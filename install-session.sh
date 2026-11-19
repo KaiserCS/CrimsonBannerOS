@@ -6,7 +6,7 @@
 #   sudo ./install-session.sh                   uses what you built here: the newest AppImage in dist/, else the
 #                                               dotnet build (RedStarOS/bin/Release or Debug/net8.0/RedStarOS)
 #   sudo ./install-session.sh PATH              an AppImage, the RedStarOS program, or a folder that has it
-#   sudo ./install-session.sh --uninstall       removes both sessions again
+#   sudo ./install-session.sh --uninstall       removes both sessions again (same as ./uninstall-session.sh)
 #
 # Build redstar-comp first for the Wayland session: compositor/build.sh (Arch/CachyOS: pacman -S wlroots0.20 meson).
 set -euo pipefail
@@ -18,9 +18,7 @@ XS=/usr/share/xsessions/redstaros.desktop
 WS=/usr/share/wayland-sessions/redstaros-wayland.desktop
 
 if [ "${1:-}" = "--uninstall" ]; then
-  rm -f "$BIN/redstaros-session" "$BIN/redstar-comp" "$XS" "$WS"
-  echo "Removed the Red Star OS sessions."
-  exit 0
+  exec "$HERE/uninstall-session.sh"
 fi
 
 # ── which Red Star to start ──

@@ -305,7 +305,8 @@ in CI and attaches both files to a GitHub release when you push a `v*` tag.
 
 Login-screen sessions: `sudo ./install-session.sh` (it finds what you built: the newest AppImage in `dist/`, else the
 `dotnet build` output; or give it an AppImage, the RedStarOS program or its folder). It adds **Red Star OS** (X11,
-with redstar-wm) and, when redstar-comp is built, **Red Star OS (Wayland)**; `--uninstall` removes them.
+with redstar-wm) and, when redstar-comp is built, **Red Star OS (Wayland)**. `sudo ./uninstall-session.sh` takes them
+off the login screen again (`--dry-run` lists what it would remove; your settings and the program itself stay).
 
 ## Red Star Online – native browser
 Tabs, address bar and menus are native Avalonia; pages are rendered by a hidden Electron/Chromium "web engine" (`webengine/`) and drawn inline, so it works on X11 and Wayland and behaves like the other apps.
