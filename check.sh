@@ -5,6 +5,8 @@
 #   ./check.sh --screenshots   also saves a picture of every window in ./screenshots (open screenshots/index.html)
 # The same checks run on GitHub for every push (.github/workflows/check.yml).
 set -euo pipefail
+# no telemetry from the .NET tools (PRINCIPLES.md, 5)
+export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
 FULL=0; SHOTS=0
 for a in "$@"; do case "$a" in --full) FULL=1 ;; --screenshots) SHOTS=1 ;; esac; done
 cd "$(dirname "$0")"

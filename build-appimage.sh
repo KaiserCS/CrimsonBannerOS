@@ -5,6 +5,8 @@
 # Usage:   ./build-appimage.sh            # x86_64
 #          ./build-appimage.sh arm64      # aarch64
 set -euo pipefail
+# no telemetry from the .NET tools (PRINCIPLES.md, 5)
+export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
 
 cd "$(dirname "$0")"
 ARCH_ARG="${1:-x64}"

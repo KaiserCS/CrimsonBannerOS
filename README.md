@@ -2,8 +2,9 @@
 
 Avalonia 12 (12.1.6) / .NET 8 port of the original WinForms project, with a much more functional desktop.
 
-> **Status:** written without a compiler available, so it has never been built or run by its author.
-> Expect to fix a few compile errors on the first build and send them back.
+> **Principles:** the project is governed by self-reliance, in the Marxist-Leninist sense: it holds its own base
+> layers, keeps its work GPL, accounts for every outside dependency and its way out, and builds and runs without
+> hosted services or telemetry. See [PRINCIPLES.md](PRINCIPLES.md).
 
 
 
