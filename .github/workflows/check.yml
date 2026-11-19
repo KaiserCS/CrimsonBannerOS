@@ -45,7 +45,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libfontconfig1 fonts-dejavu-core fonts-noto-core \
-            libx11-dev gcc tar xz-utils zstd p7zip-full shared-mime-info libvlc5 vlc-plugin-base
+            libx11-dev gcc tar xz-utils zstd p7zip-full shared-mime-info libvlc5 vlc-plugin-base \
+            dbus libglib2.0-bin
 
       - name: Build
         run: dotnet build RedStarOS/RedStarOS.csproj -c Release

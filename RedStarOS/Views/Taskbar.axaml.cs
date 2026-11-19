@@ -460,7 +460,7 @@ public partial class Taskbar : UserControl
         var entries = TrayService.Entries.ToList();
         // apps re-announce their tray icons often; rebuilding unchanged icons would empty an open tooltip
         var sig = string.Join(";", entries.Select(e =>
-            $"{e.Key}|{e.Tooltip}|{e.Glyph}|{(e.Icon == null ? 0 : System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(e.Icon))}|{e.Badge}|{e.Menu.Count}|{e.PanelFactory != null}"));
+            $"{e.Key}|{e.Tooltip}|{e.Glyph}|{(e.Icon == null ? 0 : System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(e.Icon))}|{e.Badge}|{e.Menu.Count}|{e.PanelFactory != null}|{e.MenuProvider != null}|{e.MenuOnClick}"));
         if (sig == _traySignature && AppTray.Children.Count > 0) return;
         _traySignature = sig;
         AppTray.Children.Clear();
@@ -511,7 +511,18 @@ public partial class Taskbar : UserControl
         btn.Classes.Add(onTaskbar ? "task" : "flat");
         ToolTip.SetTip(btn, entry.Tooltip);
 
-        if (entry.PanelFactory == null && entry.Menu.Count > 0) btn.ContextFlyout = BuildTrayMenu(entry);
+        if (entry.PanelFactory == null && entry.MenuProvider == null && entry.Menu.Count > 0) btn.ContextFlyout = BuildTrayMenu(entry, entry.Menu);
+        if (entry.MenuProvider != null || entry.ContextClick != null)
+            btn.ContextRequested += (_, e) =>
+            {
+                e.Handled = true;
+                if (entry.MenuProvider != null) ShowProvidedMenu(btn, entry);
+                else entry.ContextClick?.Invoke();
+            };
+        if (entry.MiddleClick != null)
+            btn.PointerReleased += (_, e) => { if (e.InitialPressMouseButton == Avalonia.Input.MouseButton.Middle) { e.Handled = true; entry.MiddleClick?.Invoke(); } };
+        if (entry.Scroll != null)
+            btn.PointerWheelChanged += (_, e) => { if (e.Delta.Y != 0) { e.Handled = true; entry.Scroll?.Invoke(e.Delta.Y > 0 ? 1 : -1); } };
         btn.Click += (_, _) =>
         {
             if (entry.PanelFactory != null)
@@ -519,24 +530,44 @@ public partial class Taskbar : UserControl
                 if (entry.Key == _bell.Key) Notifier.MarkAllRead();
                 ShowPanel(btn, entry.PanelFactory());
             }
-            else if (entry.Menu.Count > 0) BuildTrayMenu(entry).ShowAt(btn);
+            else if (entry.MenuOnClick && entry.MenuProvider != null) ShowProvidedMenu(btn, entry);
+            else if (entry.MenuProvider == null && entry.Menu.Count > 0) BuildTrayMenu(entry, entry.Menu).ShowAt(btn);
             else entry.Click?.Invoke();
         };
         return btn;
     }
 
-    private static MenuFlyout BuildTrayMenu(TrayEntry entry)
+    /// <summary>Asks the program for its menu as it is now, then shows it above the icon.</summary>
+    private async void ShowProvidedMenu(Button btn, TrayEntry entry)
+    {
+        var items = entry.MenuProvider == null ? null : await entry.MenuProvider();
+        if (items == null || items.Count == 0) { entry.ContextClick?.Invoke(); return; }
+        var flyout = BuildTrayMenu(entry, items);
+        PlaceAbove(flyout, btn, alignLeft: false);
+        flyout.ShowAt(btn);
+    }
+
+    private static MenuFlyout BuildTrayMenu(TrayEntry entry, List<TrayMenuEntry> entries)
     {
         var flyout = new MenuFlyout { Placement = PlacementMode.TopEdgeAlignedRight };
-        foreach (var m in entry.Menu)
-        {
-            if (m.Separator) { flyout.Items.Add(new Separator()); continue; }
-            var id = m.Id;
-            var item = new MenuItem { Header = m.Label };
-            item.Click += (_, _) => entry.MenuSelected?.Invoke(id);
-            flyout.Items.Add(item);
-        }
+        foreach (var m in entries) flyout.Items.Add(BuildTrayMenuItem(entry, m));
         return flyout;
+    }
+
+    private static Control BuildTrayMenuItem(TrayEntry entry, TrayMenuEntry m)
+    {
+        if (m.Separator) return new Separator();
+        var id = m.Id;
+        var item = new MenuItem { Header = m.Label, IsEnabled = m.Enabled };
+        if (m.Checked is { } on)
+        {
+            item.ToggleType = MenuItemToggleType.CheckBox;
+            item.IsChecked = on;
+        }
+        if (m.Children is { Count: > 0 } kids)
+            foreach (var k in kids) item.Items.Add(BuildTrayMenuItem(entry, k));
+        else item.Click += (_, _) => entry.MenuSelected?.Invoke(id);
+        return item;
     }
 
     // ------------------------------------------------------------ system tray + clock

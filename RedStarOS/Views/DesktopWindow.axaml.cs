@@ -80,6 +80,7 @@ public partial class DesktopWindow : Window
             X11Desktop.Start();
             WindowManager.TrackForeignWindows();      // other programs' windows get taskbar buttons too
             PortalSetup.Run();                         // inside redstar-comp: screenshots and screen sharing for other apps
+            SystemTray.Start();                        // other programs' tray icons (Discord, Steam…) on the taskbar
             UpdateChecker.StartBackground();
             if (InputIsolation.IsNested)
                 Notifier.Show("Keyboard and mouse are in Red Star OS",

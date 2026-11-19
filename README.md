@@ -12,6 +12,11 @@ Avalonia 12 (12.1.6) / .NET 8 port of the original WinForms project, with a much
 - **Search everything** (Super, or the Start button): apps, settings pages, recent documents, files in your home
   folder (indexed in the background; hidden and build folders skipped), quick sums ("12*7" → copy the result),
   and "Open site" / "Search the web" in Red Star Online.
+- **Other programs' tray icons:** Discord, Steam, Qt programs, update notifiers… show their icons in the taskbar's
+  tray (freedesktop StatusNotifierItem): left click opens the program (or its menu, for Steam-style icons), right
+  click its menu (DBusMenu, with submenus and ticks), middle click its second action, the wheel scrolls. In its own
+  session Red Star is the tray "watcher" programs register with; on KDE it joins KDE's. Red Star talks D-Bus with
+  its own small client, no library. Old XEmbed-only tray icons (some Wine programs) aren't shown yet.
 - **Global shortcuts (X11):** Super = Start/search, Alt+Tab / Alt+Shift+Tab = window switcher (every window,
   also non-Red Star programs), Super+←/→ snap, Super+↑ maximise, Super+↓ minimise, Super+D show desktop,
   Super+E files, Super+T or Ctrl+Alt+T terminal, Super+V clipboard history, Super+L lock, Ctrl+Alt+Delete the

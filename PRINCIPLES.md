@@ -35,6 +35,7 @@ same change that adds it, or it doesn't go in.
 | Linux, Mesa, libdrm | the base system | community (Linux Foundation, freedesktop.org) | GPL-2.0, MIT | foundation; accepted |
 | wlroots, Wayland, wayland-protocols, xkbcommon, pixman | redstar-comp | community (freedesktop.org) | MIT | accepted; the compositor is our own |
 | Xwayland, xcb, cairo | X11 apps, title bars | community (freedesktop.org) | MIT, LGPL/MPL | accepted; Xwayland only while X11 apps exist |
+| D-Bus (the session bus) | system tray, portals | community (freedesktop.org) | GPL-2.0/AFL | accepted; we talk to it with our own client (`Services/DBus.cs`), no D-Bus library |
 | .NET runtime and SDK | the shell | .NET Foundation, steered by Microsoft | MIT | **dependent.** Kept by decision (18 Nov 2026): a rewrite would cost more than it frees. Rules: no Windows-only APIs, telemetry off, nothing that ties us to Microsoft services. Way out: the shell's logic stays portable; the X11 and Wayland parts are already plain C. |
 | Avalonia (incl. Avalonia.Wayland) | the shell's UI | AvaloniaUI OÜ (company) | MIT | **dependent.** Pinned versions; the native Wayland path reduces reliance on X11. Way out: none cheap. Watch the licence and governance at every upgrade. |
 | Chromium via Electron | Red Star Online's web engine | Google (Chromium), OpenJS Foundation (Electron) | BSD, MIT | **dependent: the largest one.** Way out to evaluate: WebKitGTK (community-maintained, LGPL). |
