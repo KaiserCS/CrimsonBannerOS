@@ -80,7 +80,7 @@ public static class X11Desktop
     /// <summary>Raised (on the UI thread) for global shortcuts: "start", "switcher-next", "switcher-prev",
     /// "switcher-commit", "switcher-cancel", "clipboard", "desktop", "files", "terminal", "lock", "snap-left",
     /// "snap-right", "maximize", "minimize", "search", "screenshot", "screenshot-window" (inside redstar-comp followed by
-    /// a tab and the window's geometry).</summary>
+    /// a tab and the window's geometry), "power-menu" (Ctrl+Alt+Delete), "volume-up", "volume-down", "volume-mute".</summary>
     public static event Action<string>? Shortcut;
 
     private static IntPtr _d, _root;
@@ -89,7 +89,8 @@ public static class X11Desktop
     private static XErrorHandler? _errorHandler;     // kept alive: Xlib holds a pointer to it
     private static bool _switching;                  // Alt+Tab switcher open (keyboard grabbed)
     private static bool _superDown, _superUsed;
-    private static int _kcSuperL, _kcSuperR, _kcAltL, _kcAltR, _kcTab, _kcEsc, _kcPrint;
+    private static int _kcSuperL, _kcSuperR, _kcAltL, _kcAltR, _kcTab, _kcEsc, _kcPrint, _kcDelete, _kcKpDelete,
+        _kcVolUp, _kcVolDown, _kcMute;
     private static readonly Dictionary<int, string> _keyNames = new();
     private static readonly ConcurrentDictionary<long, (int W, int H, byte[] Pixels)> _icons = new();
     private static readonly Dictionary<long, int> _iconVersion = new();
@@ -189,6 +190,13 @@ public static class X11Desktop
         // Print / Shift+Print: screenshot of the screen / the active window
         _kcPrint = Kc("Print");
         Grab(_kcPrint, 0); Grab(_kcPrint, ShiftMask);
+        // Ctrl+Alt+Delete: the power menu
+        _kcDelete = Kc("Delete"); _kcKpDelete = Kc("KP_Delete");
+        Grab(_kcDelete, ControlMask | Mod1Mask); Grab(_kcKpDelete, ControlMask | Mod1Mask);
+        // the keyboard's volume keys (also with Shift/Ctrl held)
+        _kcVolUp = Kc("XF86AudioRaiseVolume"); _kcVolDown = Kc("XF86AudioLowerVolume"); _kcMute = Kc("XF86AudioMute");
+        foreach (var kc in new[] { _kcVolUp, _kcVolDown, _kcMute })
+            foreach (var m in new uint[] { 0, ShiftMask, ControlMask }) Grab(kc, m);
         XSync(_d, false);
     }
 
@@ -247,6 +255,13 @@ public static class X11Desktop
         // ── Ctrl+Alt ──
         if (press && ctrl && alt && name == "t") Raise("terminal");
         if (press && keycode == _kcPrint && _kcPrint != 0) Raise(shift ? "screenshot-window" : "screenshot");
+        if (press && ctrl && alt && keycode != 0 && (keycode == _kcDelete || keycode == _kcKpDelete)) Raise("power-menu");
+        if (press && keycode != 0)
+        {
+            if (keycode == _kcVolUp) Raise("volume-up");
+            else if (keycode == _kcVolDown) Raise("volume-down");
+            else if (keycode == _kcMute) Raise("volume-mute");
+        }
     }
 
     private static void EndSwitch()

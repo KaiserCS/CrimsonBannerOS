@@ -139,9 +139,10 @@
         <Button Grid.Column="3" Classes="flat footer" Content="Power  ▾">
           <Button.Flyout>
             <MenuFlyout Placement="TopEdgeAlignedRight">
+              <MenuItem Header="Lock" Click="OnLock" />
               <MenuItem Header="Log Off" Click="OnLogOff" />
-              <MenuItem Header="Shutdown" Click="OnShutdown" />
               <MenuItem Header="Restart" Click="OnRestart" />
+              <MenuItem Header="Shut Down" Click="OnShutdown" />
             </MenuFlyout>
           </Button.Flyout>
         </Button>

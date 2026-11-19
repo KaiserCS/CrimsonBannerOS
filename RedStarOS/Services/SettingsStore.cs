@@ -64,6 +64,7 @@ public sealed class Settings
     public bool IsolateInput { get; set; } = true;             // own display on top of another desktop (keyboard/mouse stay in Red Star)
     public bool WindowShadows { get; set; } = true;            // drop shadows under windows (picom; next start)
     public bool WaylandCompositor { get; set; }                // experimental: run inside redstar-comp (wlroots) instead of redstar-wm + picom; next start
+    public bool WaylandApps { get; set; } = true;               // inside redstar-comp other programs run natively on Wayland (screen sharing); off: all X11; next start
     public bool NativeWaylandShell { get; set; }               // experimental: Red Star's own windows natively on Wayland inside redstar-comp; next start
     public string Graphics { get; set; } = "auto";              // auto | gpu | software (Settings → Diagnostics)
 }

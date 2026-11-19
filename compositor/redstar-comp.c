@@ -2281,6 +2281,17 @@ static bool shell_shortcut(struct server *s, xkb_keysym_t sym, bool pressed, uin
 		return true;                         /* like the X11 keyboard grab: Super+anything stays with the shell */
 	}
 	if (pressed && ctrl && alt && lower == XKB_KEY_t) { shell_key(s, "terminal"); return true; }
+	/* Ctrl+Alt+Delete: the shell's Lock / Log off / Restart / Shut down / Task Manager menu */
+	if (ctrl && alt && (sym == XKB_KEY_Delete || sym == XKB_KEY_KP_Delete)) {
+		if (pressed) shell_key(s, "power-menu");
+		return true;
+	}
+	/* the keyboard's volume keys: the shell changes the volume and shows the level */
+	if (sym == XKB_KEY_XF86AudioRaiseVolume || sym == XKB_KEY_XF86AudioLowerVolume || sym == XKB_KEY_XF86AudioMute) {
+		if (pressed) shell_key(s, sym == XKB_KEY_XF86AudioRaiseVolume ? "volume-up"
+			: sym == XKB_KEY_XF86AudioLowerVolume ? "volume-down" : "volume-mute");
+		return true;
+	}
 	if (sym == XKB_KEY_Print) {                 /* Print: screenshot (Shift+Print: just the active window) */
 		if (!pressed) return true;
 		struct view *f = s->focused;

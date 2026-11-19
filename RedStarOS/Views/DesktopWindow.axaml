@@ -18,7 +18,7 @@
         <MenuItem Header="Open Terminal" Click="OnOpenTerminal" />
         <MenuItem Header="Refresh" Click="OnRefreshDesktop" />
         <Separator />
-        <MenuItem Header="Advanced Settings" Click="OnSettings" />
+        <MenuItem Header="System Settings" Click="OnSettings" />
       </ContextMenu>
     </Grid.ContextMenu>
 

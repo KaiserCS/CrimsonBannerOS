@@ -47,7 +47,7 @@ public static class AppRegistry
         new("clock",       "Clock",               "RSUtilities", () => new ClockWindow()),
         new("taskmgr",     "Task Manager",        "System",      () => new TaskManagerWindow()),
         new("calendar",    "Calendar",            "RSUtilities", () => new CalendarWindow()),
-        new("settings",    "Advanced Settings",   "System",      () => new SettingsWindow()),
+        new("settings",    "System Settings",     "System",      () => new SettingsWindow()),
     };
 
     // Which app a window belongs to (icon + taskbar pinning). Settings sub-dialogs count as Settings.

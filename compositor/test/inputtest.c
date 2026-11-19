@@ -2,7 +2,7 @@
  * inputtest — keyboard and mouse checks for redstar-comp, with a virtual keyboard and pointer (the same protocols
  * wtype and ydotool-style tools use), so what used to be tried only by hand runs headless:
  *   • the shell's shortcuts: Alt+Tab (open, next, commit on Alt release, Escape cancels), Super alone, Super+arrow,
- *     Ctrl+Alt+T, Print / Shift+Print, and none of it when the shell hasn't asked for them;
+ *     Ctrl+Alt+T, Print / Shift+Print, the volume keys, Ctrl+Alt+Delete, and none of it when the shell hasn't asked for them;
  *   • a menu closes when you click outside it and stays open when you click inside it;
  *   • title bar: double-click maximises, the maximise button restores, the close button closes.
  * Run by run-tests.sh after nativetest. The two virtual-input protocols aren't in wayland-protocols, so their few
@@ -289,6 +289,14 @@ int main(void)
 	key(KEY_LEFTALT, false);
 	tap(KEY_SYSRQ);
 	check(wait_line("key\tscreenshot", 1000), "Print takes a screenshot");
+	tap(KEY_VOLUMEUP);
+	check(wait_line("key\tvolume-up", 1000), "the volume-up key turns the volume up");
+	tap(KEY_VOLUMEDOWN);
+	check(wait_line("key\tvolume-down", 1000), "the volume-down key turns it down");
+	tap(KEY_MUTE);
+	check(wait_line("key\tvolume-mute", 1000), "the mute key mutes");
+	key(KEY_LEFTCTRL, true); key(KEY_LEFTALT, true); tap(KEY_DELETE); key(KEY_LEFTALT, false); key(KEY_LEFTCTRL, false);
+	check(wait_line("key\tpower-menu", 1000), "Ctrl+Alt+Delete opens the power menu");
 
 	/* ── a framed window to click on (centred: 400×300 on 1280×720 → client area at 440,226) ── */
 	struct wl_surface *ws = wl_compositor_create_surface(compositor);

@@ -106,6 +106,33 @@ public static class SystemInfo
             await ProcessUtil.RunAsync(amixer, new[] { "set", "Master", percent + "%" }, 3000);
     }
 
+    /// <summary>The volume one step up or down (taskbar scroll wheel, volume keys): 0–100, or where it already is if
+    /// something else turned it past 100.</summary>
+    public static int StepVolume(int current, int delta) =>
+        delta > 0 ? Math.Max(current, Math.Min(100, current + delta)) : Math.Max(0, current + delta);
+
+    /// <summary>Turns the volume up or down by <paramref name="delta"/> percent and unmutes it; returns the new
+    /// (volume, muted), or null without a sound system.</summary>
+    public static async Task<(int Volume, bool Muted)?> ChangeVolume(int delta)
+    {
+        var now = await GetVolume();
+        if (now == null) return null;
+        int next = StepVolume(now.Value, delta);
+        if (next != now) await SetVolume(next);
+        if (await GetMuted() == true) await SetMuted(false);
+        return (next, false);
+    }
+
+    /// <summary>Mutes or unmutes; returns the new (volume, muted), or null without a sound system.</summary>
+    public static async Task<(int Volume, bool Muted)?> ToggleMuted()
+    {
+        var vol = await GetVolume();
+        if (vol == null) return null;
+        bool muted = await GetMuted() != true;
+        await SetMuted(muted);
+        return (vol.Value, muted);
+    }
+
     public static async Task<bool?> GetMuted()
     {
         if (ProcessUtil.Which("pactl") is { } pactl)

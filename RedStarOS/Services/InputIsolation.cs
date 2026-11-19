@@ -207,15 +207,11 @@ public static class InputIsolation
         var env = new Dictionary<string, string?>
         {
             ["XDG_CURRENT_DESKTOP"] = "RedStar",
-            // every app inside talks X11 so the taskbar sees it (native Wayland apps still work: unset these per app)
-            ["GDK_BACKEND"] = "x11",
-            ["QT_QPA_PLATFORM"] = "xcb",
-            ["SDL_VIDEODRIVER"] = "x11",
-            ["ELECTRON_OZONE_PLATFORM_HINT"] = "x11",
             ["REDSTAR_COMPOSITOR_RUNNING"] = "redstar-comp",
             ["REDSTAR_HOST_DISPLAY"] = Env("DISPLAY"),
             ["REDSTAR_HOST_WAYLAND_DISPLAY"] = Env("WAYLAND_DISPLAY"),
         };
+        foreach (var (k, v) in AppDisplayEnv(SettingFlag("WaylandApps", fallback: true))) env[k] = v;
         env["REDSTAR_SHADOWS"] = SettingFlag("WindowShadows", fallback: true) ? "1" : "0";
         env["REDSTAR_REDUCE_MOTION"] = SettingFlag("ReduceMotion") ? "1" : "0";         // no window fades
         if (!session) { env["REDSTAR_NESTED"] = "1"; env["REDSTAR_NESTED_MODE"] = "redstar-comp"; }
@@ -261,6 +257,26 @@ public static class InputIsolation
     }
 
     /// <summary>A true/false setting straight from settings.json (this runs before the settings are loaded).</summary>
+    /// <summary>
+    /// How programs inside redstar-comp pick their display. Native Wayland (the default): GTK, Qt, SDL and Electron
+    /// choose for themselves, which they do as Wayland. That is what screen sharing needs: OBS and Discord only offer
+    /// the PipeWire portal (whole screen, every window) as Wayland programs; through Xwayland they see X11 windows
+    /// only. The taskbar lists them either way (redstar-comp reports native windows). Off: everything talks X11, as
+    /// Red Star did before.
+    /// </summary>
+    public static Dictionary<string, string?> AppDisplayEnv(bool waylandApps) => waylandApps
+        ? new()
+        {
+            ["XDG_SESSION_TYPE"] = "wayland",
+            ["GDK_BACKEND"] = null, ["QT_QPA_PLATFORM"] = null, ["SDL_VIDEODRIVER"] = null,
+            ["ELECTRON_OZONE_PLATFORM_HINT"] = "auto",       // older Electron apps (Discord) stay on X11 without it
+        }
+        : new()
+        {
+            ["GDK_BACKEND"] = "x11", ["QT_QPA_PLATFORM"] = "xcb", ["SDL_VIDEODRIVER"] = "x11",
+            ["ELECTRON_OZONE_PLATFORM_HINT"] = "x11",
+        };
+
     internal static bool SettingFlag(string name, bool fallback = false)
     {
         try

@@ -133,7 +133,11 @@ public partial class DesktopWindow : Window
             case "clipboard": Bar.ShowClipboard(); break;
             case "files": WindowManager.Open(new FileManagerWindow(AppPaths.Home), "files"); break;
             case "terminal": TerminalLauncher.Launch(); break;
-            case "lock": ShellActions.LogOff(); break;
+            case "lock": ShellActions.Lock(); break;
+            case "power-menu": PowerMenu.Show(); break;
+            case "volume-up": Bar.StepVolume(Taskbar.VolumeStep); break;
+            case "volume-down": Bar.StepVolume(-Taskbar.VolumeStep); break;
+            case "volume-mute": Bar.StepVolume(0); break;
             case "desktop":
                 X11Desktop.ListWindows(list => { foreach (var w in list) X11Desktop.SnapWindow(w.Id, "minimize"); });
                 break;

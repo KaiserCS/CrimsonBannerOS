@@ -57,6 +57,13 @@ public partial class Taskbar : UserControl
         BuildStartMenu();
 
         SystemTrayButton.Click += (_, _) => ShowPanel(SystemTrayButton, new QuickSettingsPanel());
+        // scrolling over the network / volume / battery button turns the volume up and down, 5% a notch
+        SystemTrayButton.PointerWheelChanged += (_, e) =>
+        {
+            if (e.Delta.Y == 0) return;
+            e.Handled = true;
+            StepVolume(e.Delta.Y > 0 ? VolumeStep : -VolumeStep);
+        };
         ClockButton.Click += (_, _) => ShowPanel(ClockButton, new CalendarPanel());
 
         // The notification centre is the app tray's built-in resident.
@@ -142,6 +149,61 @@ public partial class Taskbar : UserControl
 
     /// <summary>Super+V.</summary>
     public void ShowClipboard() => ShowPanel(SystemTrayButton, new ClipboardPanel());
+
+    // ------------------------------------------------------------ volume (scroll wheel, volume keys)
+
+    public const int VolumeStep = 5;
+    private Flyout? _volumePopup;
+    private ProgressBar? _volumeBar;
+    private ContentControl? _volumeIcon;
+    private TextBlock? _volumeText;
+    private readonly DispatcherTimer _volumeHide = new() { Interval = TimeSpan.FromSeconds(1.5) };
+    private System.Threading.Tasks.Task _volumeQueue = System.Threading.Tasks.Task.CompletedTask;
+
+    /// <summary>Volume up (positive) or down; 0 toggles mute. Shows the new level above the tray for a moment.</summary>
+    public void StepVolume(int delta)
+    {
+        // one change at a time, in order: fast scrolling or a held key must not race pactl
+        _volumeQueue = _volumeQueue.ContinueWith(async _ =>
+        {
+            var r = delta == 0 ? await SystemInfo.ToggleMuted() : await SystemInfo.ChangeVolume(delta);
+            if (r is { } v) Dispatcher.UIThread.Post(() => ShowVolume(v.Volume, v.Muted));
+        }).Unwrap();
+    }
+
+    private static string VolumeGlyphName(int volume, bool muted) =>
+        muted || volume == 0 ? "volume-mute" : volume < 40 ? "volume-low" : volume < 75 ? "volume-mid" : "volume";
+
+    private void ShowVolume(int volume, bool muted)
+    {
+        VolumeGlyph.IsVisible = true;
+        VolumeGlyph.Content = Icons.Create(VolumeGlyphName(volume, muted), 17);
+        if (_volumePopup == null)
+        {
+            _volumeIcon = new ContentControl { VerticalAlignment = VerticalAlignment.Center };
+            _volumeBar = new ProgressBar { Minimum = 0, Maximum = 100, Width = 160, VerticalAlignment = VerticalAlignment.Center };
+            _volumeText = new TextBlock { Width = 48, TextAlignment = TextAlignment.Right, VerticalAlignment = VerticalAlignment.Center };
+            // transient: shown without taking the keyboard from the window you're typing in
+            _volumePopup = new Flyout
+            {
+                Content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Margin = new Thickness(4, 2), Children = { _volumeIcon, _volumeBar, _volumeText } },
+                Placement = PlacementMode.TopEdgeAlignedRight,
+                ShowMode = FlyoutShowMode.Transient,
+            };
+            _volumePopup.FlyoutPresenterClasses.Add("shell");
+            _volumeHide.Tick += (_, _) => { _volumeHide.Stop(); _volumePopup?.Hide(); };
+        }
+        _volumeIcon!.Content = Icons.Create(VolumeGlyphName(volume, muted), 20);
+        _volumeBar!.Value = muted ? 0 : Math.Min(100, volume);
+        _volumeText!.Text = muted ? "Muted" : volume + "%";
+        if (!_volumePopup.IsOpen)
+        {
+            PlaceAbove(_volumePopup, SystemTrayButton, alignLeft: false);
+            _volumePopup.ShowAt(SystemTrayButton);
+        }
+        _volumeHide.Stop(); _volumeHide.Start();
+        ToolTip.SetTip(SystemTrayButton, muted ? "Volume: muted" : $"Volume: {volume}%");
+    }
 
     // ------------------------------------------------------------ panels
 
@@ -507,7 +569,7 @@ public partial class Taskbar : UserControl
         var volume = await SystemInfo.GetVolume();
         var muted = await SystemInfo.GetMuted();
         VolumeGlyph.IsVisible = volume != null;
-        VolumeGlyph.Content = Icons.Create(muted == true || volume == 0 ? "volume-mute" : volume < 40 ? "volume-low" : volume < 75 ? "volume-mid" : "volume", 17);
+        VolumeGlyph.Content = Icons.Create(VolumeGlyphName(volume ?? 0, muted == true), 17);
 
         var parts = new List<string> { kind == "offline" ? "Offline" : "Network: " + SystemInfo.NetworkSummary() };
         if (volume != null) parts.Add(muted == true ? "Volume: muted" : $"Volume: {volume}%");

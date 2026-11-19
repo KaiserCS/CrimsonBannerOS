@@ -9,7 +9,7 @@ using RedStarOS.Services;
 namespace RedStarOS.Views;
 
 /// <summary>
-/// Advanced Settings: one window with a sidebar. Appearance, Desktop &amp; Taskbar and Games are pages here;
+/// System Settings: one window with a sidebar. Appearance, Desktop &amp; Taskbar and Games are pages here;
 /// Network, Account, Wallpapers and Software Updates open their own windows (the sidebar entry shows a launcher).
 /// Everything applies immediately.
 /// </summary>
@@ -215,12 +215,21 @@ public partial class SettingsWindow : Window
         {
             Classes = { "caption" }, TextWrapping = TextWrapping.Wrap,
             Text = "redstar-comp (wlroots) takes the place of the window manager and picom: same title bars, snapping and shadows, "
-                 + "and native Wayland apps work too. Red Star's own windows still run through Xwayland. On another desktop it opens "
+                 + "and native Wayland apps work too. On another desktop it opens "
                  + "full screen and asks that desktop to pass Super, Alt+Tab and its other shortcuts through (KDE and GNOME may ask "
                  + "once); set REDSTAR_COMP_WINDOWED=1 for an ordinary window. Ctrl+Alt+Backspace leaves. "
                  + "For a full session pick \"Red Star OS (Wayland)\" at the login screen. Takes effect the next time Red Star OS starts."
                  + (InputIsolation.InRedStarComp ? "\nNow: running inside redstar-comp."
                     : haveComp ? "" : "\nNot installed: build it with compositor/build.sh (needs wlroots 0.20).")
+        });
+        p.Children.Add(Check("Run other programs natively on Wayland", s.WaylandApps, v => SettingsStore.Current.WaylandApps = v));
+        p.Children.Add(new TextBlock
+        {
+            Classes = { "caption" }, TextWrapping = TextWrapping.Wrap,
+            Text = "Inside redstar-comp, GTK, Qt and Electron programs pick Wayland for themselves. Screen sharing in OBS and "
+                 + "Discord needs this: only as Wayland programs do they offer the PipeWire screen capture. Turn it off if a "
+                 + "program misbehaves, and everything talks X11 through Xwayland as before. Takes effect the next time Red Star "
+                 + "OS starts."
         });
         p.Children.Add(Check("Draw Red Star's own windows natively on Wayland (experimental)", s.NativeWaylandShell, v => SettingsStore.Current.NativeWaylandShell = v));
         p.Children.Add(new TextBlock

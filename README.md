@@ -14,7 +14,11 @@ Avalonia 12 (12.1.6) / .NET 8 port of the original WinForms project, with a much
   and "Open site" / "Search the web" in Red Star Online.
 - **Global shortcuts (X11):** Super = Start/search, Alt+Tab / Alt+Shift+Tab = window switcher (every window,
   also non-Red Star programs), Super+←/→ snap, Super+↑ maximise, Super+↓ minimise, Super+D show desktop,
-  Super+E files, Super+T or Ctrl+Alt+T terminal, Super+V clipboard history, Super+L lock.
+  Super+E files, Super+T or Ctrl+Alt+T terminal, Super+V clipboard history, Super+L lock, Ctrl+Alt+Delete the
+  Lock / Log off / Restart / Shut down / Task Manager menu, and the keyboard's volume keys (scrolling over the tray's
+  volume icon does the same; the level shows above the tray). As the login session, Log off goes back to the login
+  screen and Shut down / Restart turn off or restart the computer (systemd-logind); as an app on another desktop they
+  lock, close or restart Red Star OS.
   Red Star has a single workspace (workspace switching was removed).
 - **Other programs on the taskbar**: every window of another program (Firefox, GIMP, LibreOffice, a Flatpak…)
   gets a taskbar button that works like a Red Star app's — click to switch to it, click again to minimise, the
@@ -137,6 +141,10 @@ their own (Chrome's tab strip, apps that ask for client-side decorations), so th
   OBS, video calls) go through xdg-desktop-portal-wlr: Red Star writes `~/.config/xdg-desktop-portal/redstar-portals.conf`
   for it, and in the Red Star (Wayland) session points the session's services at the compositor. Install them with
   `sudo pacman -S --needed grim xdg-desktop-portal-wlr` (Debian/Ubuntu: `grim xdg-desktop-portal-wlr`).
+  Programs inside redstar-comp run natively on Wayland (System Settings → "Run other programs natively on Wayland",
+  on by default), since OBS's "Screen Capture (PipeWire)" and Discord's screen share only work that way. Red Star
+  also writes `~/.config/xdg-desktop-portal-wlr/config` (when you have none) with `chooser_type=none`, because the
+  usual screen pickers (slurp, wofi) need layer-shell, which redstar-comp doesn't have yet.
   Apps can now also hand GPU buffers to the compositor (linux-dmabuf), so Xwayland draws Red Star's windows on the GPU.
 * **Red Star natively on Wayland (phase 4, second part, experimental):** Settings → Desktop & Taskbar → *Draw Red
   Star's own windows natively on Wayland* (or `REDSTAR_NATIVE_WAYLAND=1`; `0` forces Xwayland). Inside redstar-comp

@@ -57,7 +57,7 @@ public partial class StartMenu : UserControl
     private static readonly string[] RedStarCategoryOrder = { "RSOffice", "RSMedia", "RSGames", "RSOnline", "RSUtilities", "System" };
 
     public event Action? CloseRequested;
-    public event Action<string>? PowerRequested;       // "settings" | "logoff" | "shutdown" | "restart"
+    public event Action<string>? PowerRequested;       // "settings" | "lock" | "logoff" | "shutdown" | "restart"
 
     private List<StartItem> _items = new();
     private string _categoryKey = KeyAll;
@@ -410,6 +410,7 @@ public partial class StartMenu : UserControl
     // ------------------------------------------------------------ footer
 
     private void OnSettings(object? s, RoutedEventArgs e) { CloseRequested?.Invoke(); PowerRequested?.Invoke("settings"); }
+    private void OnLock(object? s, RoutedEventArgs e) { CloseRequested?.Invoke(); PowerRequested?.Invoke("lock"); }
     private void OnLogOff(object? s, RoutedEventArgs e) { CloseRequested?.Invoke(); PowerRequested?.Invoke("logoff"); }
     private void OnShutdown(object? s, RoutedEventArgs e) { CloseRequested?.Invoke(); PowerRequested?.Invoke("shutdown"); }
     private void OnRestart(object? s, RoutedEventArgs e) { CloseRequested?.Invoke(); PowerRequested?.Invoke("restart"); }

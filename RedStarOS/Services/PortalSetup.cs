@@ -26,6 +26,17 @@ public static class PortalSetup
     public static bool WlrInstalled =>
         File.Exists("/usr/share/xdg-desktop-portal/portals/wlr.portal") || File.Exists("/usr/local/share/xdg-desktop-portal/portals/wlr.portal");
 
+    /// <summary>
+    /// xdg-desktop-portal-wlr's own settings (~/.config/xdg-desktop-portal-wlr/config, written only when you have
+    /// none). Its usual screen pickers (slurp, wofi, bemenu) draw with layer-shell, which redstar-comp doesn't have,
+    /// so asking one makes screen sharing fail. Without a picker it shares the screen (the first one on several).
+    /// </summary>
+    public const string WlrConfig =
+        "# written by Red Star OS: share the screen without a picker (slurp/wofi need layer-shell, which redstar-comp lacks)\n" +
+        "[screencast]\n" +
+        "chooser_type=none\n" +
+        "max_fps=60\n";
+
     public static void Run()
     {
         if (!InputIsolation.InRedStarComp) return;
@@ -39,6 +50,10 @@ public static class PortalSetup
                 var f = Path.Combine(dir, name);
                 if (!File.Exists(f)) File.WriteAllText(f, Config);
             }
+            var wlrDir = Path.Combine(cfg, "xdg-desktop-portal-wlr");
+            Directory.CreateDirectory(wlrDir);
+            var wlr = Path.Combine(wlrDir, "config");
+            if (!File.Exists(wlr)) File.WriteAllText(wlr, WlrConfig);
         }
         catch { }
         if (Environment.GetEnvironmentVariable("REDSTAR_SESSION") != "1") return;
