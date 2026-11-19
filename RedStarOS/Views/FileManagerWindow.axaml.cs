@@ -810,6 +810,8 @@ public partial class FileManagerWindow : Window
 
     private void UpdateUndo()
     {
+        // transfers finish on a background thread: update the button on the window's own
+        if (!Avalonia.Threading.Dispatcher.UIThread.CheckAccess()) { Avalonia.Threading.Dispatcher.UIThread.Post(UpdateUndo); return; }
         var label = FileTransfer.UndoLabel;
         UndoButton.IsVisible = label != null;
         UndoButton.Content = label != null ? "Undo " + LowerFirst(label) : "";

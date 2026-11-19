@@ -6,6 +6,7 @@ using Xunit;
 
 namespace RedStarOS.Tests;
 
+[Collection("environment")]     // reads XDG_DATA_HOME (wallpapers), which the file tests change
 public class FirstRunTests
 {
     [Fact]

@@ -41,20 +41,28 @@ public static class FileTransfer
     private static readonly Stack<UndoStep> UndoStack = new();
     public static event Action? UndoChanged;
 
-    public static string? UndoLabel => UndoStack.Count > 0 ? UndoStack.Peek().Label : null;
+    public static string? UndoLabel { get { lock (UndoStack) return UndoStack.Count > 0 ? UndoStack.Peek().Label : null; } }
 
+    /// <summary>Remembers a step for Undo. Called from whichever thread finished the transfer.</summary>
     public static void Record(string label, Action revert)
     {
-        UndoStack.Push(new UndoStep(label, revert));
-        while (UndoStack.Count > 30) { var keep = UndoStack.Take(30).Reverse().ToList(); UndoStack.Clear(); foreach (var k in keep) UndoStack.Push(k); }
+        lock (UndoStack)
+        {
+            UndoStack.Push(new UndoStep(label, revert));
+            while (UndoStack.Count > 30) { var keep = UndoStack.Take(30).Reverse().ToList(); UndoStack.Clear(); foreach (var k in keep) UndoStack.Push(k); }
+        }
         UndoChanged?.Invoke();
     }
 
     /// <summary>Reverts the last operation; returns what was undone, or null.</summary>
     public static string? Undo()
     {
-        if (UndoStack.Count == 0) return null;
-        var step = UndoStack.Pop();
+        UndoStep step;
+        lock (UndoStack)
+        {
+            if (UndoStack.Count == 0) return null;
+            step = UndoStack.Pop();
+        }
         UndoChanged?.Invoke();
         step.Revert();
         return step.Label;
