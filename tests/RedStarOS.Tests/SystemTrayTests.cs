@@ -167,7 +167,7 @@ public class SystemTrayTests
 
         // the program quits: its icon goes
         appBus.Dispose();
-        Assert.Equal(item.Key, await removed.Task.WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.Equal(item.Key, await removed.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken));
         Assert.Empty(host.Items);
     }
 
