@@ -10,7 +10,9 @@
 - Nothing may require a hosted service to build, test or run. `./check.sh` is the authority; CI only repeats it.
 - No telemetry, analytics or phoning home. Opt out of tools' telemetry in scripts.
 - New code is GPL-3.0-or-later.
-- When work reduces a recorded dependency, update its row.
+- When work reduces a recorded dependency, update its row and the layer scores ("The goal" in `PRINCIPLES.md`).
+  The aim is at least 75% of layers ours or community commons. Self-sufficiency to a point, not isolation:
+  community GPL projects are welcome.
 
 ## How the owner works
 

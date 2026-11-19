@@ -44,6 +44,40 @@ same change that adds it, or it doesn't go in.
 | NuGet, npm registries | package downloads | Microsoft, GitHub (Microsoft) | proprietary services | **dependent.** Way out: a local package cache so builds can run offline. |
 | AI-assisted development | writing and reviewing code | Anthropic (company) | proprietary service | **dependent.** Its output is GPL like all our code; the tool itself is not ours. Nothing in the build or the running system depends on it. |
 
+## The goal: self-sufficiency to a point, 75% or more
+
+Self-reliance isn't isolation. Free software built and governed by its community, such as Linux, the freedesktop.org
+stack and other GPL projects, is a commons we share in, not a dependency to escape. Copyleft is preferred, since it
+keeps that commons open. What the project aims to escape is control by a single company.
+
+The target: **at least 75% of the layers below are either our own or the community's commons.** Each layer is scored
+as *ours*, *commons* (community-governed free software) or *dependent* (controlled by one company). Update the scores
+whenever a layer changes.
+
+| Layer | What fills it | Score |
+|---|---|---|
+| Kernel, graphics drivers | Linux, Mesa | commons |
+| Compositor (Wayland) | redstar-comp, on wlroots | ours |
+| Window manager (X11) | redstar-wm | ours |
+| Shell: desktop, taskbar, apps | Red Star OS | ours |
+| UI toolkit | Avalonia | dependent |
+| Runtime | .NET | dependent |
+| Web engine | Chromium via Electron | dependent |
+| Media | libVLC | commons |
+| Tests | xUnit, our own harnesses | commons |
+| Build and release | check.sh, build-appimage.sh | ours |
+| Source hosting and CI | GitHub | dependent |
+| Package sources | NuGet, npm registries | dependent |
+
+**Now: 7 of 12 (58%).** The way to the target:
+
+1. Make a community forge (Codeberg) the main home and keep GitHub as a mirror. Hosting becomes commons: 8/12 (67%).
+2. Keep a local package feed in the repository's tooling so builds run offline from cached packages. Package
+   sources become ours: **9/12 (75%), the target.**
+3. Move the web engine to WebKitGTK (LGPL, community-maintained): 10/12 (83%).
+
+.NET and Avalonia are the last two. Replacing them is the largest piece of work and isn't needed for the target.
+
 ## 4. Build and verify without the platforms
 
 - `./check.sh` is the authority on whether the project works. CI on a hosted platform is a convenience that runs the
