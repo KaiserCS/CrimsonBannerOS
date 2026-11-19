@@ -12,8 +12,15 @@ export XDG_CURRENT_DESKTOP=RedStar
 # "Red Star OS (Wayland)" at the login screen (redstaros-session --wayland): Red Star runs inside redstar-comp, its
 # own Wayland compositor, which also replaces the window manager and picom. Falls back to X11 if it isn't built.
 if [ "$1" = "--wayland" ]; then
+    export PATH="/usr/local/bin:$PATH"
+    if ! command -v redstar-comp >/dev/null 2>&1 && [ ! -x "$(dirname "$APP")/redstar-comp" ]; then
+        # without the compositor there is no display to start on: say why instead of a blank return to the login
+        echo "$(date '+%F %T') Red Star OS (Wayland): redstar-comp is not installed — build it (compositor/build.sh) and run install-session.sh again" >> "$CFG/session.log"
+        exit 1
+    fi
     export REDSTAR_WAYLAND=1
     unset DISPLAY WAYLAND_DISPLAY
+    echo "$(date '+%F %T') Red Star OS (Wayland) session starting: $APP" >> "$CFG/session.log"
     exec "$APP"
 fi
 

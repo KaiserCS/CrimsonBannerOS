@@ -115,8 +115,9 @@ their own (Chrome's tab strip, apps that ask for client-side decorations), so th
   `REDSTAR_WAYLAND=1`. On another desktop it opens full screen, like keyboard isolation: on Wayland it asks the
   desktop to pass Super, Alt+Tab and its other shortcuts through (keyboard-shortcuts-inhibit; KDE and GNOME may ask
   once), on X11 it asks the window manager for full screen. `REDSTAR_COMP_WINDOWED=1` (or `redstar-comp -w`) gives an
-  ordinary window instead. For the full session, `sudo ./install-session.sh …` now also
-  adds **Red Star OS (Wayland)** to the login screen; it falls back to the X11 session if redstar-comp is missing.
+  ordinary window instead. For the full session, build redstar-comp (`compositor/build.sh`) and run
+  `sudo ./install-session.sh`: it adds **Red Star OS (Wayland)** to the login screen (on KDE, SDDM's session menu at
+  the bottom left) next to the X11 session. Without redstar-comp built it leaves the Wayland entry out.
 * Ctrl+Alt+Backspace quits it; Ctrl+Alt+F1…F12 switch consoles on the real hardware. Messages go to
   `~/.config/redstaros/session.log`.
 * **Shell integration (phase 3):** redstar-comp and the shell talk over a Unix socket (`$REDSTAR_COMP_SOCKET`; the
@@ -302,8 +303,9 @@ Optional self-update support: `GH_REPO=user/repo ./build-appimage.sh` embeds upd
 (also install `zsync` so the `.zsync` file is produced). `.github/workflows/appimage.yml` does this
 in CI and attaches both files to a GitHub release when you push a `v*` tag.
 
-Login-screen session (X11): `sudo ./install-session.sh /path/to/RedStarOS-x86_64.AppImage`
-(install a light window manager such as `openbox` too – Red Star OS is a shell, not a WM).
+Login-screen sessions: `sudo ./install-session.sh` (it finds what you built: the newest AppImage in `dist/`, else the
+`dotnet build` output; or give it an AppImage, the RedStarOS program or its folder). It adds **Red Star OS** (X11,
+with redstar-wm) and, when redstar-comp is built, **Red Star OS (Wayland)**; `--uninstall` removes them.
 
 ## Red Star Online – native browser
 Tabs, address bar and menus are native Avalonia; pages are rendered by a hidden Electron/Chromium "web engine" (`webengine/`) and drawn inline, so it works on X11 and Wayland and behaves like the other apps.
