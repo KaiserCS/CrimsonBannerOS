@@ -1,0 +1,22 @@
+bin/
+obj/
+dist/
+.vs/
+*.user
+node_modules/
+terminal/node_modules/
+
+# test output
+screenshots/
+session-screenshots/
+TestResults/
+
+compositor/build/
+compositor/test/comptest
+
+# test binaries and caches
+__pycache__/
+wm/test/wmtest
+wm/test/clicktest
+compositor/test/nativetest
+compositor/test/inputtest

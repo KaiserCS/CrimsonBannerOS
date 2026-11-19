@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="RedStarOS.Views.CalendarPanel"
+             Width="352">
+  <StackPanel Margin="16" Spacing="10">
+    <StackPanel>
+      <TextBlock x:Name="BigTime" FontSize="34" FontWeight="Light" />
+      <TextBlock x:Name="BigDate" Classes="caption" />
+    </StackPanel>
+
+    <Border Classes="card" Padding="4">
+      <Calendar x:Name="MonthCalendar" HorizontalAlignment="Center" />
+    </Border>
+
+    <TextBlock x:Name="AgendaHeader" Classes="eyebrow" />
+    <StackPanel x:Name="Agenda" Spacing="6" />
+
+    <Button Classes="primary" Content="Open Calendar" HorizontalAlignment="Stretch" Padding="12,8" Click="OnOpen" />
+  </StackPanel>
+</UserControl>

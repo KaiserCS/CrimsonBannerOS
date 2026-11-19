@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>RedStarOS</AssemblyName>
+    <RootNamespace>RedStarOS</RootNamespace>
+    <ApplicationIcon />
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Version>1.3.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <!-- Red Star's window manager (C, Xlib): rebuilt from wm/redstar-wm.c when gcc and the X11 headers are there,
+       otherwise the prebuilt x86_64 binary in wm/ is used. Copied next to RedStarOS. -->
+  <Target Name="BuildRedStarWm" BeforeTargets="BeforeBuild" Condition="'$(OS)' != 'Windows_NT'">
+    <Exec Command="command -v gcc &gt;/dev/null 2&gt;&amp;1 &amp;&amp; [ -f /usr/include/X11/Xlib.h ] &amp;&amp; gcc -O2 -Wall -o &quot;$(MSBuildProjectDirectory)/../wm/redstar-wm&quot; &quot;$(MSBuildProjectDirectory)/../wm/redstar-wm.c&quot; -lX11 -ldl -lm || echo &quot;redstar-wm: using the prebuilt binary&quot;"
+          ContinueOnError="true" />
+  </Target>
+  <ItemGroup>
+    <None Include="../wm/redstar-wm" Link="redstar-wm" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('../wm/redstar-wm')" />
+  </ItemGroup>
+
+  <!-- Red Star's Wayland compositor (C, wlroots 0.20; experimental): built from compositor/ when wlroots 0.20 and
+       meson are installed, then copied next to RedStarOS. Without them the build carries on without it. -->
+  <Target Name="BuildRedStarComp" AfterTargets="Build" Condition="'$(OS)' != 'Windows_NT'">
+    <Exec Command="cd &quot;$(MSBuildProjectDirectory)/../compositor&quot; &amp;&amp; if pkg-config --exists wlroots-0.20 &amp;&amp; command -v meson &gt;/dev/null 2&gt;&amp;1; then ( [ -d build ] || meson setup build &gt;/dev/null ) &amp;&amp; meson compile -C build; else echo &quot;redstar-comp: skipped (needs wlroots0.20 and meson)&quot;; fi"
+          ContinueOnError="true" />
+    <Copy SourceFiles="../compositor/build/redstar-comp" DestinationFolder="$(OutDir)" Condition="Exists('../compositor/build/redstar-comp')" ContinueOnError="true" />
+  </Target>
+  <Target Name="PublishRedStarComp" AfterTargets="Publish" Condition="Exists('../compositor/build/redstar-comp')">
+    <Copy SourceFiles="../compositor/build/redstar-comp" DestinationFolder="$(PublishDir)" ContinueOnError="true" />
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Wayland" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.6" />
+    <PackageReference Include="LibVLCSharp" Version="3.9.*" />
+  </ItemGroup>
+
+</Project>

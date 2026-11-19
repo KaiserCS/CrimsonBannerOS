@@ -1,0 +1,34 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="RedStarOS.Views.AccountWindow"
+        Title="Account Settings"
+        Width="600" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner">
+  <Grid Classes="spaced" ColumnDefinitions="Auto,*" Margin="20">
+    <StackPanel Spacing="8" Margin="0,0,16,0">
+      <Image x:Name="Avatar" Source="avares://RedStarOS/Assets/avatar.png" Width="164" Height="158" />
+      <Button Content="Change Profile Photo" HorizontalAlignment="Stretch"
+              HorizontalContentAlignment="Center" Click="OnChangePhoto" />
+    </StackPanel>
+    <StackPanel Grid.Column="1" Spacing="8">
+      <TextBlock Text="Account Settings" Classes="h1" />
+      <TextBlock x:Name="UserLabel" FontSize="16" />
+      <Grid Classes="spaced" ColumnDefinitions="150,*" RowDefinitions="Auto,Auto,Auto">
+        <TextBlock Text="Current Password" VerticalAlignment="Center" />
+        <TextBox x:Name="CurrentBox" Grid.Column="1" PasswordChar="●" />
+        <TextBlock Grid.Row="1" Text="New Password" VerticalAlignment="Center" />
+        <TextBox x:Name="NewBox" Grid.Row="1" Grid.Column="1" PasswordChar="●" />
+        <TextBlock Grid.Row="2" Text="Retype New Password" VerticalAlignment="Center" />
+        <TextBox x:Name="RetypeBox" Grid.Row="2" Grid.Column="1" PasswordChar="●" />
+      </Grid>
+      <Button Content="Change Password" Click="OnChangePassword" />
+      <TextBlock Text="Account type" Margin="0,8,0,0" />
+      <WrapPanel ItemSpacing="12" LineSpacing="6">
+        <RadioButton x:Name="AdminRadio" GroupName="type" Content="Admin" />
+        <RadioButton x:Name="DevRadio" GroupName="type" Content="Developer" />
+        <RadioButton x:Name="ChildRadio" GroupName="type" Content="Child" />
+        <Button Content="Change Account Type" Click="OnChangeType" />
+      </WrapPanel>
+      <TextBlock x:Name="StatusLabel" TextWrapping="Wrap" />
+    </StackPanel>
+  </Grid>
+</Window>

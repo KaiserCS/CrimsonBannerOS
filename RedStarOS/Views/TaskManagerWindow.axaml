@@ -1,0 +1,32 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="RedStarOS.Views.TaskManagerWindow"
+        Title="Task Manager"
+        Width="680" Height="500" MinWidth="480" MinHeight="320"
+        WindowStartupLocation="CenterOwner">
+  <Grid RowDefinitions="Auto,Auto,*" Margin="16">
+    <Grid ColumnDefinitions="*,*,*" Classes="spaced">
+      <Border Classes="card"><StackPanel><TextBlock Text="CPU" Classes="eyebrow" /><TextBlock x:Name="CpuLabel" Classes="h1" Text="--" /></StackPanel></Border>
+      <Border Grid.Column="1" Classes="card"><StackPanel><TextBlock Text="MEMORY" Classes="eyebrow" /><TextBlock x:Name="MemLabel" Classes="h1" Text="--" /></StackPanel></Border>
+      <Border Grid.Column="2" Classes="card"><StackPanel><TextBlock Text="UPTIME" Classes="eyebrow" /><TextBlock x:Name="UpLabel" Classes="h1" Text="--" /></StackPanel></Border>
+    </Grid>
+
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" Margin="0,12,0,8">
+      <TextBox x:Name="FilterBox" PlaceholderText="Filter processes" MinHeight="34" CornerRadius="10" VerticalContentAlignment="Center" />
+      <ComboBox x:Name="SortBox" Grid.Column="1" Width="130" Margin="8,0" />
+      <Button x:Name="EndButton" Grid.Column="2" Content="End task" Classes="primary" Padding="14,6" Click="OnEnd" />
+    </Grid>
+
+    <ListBox x:Name="List" Grid.Row="2" Background="Transparent">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <Grid ColumnDefinitions="*,70,70,100" Margin="0,2">
+            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+            <TextBlock Grid.Column="1" Text="{Binding Pid}" Opacity="0.65" TextAlignment="Right" />
+            <TextBlock Grid.Column="2" Text="{Binding Cpu}" TextAlignment="Right" />
+            <TextBlock Grid.Column="3" Text="{Binding Memory}" TextAlignment="Right" />
+          </Grid>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+  </Grid>
+</Window>

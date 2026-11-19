@@ -1,0 +1,57 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="RedStarOS.Views.StudioWindow"
+        Title="Red Star Studio"
+        Width="780" Height="520" CanResize="False"
+        WindowStartupLocation="CenterOwner">
+  <Grid RowDefinitions="Auto,*,Auto" Margin="20">
+    <Grid ColumnDefinitions="*,Auto">
+      <StackPanel VerticalAlignment="Top" Spacing="4">
+        <TextBlock Text="Red Star Studio" FontSize="40" FontWeight="Light" />
+        <TextBlock Text="Office Software" FontSize="22" Classes="brand" FontWeight="Light" />
+        <TextBlock Text="Version  1.1" Classes="caption" Margin="0,12,0,0" />
+      </StackPanel>
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+        <StackPanel Width="132" Spacing="6">
+          <Image Source="avares://RedStarOS/Assets/studio-writer.png" Width="119" HorizontalAlignment="Center" Height="105" />
+          <Button Content="New document" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="6,5" Click="OnWriter" />
+        </StackPanel>
+        <StackPanel Width="132" Spacing="6">
+          <Image Source="avares://RedStarOS/Assets/studio-sheet.png" Width="119" HorizontalAlignment="Center" Height="105" />
+          <Button Content="New spreadsheet" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="6,5" Click="OnSheets" />
+        </StackPanel>
+        <StackPanel Width="132" Spacing="6">
+          <Image Source="avares://RedStarOS/Assets/studio-slides.png" Width="119" HorizontalAlignment="Center" Height="105" />
+          <Button Content="New presentation" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="6,5" Click="OnSlides" />
+        </StackPanel>
+      </StackPanel>
+    </Grid>
+
+    <Border Grid.Row="1" Classes="card" Padding="0" Margin="0,14,0,14">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Text="Recent documents" FontWeight="SemiBold" Margin="14,10,14,6" />
+        <ListBox Grid.Row="1" x:Name="RecentList" Background="Transparent" DoubleTapped="OnRecentOpen" KeyDown="OnRecentKey">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <Grid ColumnDefinitions="34,*,Auto" Margin="2,3">
+                <TextBlock Text="{Binding Icon}" FontSize="20" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding Name}" />
+                  <TextBlock Text="{Binding Folder}" Classes="caption" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <TextBlock Grid.Column="2" Text="{Binding Kind}" Classes="caption" VerticalAlignment="Center" Margin="12,0,6,0" />
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+        <TextBlock Grid.Row="1" x:Name="EmptyText" Text="Documents you open or save in Writer, Sheets and Slides appear here."
+                   Classes="caption" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" />
+      </Grid>
+    </Border>
+
+    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
+      <Button Classes="primary" Content="Open file…" Click="OnOpenFile" />
+      <Button Content="Open selected" Click="OnRecentOpen" />
+      <Button Classes="flat" Content="Clear list" Click="OnClearRecent" />
+    </StackPanel>
+  </Grid>
+</Window>

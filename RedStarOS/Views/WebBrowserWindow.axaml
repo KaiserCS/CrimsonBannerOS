@@ -1,0 +1,154 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="using:RedStarOS.Views"
+        x:Class="RedStarOS.Views.WebBrowserWindow"
+        Title="Red Star Online"
+        Width="1200" Height="800" MinWidth="560" MinHeight="400"
+        WindowStartupLocation="CenterScreen">
+  <Window.Styles>
+    <!-- Line icons for the toolbar: drawn as vectors so they stay crisp and follow the theme / disabled colour -->
+    <Style Selector="Path.icon">
+      <Setter Property="Stroke" Value="{Binding $parent[Button].Foreground}" />
+      <Setter Property="StrokeThickness" Value="2.2" />
+      <Setter Property="StrokeLineCap" Value="Round" />
+      <Setter Property="StrokeJoin" Value="Round" />
+    </Style>
+    <Style Selector="Viewbox.icon">
+      <Setter Property="Width" Value="18" />
+      <Setter Property="Height" Value="18" />
+    </Style>
+  </Window.Styles>
+  <DockPanel>
+    <!-- Tabs -->
+    <Border x:Name="TabBar" DockPanel.Dock="Top" Classes="card" CornerRadius="0" BorderThickness="0,0,0,1" Padding="6,4,6,0">
+      <DockPanel>
+        <Button DockPanel.Dock="Right" Classes="flat" Tag="newtab" Click="OnCmd" ToolTip.Tip="New tab (Ctrl+T)" ><v:IconView Kind="plus" Size="16" /></Button>
+        <TextBlock x:Name="PrivateBadge" DockPanel.Dock="Left" Text="🕶 Private" IsVisible="False" VerticalAlignment="Center" Margin="4,0,8,0" FontWeight="SemiBold" />
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+          <StackPanel x:Name="TabsPanel" Orientation="Horizontal" Spacing="2" />
+        </ScrollViewer>
+      </DockPanel>
+    </Border>
+
+    <!-- Toolbar -->
+    <Border x:Name="ToolBar" DockPanel.Dock="Top" Classes="card" CornerRadius="0" BorderThickness="0,0,0,1" Padding="8,6">
+      <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+        <StackPanel Orientation="Horizontal" Spacing="2">
+          <Button x:Name="BackBtn" Classes="flat" Tag="back" Click="OnCmd" ToolTip.Tip="Back (Alt+←)">
+            <Viewbox Classes="icon"><Canvas Width="24" Height="24"><Path Classes="icon" Data="M 19,12 L 5,12 M 11,18 L 5,12 L 11,6" /></Canvas></Viewbox>
+          </Button>
+          <Button x:Name="FwdBtn" Classes="flat" Tag="forward" Click="OnCmd" ToolTip.Tip="Forward (Alt+→)">
+            <Viewbox Classes="icon"><Canvas Width="24" Height="24"><Path Classes="icon" Data="M 5,12 L 19,12 M 13,6 L 19,12 L 13,18" /></Canvas></Viewbox>
+          </Button>
+          <Button x:Name="ReloadBtn" Classes="flat" Tag="reload" Click="OnCmd" ToolTip.Tip="Reload (F5 / Ctrl+R)">
+            <Viewbox Classes="icon">
+              <Canvas Width="24" Height="24">
+                <Path x:Name="ReloadIcon" Classes="icon" Data="M 20,4 L 20,9.5 L 14.5,9.5 M 19.6,15 A 8,8 0 1 1 18.4,7.9 L 20,9.5" />
+                <Path x:Name="StopIcon" Classes="icon" IsVisible="False" Data="M 18,6 L 6,18 M 6,6 L 18,18" />
+              </Canvas>
+            </Viewbox>
+          </Button>
+          <Button Classes="flat" Tag="home" Click="OnCmd" ToolTip.Tip="Home (Alt+Home)">
+            <Viewbox Classes="icon"><Canvas Width="24" Height="24"><Path Classes="icon" Data="M 3.5,10.5 L 12,3.5 L 20.5,10.5 M 5.5,9 L 5.5,20 L 10,20 L 10,14 L 14,14 L 14,20 L 18.5,20 L 18.5,9" /></Canvas></Viewbox>
+          </Button>
+        </StackPanel>
+        <Button x:Name="SiteBtn" Grid.Column="1" Classes="flat" Margin="6,0,0,0" Click="OnSiteInfo" ToolTip.Tip="Site information and privacy" />
+        <TextBox x:Name="UrlBox" Grid.Column="2" Margin="2,0,8,0" PlaceholderText="Search or type an address" VerticalContentAlignment="Center" />
+        <Popup x:Name="SuggestPopup" Grid.Column="2" Placement="Bottom" IsLightDismissEnabled="False">
+          <Border Classes="card" Padding="2" BorderThickness="1">
+            <ListBox x:Name="SuggestList" MaxHeight="320" />
+          </Border>
+        </Popup>
+        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="2">
+          <Button x:Name="StarBtn" Classes="flat" Tag="bookmark" Click="OnCmd" ToolTip.Tip="Bookmark this page (Ctrl+D)" />
+          <Button x:Name="AudioBtn" Classes="flat" Tag="mute" Click="OnCmd" IsVisible="False" ToolTip.Tip="Mute / unmute this tab (Ctrl+M)" />
+          <Button x:Name="DownloadsBtn" Classes="flat" ToolTip.Tip="Downloads (Ctrl+J)"><v:IconView Kind="download" Size="18" /></Button>
+          <TextBlock x:Name="ZoomLabel" Classes="caption" VerticalAlignment="Center" Margin="0,0,6,0" />
+          <Button Classes="flat" Content="⋯" ToolTip.Tip="Menu">
+            <Button.Flyout>
+              <MenuFlyout>
+                <MenuItem Header="New tab" InputGesture="Ctrl+T" Tag="newtab" Click="OnCmd" />
+                <MenuItem Header="New private window" InputGesture="Ctrl+Shift+N" Tag="private" Click="OnCmd" />
+                <MenuItem Header="Reopen closed tab" InputGesture="Ctrl+Shift+T" Tag="reopen" Click="OnCmd" />
+                <Separator />
+                <MenuItem Header="Bookmarks" InputGesture="Ctrl+Shift+O" Tag="bookmarks" Click="OnCmd" />
+                <MenuItem Header="History" InputGesture="Ctrl+H" Tag="history" Click="OnCmd" />
+                <MenuItem Header="Downloads" InputGesture="Ctrl+J" Tag="downloadspanel" Click="OnCmd" />
+                <MenuItem Header="Show bookmarks bar" InputGesture="Ctrl+Shift+B" Tag="togglebar" Click="OnCmd" />
+                <Separator />
+                <MenuItem Header="Find in page…" InputGesture="Ctrl+F" Tag="find" Click="OnCmd" />
+                <MenuItem Header="Reader mode" Tag="reader" Click="OnCmd" />
+                <MenuItem Header="Save page as PDF…" InputGesture="Ctrl+S" Tag="savepdf" Click="OnCmd" />
+                <MenuItem Header="Print…" InputGesture="Ctrl+P" Tag="print" Click="OnCmd" />
+                <MenuItem Header="Open page in Writer" Tag="writer" Click="OnCmd" />
+                <MenuItem Header="Send link to Messenger" Tag="messenger" Click="OnCmd" />
+                <MenuItem Header="Share page…" Tag="share" Click="OnCmd" />
+                <MenuItem Header="Picture in picture" Tag="pip" Click="OnCmd" />
+                <MenuItem Header="Mute / unmute tab" InputGesture="Ctrl+M" Tag="mute" Click="OnCmd" />
+                <MenuItem Header="Zoom in" InputGesture="Ctrl++" Tag="zoomin" Click="OnCmd" />
+                <MenuItem Header="Zoom out" InputGesture="Ctrl+-" Tag="zoomout" Click="OnCmd" />
+                <MenuItem Header="Reset zoom" InputGesture="Ctrl+0" Tag="zoomreset" Click="OnCmd" />
+                <Separator />
+                <MenuItem Header="Full screen" InputGesture="F11" Tag="fullscreen" Click="OnCmd" />
+                <MenuItem Header="Developer tools" InputGesture="F12" Tag="devtools" Click="OnCmd" />
+                <Separator />
+                <MenuItem Header="Clear browsing data…" InputGesture="Ctrl+Shift+Delete" Tag="cleardata" Click="OnCmd" />
+                <MenuItem Header="Settings" Tag="settings" Click="OnCmd" />
+                <MenuItem Header="Keyboard shortcuts" Tag="shortcuts" Click="OnCmd" />
+                <MenuItem Header="Open Downloads folder" Tag="downloads" Click="OnCmd" />
+                <MenuItem Header="Open in system browser" Tag="external" Click="OnCmd" />
+              </MenuFlyout>
+            </Button.Flyout>
+          </Button>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Bookmarks bar -->
+    <Border x:Name="BookmarksBar" DockPanel.Dock="Top" Classes="card" CornerRadius="0" BorderThickness="0,0,0,1" Padding="6,2" IsVisible="False">
+      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+        <StackPanel x:Name="BarPanel" Orientation="Horizontal" Spacing="2" />
+      </ScrollViewer>
+    </Border>
+
+    <ProgressBar x:Name="Progress" DockPanel.Dock="Top" IsIndeterminate="True" Height="3" MinHeight="3" IsVisible="False" />
+
+    <!-- Find bar -->
+    <Border x:Name="FindBar" DockPanel.Dock="Bottom" Classes="card" CornerRadius="0" BorderThickness="0,1,0,0" Padding="8,6" IsVisible="False">
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <TextBox x:Name="FindBox" Width="260" PlaceholderText="Find in page" />
+        <Button Classes="flat" Content="▲" Tag="findprev" Click="OnCmd" />
+        <Button Classes="flat" Content="▼" Tag="findnext" Click="OnCmd" />
+        <CheckBox x:Name="CaseChk" Content="Match case" VerticalAlignment="Center" />
+        <TextBlock x:Name="FindInfo" Classes="caption" VerticalAlignment="Center" />
+        <Button Classes="flat" Content="✕" Tag="findclose" Click="OnCmd" />
+      </StackPanel>
+    </Border>
+
+    <!-- Page -->
+    <Grid x:Name="Stage" Background="White">
+      <v:WebSurface x:Name="Surface" />
+      <Border x:Name="StatusPill" HorizontalAlignment="Left" VerticalAlignment="Bottom" Padding="8,3" CornerRadius="0,6,0,0"
+              Background="#E6202020" IsVisible="False" IsHitTestVisible="False" MaxWidth="900">
+        <TextBlock x:Name="StatusText" Foreground="White" FontSize="12" TextTrimming="CharacterEllipsis" />
+      </Border>
+      <Border x:Name="PagePanel" IsVisible="False" Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+        <ContentControl x:Name="PageHost" />
+      </Border>
+      <Border x:Name="ErrorPanel" IsVisible="False" Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10" MaxWidth="520">
+          <TextBlock Text="⚠" FontSize="48" HorizontalAlignment="Center" />
+          <TextBlock x:Name="ErrorTitle" Text="This page can't be reached" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" />
+          <TextBlock x:Name="ErrorDetail" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Opacity="0.8" />
+          <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+            <Button x:Name="TryBtn" Classes="primary" Content="Try again" Tag="reload" Click="OnCmd" />
+            <Button x:Name="ProceedBtn" Content="Proceed anyway (unsafe)" Tag="proceed" Click="OnCmd" IsVisible="False" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+      <Border x:Name="ToastPill" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,14,0,0" Padding="14,8" CornerRadius="8"
+              Background="#EE202020" IsVisible="False" IsHitTestVisible="False" MaxWidth="640">
+        <TextBlock x:Name="ToastText" Foreground="White" TextWrapping="Wrap" />
+      </Border>
+    </Grid>
+  </DockPanel>
+</Window>

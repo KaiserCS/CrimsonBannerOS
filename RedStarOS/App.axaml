@@ -1,0 +1,10 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="RedStarOS.App"
+             RequestedThemeVariant="Light">
+  <Application.Styles>
+    <FluentTheme />
+    <!-- Design tokens + shared styles used by the shell, every app window and the tray panels. -->
+    <StyleInclude Source="avares://RedStarOS/Styles/Shell.axaml" />
+  </Application.Styles>
+</Application>

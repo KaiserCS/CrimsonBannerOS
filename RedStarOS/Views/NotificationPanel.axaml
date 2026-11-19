@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:svc="using:RedStarOS.Services"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="RedStarOS.Views.NotificationPanel"
+             Width="380">
+  <Grid RowDefinitions="Auto,Auto,*" Margin="16" MaxHeight="520">
+    <Grid ColumnDefinitions="*,Auto,Auto">
+      <TextBlock Classes="h2" Text="Notifications" VerticalAlignment="Center" />
+      <Button x:Name="DndButton" Grid.Column="1" Classes="flat" Click="OnDnd" ToolTip.Tip="Do not disturb" />
+      <Button Grid.Column="2" Classes="flat" Content="Clear all" Click="OnClear" />
+    </Grid>
+
+    <TextBlock x:Name="DndNote" Grid.Row="1" Classes="caption" Margin="0,2,0,8" TextWrapping="Wrap"
+               Text="Do not disturb is on: new notifications are kept here without pop-ups." IsVisible="False" />
+
+    <Grid Grid.Row="2" Margin="0,8,0,0">
+      <ListBox x:Name="List" Background="Transparent" BorderThickness="0"
+               ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,4">
+              <Border Width="32" Height="32" CornerRadius="9" Background="{Binding Badge}" VerticalAlignment="Top">
+                <ContentControl Content="{Binding Glyph, Converter={x:Static svc:IconConverter.White}, ConverterParameter=18}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+              <StackPanel Grid.Column="1" Margin="10,0">
+                <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding Message}" FontSize="12" Opacity="0.8" TextWrapping="Wrap" MaxLines="3" />
+              </StackPanel>
+              <TextBlock Grid.Column="2" Text="{Binding Time}" Classes="caption" VerticalAlignment="Top" />
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+      <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4" Margin="0,40">
+        <TextBlock Text="🔔" FontSize="30" HorizontalAlignment="Center" Opacity="0.5" />
+        <TextBlock Text="You're all caught up" Classes="caption" HorizontalAlignment="Center" />
+      </StackPanel>
+    </Grid>
+  </Grid>
+</UserControl>

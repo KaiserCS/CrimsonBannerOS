@@ -1,0 +1,43 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- Settings → Accessibility → High contrast. Added on top of Shell.axaml while it is on; ThemeService also
+       replaces the text / border / focus brushes with black-on-white or white-on-black ones. -->
+
+  <!-- secondary text at full strength -->
+  <Style Selector="TextBlock.caption">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+  <Style Selector="TextBlock.eyebrow">
+    <Setter Property="Opacity" Value="1" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+
+  <!-- every control has a visible edge -->
+  <Style Selector=":is(Button)">
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HcStrokeBrush}" />
+  </Style>
+  <Style Selector="TextBox">
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HcStrokeBrush}" />
+  </Style>
+  <Style Selector="ComboBox">
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HcStrokeBrush}" />
+  </Style>
+  <Style Selector="ListBoxItem:selected">
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HcFocusBrush}" />
+  </Style>
+
+  <!-- a thick, unmistakable focus outline -->
+  <Style Selector=":is(Control)">
+    <Setter Property="FocusAdorner">
+      <FocusAdornerTemplate>
+        <Border BorderThickness="3" BorderBrush="{DynamicResource HcFocusBrush}" CornerRadius="4" Margin="-3">
+          <Border BorderThickness="1" BorderBrush="{DynamicResource HcStrokeInverseBrush}" CornerRadius="3" />
+        </Border>
+      </FocusAdornerTemplate>
+    </Setter>
+  </Style>
+</Styles>

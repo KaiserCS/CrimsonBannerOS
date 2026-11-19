@@ -1,0 +1,151 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="clr-namespace:RedStarOS.Views"
+        x:Class="RedStarOS.Views.SpreadsheetWindow"
+        Title="Untitled - Red Star Sheets"
+        Width="1180" Height="720" MinWidth="780" MinHeight="460"
+        WindowStartupLocation="CenterOwner">
+  <DockPanel>
+    <Menu DockPanel.Dock="Top">
+      <MenuItem Header="_File">
+        <MenuItem Header="_New" Tag="new" InputGesture="Ctrl+N" Click="OnMenu" />
+        <MenuItem Header="_Open…" Tag="open" InputGesture="Ctrl+O" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="_Save" Tag="save" InputGesture="Ctrl+S" Click="OnMenu" />
+        <MenuItem Header="Save _as…" Tag="saveas" InputGesture="Ctrl+Shift+S" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="_Close" Tag="close" Click="OnMenu" />
+      </MenuItem>
+      <MenuItem Header="_Edit">
+        <MenuItem Header="_Undo" Tag="undo" InputGesture="Ctrl+Z" Click="OnMenu" />
+        <MenuItem Header="_Redo" Tag="redo" InputGesture="Ctrl+Y" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="Cu_t" Tag="cut" InputGesture="Ctrl+X" Click="OnMenu" />
+        <MenuItem Header="_Copy" Tag="copy" InputGesture="Ctrl+C" Click="OnMenu" />
+        <MenuItem Header="_Paste" Tag="paste" InputGesture="Ctrl+V" Click="OnMenu" />
+        <MenuItem Header="Clear _contents" Tag="clear" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="Fill _down" Tag="filldown" InputGesture="Ctrl+D" Click="OnMenu" />
+        <MenuItem Header="Fill _right" Tag="fillright" InputGesture="Ctrl+R" Click="OnMenu" />
+        <MenuItem Header="Select _all" Tag="selectall" InputGesture="Ctrl+A" Click="OnMenu" />
+      </MenuItem>
+      <MenuItem Header="F_ormat">
+        <MenuItem Header="_Bold" Tag="bold" InputGesture="Ctrl+B" Click="OnMenu" />
+        <MenuItem Header="_Italic" Tag="italic" InputGesture="Ctrl+I" Click="OnMenu" />
+        <MenuItem Header="_Underline" Tag="underline" InputGesture="Ctrl+U" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="Number format">
+          <MenuItem Header="General" Tag="num:General" Click="OnMenu" />
+          <MenuItem Header="Number (1234.50)" Tag="num:Number" Click="OnMenu" />
+          <MenuItem Header="Thousands (1,234.50)" Tag="num:Thousands" Click="OnMenu" />
+          <MenuItem Header="Currency ($1,234.50)" Tag="num:Currency" Click="OnMenu" />
+          <MenuItem Header="Percent (12%)" Tag="num:Percent" Click="OnMenu" />
+          <MenuItem Header="Date (2025-01-31)" Tag="num:Date" Click="OnMenu" />
+          <MenuItem Header="Text" Tag="num:Text" Click="OnMenu" />
+        </MenuItem>
+        <MenuItem Header="Increase decimals" Tag="decplus" Click="OnMenu" />
+        <MenuItem Header="Decrease decimals" Tag="decminus" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="Align left" Tag="align:1" Click="OnMenu" />
+        <MenuItem Header="Align centre" Tag="align:2" Click="OnMenu" />
+        <MenuItem Header="Align right" Tag="align:3" Click="OnMenu" />
+        <MenuItem Header="Automatic alignment" Tag="align:0" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="All borders" Tag="border:15" Click="OnMenu" />
+        <MenuItem Header="Outline only" Tag="border:outline" Click="OnMenu" />
+        <MenuItem Header="No borders" Tag="border:0" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="Clear formatting" Tag="clearfmt" Click="OnMenu" />
+        <MenuItem Header="Auto-fit column width" Tag="autofit" Click="OnMenu" />
+        <MenuItem Header="Reset column widths and row heights" Tag="resetsize" Click="OnMenu" />
+      </MenuItem>
+      <MenuItem Header="_Data">
+        <MenuItem Header="Sort A → Z" Tag="sortasc" Click="OnMenu" />
+        <MenuItem Header="Sort Z → A" Tag="sortdesc" Click="OnMenu" />
+        <MenuItem Header="_Filter…" Tag="filter" Click="OnMenu" />
+        <MenuItem Header="Show all rows" Tag="clearfilter" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="Freeze top row" Tag="freeze:row" Click="OnMenu" />
+        <MenuItem Header="Freeze first column" Tag="freeze:col" Click="OnMenu" />
+        <MenuItem Header="Freeze panes at selection" Tag="freeze:sel" Click="OnMenu" />
+        <MenuItem Header="Unfreeze panes" Tag="freeze:none" Click="OnMenu" />
+      </MenuItem>
+      <MenuItem Header="_Insert">
+        <MenuItem Header="_Chart from selection…" Tag="chart" Click="OnMenu" />
+      </MenuItem>
+      <MenuItem Header="_Help">
+        <MenuItem Header="Functions…" Tag="functions" Click="OnMenu" />
+        <MenuItem Header="Keyboard shortcuts…" Tag="keys" Click="OnMenu" />
+      </MenuItem>
+    </Menu>
+
+    <Border DockPanel.Dock="Top" Classes="card" CornerRadius="0" BorderThickness="0,0,0,1" Padding="8,5">
+      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+        <StackPanel Orientation="Horizontal" Spacing="4">
+          <Button Classes="flat" Content="↶" Tag="undo" Click="OnMenu" ToolTip.Tip="Undo (Ctrl+Z)" />
+          <Button Classes="flat" Content="↷" Tag="redo" Click="OnMenu" ToolTip.Tip="Redo (Ctrl+Y)" />
+          <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
+          <Button Classes="flat" Content="B" FontWeight="Bold" Tag="bold" Click="OnMenu" ToolTip.Tip="Bold (Ctrl+B)" />
+          <Button Classes="flat" Content="I" FontStyle="Italic" Tag="italic" Click="OnMenu" ToolTip.Tip="Italic (Ctrl+I)" />
+          <Button Classes="flat" Content="U" Tag="underline" Click="OnMenu" ToolTip.Tip="Underline (Ctrl+U)" />
+          <ContentControl x:Name="TextColorHost" />
+          <ContentControl x:Name="FillColorHost" />
+          <Button Classes="flat" Content="▦" Tag="border:toggle" Click="OnMenu" ToolTip.Tip="Borders on / off" />
+          <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
+          <Button Classes="flat" Content="⯇" Tag="align:1" Click="OnMenu" ToolTip.Tip="Align left" />
+          <Button Classes="flat" Content="≡" Tag="align:2" Click="OnMenu" ToolTip.Tip="Centre" />
+          <Button Classes="flat" Content="⯈" Tag="align:3" Click="OnMenu" ToolTip.Tip="Align right" />
+          <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
+          <ComboBox x:Name="NumBox" Width="130" ToolTip.Tip="Number format" />
+          <Button Classes="flat" Content="$" Tag="num:Currency" Click="OnMenu" ToolTip.Tip="Currency" />
+          <Button Classes="flat" Content="%" Tag="num:Percent" Click="OnMenu" ToolTip.Tip="Percent" />
+          <Button Classes="flat" Content=".0←" Tag="decminus" Click="OnMenu" ToolTip.Tip="Fewer decimals" />
+          <Button Classes="flat" Content=".00→" Tag="decplus" Click="OnMenu" ToolTip.Tip="More decimals" />
+          <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
+          <Button Classes="flat" Content="A↓Z" Tag="sortasc" Click="OnMenu" ToolTip.Tip="Sort A to Z by the selected column" />
+          <Button Classes="flat" Content="Z↓A" Tag="sortdesc" Click="OnMenu" ToolTip.Tip="Sort Z to A by the selected column" />
+          <Button Classes="flat" Content="Filter" Tag="filter" Click="OnMenu" />
+          <Button Classes="flat" Content="❄ Freeze" Tag="freeze:toggle" Click="OnMenu" ToolTip.Tip="Freeze or unfreeze the top row" />
+          <Button Classes="flat" Content="📊 Chart" Tag="chart" Click="OnMenu" />
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+
+    <Border DockPanel.Dock="Top" Padding="8,4" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource ShellBorderBrush}">
+      <Grid ColumnDefinitions="90,Auto,*">
+        <TextBlock x:Name="NameLabel" Text="A1" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center" />
+        <TextBlock Grid.Column="1" Text="fx" FontStyle="Italic" Opacity="0.6" VerticalAlignment="Center" Margin="0,0,8,0" />
+        <TextBox Grid.Column="2" x:Name="FormulaBox" MinHeight="0" Padding="6,3" />
+      </Grid>
+    </Border>
+
+    <Border x:Name="FilterPanel" DockPanel.Dock="Top" IsVisible="False" Classes="card" CornerRadius="0" BorderThickness="0,0,0,1" Padding="8,5">
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBlock Text="Show rows where column" VerticalAlignment="Center" />
+        <ComboBox x:Name="FilterCol" Width="170" />
+        <ComboBox x:Name="FilterOp" Width="120" />
+        <TextBox x:Name="FilterVal" Width="160" />
+        <Button Classes="primary" Content="Apply" Tag="filterapply" Click="OnMenu" />
+        <Button Content="Show all" Tag="clearfilter" Click="OnMenu" />
+        <Button Classes="flat" Content="✕" Tag="filterclose" Click="OnMenu" />
+        <TextBlock Text="(the first row is treated as a heading)" Classes="caption" VerticalAlignment="Center" />
+      </StackPanel>
+    </Border>
+
+    <Border DockPanel.Dock="Bottom" Classes="card" CornerRadius="0" BorderThickness="0,1,0,0" Padding="12,4">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock x:Name="StatusText" Classes="caption" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="1" x:Name="SummaryText" Classes="caption" VerticalAlignment="Center" />
+      </Grid>
+    </Border>
+
+    <Grid RowDefinitions="*,Auto" ColumnDefinitions="*,Auto">
+      <Panel x:Name="Host" ClipToBounds="True">
+        <v:SheetGrid x:Name="Sheet" />
+        <TextBox x:Name="Editor" IsVisible="False" HorizontalAlignment="Left" VerticalAlignment="Top"
+                 MinHeight="0" MinWidth="40" Padding="4,0" BorderThickness="2" VerticalContentAlignment="Center" />
+      </Panel>
+      <ScrollBar x:Name="VScroll" Grid.Column="1" Orientation="Vertical" />
+      <ScrollBar x:Name="HScroll" Grid.Row="1" Orientation="Horizontal" />
+    </Grid>
+  </DockPanel>
+</Window>

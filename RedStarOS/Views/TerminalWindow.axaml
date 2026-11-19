@@ -1,0 +1,62 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:v="using:RedStarOS.Views" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="RedStarOS.Views.TerminalWindow"
+        Title="Red Star Terminal"
+        Width="960" Height="600" MinWidth="360" MinHeight="220"
+        WindowStartupLocation="CenterScreen">
+  <DockPanel>
+    <!-- Tabs -->
+    <Border x:Name="TabBar" DockPanel.Dock="Top" Classes="card" CornerRadius="0" BorderThickness="0,0,0,1" Padding="6,4,6,0">
+      <DockPanel>
+        <Button x:Name="MenuBtn" DockPanel.Dock="Right" Classes="flat" Content="⋯" ToolTip.Tip="Menu">
+          <Button.Flyout>
+            <MenuFlyout Placement="BottomEdgeAlignedRight">
+              <MenuItem Header="New tab" InputGesture="Ctrl+Shift+T" Tag="newtab" Click="OnCmd" />
+              <MenuItem Header="Close tab" Tag="closetab" Click="OnCmd" />
+              <Separator />
+              <MenuItem Header="Split right" InputGesture="Ctrl+Shift+E" Tag="splitright" Click="OnCmd" />
+              <MenuItem Header="Split down" InputGesture="Ctrl+Shift+O" Tag="splitdown" Click="OnCmd" />
+              <MenuItem Header="Close pane" InputGesture="Ctrl+Shift+W" Tag="closepane" Click="OnCmd" />
+              <MenuItem Header="Maximize / restore pane" InputGesture="Ctrl+Shift+Z" Tag="zoompane" Click="OnCmd" />
+              <Separator />
+              <MenuItem Header="Copy" InputGesture="Ctrl+Shift+C" Tag="copy" Click="OnCmd" />
+              <MenuItem Header="Paste" InputGesture="Ctrl+Shift+V" Tag="paste" Click="OnCmd" />
+              <MenuItem Header="Select all" InputGesture="Ctrl+Shift+A" Tag="selectall" Click="OnCmd" />
+              <MenuItem Header="Find…" InputGesture="Ctrl+Shift+F" Tag="find" Click="OnCmd" />
+              <Separator />
+              <MenuItem Header="Zoom in" InputGesture="Ctrl+OemPlus" Tag="zoomin" Click="OnCmd" />
+              <MenuItem Header="Zoom out" InputGesture="Ctrl+OemMinus" Tag="zoomout" Click="OnCmd" />
+              <MenuItem Header="Normal size" InputGesture="Ctrl+D0" Tag="zoomreset" Click="OnCmd" />
+              <MenuItem Header="Full screen" InputGesture="F11" Tag="fullscreen" Click="OnCmd" />
+              <Separator />
+              <MenuItem Header="Clear scrollback" InputGesture="Ctrl+Shift+K" Tag="clear" Click="OnCmd" />
+              <MenuItem Header="Reset terminal" Tag="reset" Click="OnCmd" />
+              <MenuItem Header="Open folder in File Manager" Tag="files" Click="OnCmd" />
+              <MenuItem Header="Profiles and colours…" Tag="profiles" Click="OnCmd" />
+              <MenuItem Header="Keyboard shortcuts" Tag="help" Click="OnCmd" />
+            </MenuFlyout>
+          </Button.Flyout>
+        </Button>
+        <Button x:Name="ProfileBtn" DockPanel.Dock="Right" Classes="flat" Content="▾" Padding="4,0" ToolTip.Tip="New tab with a profile" Click="OnProfileMenu" />
+        <Button DockPanel.Dock="Right" Classes="flat" Tag="newtab" Click="OnCmd" ToolTip.Tip="New tab (Ctrl+Shift+T)" ><v:IconView Kind="plus" Size="16" /></Button>
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+          <StackPanel x:Name="TabsPanel" Orientation="Horizontal" Spacing="2" />
+        </ScrollViewer>
+      </DockPanel>
+    </Border>
+
+    <!-- Find -->
+    <Border x:Name="FindBar" DockPanel.Dock="Bottom" Classes="card" CornerRadius="0" BorderThickness="0,1,0,0" Padding="8,6" IsVisible="False">
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <TextBox x:Name="FindBox" Width="260" PlaceholderText="Find in terminal" />
+        <Button Classes="flat" Content="▲" Tag="findprev" Click="OnCmd" ToolTip.Tip="Previous (Shift+Enter)" />
+        <Button Classes="flat" Content="▼" Tag="findnext" Click="OnCmd" ToolTip.Tip="Next (Enter)" />
+        <CheckBox x:Name="CaseChk" Content="Match case" VerticalAlignment="Center" />
+        <TextBlock x:Name="FindInfo" Classes="caption" VerticalAlignment="Center" />
+        <Button Classes="flat" Content="✕" Tag="findclose" Click="OnCmd" />
+      </StackPanel>
+    </Border>
+
+    <!-- Terminals -->
+    <Panel x:Name="Stage" />
+  </DockPanel>
+</Window>

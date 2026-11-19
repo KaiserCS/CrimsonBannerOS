@@ -1,0 +1,15 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="RedStarOS.Views.ConnectNetworkWindow"
+        Title="Connect To Other Networks"
+        Width="420" Height="460"
+        WindowStartupLocation="CenterOwner">
+  <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="16">
+    <Button Content="Scan" Click="OnScan" />
+    <ListBox x:Name="Networks" Grid.Row="1" Margin="0,8" />
+    <TextBox x:Name="PasswordBox" Grid.Row="2" PasswordChar="●" PlaceholderText="Password (leave empty for open networks)" />
+    <StackPanel Grid.Row="3" Margin="0,8,0,0" Spacing="6">
+      <Button x:Name="ConnectButton" Content="Connect" Click="OnConnect" HorizontalAlignment="Right" MinWidth="90" HorizontalContentAlignment="Center" />
+      <TextBlock x:Name="StatusLabel" TextWrapping="Wrap" />
+    </StackPanel>
+  </Grid>
+</Window>

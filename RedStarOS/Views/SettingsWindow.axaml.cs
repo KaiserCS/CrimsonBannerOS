@@ -1,0 +1,280 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Avalonia.Controls;
+using Avalonia.Layout;
+using Avalonia.Media;
+using RedStarOS.Services;
+
+namespace RedStarOS.Views;
+
+/// <summary>
+/// Advanced Settings: one window with a sidebar. Appearance, Desktop &amp; Taskbar and Games are pages here;
+/// Network, Account, Wallpapers and Software Updates open their own windows (the sidebar entry shows a launcher).
+/// Everything applies immediately.
+/// </summary>
+public partial class SettingsWindow : Window
+{
+    public sealed record NavItem(string Name, string Glyph, IBrush Color, Func<Control> Build);
+
+    private static readonly string[] Themes = { "Light", "Dark", "System" };
+
+    public static SettingsWindow? Instance { get; private set; }
+
+    /// <summary>Opens Settings at a page (used by Start-menu search and other apps).</summary>
+    public static void OpenPage(string name)
+    {
+        var w = Instance ?? WindowManager.Open(new SettingsWindow(), "settings");
+        if (w.WindowState == WindowState.Minimized) w.WindowState = WindowState.Normal;
+        w.Activate();
+        if (w.Nav.ItemsSource is IEnumerable<NavItem> items)
+        {
+            var it = items.FirstOrDefault(i => i.Name == name);
+            if (it != null) w.Nav.SelectedItem = it;
+        }
+    }
+
+    /// <summary>Makes the settings pages findable from the Start menu.</summary>
+    public static void RegisterSearch()
+    {
+        if (SearchIndex.Settings.Count > 0) return;
+        foreach (var (name, keywords, icon) in SearchPages)
+        {
+            var n = name;
+            SearchIndex.Settings.Add((n, keywords, icon, () => OpenPage(n)));
+        }
+    }
+
+    private static readonly (string Name, string Keywords, string Icon)[] SearchPages =
+    {
+        ("Appearance", "theme dark light accent colour color font", "palette"),
+        ("Desktop & Taskbar", "taskbar pinned labels desktop icons", "monitor"),
+        ("Wallpapers", "background picture slideshow wallpaper search download", "image"),
+        ("Wi-Fi & Network", "wifi wi-fi internet ethernet wired airplane network", "wifi"),
+        ("Sound", "volume speaker headphones microphone audio output input", "volume"),
+        ("Bluetooth", "headphones pair device mouse keyboard", "bluetooth"),
+        ("Displays", "screen monitor resolution rotate mirror projector", "monitor"),
+        ("Printers", "print printer cups queue", "printer"),
+        ("Default apps", "open with browser default program", "apps"),
+        ("Accessibility", "size scale bigger text zoom contrast motion animation cursor pointer sounds keyboard screen reader", "accessibility"),
+        ("Account", "password user photo child parental", "user"),
+        ("Software Updates", "update upgrade version release", "refresh"),
+        ("Diagnostics", "crash log error bug report system info", "bug"),
+        ("Games", "pong", "game"),
+    };
+
+    public SettingsWindow()
+    {
+        InitializeComponent();
+        Instance = this;
+        Closed += (_, _) => { if (ReferenceEquals(Instance, this)) Instance = null; };
+
+        var items = new List<NavItem>
+        {
+            new("Appearance", "🎨", AppIcons.Brush("#C8102E"), BuildAppearance),
+            new("Desktop & Taskbar", "🖥", AppIcons.Brush("#4A5568"), BuildTaskbar),
+            new("Wallpapers", "image", AppIcons.Brush("#2F855A"), () => PageLauncher("Wallpapers", "Search online for full-resolution wallpapers that fit your screen, or use your own pictures and slideshows.", "Open Wallpapers", () => WallpaperPickerWindow.Open())),
+            new("Wi-Fi & Network", "wifi", AppIcons.Brush("#6B46C1"), SettingsPages.Network),
+            new("Sound", "volume", AppIcons.Brush("#C8102E"), SettingsPages.Sound),
+            new("Bluetooth", "bluetooth", AppIcons.Brush("#2B6CB0"), SettingsPages.Bluetooth),
+            new("Displays", "monitor", AppIcons.Brush("#4A5568"), SettingsPages.Displays),
+            new("Printers", "printer", AppIcons.Brush("#2F855A"), SettingsPages.Printers),
+            new("Default apps", "apps", AppIcons.Brush("#DD6B20"), SettingsPages.DefaultAppsPage),
+            new("Accessibility", "accessibility", AppIcons.Brush("#2B6CB0"), SettingsPages.Accessibility),
+            new("Account", "👤", AppIcons.Brush("#DD6B20"), () => PageLauncher("Account", "Password, profile photo and account type.", "Open Account", () => WindowManager.Open(new AccountWindow()))),
+            new("Software Updates", "refresh", AppIcons.Brush("#2B6CB0"), SettingsPages.Updates),
+            new("Diagnostics", "bug", AppIcons.Brush("#4A5568"), SettingsPages.DiagnosticsPage),
+            new("Games", "🏓", AppIcons.Brush("#2F855A"), BuildGames),
+        };
+        Nav.ItemsSource = items;
+        Nav.SelectionChanged += (_, _) =>
+        {
+            if (Nav.SelectedItem is NavItem n) Page.Content = n.Build();
+        };
+        Nav.SelectedIndex = 0;
+    }
+
+    // ------------------------------------------------------------ helpers
+
+    private static StackPanel PageOf(string title, string? subtitle = null)
+    {
+        var p = new StackPanel { Spacing = 12 };
+        p.Children.Add(new TextBlock { Text = title, Classes = { "h1" } });
+        if (subtitle != null) p.Children.Add(new TextBlock { Text = subtitle, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap });
+        return p;
+    }
+
+    private static TextBlock Eyebrow(string text) =>
+        new() { Text = text, Classes = { "eyebrow" }, Margin = new Avalonia.Thickness(0, 8, 0, 0) };
+
+    private static Control PageLauncher(string title, string text, string button, Action open)
+    {
+        var p = PageOf(title, text);
+        var b = new Button { Content = button, Classes = { "primary" }, Padding = new Avalonia.Thickness(16, 8), HorizontalAlignment = HorizontalAlignment.Left };
+        b.Click += (_, _) => open();
+        p.Children.Add(b);
+        return p;
+    }
+
+    private static CheckBox Check(string text, bool value, Action<bool> set)
+    {
+        var c = new CheckBox { Content = text, IsChecked = value };
+        c.IsCheckedChanged += (_, _) => { set(c.IsChecked == true); SettingsStore.Save(); WindowManager.RaiseChanged(); };
+        return c;
+    }
+
+    // ------------------------------------------------------------ pages
+
+    private static Control BuildAppearance()
+    {
+        var s = SettingsStore.Current;
+        var p = PageOf("Appearance", "Changes apply immediately, including in Red Star Online and Red Star Video.");
+
+        p.Children.Add(Eyebrow("THEME"));
+        var theme = new ComboBox { ItemsSource = Themes, SelectedIndex = Math.Max(0, Array.IndexOf(Themes, s.Theme)), HorizontalAlignment = HorizontalAlignment.Stretch };
+        theme.SelectionChanged += (_, _) =>
+        {
+            if (theme.SelectedIndex < 0) return;
+            SettingsStore.Current.Theme = Themes[theme.SelectedIndex];
+            SettingsStore.Save();
+            ThemeService.Apply();
+        };
+        p.Children.Add(theme);
+
+        p.Children.Add(Eyebrow("ACCENT COLOUR"));
+        var accents = ThemeService.Accents;
+        var idx = Array.FindIndex(accents, a => a.Hex.Equals(s.Accent, StringComparison.OrdinalIgnoreCase));
+        var accent = new ComboBox { ItemsSource = accents.Select(a => a.Name).ToList(), SelectedIndex = idx < 0 ? 0 : idx, HorizontalAlignment = HorizontalAlignment.Stretch };
+        accent.SelectionChanged += (_, _) =>
+        {
+            if (accent.SelectedIndex < 0) return;
+            SettingsStore.Current.Accent = accents[accent.SelectedIndex].Hex;
+            SettingsStore.Save();
+            ThemeService.Apply();
+        };
+        p.Children.Add(accent);
+
+        p.Children.Add(Eyebrow("SCREEN"));
+        var full = new CheckBox { Content = "Full-screen desktop (covers the host panel)", IsChecked = s.Fullscreen };
+        full.IsCheckedChanged += (_, _) =>
+        {
+            SettingsStore.Current.Fullscreen = full.IsChecked == true;
+            SettingsStore.Save();
+            if (WindowManager.Desktop != null)
+                WindowManager.Desktop.WindowState = SettingsStore.Current.Fullscreen ? WindowState.FullScreen : WindowState.Maximized;
+        };
+        p.Children.Add(full);
+
+        p.Children.Add(Eyebrow("GETTING STARTED"));
+        var welcome = new Button { Content = "Show the welcome again", Padding = new Avalonia.Thickness(12, 6), HorizontalAlignment = HorizontalAlignment.Left };
+        welcome.Click += (_, _) => WelcomeWindow.Open();
+        p.Children.Add(welcome);
+        return p;
+    }
+
+    private static string InputIsolationStatus() => InputIsolation.Mode switch
+    {
+        "xwayland" => "Now: isolated (Xwayland, the Wayland desktop's shortcuts are switched off while Red Star has the keyboard).",
+        "xephyr" => "Now: isolated (Xephyr on X11).",
+        "redstar-comp" => "Now: isolated by redstar-comp — full screen, and the other desktop passes its shortcuts through (if it allows that).",
+        "xephyr-on-wayland" =>"Now: partly isolated — Xephyr on Wayland can't switch off the desktop's own shortcuts. Xwayland 23.1 or newer fixes that.",
+        _ when Environment.GetEnvironmentVariable("REDSTAR_SESSION") == "1" => "Now: Red Star OS is the whole session, so nothing else can take the keyboard.",
+        _ when InputIsolation.Missing != null => "Now: not isolated — install Xephyr (Debian/Ubuntu: xserver-xephyr · Fedora: xorg-x11-server-Xephyr · Arch: xorg-server-xephyr), or Xwayland 23.1+ on Wayland.",
+        _ => "Now: running directly on the other desktop."
+    };
+
+    private static Control BuildTaskbar()
+    {
+        var s = SettingsStore.Current;
+        var p = PageOf("Desktop & Taskbar", "Choose what the taskbar shows and which apps stay pinned to it.");
+
+        p.Children.Add(Eyebrow("KEYBOARD AND MOUSE"));
+        p.Children.Add(Check("Keep the keyboard and mouse inside Red Star OS when it runs on another desktop", s.IsolateInput, v => SettingsStore.Current.IsolateInput = v));
+        p.Children.Add(new TextBlock
+        {
+            Classes = { "caption" }, TextWrapping = TextWrapping.Wrap,
+            Text = "Red Star OS opens in its own display (like a virtual machine), so Super, Alt+Tab, hot corners and panels of the "
+                 + "other desktop can't take over. Press Ctrl+Shift to release the keyboard and mouse, and again to capture them. "
+                 + "Takes effect the next time Red Star OS starts.\n" + InputIsolationStatus()
+        });
+
+        p.Children.Add(Eyebrow("WINDOWS"));
+        p.Children.Add(Check("Soft shadows under windows", s.WindowShadows, v => SettingsStore.Current.WindowShadows = v));
+        p.Children.Add(new TextBlock
+        {
+            Classes = { "caption" }, TextWrapping = TextWrapping.Wrap,
+            Text = (InputIsolation.InRedStarComp ? "Drawn by redstar-comp. " : "Drawn by the picom compositor (install picom if it's missing). ")
+                 + "Windows that are maximised or full screen, menus and tooltips have none. Takes effect the next time Red Star OS starts."
+                 + (X11Props.CompositorRunning() ? "" : "\nNow: no compositor is running, so there are no shadows.")
+        });
+
+        p.Children.Add(Eyebrow("WAYLAND (EXPERIMENTAL)"));
+        p.Children.Add(Check("Run Red Star OS in its own Wayland compositor", s.WaylandCompositor, v => SettingsStore.Current.WaylandCompositor = v));
+        bool haveComp = InputIsolation.RedStarCompPath() != null;
+        p.Children.Add(new TextBlock
+        {
+            Classes = { "caption" }, TextWrapping = TextWrapping.Wrap,
+            Text = "redstar-comp (wlroots) takes the place of the window manager and picom: same title bars, snapping and shadows, "
+                 + "and native Wayland apps work too. Red Star's own windows still run through Xwayland. On another desktop it opens "
+                 + "full screen and asks that desktop to pass Super, Alt+Tab and its other shortcuts through (KDE and GNOME may ask "
+                 + "once); set REDSTAR_COMP_WINDOWED=1 for an ordinary window. Ctrl+Alt+Backspace leaves. "
+                 + "For a full session pick \"Red Star OS (Wayland)\" at the login screen. Takes effect the next time Red Star OS starts."
+                 + (InputIsolation.InRedStarComp ? "\nNow: running inside redstar-comp."
+                    : haveComp ? "" : "\nNot installed: build it with compositor/build.sh (needs wlroots 0.20).")
+        });
+        p.Children.Add(Check("Draw Red Star's own windows natively on Wayland (experimental)", s.NativeWaylandShell, v => SettingsStore.Current.NativeWaylandShell = v));
+        p.Children.Add(new TextBlock
+        {
+            Classes = { "caption" }, TextWrapping = TextWrapping.Wrap,
+            Text = "Inside redstar-comp, Red Star's desktop, taskbar and apps use Avalonia's Wayland backend instead of Xwayland: "
+                 + "sharper on scaled screens and no X11 in between. Avalonia marks it experimental. If it fails to start, Red Star "
+                 + "starts again through Xwayland on its own and tells you. Other programs are not affected. Takes effect the next time "
+                 + "Red Star OS starts."
+                 + (WaylandShell.Active ? "\nNow: drawing natively on Wayland."
+                    : WaylandShell.FellBackReason is { } why ? "\nNow: " + why : "")
+        });
+
+        p.Children.Add(Eyebrow("TASKBAR"));
+        p.Children.Add(Check("Show window titles next to taskbar icons", s.TaskbarLabels, v => SettingsStore.Current.TaskbarLabels = v));
+        p.Children.Add(Check("24-hour clock", s.Clock24h, v => SettingsStore.Current.Clock24h = v));
+
+        p.Children.Add(Eyebrow("NOTIFICATIONS"));
+        var dnd = new CheckBox { Content = "Do not disturb (keep notifications in the notification centre, no pop-ups)", IsChecked = Notifier.DoNotDisturb };
+        dnd.IsCheckedChanged += (_, _) => Notifier.SetDoNotDisturb(dnd.IsChecked == true);
+        p.Children.Add(dnd);
+
+        p.Children.Add(Eyebrow("PINNED APPS"));
+        var child = s.AccountType == "Child";
+        foreach (var app in AppRegistry.Apps.Where(a => !(child && a.RestrictedForChild)))
+        {
+            var id = app.Id;
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Margin = new Avalonia.Thickness(0, 2) };
+            var icon = AppIcons.Create(id, app.Name, 26);
+            row.Children.Add(icon);
+            var name = new TextBlock { Text = app.Name, Margin = new Avalonia.Thickness(10, 0), VerticalAlignment = VerticalAlignment.Center };
+            Grid.SetColumn(name, 1);
+            row.Children.Add(name);
+            var sw = new ToggleSwitch { IsChecked = WindowManager.IsPinned(id), OnContent = "", OffContent = "" };
+            sw.IsCheckedChanged += (_, _) =>
+            {
+                if ((sw.IsChecked == true) != WindowManager.IsPinned(id)) WindowManager.TogglePin(id);
+            };
+            Grid.SetColumn(sw, 2);
+            row.Children.Add(sw);
+            p.Children.Add(row);
+        }
+        return p;
+    }
+
+    private static Control BuildGames()
+    {
+        var s = SettingsStore.Current;
+        var p = PageOf("Games", "Scores are kept on this computer.");
+        p.Children.Add(new TextBlock { Text = $"Ping Pong - best solo rally: {s.PongBest}" });
+        p.Children.Add(new TextBlock { Text = $"Ping Pong - wins against the computer: {s.PongAiWins}" });
+        var reset = new Button { Content = "Reset scores", Classes = { "flat" }, HorizontalAlignment = HorizontalAlignment.Left };
+        reset.Click += (_, _) => { SettingsStore.Current.PongBest = 0; SettingsStore.Current.PongAiWins = 0; SettingsStore.Save(); reset.Content = "Scores reset"; };
+        p.Children.Add(reset);
+        return p;
+    }
+}

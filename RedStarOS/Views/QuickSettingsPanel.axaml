@@ -1,0 +1,78 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:v="using:RedStarOS.Views"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="RedStarOS.Views.QuickSettingsPanel"
+             Width="352">
+  <StackPanel Margin="16" Spacing="12">
+
+    <!-- Who + settings -->
+    <Grid ColumnDefinitions="Auto,*,Auto">
+      <Border Width="38" Height="38" CornerRadius="19" ClipToBounds="True">
+        <Image x:Name="AvatarImage" Source="avares://RedStarOS/Assets/avatar.png" Stretch="UniformToFill" />
+      </Border>
+      <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+        <TextBlock x:Name="UserLabel" FontSize="14" FontWeight="SemiBold" />
+        <TextBlock x:Name="HostLabel" Classes="caption" />
+      </StackPanel>
+      <Button Grid.Column="2" Classes="flat" Content="⚙" FontSize="18" Width="40" Height="40" Padding="0"
+              HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+              ToolTip.Tip="Settings" Click="OnSettings" />
+    </Grid>
+
+    <!-- Quick tiles -->
+    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" Classes="spaced">
+      <Button x:Name="NetTile" Classes="tile" Click="OnNetwork">
+        <StackPanel Spacing="2">
+          <ContentControl x:Name="NetGlyph" />
+          <TextBlock x:Name="NetTitle" FontSize="13" FontWeight="SemiBold" />
+          <TextBlock x:Name="NetSub" Classes="caption" TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+      </Button>
+      <Button x:Name="ThemeTile" Grid.Column="1" Classes="tile" Click="OnTheme">
+        <StackPanel Spacing="2">
+          <v:IconView Kind="moon" Size="18" />
+          <TextBlock Text="Dark mode" FontSize="13" FontWeight="SemiBold" />
+          <TextBlock x:Name="ThemeSub" FontSize="12" Opacity="0.75" />
+        </StackPanel>
+      </Button>
+      <Button x:Name="DndTile" Grid.Row="1" Classes="tile" Click="OnDnd">
+        <StackPanel Spacing="2">
+          <v:IconView Kind="bell-off" Size="18" />
+          <TextBlock Text="Do not disturb" FontSize="13" FontWeight="SemiBold" />
+          <TextBlock x:Name="DndSub" FontSize="12" Opacity="0.75" />
+        </StackPanel>
+      </Button>
+      <Button x:Name="WallTile" Grid.Row="1" Grid.Column="1" Classes="tile" Click="OnNextWallpaper">
+        <StackPanel Spacing="2">
+          <v:IconView Kind="image" Size="18" />
+          <TextBlock Text="Wallpaper" FontSize="13" FontWeight="SemiBold" />
+          <TextBlock Text="Next picture" FontSize="12" Opacity="0.75" />
+        </StackPanel>
+      </Button>
+    </Grid>
+
+    <!-- Volume -->
+    <Border Classes="card" Padding="8,6">
+      <Grid ColumnDefinitions="Auto,*,48">
+        <Button x:Name="MuteButton" Classes="flat" Width="38" Height="36" Padding="0" Content="🔊" FontSize="16"
+                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                ToolTip.Tip="Mute / unmute" Click="OnMute" />
+        <Slider x:Name="VolumeSlider" Grid.Column="1" Minimum="0" Maximum="100" VerticalAlignment="Center" Margin="4,0" />
+        <TextBlock x:Name="VolumeLabel" Grid.Column="2" Text="--" TextAlignment="Right" VerticalAlignment="Center" FontSize="13" />
+      </Grid>
+    </Border>
+
+    <!-- Battery -->
+    <Border x:Name="BatteryCard" Classes="card" Padding="12,8" IsVisible="False">
+      <TextBlock x:Name="BatteryLabel" FontSize="13" />
+    </Border>
+
+    <Border Classes="divider" />
+
+    <!-- Session -->
+    <Grid ColumnDefinitions="*,*,*" Classes="spaced">
+      <Button Classes="flat" Content="Log off" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="OnLogOff" />
+      <Button Grid.Column="1" Classes="flat" Content="Restart" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="OnRestart" />
+      <Button Grid.Column="2" Classes="flat" Content="Shut down" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="OnShutdown" />
+    </Grid>
+  </StackPanel>
+</UserControl>

@@ -1,0 +1,48 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="RedStarOS.Views.LoginWindow"
+        Title="Red Star OS - Login"
+        WindowState="FullScreen"
+        WindowDecorations="None"
+        Topmost="True">
+  <Window.Background>
+    <ImageBrush Source="avares://RedStarOS/Assets/login-bg.jpg" Stretch="UniformToFill" />
+  </Window.Background>
+  <Grid>
+    <Border Background="#70000000" />
+
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="30">
+      <StackPanel Spacing="0">
+        <TextBlock x:Name="ClockLabel" Foreground="White" FontSize="88" FontWeight="Light"
+                   HorizontalAlignment="Center" Text="00:00" />
+        <TextBlock x:Name="DateLabel" Foreground="White" Opacity="0.85" FontSize="18"
+                   HorizontalAlignment="Center" />
+      </StackPanel>
+
+      <Border x:Name="Card" Width="340" CornerRadius="20" Background="#C0141418"
+              BorderBrush="#2EFFFFFF" BorderThickness="1" Padding="28,26">
+        <StackPanel Spacing="12">
+          <Border Width="96" Height="96" CornerRadius="48" ClipToBounds="True" HorizontalAlignment="Center"
+                  BorderBrush="#40FFFFFF" BorderThickness="2">
+            <Image x:Name="AvatarImage" Source="avares://RedStarOS/Assets/avatar.png" Stretch="UniformToFill" />
+          </Border>
+          <TextBlock x:Name="UserLabel" Foreground="White" FontSize="20" FontWeight="SemiBold"
+                     HorizontalAlignment="Center" />
+          <TextBox x:Name="PasswordBox" PasswordChar="●" PlaceholderText="Password" MinHeight="40"
+                   CornerRadius="10" VerticalContentAlignment="Center" />
+          <TextBlock x:Name="ErrorLabel" Foreground="#FF8A8A" HorizontalAlignment="Center" IsVisible="False"
+                     Text="Incorrect password. Try again." FontSize="13" />
+          <TextBlock x:Name="HintLabel" Foreground="White" Opacity="0.7" HorizontalAlignment="Center"
+                     FontSize="12" IsVisible="False" Text="No password is set. Press Enter to sign in." />
+          <Button Content="Sign in" Classes="primary" HorizontalAlignment="Stretch" MinHeight="40"
+                  FontWeight="SemiBold" Click="OnLogin" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+
+    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                Margin="0,0,0,28">
+      <Button Classes="flat" Foreground="White" Content="⟳  Restart" Click="OnRestart" />
+      <Button Classes="flat" Foreground="White" Content="⏻  Shut down" Click="OnShutdown" />
+    </StackPanel>
+  </Grid>
+</Window>

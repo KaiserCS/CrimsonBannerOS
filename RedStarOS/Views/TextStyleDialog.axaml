@@ -1,0 +1,24 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="RedStarOS.Views.TextStyleDialog"
+        Title="Text Settings"
+        Width="340" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner">
+  <StackPanel Margin="16" Spacing="10">
+    <StackPanel x:Name="FontPanel" Spacing="6">
+      <TextBlock Text="Font" />
+      <ComboBox x:Name="FamilyBox" HorizontalAlignment="Stretch" />
+      <TextBlock Text="Size" />
+      <NumericUpDown x:Name="SizeBox" Minimum="6" Maximum="96" Increment="1" FormatString="0" />
+    </StackPanel>
+    <StackPanel x:Name="ColorPanel" Spacing="6">
+      <TextBlock Text="Colour" />
+      <ComboBox x:Name="ColorBox" HorizontalAlignment="Stretch" />
+      <TextBlock Text="...or a custom hex colour (e.g. #8B0000)" />
+      <TextBox x:Name="HexBox" PlaceholderText="#RRGGBB" />
+    </StackPanel>
+    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+      <Button Content="OK" MinWidth="80" Click="OnOk" />
+      <Button Content="Cancel" MinWidth="80" Click="OnCancel" />
+    </StackPanel>
+  </StackPanel>
+</Window>

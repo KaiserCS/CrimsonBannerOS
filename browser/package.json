@@ -1,0 +1,15 @@
+{
+  "name": "redstar-browser",
+  "productName": "Red Star Online",
+  "version": "1.0.0",
+  "description": "Electron web browser for Red Star OS",
+  "main": "main.js",
+  "private": true,
+  "dependencies": {
+    "electron": "^33.2.0"
+  },
+  "scripts": {
+    "setup": "bash setup.sh",
+    "start": "electron --no-sandbox ."
+  }
+}

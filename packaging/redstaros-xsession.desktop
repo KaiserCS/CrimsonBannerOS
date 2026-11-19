@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Red Star OS
+Comment=Red Star OS desktop session
+Exec=/usr/local/bin/redstaros-session
+TryExec=/usr/local/bin/redstaros-session
+Type=Application
+DesktopNames=RedStarOS

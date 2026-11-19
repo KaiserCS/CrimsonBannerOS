@@ -1,0 +1,177 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="clr-namespace:RedStarOS.Views"
+        x:Class="RedStarOS.Views.SlidesWindow"
+        Title="Untitled - Red Star Slides"
+        Width="1320" Height="820" MinWidth="860" MinHeight="560"
+        WindowStartupLocation="CenterOwner">
+  <DockPanel>
+    <Menu DockPanel.Dock="Top">
+      <MenuItem Header="_File">
+        <MenuItem Header="_New presentation" Tag="new" InputGesture="Ctrl+N" Click="OnMenu" />
+        <MenuItem Header="_Open…" Tag="open" InputGesture="Ctrl+O" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="_Save" Tag="save" InputGesture="Ctrl+S" Click="OnMenu" />
+        <MenuItem Header="Save _as…" Tag="saveas" InputGesture="Ctrl+Shift+S" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="Export as _PDF…" Tag="pdf" Click="OnMenu" />
+        <MenuItem Header="Export slides as _images…" Tag="pngs" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="_Close" Tag="close" Click="OnMenu" />
+      </MenuItem>
+      <MenuItem Header="_Edit">
+        <MenuItem Header="_Undo" Tag="undo" InputGesture="Ctrl+Z" Click="OnMenu" />
+        <MenuItem Header="_Redo" Tag="redo" InputGesture="Ctrl+Y" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="Cu_t" Tag="cut" InputGesture="Ctrl+X" Click="OnMenu" />
+        <MenuItem Header="_Copy" Tag="copy" InputGesture="Ctrl+C" Click="OnMenu" />
+        <MenuItem Header="_Paste" Tag="paste" InputGesture="Ctrl+V" Click="OnMenu" />
+        <MenuItem Header="D_uplicate" Tag="dupitem" InputGesture="Ctrl+D" Click="OnMenu" />
+        <MenuItem Header="_Delete (Del)" Tag="delitem" Click="OnMenu" />
+      </MenuItem>
+      <MenuItem Header="_Slide">
+        <MenuItem Header="_New slide" Tag="newslide" InputGesture="Ctrl+M" Click="OnMenu" />
+        <MenuItem Header="D_uplicate slide" Tag="dupslide" Click="OnMenu" />
+        <MenuItem Header="_Delete slide" Tag="delslide" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="Move _up" Tag="slideup" Click="OnMenu" />
+        <MenuItem Header="Move _down" Tag="slidedown" Click="OnMenu" />
+      </MenuItem>
+      <MenuItem Header="_Insert">
+        <MenuItem Header="_Text box" Tag="addtext" Click="OnMenu" />
+        <MenuItem Header="_Picture…" Tag="addimage" Click="OnMenu" />
+        <MenuItem Header="_Shape" Tag="addshape" Click="OnMenu" />
+      </MenuItem>
+      <MenuItem Header="_Slide show">
+        <MenuItem Header="From _beginning" Tag="present" InputGesture="F5" Click="OnMenu" />
+        <MenuItem Header="From _current slide" Tag="presentcur" InputGesture="Shift+F5" Click="OnMenu" />
+      </MenuItem>
+      <MenuItem Header="_View">
+        <MenuItem x:Name="NotesItem" Header="_Speaker notes" Tag="notes" ToggleType="CheckBox" IsChecked="True" Click="OnMenu" />
+      </MenuItem>
+    </Menu>
+
+    <Border DockPanel.Dock="Top" Classes="card" CornerRadius="0" BorderThickness="0,0,0,1" Padding="8,6">
+      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+        <StackPanel Orientation="Horizontal" Spacing="12">
+
+          <StackPanel Spacing="3">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <Button Classes="primary" Content="＋ New slide" Tag="newslide" Click="OnMenu" />
+              <ComboBox x:Name="LayoutBox" Width="150" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <Button Classes="flat" Content="Duplicate" Tag="dupslide" Click="OnMenu" />
+              <Button Classes="flat" Content="Delete" Tag="delslide" Click="OnMenu" />
+              <Button Classes="flat" Content="▲" Tag="slideup" Click="OnMenu" />
+              <Button Classes="flat" Content="▼" Tag="slidedown" Click="OnMenu" />
+            </StackPanel>
+            <TextBlock Text="Slides" Classes="caption" HorizontalAlignment="Center" />
+          </StackPanel>
+          <Border Width="1" Background="{DynamicResource ShellBorderBrush}" />
+
+          <StackPanel Spacing="3">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <Button Classes="flat" Content="Text box" Tag="addtext" Click="OnMenu" />
+              <Button Classes="flat" Content="Picture…" Tag="addimage" Click="OnMenu" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <ComboBox x:Name="ShapeBox" Width="150" />
+              <Button Classes="flat" Content="Add" Tag="addshape" Click="OnMenu" />
+            </StackPanel>
+            <TextBlock Text="Insert" Classes="caption" HorizontalAlignment="Center" />
+          </StackPanel>
+          <Border Width="1" Background="{DynamicResource ShellBorderBrush}" />
+
+          <StackPanel Spacing="3">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <ComboBox x:Name="FontBox" Width="170" />
+              <ComboBox x:Name="SizeBox" Width="72" />
+              <ToggleButton x:Name="BoldBtn" Content="B" FontWeight="Bold" Width="32" />
+              <ToggleButton x:Name="ItalicBtn" Content="I" FontStyle="Italic" Width="32" />
+              <ToggleButton x:Name="UnderBtn" Content="U" Width="32" />
+              <ContentControl x:Name="TextColorHost" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <ToggleButton x:Name="AlignL" Content="≡ Left" />
+              <ToggleButton x:Name="AlignC" Content="≡ Centre" />
+              <ToggleButton x:Name="AlignR" Content="≡ Right" />
+              <ToggleButton x:Name="BulletBtn" Content="• List" />
+              <ComboBox x:Name="VAlignBox" Width="96" />
+            </StackPanel>
+            <TextBlock Text="Text" Classes="caption" HorizontalAlignment="Center" />
+          </StackPanel>
+          <Border Width="1" Background="{DynamicResource ShellBorderBrush}" />
+
+          <StackPanel Spacing="3">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="Fill" VerticalAlignment="Center" Classes="caption" />
+              <ContentControl x:Name="FillHost" />
+              <TextBlock Text="Outline" VerticalAlignment="Center" Classes="caption" />
+              <ContentControl x:Name="LineHost" />
+              <ComboBox x:Name="LineWBox" Width="70" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="Rotation" VerticalAlignment="Center" Classes="caption" />
+              <TextBox x:Name="RotBox" Width="64" Text="0" />
+              <Button Classes="flat" Content="Front" Tag="front" Click="OnMenu" />
+              <Button Classes="flat" Content="Forward" Tag="forward" Click="OnMenu" />
+              <Button Classes="flat" Content="Backward" Tag="backward" Click="OnMenu" />
+              <Button Classes="flat" Content="Back" Tag="back" Click="OnMenu" />
+            </StackPanel>
+            <TextBlock Text="Shape and arrange" Classes="caption" HorizontalAlignment="Center" />
+          </StackPanel>
+          <Border Width="1" Background="{DynamicResource ShellBorderBrush}" />
+
+          <StackPanel Spacing="3">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <ComboBox x:Name="ThemeBox" Width="120" />
+              <TextBlock Text="Background" VerticalAlignment="Center" Classes="caption" />
+              <ContentControl x:Name="BgHost" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="Transition" VerticalAlignment="Center" Classes="caption" />
+              <ComboBox x:Name="TransitionBox" Width="100" />
+              <Button Classes="primary" Content="▶ Present" Tag="present" Click="OnMenu" />
+            </StackPanel>
+            <TextBlock Text="Design and show" Classes="caption" HorizontalAlignment="Center" />
+          </StackPanel>
+
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+
+    <Border DockPanel.Dock="Bottom" Classes="card" CornerRadius="0" BorderThickness="0,1,0,0" Padding="12,4">
+      <TextBlock x:Name="StatusText" Classes="caption" />
+    </Border>
+
+    <Border DockPanel.Dock="Left" Width="200" Classes="card" CornerRadius="0" BorderThickness="0,0,1,0">
+      <ListBox x:Name="ThumbList" Background="Transparent" Padding="6">
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <Grid ColumnDefinitions="22,*" Margin="0,2">
+              <TextBlock Text="{Binding Number}" Classes="caption" VerticalAlignment="Top" Margin="0,4,0,0" />
+              <Border Grid.Column="1" CornerRadius="3" ClipToBounds="True" BorderThickness="1" BorderBrush="#55808080" Background="White">
+                <Image Source="{Binding Image}" Stretch="Uniform" />
+              </Border>
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </Border>
+
+    <Grid x:Name="Centre" RowDefinitions="*,Auto">
+      <Border Background="#33808080">
+        <Grid>
+          <v:SlideCanvas x:Name="Surface" />
+          <Canvas x:Name="Overlay" />
+        </Grid>
+      </Border>
+      <Border x:Name="NotesHost" Grid.Row="1" Classes="card" CornerRadius="0" BorderThickness="0,1,0,0" Padding="10,6">
+        <StackPanel Spacing="2">
+          <TextBlock Text="Speaker notes" Classes="caption" />
+          <TextBox x:Name="NotesBox" Height="70" AcceptsReturn="True" TextWrapping="Wrap" PlaceholderText="Click to add notes for this slide" />
+        </StackPanel>
+      </Border>
+    </Grid>
+  </DockPanel>
+</Window>

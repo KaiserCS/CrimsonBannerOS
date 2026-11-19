@@ -1,0 +1,79 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="RedStarOS.Views.ImageViewerWindow"
+        Title="Image Viewer"
+        Width="1000" Height="700" MinWidth="560" MinHeight="400"
+        WindowStartupLocation="CenterOwner">
+  <DockPanel>
+    <Border x:Name="Toolbar" DockPanel.Dock="Top" Classes="card" CornerRadius="0" BorderThickness="0,0,0,1" Padding="8,6">
+      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+        <StackPanel Orientation="Horizontal" Spacing="4">
+          <Button Classes="flat" Content="Open…" Tag="open" Click="OnCmd" ToolTip.Tip="Open an image (Ctrl+O)" />
+          <Button Classes="flat" Content="◀" Tag="prev" Click="OnCmd" ToolTip.Tip="Previous image (Left)" />
+          <Button Classes="flat" Content="▶" Tag="next" Click="OnCmd" ToolTip.Tip="Next image (Right)" />
+          <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
+          <Button Classes="flat" Content="⟲" Tag="rotl" Click="OnCmd" ToolTip.Tip="Rotate left (Shift+R)" />
+          <Button Classes="flat" Content="⟳" Tag="rotr" Click="OnCmd" ToolTip.Tip="Rotate right (R)" />
+          <Button Classes="flat" Content="⇋" Tag="fliph" Click="OnCmd" ToolTip.Tip="Flip horizontally (H)" />
+          <Button Classes="flat" Content="⇵" Tag="flipv" Click="OnCmd" ToolTip.Tip="Flip vertically (V)" />
+          <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
+          <Button Classes="flat" Content="Fit" Tag="fit" Click="OnCmd" ToolTip.Tip="Fit to window (F)" />
+          <Button Classes="flat" Content="100%" Tag="actual" Click="OnCmd" ToolTip.Tip="Actual size (0)" />
+          <Button Classes="flat" Content="−" Tag="zoomout" Click="OnCmd" ToolTip.Tip="Zoom out (-)" />
+          <Button Classes="flat" Content="+" Tag="zoomin" Click="OnCmd" ToolTip.Tip="Zoom in (+)" />
+          <TextBlock x:Name="ZoomText" Width="52" TextAlignment="Center" VerticalAlignment="Center" Classes="caption" />
+          <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
+          <Button x:Name="SlideBtn" Classes="flat" Content="▶ Slideshow" Tag="slideshow" Click="OnCmd" ToolTip.Tip="Start or stop the slideshow (S)" />
+          <Button Classes="flat" Content="⛶" Tag="fullscreen" Click="OnCmd" ToolTip.Tip="Full screen (F11)" />
+          <Button Classes="flat" Content="▤" Tag="thumbs" Click="OnCmd" ToolTip.Tip="Show or hide thumbnails (T)" />
+          <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
+          <Button Classes="flat" Content="Edit in Paint" Tag="paint" Click="OnCmd" />
+          <Button Classes="flat" Content="⋯" ToolTip.Tip="More">
+            <Button.Flyout>
+              <MenuFlyout>
+                <MenuItem Header="Rename…" Tag="rename" Click="OnCmd" />
+                <MenuItem Header="Move to Trash" Tag="delete" Click="OnCmd" />
+                <Separator />
+                <MenuItem Header="Set as wallpaper" Tag="wallpaper" Click="OnCmd" />
+                <MenuItem Header="Copy file path" Tag="copypath" Click="OnCmd" />
+                <MenuItem Header="Share…" Tag="share" Click="OnCmd" />
+                <MenuItem Header="Save rotated/flipped image…" Tag="saverot" Click="OnCmd" />
+              </MenuFlyout>
+            </Button.Flyout>
+          </Button>
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+
+    <Border x:Name="StatusBar" DockPanel.Dock="Bottom" Classes="card" CornerRadius="0" BorderThickness="0,1,0,0" Padding="12,4">
+      <TextBlock x:Name="StatusText" Classes="caption" TextTrimming="CharacterEllipsis" />
+    </Border>
+
+    <Border x:Name="StripHost" DockPanel.Dock="Bottom" Height="88" Background="#141414">
+      <ListBox x:Name="ThumbList" Background="Transparent" Padding="6"
+               ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+        <ListBox.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal" Spacing="4" />
+          </ItemsPanelTemplate>
+        </ListBox.ItemsPanel>
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <Border Width="84" Height="60" CornerRadius="4" ClipToBounds="True" Background="#2A2A2A">
+              <Image Source="{Binding Thumb}" Stretch="UniformToFill" />
+            </Border>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </Border>
+
+    <Grid x:Name="Stage" Background="#1A1A1A">
+      <ScrollViewer x:Name="Scroller" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <LayoutTransformControl x:Name="Holder" HorizontalAlignment="Center" VerticalAlignment="Center">
+          <Image x:Name="Picture" Stretch="Fill" Cursor="Hand" />
+        </LayoutTransformControl>
+      </ScrollViewer>
+      <TextBlock x:Name="Hint" Text="Open an image (Ctrl+O) or drag one here" Foreground="#B0B0B0" FontSize="16"
+                 HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
+    </Grid>
+  </DockPanel>
+</Window>

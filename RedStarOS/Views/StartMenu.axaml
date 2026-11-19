@@ -1,0 +1,151 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:svc="using:RedStarOS.Services" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="RedStarOS.Views.StartMenu"
+             Width="700" Height="600">
+  <UserControl.Styles>
+    <!-- spacing follows a 4/8 px grid -->
+    <Style Selector="ListBox.rail ListBoxItem">
+      <Setter Property="Padding" Value="12,8" />
+      <Setter Property="Margin" Value="0,2" />
+      <Setter Property="MinHeight" Value="36" />
+      <Setter Property="CornerRadius" Value="8" />
+    </Style>
+    <Style Selector="ListBox.apps ListBoxItem">
+      <Setter Property="Padding" Value="10,6" />
+      <Setter Property="Margin" Value="0,2,8,2" />
+      <Setter Property="CornerRadius" Value="10" />
+    </Style>
+    <!-- group headings in the list can't be selected or launched -->
+    <Style Selector="ListBox.apps ListBoxItem">
+      <Setter Property="IsEnabled" Value="{Binding IsApp}" />
+    </Style>
+    <Style Selector="ToggleButton.section">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="ToggleButton.section:checked /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource ShellAccentBrush}" />
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.footer">
+      <Setter Property="Margin" Value="8,0,0,0" />
+      <Setter Property="Padding" Value="12,6" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid RowDefinitions="Auto,*,Auto" Margin="20,20,20,16">
+
+    <TextBox x:Name="SearchBox" PlaceholderText="Search apps, files, settings and the web" FontSize="14" MinHeight="40"
+             Padding="4,10" CornerRadius="10" Margin="0,0,0,16" VerticalContentAlignment="Center">
+      <TextBox.InnerLeftContent>
+        <TextBlock Text="🔍" Margin="14,0,8,0" VerticalAlignment="Center" Opacity="0.6" />
+      </TextBox.InnerLeftContent>
+    </TextBox>
+
+    <Grid Grid.Row="1" ColumnDefinitions="220,Auto,*">
+
+      <!-- Category rail: Red Star apps and installed Linux apps are kept apart, one tab each -->
+      <Grid RowDefinitions="Auto,*">
+        <Border x:Name="SectionTabs" CornerRadius="10" Padding="4" Margin="0,0,16,12"
+                Background="{DynamicResource ShellCardBrush}">
+          <Grid ColumnDefinitions="*,*">
+            <ToggleButton x:Name="RsTab" Classes="section" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                          Padding="4,6" CornerRadius="6" ToolTip.Tip="Red Star apps" AutomationProperties.Name="Red Star apps">
+              <ContentControl x:Name="RsTabIcon" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </ToggleButton>
+            <ToggleButton x:Name="LinuxTab" Grid.Column="1" Classes="section" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                          Padding="4,6" CornerRadius="6" ToolTip.Tip="Linux apps installed on this computer" AutomationProperties.Name="Linux apps">
+              <ContentControl x:Name="LinuxTabIcon" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </ToggleButton>
+          </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <StackPanel Margin="0,0,16,0">
+            <ListBox x:Name="RsCats" Classes="rail" Background="Transparent" BorderThickness="0"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled">
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{Binding Label}" FontSize="14" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="{Binding Count}" FontSize="11" Opacity="0.5"
+                               Margin="8,0,0,0" VerticalAlignment="Center" />
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+
+            <ListBox x:Name="LinuxCats" Classes="rail" Background="Transparent" BorderThickness="0" IsVisible="False"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled">
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{Binding Label}" FontSize="14" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="{Binding Count}" FontSize="11" Opacity="0.5"
+                               Margin="8,0,0,0" VerticalAlignment="Center" />
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </StackPanel>
+        </ScrollViewer>
+      </Grid>
+
+      <Border Grid.Column="1" Width="1" Background="{DynamicResource ShellBorderBrush}" Margin="0,4" />
+
+      <!-- App list -->
+      <Grid Grid.Column="2" RowDefinitions="Auto,*" Margin="16,0,0,0">
+        <TextBlock x:Name="HeaderLabel" FontSize="12" FontWeight="SemiBold" Opacity="0.6"
+                   Margin="10,6,0,12" />
+        <ListBox x:Name="AppList" Grid.Row="1" Classes="apps" Background="Transparent" BorderThickness="0"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <Panel>
+                <!-- group heading in search results ("RED STAR APPS", "LINUX APPS", …) -->
+                <TextBlock Text="{Binding Title}" IsVisible="{Binding IsHeader}" FontSize="10" FontWeight="SemiBold"
+                           Opacity="0.55" Margin="0,12,0,4" />
+                <Grid ColumnDefinitions="Auto,*" MinHeight="48" IsVisible="{Binding IsApp}">
+                  <Panel Width="40" Height="40" VerticalAlignment="Center">
+                    <Border CornerRadius="10" Background="{Binding Badge}" IsVisible="{Binding ShowBadge}">
+                      <ContentControl Content="{Binding Glyph, Converter={x:Static svc:IconConverter.White}, ConverterParameter=22}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <Image Source="{Binding Icon}" IsVisible="{Binding HasIcon}" Width="36" Height="36"
+                           RenderOptions.BitmapInterpolationMode="HighQuality" />
+                  </Panel>
+                  <StackPanel Grid.Column="1" Margin="14,0,0,0" Spacing="2" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Title}" FontSize="14" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Subtitle}" FontSize="11" Opacity="0.6" TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+                </Grid>
+              </Panel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+        <TextBlock x:Name="EmptyLabel" Grid.Row="1" Text="No apps found" IsVisible="False" Opacity="0.6"
+                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+      </Grid>
+    </Grid>
+
+    <!-- Footer -->
+    <Border Grid.Row="2" Margin="0,16,0,0" Padding="0,16,0,0" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource ShellBorderBrush}">
+      <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+        <Border Width="36" Height="36" CornerRadius="18" ClipToBounds="True">
+          <Image x:Name="AvatarImage" Source="avares://RedStarOS/Assets/avatar.png" Stretch="UniformToFill" />
+        </Border>
+        <TextBlock x:Name="UserLabel" Grid.Column="1" Margin="12,0,0,0" FontSize="14"
+                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+        <Button Grid.Column="2" Classes="flat footer" Content="⚙  Settings" Click="OnSettings" />
+        <Button Grid.Column="3" Classes="flat footer" Content="Power  ▾">
+          <Button.Flyout>
+            <MenuFlyout Placement="TopEdgeAlignedRight">
+              <MenuItem Header="Log Off" Click="OnLogOff" />
+              <MenuItem Header="Shutdown" Click="OnShutdown" />
+              <MenuItem Header="Restart" Click="OnRestart" />
+            </MenuFlyout>
+          </Button.Flyout>
+        </Button>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

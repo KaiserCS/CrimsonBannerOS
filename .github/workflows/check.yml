@@ -1,0 +1,160 @@
+name: Check
+
+# Every push and pull request gets a green or red mark. Three jobs run side by side:
+#   • app            build + every C# test (every window opens, Files, archives, batch rename, terminal, …) and a
+#                    screenshot of every window (artifact "screenshots": open index.html)
+#   • window-manager redstar-wm on a virtual screen: its behaviour tests, click delivery, and a real Chromium
+#                    session (artifact "session-screenshots")
+#   • web-engine     ad blocker, GPU switches and the browser engine tests
+#   • compositor     redstar-comp (wlroots 0.20, in an Arch Linux container) built with warnings as errors, then its
+#                    behaviour tests on wlroots' virtual screen through Xwayland
+# The same checks run locally with ./check.sh (--full adds the web-engine tests).
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  app:
+    name: Build and C# tests
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: NuGet cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Libraries for drawing windows and the tools some features use
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libfontconfig1 fonts-dejavu-core fonts-noto-core \
+            libx11-dev gcc tar xz-utils zstd p7zip-full shared-mime-info
+
+      - name: Build
+        run: dotnet build RedStarOS/RedStarOS.csproj -c Release
+
+      - name: C# tests (with a screenshot of every window)
+        env:
+          REDSTAR_SCREENSHOTS: ${{ github.workspace }}/screenshots
+        run: >
+          dotnet test tests/RedStarOS.Tests/RedStarOS.Tests.csproj -c Release
+          --logger "console;verbosity=normal" --logger "trx;LogFilePrefix=results"
+          --results-directory TestResults
+
+      - name: Summary
+        if: always()
+        run: |
+          python3 .github/scripts/summary.py tests TestResults >> "$GITHUB_STEP_SUMMARY" || true
+          python3 .github/scripts/summary.py shots screenshots >> "$GITHUB_STEP_SUMMARY" || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: screenshots
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results
+          path: TestResults
+          retention-days: 14
+
+  window-manager:
+    name: Window manager (Xvfb)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: X11 build tools and a virtual screen
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc libx11-dev libxtst-dev libxi-dev xvfb x11-utils imagemagick
+
+      - name: redstar-wm compiles without warnings
+        run: gcc -O2 -Wall -Wextra -Werror -o /tmp/redstar-wm wm/redstar-wm.c -lX11 -ldl -lm
+
+      - name: Behaviour and click tests
+        run: wm/test/run-tests.sh
+
+      - name: Real session with Chromium
+        env:
+          SESSION_SHOTS: ${{ github.workspace }}/session-screenshots
+        run: |
+          python3 -m pip install --quiet playwright
+          python3 -m playwright install --with-deps chromium
+          python3 wm/test/session_test.py
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: session-screenshots
+          path: session-screenshots
+          if-no-files-found: ignore
+          retention-days: 14
+
+  web-engine:
+    name: Web engine
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Ad-blocker and GPU-switch tests
+        run: |
+          node webengine/test/adblock.test.js
+          node webengine/test/gpu.test.js
+
+      - name: Engine tests
+        working-directory: webengine/test
+        run: |
+          npm init -y >/dev/null
+          npm i --no-save playwright@1
+          npx playwright install --with-deps chromium
+          node run-tests.js
+
+  compositor:
+    name: Wayland compositor (wlroots 0.20)
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    timeout-minutes: 20
+    steps:
+      - name: wlroots 0.20 and build tools
+        run: |
+          pacman -Syu --noconfirm --needed git gcc meson ninja pkgconf wlroots0.20 wayland wayland-protocols \
+            libxkbcommon libxcb xcb-util-wm cairo libdrm pixman xorg-xwayland libx11 ttf-dejavu
+
+      - uses: actions/checkout@v4
+
+      - name: redstar-comp compiles without warnings
+        working-directory: compositor
+        run: |
+          meson setup build -Dwerror=true
+          meson compile -C build
+
+      - name: Behaviour tests (headless, through Xwayland)
+        run: compositor/test/run-tests.sh

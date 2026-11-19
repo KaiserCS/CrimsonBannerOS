@@ -1,0 +1,159 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="clr-namespace:RedStarOS.Views"
+        x:Class="RedStarOS.Views.PaintWindow"
+        Title="Untitled - Red Star Paint"
+        Width="1120" Height="760" MinWidth="720" MinHeight="480"
+        WindowStartupLocation="CenterOwner">
+  <DockPanel>
+    <Menu DockPanel.Dock="Top">
+      <MenuItem Header="_File">
+        <MenuItem Header="_New" Tag="new" InputGesture="Ctrl+N" Click="OnMenu" />
+        <MenuItem Header="_Open…" Tag="open" InputGesture="Ctrl+O" Click="OnMenu" />
+        <MenuItem Header="Paste _from file…" Tag="pastefrom" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="_Save" Tag="save" InputGesture="Ctrl+S" Click="OnMenu" />
+        <MenuItem Header="Save _as…" Tag="saveas" InputGesture="Ctrl+Shift+S" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="_Close" Tag="close" Click="OnMenu" />
+      </MenuItem>
+      <MenuItem Header="_Edit">
+        <MenuItem Header="_Undo" Tag="undo" InputGesture="Ctrl+Z" Click="OnMenu" />
+        <MenuItem Header="_Redo" Tag="redo" InputGesture="Ctrl+Y" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="Cu_t" Tag="cut" InputGesture="Ctrl+X" Click="OnMenu" />
+        <MenuItem Header="_Copy" Tag="copy" InputGesture="Ctrl+C" Click="OnMenu" />
+        <MenuItem Header="_Paste" Tag="paste" InputGesture="Ctrl+V" Click="OnMenu" />
+        <MenuItem Header="_Delete (Del)" Tag="delete" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="Select _all" Tag="selectall" InputGesture="Ctrl+A" Click="OnMenu" />
+        <MenuItem Header="Clear s_election (Esc)" Tag="deselect" Click="OnMenu" />
+      </MenuItem>
+      <MenuItem Header="_Image">
+        <MenuItem Header="C_rop to selection" Tag="crop" InputGesture="Ctrl+Shift+X" Click="OnMenu" />
+        <MenuItem Header="Re_size and skew…" Tag="resize" InputGesture="Ctrl+W" Click="OnMenu" />
+        <MenuItem Header="_Canvas size…" Tag="canvas" InputGesture="Ctrl+E" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="Rotate _right 90°" Tag="rotr" Click="OnMenu" />
+        <MenuItem Header="Rotate _left 90°" Tag="rotl" Click="OnMenu" />
+        <MenuItem Header="Rotate 18_0°" Tag="rot180" Click="OnMenu" />
+        <MenuItem Header="Flip _horizontal" Tag="fliph" Click="OnMenu" />
+        <MenuItem Header="Flip _vertical" Tag="flipv" Click="OnMenu" />
+        <Separator />
+        <MenuItem Header="_Invert colours" Tag="invert" InputGesture="Ctrl+Shift+I" Click="OnMenu" />
+        <MenuItem Header="C_lear image" Tag="clear" InputGesture="Ctrl+Shift+N" Click="OnMenu" />
+      </MenuItem>
+      <MenuItem Header="_View">
+        <MenuItem Header="Zoom _in (Ctrl +)" Tag="zoomin" Click="OnMenu" />
+        <MenuItem Header="Zoom _out (Ctrl -)" Tag="zoomout" Click="OnMenu" />
+        <MenuItem Header="_Actual size (Ctrl 0)" Tag="zoom100" Click="OnMenu" />
+        <MenuItem Header="_Fit to window" Tag="fit" Click="OnMenu" />
+        <Separator />
+        <MenuItem x:Name="GridItem" Header="_Gridlines" Tag="grid" InputGesture="Ctrl+G" ToggleType="CheckBox" Click="OnMenu" />
+        <MenuItem x:Name="StatusItem" Header="_Status bar" Tag="status" ToggleType="CheckBox" IsChecked="True" Click="OnMenu" />
+      </MenuItem>
+    </Menu>
+
+    <Border DockPanel.Dock="Top" Classes="card" CornerRadius="0" BorderThickness="0,0,0,1" Padding="8,6">
+      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+        <StackPanel Orientation="Horizontal" Spacing="12">
+
+          <StackPanel Spacing="3">
+            <UniformGrid x:Name="ToolsPanel" Columns="5" />
+            <TextBlock Text="Tools" Classes="caption" HorizontalAlignment="Center" />
+          </StackPanel>
+          <Border Width="1" Background="{DynamicResource ShellBorderBrush}" />
+
+          <StackPanel Spacing="3" MinWidth="120">
+            <ComboBox x:Name="BrushBox" HorizontalAlignment="Stretch" />
+            <Button Classes="flat" Content="Swap colours ⇄" Click="OnSwapColors" HorizontalAlignment="Stretch" />
+            <TextBlock Text="Brush" Classes="caption" HorizontalAlignment="Center" />
+          </StackPanel>
+          <Border Width="1" Background="{DynamicResource ShellBorderBrush}" />
+
+          <StackPanel Spacing="3" MinWidth="150">
+            <ComboBox x:Name="ShapeBox" HorizontalAlignment="Stretch" />
+            <ComboBox x:Name="FillBox" HorizontalAlignment="Stretch" />
+            <TextBlock Text="Shapes" Classes="caption" HorizontalAlignment="Center" />
+          </StackPanel>
+          <Border Width="1" Background="{DynamicResource ShellBorderBrush}" />
+
+          <StackPanel Spacing="3" Width="150">
+            <Slider x:Name="SizeSlider" Minimum="1" Maximum="60" Value="4" />
+            <CheckBox x:Name="SmoothBox" Content="Smooth edges" IsChecked="True" />
+            <TextBlock x:Name="SizeText" Text="Size: 4 px" Classes="caption" HorizontalAlignment="Center" />
+          </StackPanel>
+          <Border Width="1" Background="{DynamicResource ShellBorderBrush}" />
+
+          <StackPanel Spacing="3">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <Button Classes="flat" Content="Crop" Tag="crop" Click="OnMenu" />
+              <Button Classes="flat" Content="Resize" Tag="resize" Click="OnMenu" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <Button Classes="flat" Content="Rotate ⟳" Tag="rotr" Click="OnMenu" />
+              <Button Classes="flat" Content="Flip ⇋" Tag="fliph" Click="OnMenu" />
+            </StackPanel>
+            <CheckBox x:Name="TransparentBox" Content="Transparent selection" Click="OnTransparentChanged" />
+            <TextBlock Text="Image" Classes="caption" HorizontalAlignment="Center" />
+          </StackPanel>
+          <Border Width="1" Background="{DynamicResource ShellBorderBrush}" />
+
+          <StackPanel Spacing="3">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <StackPanel Spacing="2">
+                <Border x:Name="Sw1" Width="40" Height="30" CornerRadius="4" BorderThickness="2" BorderBrush="#99808080" Cursor="Hand" />
+                <TextBlock Text="Colour 1" Classes="caption" HorizontalAlignment="Center" />
+              </StackPanel>
+              <StackPanel Spacing="2">
+                <Border x:Name="Sw2" Width="40" Height="30" CornerRadius="4" BorderThickness="2" BorderBrush="#99808080" Cursor="Hand" />
+                <TextBlock Text="Colour 2" Classes="caption" HorizontalAlignment="Center" />
+              </StackPanel>
+              <UniformGrid x:Name="Palette" Rows="2" Columns="14" VerticalAlignment="Center" />
+              <Button Classes="flat" Content="Edit colours…" Click="OnEditColors" VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock Text="Colours  (left click = colour 1, right click = colour 2)" Classes="caption" HorizontalAlignment="Center" />
+          </StackPanel>
+          <Border Width="1" Background="{DynamicResource ShellBorderBrush}" />
+
+          <StackPanel Spacing="3">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <ComboBox x:Name="FontBox" Width="170" />
+              <ComboBox x:Name="FontSizeBox" Width="72" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <ToggleButton x:Name="BoldBtn" Content="B" FontWeight="Bold" Width="34" />
+              <ToggleButton x:Name="ItalicBtn" Content="I" FontStyle="Italic" Width="34" />
+              <ToggleButton x:Name="UnderBtn" Content="U" Width="34" />
+              <CheckBox x:Name="OpaqueBox" Content="Opaque" />
+            </StackPanel>
+            <TextBlock Text="Text" Classes="caption" HorizontalAlignment="Center" />
+          </StackPanel>
+
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+
+    <Border x:Name="StatusBar" DockPanel.Dock="Bottom" Classes="card" CornerRadius="0" BorderThickness="0,1,0,0" Padding="10,4">
+      <Grid ColumnDefinitions="150,150,170,*,Auto">
+        <TextBlock x:Name="PosText" Classes="caption" VerticalAlignment="Center" />
+        <TextBlock x:Name="SelText" Grid.Column="1" Classes="caption" VerticalAlignment="Center" />
+        <TextBlock x:Name="SizeText2" Grid.Column="2" Classes="caption" VerticalAlignment="Center" />
+        <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="6">
+          <Button Classes="flat" Content="−" Tag="zoomout" Click="OnMenu" Padding="8,0" />
+          <Slider x:Name="ZoomSlider" Minimum="-3" Maximum="3" Value="0" Width="150" VerticalAlignment="Center" />
+          <Button Classes="flat" Content="+" Tag="zoomin" Click="OnMenu" Padding="8,0" />
+          <TextBlock x:Name="ZoomText" Text="100%" Width="48" VerticalAlignment="Center" TextAlignment="Right" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Border Background="#33808080">
+      <ScrollViewer x:Name="Scroller" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <Grid Margin="12" HorizontalAlignment="Left" VerticalAlignment="Top">
+          <v:PaintCanvas x:Name="Surface" HorizontalAlignment="Left" VerticalAlignment="Top" />
+          <Canvas x:Name="Overlay" />
+        </Grid>
+      </ScrollViewer>
+    </Border>
+  </DockPanel>
+</Window>

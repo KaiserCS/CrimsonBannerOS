@@ -1,0 +1,49 @@
+name: Build AppImage
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  appimage:
+    # 22.04 keeps the glibc requirement low so the AppImage runs on older distros.
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Tools for AppImage creation and delta updates
+        run: sudo apt-get update && sudo apt-get install -y zsync libfuse2
+
+      - name: Build AppImage
+        env:
+          GH_REPO: ${{ github.repository }}
+        run: ./build-appimage.sh x64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RedStarOS-x86_64
+          path: |
+            dist/RedStarOS-x86_64.AppImage
+            dist/RedStarOS-x86_64.AppImage.zsync
+
+      - name: Publish release (tags only)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/RedStarOS-x86_64.AppImage
+            dist/RedStarOS-x86_64.AppImage.zsync

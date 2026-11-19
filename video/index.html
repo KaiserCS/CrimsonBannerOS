@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Red Star Video</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="idle-off">
+  <main id="stage">
+    <video id="video" preload="metadata"></video>
+
+    <div id="empty">
+      <div class="logo">&#9733;</div>
+      <h1>Red Star Video</h1>
+      <p>Drop video files here, or press <b>O</b> to open them.</p>
+      <button id="openBtn">Open files...</button>
+    </div>
+
+    <div id="error" hidden>
+      <p id="errorText"></p>
+      <button id="externalBtn">Open with system player</button>
+    </div>
+
+    <div id="toast" hidden></div>
+
+    <div id="controls">
+      <input id="seek" type="range" min="0" max="1000" value="0" step="1">
+      <div class="row">
+        <button id="prevBtn" title="Previous (Page Up)">&#9198;</button>
+        <button id="playBtn" title="Play / Pause (Space)">&#9654;</button>
+        <button id="nextBtn" title="Next (Page Down)">&#9197;</button>
+        <span id="time">0:00 / 0:00</span>
+        <span class="spacer"></span>
+        <select id="speed" title="Speed (, and .)">
+          <option value="0.5">0.5x</option>
+          <option value="0.75">0.75x</option>
+          <option value="1" selected>1x</option>
+          <option value="1.25">1.25x</option>
+          <option value="1.5">1.5x</option>
+          <option value="2">2x</option>
+        </select>
+        <button id="muteBtn" title="Mute (M)">&#128266;</button>
+        <input id="volume" type="range" min="0" max="100" value="100" step="1" title="Volume (Up / Down)">
+        <button id="subBtn" title="Load subtitles (S), show/hide (V)">CC</button>
+        <button id="repeatBtn" title="Repeat (R)">&#128257;</button>
+        <button id="listBtn" title="Playlist (L)">&#9776;</button>
+        <button id="fullBtn" title="Full screen (F)">&#9974;</button>
+      </div>
+    </div>
+  </main>
+
+  <aside id="playlist" hidden>
+    <header>
+      <strong>Playlist</strong>
+      <span class="spacer"></span>
+      <button id="plOpen" title="Add files (O)">+</button>
+      <button id="plClear" title="Clear playlist">Clear</button>
+    </header>
+    <ul id="items"></ul>
+  </aside>
+
+  <script src="helpers.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

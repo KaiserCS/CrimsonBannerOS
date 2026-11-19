@@ -1,0 +1,232 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:svc="using:RedStarOS.Services"
+        x:Class="RedStarOS.Views.FileManagerWindow"
+        Title="Files"
+        Width="1100" Height="700" MinWidth="720" MinHeight="440"
+        WindowStartupLocation="CenterOwner">
+  <Window.Resources>
+    <!-- list view row: icon · name · kind · size · modified -->
+    <DataTemplate x:Key="ListRow">
+      <Grid ColumnDefinitions="36,*,150,90,150" MinHeight="34">
+        <Panel Width="24" Height="24" VerticalAlignment="Center">
+          <ContentControl Content="{Binding IconKey, Converter={x:Static svc:IconConverter.Default}, ConverterParameter=20}" IsVisible="{Binding !HasThumb}" />
+          <Image Source="{Binding Thumb}" IsVisible="{Binding HasThumb}" Stretch="UniformToFill" Width="24" Height="24" />
+        </Panel>
+        <DockPanel Grid.Column="1" VerticalAlignment="Center">
+          <TextBlock DockPanel.Dock="Right" Text="★" Foreground="#E0A100" Margin="6,0,4,0" IsVisible="{Binding Starred}" VerticalAlignment="Center" />
+          <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Opacity="{Binding NameOpacity}" />
+        </DockPanel>
+        <TextBlock Grid.Column="2" Text="{Binding Kind}" Classes="caption" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="8,0" />
+        <TextBlock Grid.Column="3" Text="{Binding SizeText}" Classes="caption" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,16,0" />
+        <TextBlock Grid.Column="4" Text="{Binding DateText}" Classes="caption" VerticalAlignment="Center" />
+      </Grid>
+    </DataTemplate>
+    <!-- grid view tile: big icon or picture thumbnail, two lines of name -->
+    <DataTemplate x:Key="GridTile">
+      <StackPanel Width="112" Spacing="6" Margin="0,4">
+        <Panel Width="72" Height="72" HorizontalAlignment="Center">
+          <ContentControl Content="{Binding IconKey, Converter={x:Static svc:IconConverter.Default}, ConverterParameter=56}" IsVisible="{Binding !HasThumb}" />
+          <Border CornerRadius="6" ClipToBounds="True" IsVisible="{Binding HasThumb}">
+            <Image Source="{Binding Thumb}" Stretch="UniformToFill" />
+          </Border>
+        </Panel>
+        <TextBlock Text="{Binding TileName}" TextAlignment="Center" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"
+                   FontSize="12.5" Opacity="{Binding NameOpacity}" />
+      </StackPanel>
+    </DataTemplate>
+  </Window.Resources>
+
+  <Window.Styles>
+    <Style Selector="Button.tool">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="8" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="MinWidth" Value="36" />
+      <Setter Property="MinHeight" Value="36" />
+    </Style>
+    <Style Selector="Button.crumb">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="8,4" />
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="FontSize" Value="13.5" />
+    </Style>
+    <Style Selector="Button.nav">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="10,7" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Margin" Value="0,1" />
+    </Style>
+    <Style Selector="Button.nav.current">
+      <Setter Property="Background" Value="{DynamicResource ShellAccentSoftBrush}" />
+    </Style>
+    <Style Selector="Button.header">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="0,4" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Opacity" Value="0.7" />
+    </Style>
+    <Style Selector="ListBox#FileList ListBoxItem">
+      <Setter Property="Padding" Value="8,2" />
+      <Setter Property="Margin" Value="0,1" />
+      <Setter Property="CornerRadius" Value="8" />
+    </Style>
+    <Style Selector="ListBox#FileList.grid ListBoxItem">
+      <Setter Property="Padding" Value="6" />
+      <Setter Property="Margin" Value="4" />
+      <Setter Property="CornerRadius" Value="10" />
+    </Style>
+  </Window.Styles>
+
+  <Grid RowDefinitions="Auto,Auto,*,Auto,Auto">
+
+    <!-- ═════════ tabs (shown with two or more) ═════════ -->
+    <Border x:Name="TabBar" IsVisible="False" Padding="8,6,8,0" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource ShellBorderBrush}">
+      <Grid ColumnDefinitions="*,Auto">
+        <WrapPanel x:Name="TabStrip" />
+        <Button x:Name="NewTabButton" Grid.Column="1" Classes="tool" ToolTip.Tip="New tab (Ctrl+T)" Click="OnNewTab" Margin="4,0,0,4" />
+      </Grid>
+    </Border>
+
+    <!-- ═════════ toolbar ═════════ -->
+    <Border Grid.Row="1" Padding="10,8" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource ShellBorderBrush}">
+      <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto">
+        <Button x:Name="BackButton" Classes="tool" ToolTip.Tip="Back (Alt+←)" Click="OnBack" />
+        <Button x:Name="ForwardButton" Grid.Column="1" Classes="tool" ToolTip.Tip="Forward (Alt+→)" Click="OnForward" />
+        <Button x:Name="UpButton" Grid.Column="2" Classes="tool" ToolTip.Tip="Up one folder (Alt+↑)" Click="OnUp" Margin="0,0,8,0" />
+
+        <!-- breadcrumb path; click an empty spot (or Ctrl+L) to type a path -->
+        <Border x:Name="PathFrame" Grid.Column="3" CornerRadius="10" Padding="4,2" MinHeight="36"
+                Background="{DynamicResource ShellCardBrush}" BorderThickness="1" BorderBrush="{DynamicResource ShellBorderBrush}">
+          <Panel>
+            <ScrollViewer x:Name="CrumbScroll" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+              <StackPanel x:Name="Crumbs" Orientation="Horizontal" VerticalAlignment="Center" />
+            </ScrollViewer>
+            <TextBox x:Name="PathBox" IsVisible="False" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center" />
+          </Panel>
+        </Border>
+
+        <TextBox x:Name="SearchBox" Grid.Column="4" Width="230" Margin="8,0,0,0" CornerRadius="10" VerticalContentAlignment="Center"
+                 PlaceholderText="Search" MinHeight="36" />
+
+        <Button x:Name="NewButton" Grid.Column="5" Classes="tool" ToolTip.Tip="New folder or file" Margin="8,0,0,0" />
+        <Button x:Name="ViewButton" Grid.Column="6" Classes="tool" ToolTip.Tip="List or grid (Ctrl+1 / Ctrl+2)" Click="OnToggleView" />
+        <Button x:Name="DetailsButton" Grid.Column="7" Classes="tool" ToolTip.Tip="Details panel (F9)" />
+        <Button x:Name="MoreButton" Grid.Column="8" Classes="tool" ToolTip.Tip="More" />
+      </Grid>
+    </Border>
+
+    <!-- ═════════ sidebar | content ═════════ -->
+    <Grid Grid.Row="2" ColumnDefinitions="232,1,*,Auto">
+      <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <StackPanel x:Name="Sidebar" Margin="10,10,10,10" Spacing="2" />
+      </ScrollViewer>
+      <Border Grid.Column="1" Background="{DynamicResource ShellBorderBrush}" />
+
+      <Grid Grid.Column="2" RowDefinitions="Auto,Auto,*">
+        <!-- shown in the Trash -->
+        <Border x:Name="TrashBar" IsVisible="False" Margin="12,10,12,0" Padding="12,8" CornerRadius="10" Background="{DynamicResource ShellCardBrush}">
+          <Grid ColumnDefinitions="*,Auto,Auto">
+            <TextBlock x:Name="TrashText" VerticalAlignment="Center" TextWrapping="Wrap" />
+            <Button Grid.Column="1" Content="Restore selected" Click="OnRestore" Margin="8,0,0,0" />
+            <Button Grid.Column="2" Content="Empty Trash" Click="OnEmptyTrash" Margin="8,0,0,0" />
+          </Grid>
+        </Border>
+
+        <!-- shown inside an archive (a read-only unpacked copy) -->
+        <Border x:Name="ArchiveBar" IsVisible="False" Margin="12,10,12,0" Padding="12,8" CornerRadius="10" Background="{DynamicResource ShellCardBrush}">
+          <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+            <ContentControl x:Name="ArchiveIcon" VerticalAlignment="Center" Margin="0,0,10,0" />
+            <TextBlock x:Name="ArchiveText" Grid.Column="1" VerticalAlignment="Center" TextWrapping="Wrap" />
+            <Button x:Name="ArchiveExtract" Grid.Column="2" Content="Extract all" Classes="primary" Margin="8,0,0,0" />
+            <Button x:Name="ArchiveExtractTo" Grid.Column="3" Content="Extract to…" Margin="8,0,0,0" />
+          </Grid>
+        </Border>
+
+        <!-- column headers (list view) -->
+        <Grid x:Name="ListHeader" Grid.Row="1" ColumnDefinitions="36,*,150,90,150" Margin="20,8,24,0">
+          <Button x:Name="SortName" Grid.Column="1" Classes="header" Click="OnSortName" />
+          <Button x:Name="SortKind" Grid.Column="2" Classes="header" Click="OnSortKind" Margin="8,0" />
+          <Button x:Name="SortSize" Grid.Column="3" Classes="header" Click="OnSortSize" HorizontalContentAlignment="Right" Margin="0,0,16,0" />
+          <Button x:Name="SortDate" Grid.Column="4" Classes="header" Click="OnSortDate" />
+        </Grid>
+
+        <ListBox x:Name="FileList" Grid.Row="2" SelectionMode="Multiple" Background="Transparent" BorderThickness="0"
+                 Margin="12,4,12,8" DoubleTapped="OnEntryActivated" ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+
+        <!-- rubber-band selection: drag on empty space -->
+        <Canvas x:Name="BandLayer" Grid.Row="2" Margin="12,4,12,8" IsHitTestVisible="False" ClipToBounds="True">
+          <Border x:Name="Band" IsVisible="False" BorderThickness="1" CornerRadius="3"
+                  BorderBrush="{DynamicResource ShellAccentBrush}" Background="{DynamicResource ShellAccentSoftBrush}" Opacity="0.8" />
+        </Canvas>
+
+        <!-- Space: quick preview of the selected item -->
+        <Border x:Name="PreviewLayer" Grid.Row="0" Grid.RowSpan="3" IsVisible="False" Background="#99000000" Padding="28">
+          <Border x:Name="PreviewCard" CornerRadius="14" Padding="18" Background="{DynamicResource ShellCardBrush}"
+                  BorderThickness="1" BorderBrush="{DynamicResource ShellBorderBrush}" MaxWidth="900">
+            <Grid RowDefinitions="Auto,*,Auto">
+              <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,12">
+                <ContentControl x:Name="PreviewIcon" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+                  <TextBlock x:Name="PreviewName" FontSize="16" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                  <TextBlock x:Name="PreviewInfo" Classes="caption" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                  <Button x:Name="PreviewOpen" Content="Open" Classes="primary" Padding="14,6" />
+                  <Button x:Name="PreviewClose" Classes="tool" ToolTip.Tip="Close (Space / Esc)" />
+                </StackPanel>
+              </Grid>
+              <Panel x:Name="PreviewBody" Grid.Row="1" />
+              <TextBlock Grid.Row="2" Classes="caption" Margin="0,12,0,0" HorizontalAlignment="Center"
+                         Text="↑ ↓ ← → next item · Enter open · Space or Esc close" />
+            </Grid>
+          </Border>
+        </Border>
+
+        <!-- empty folder / no results -->
+        <StackPanel x:Name="EmptyState" Grid.Row="2" IsVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10" IsHitTestVisible="False">
+          <ContentControl x:Name="EmptyIcon" HorizontalAlignment="Center" Opacity="0.35" />
+          <TextBlock x:Name="EmptyText" HorizontalAlignment="Center" Opacity="0.6" FontSize="14" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="440" />
+        </StackPanel>
+      </Grid>
+
+      <!-- F9: details of the selection -->
+      <Border x:Name="DetailsPanel" Grid.Column="3" Width="290" IsVisible="False" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource ShellBorderBrush}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <StackPanel x:Name="DetailsBody" Margin="18,16" Spacing="6" />
+        </ScrollViewer>
+      </Border>
+    </Grid>
+
+    <!-- ═════════ copy / move in progress ═════════ -->
+    <Border x:Name="OpPanel" Grid.Row="3" IsVisible="False" Padding="14,8" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource ShellBorderBrush}"
+            Background="{DynamicResource ShellCardBrush}">
+      <Grid ColumnDefinitions="*,220,Auto">
+        <TextBlock x:Name="OpText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,12,0" />
+        <ProgressBar x:Name="OpBar" Grid.Column="1" Minimum="0" Maximum="1" Height="6" VerticalAlignment="Center" />
+        <Button x:Name="OpCancel" Grid.Column="2" Content="Cancel" Margin="12,0,0,0" Padding="12,4" />
+      </Grid>
+    </Border>
+
+    <!-- ═════════ status bar ═════════ -->
+    <Border Grid.Row="4" Padding="14,6" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource ShellBorderBrush}">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <TextBlock x:Name="StatusLabel" FontSize="12" Opacity="0.75" VerticalAlignment="Center" />
+          <Button x:Name="UndoButton" IsVisible="False" Padding="8,1" FontSize="12" Classes="flat" VerticalAlignment="Center" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <TextBlock x:Name="FreeLabel" FontSize="12" Opacity="0.75" VerticalAlignment="Center" />
+          <ProgressBar x:Name="FreeBar" Width="90" Height="4" Minimum="0" Maximum="1" VerticalAlignment="Center" />
+        </StackPanel>
+      </Grid>
+    </Border>
+  </Grid>
+</Window>

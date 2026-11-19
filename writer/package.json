@@ -1,0 +1,10 @@
+{
+  "name": "redstar-writer",
+  "version": "1.0.0",
+  "description": "Red Star Writer - rich text word processor (Electron)",
+  "main": "main.js",
+  "scripts": {
+    "start": "../browser/node_modules/.bin/electron . --no-sandbox"
+  },
+  "license": "MIT"
+}

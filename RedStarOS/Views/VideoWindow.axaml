@@ -1,0 +1,74 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="RedStarOS.Views.VideoWindow"
+        Title="Red Star Video"
+        Width="1040" Height="660" MinWidth="560" MinHeight="380"
+        WindowStartupLocation="CenterScreen">
+  <DockPanel>
+    <!-- Controls -->
+    <Border x:Name="ControlsBar" DockPanel.Dock="Bottom" Classes="card" CornerRadius="0" BorderThickness="0,1,0,0" Padding="10,6">
+      <StackPanel>
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <TextBlock x:Name="TimeText" Grid.Column="0" Text="0:00" Classes="caption" VerticalAlignment="Center" MinWidth="46" />
+          <Slider x:Name="SeekSlider" Grid.Column="1" Minimum="0" Maximum="1000" Value="0" Margin="8,0" />
+          <TextBlock x:Name="LenText" Grid.Column="2" Text="0:00" Classes="caption" VerticalAlignment="Center" MinWidth="46" TextAlignment="Right" />
+        </Grid>
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+          <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,4,0,0">
+            <Button Classes="flat" Content="📂 Open…" Tag="open" Click="OnCmd" ToolTip.Tip="Open files (O)" />
+            <Button Classes="flat" Content="⏮" Tag="prev" Click="OnCmd" ToolTip.Tip="Previous (Page Up)" />
+            <Button x:Name="PlayBtn" Classes="primary" Content="▶" Width="44" Tag="play" Click="OnCmd" ToolTip.Tip="Play / pause (Space)" />
+            <Button Classes="flat" Content="⏭" Tag="next" Click="OnCmd" ToolTip.Tip="Next (Page Down)" />
+            <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
+            <Button x:Name="MuteBtn" Classes="flat" Content="🔊" Tag="mute" Click="OnCmd" ToolTip.Tip="Mute (M)" />
+            <Slider x:Name="VolSlider" Minimum="0" Maximum="100" Value="80" Width="110" VerticalAlignment="Center" />
+            <TextBlock x:Name="VolText" Classes="caption" Width="38" VerticalAlignment="Center" TextAlignment="Center" />
+            <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
+            <ComboBox x:Name="SpeedBox" Width="84" VerticalAlignment="Center" ToolTip.Tip="Playback speed (, and .)" />
+            <Button x:Name="RepeatBtn" Classes="flat" Content="Repeat: off" Tag="repeat" Click="OnCmd" ToolTip.Tip="Repeat mode (R)" />
+            <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
+            <Button x:Name="SubsBtn" Classes="flat" Content="CC" Tag="togglesubs" Click="OnCmd" ToolTip.Tip="Show or hide subtitles (V)" />
+            <Button Classes="flat" Content="Load subtitles…" Tag="loadsubs" Click="OnCmd" ToolTip.Tip="Load a subtitle file (S)" />
+            <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
+            <Button x:Name="ListBtn" Classes="flat" Content="☰ Playlist" Tag="playlist" Click="OnCmd" ToolTip.Tip="Show or hide the playlist (L)" />
+            <Button Classes="flat" Content="⛶" Tag="fullscreen" Click="OnCmd" ToolTip.Tip="Full screen (F, double-click)" />
+            <Button Classes="flat" Content="Open with system player" Tag="external" Click="OnCmd" />
+          </StackPanel>
+        </ScrollViewer>
+      </StackPanel>
+    </Border>
+
+    <!-- Thin hover strip used in full screen to bring the controls back -->
+    <Border x:Name="HoverStrip" DockPanel.Dock="Bottom" Height="6" Background="Transparent" IsVisible="False" />
+
+    <!-- Playlist -->
+    <Border x:Name="ListPanel" DockPanel.Dock="Right" Width="270" Classes="card" CornerRadius="0" BorderThickness="1,0,0,0">
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Margin="10,8" Orientation="Horizontal" Spacing="6">
+          <TextBlock Text="Playlist" FontWeight="SemiBold" VerticalAlignment="Center" />
+          <TextBlock x:Name="ListCount" Classes="caption" VerticalAlignment="Center" />
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="4" Margin="8">
+          <Button Classes="flat" Content="Add…" Tag="open" Click="OnCmd" />
+          <Button Classes="flat" Content="Remove" Tag="remove" Click="OnCmd" />
+          <Button Classes="flat" Content="Clear" Tag="clear" Click="OnCmd" />
+        </StackPanel>
+        <ListBox x:Name="PlayList" Background="Transparent" Margin="4,0">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" Padding="4,5" ToolTip.Tip="{Binding Path}" />
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </DockPanel>
+    </Border>
+
+    <!-- Stage -->
+    <Grid x:Name="Stage" Background="Black">
+      <Image x:Name="Video" Stretch="Uniform" />
+      <StackPanel x:Name="Overlay" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8" IsHitTestVisible="False">
+        <TextBlock x:Name="OverlayIcon" Text="🎬" FontSize="56" HorizontalAlignment="Center" Foreground="#CCCCCC" />
+        <TextBlock x:Name="OverlayText" Text="Drop videos or music here, or press O to open" Foreground="#CCCCCC" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="460" />
+      </StackPanel>
+    </Grid>
+  </DockPanel>
+</Window>

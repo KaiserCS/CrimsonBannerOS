@@ -1,0 +1,48 @@
+#!/bin/sh
+# Starts Red Star OS as a full desktop session.
+# Red Star OS is a shell, not a window manager, so a lightweight WM is started underneath it.
+APP="${REDSTAROS_APP:-@APPIMAGE@}"
+
+CFG="${XDG_CONFIG_HOME:-$HOME/.config}/redstaros"
+mkdir -p "$CFG"
+# Red Star OS is the whole session here: no nested display needed for keyboard/mouse isolation.
+export REDSTAR_SESSION=1
+export XDG_CURRENT_DESKTOP=RedStar
+
+# "Red Star OS (Wayland)" at the login screen (redstaros-session --wayland): Red Star runs inside redstar-comp, its
+# own Wayland compositor, which also replaces the window manager and picom. Falls back to X11 if it isn't built.
+if [ "$1" = "--wayland" ]; then
+    export REDSTAR_WAYLAND=1
+    unset DISPLAY WAYLAND_DISPLAY
+    exec "$APP"
+fi
+
+# Settings → Accessibility → Large mouse pointer: applies to the window manager and every program in the session.
+if grep -q '"LargeCursor": *true' "$CFG/settings.json" 2>/dev/null; then
+    export XCURSOR_SIZE=48
+    command -v xrdb >/dev/null 2>&1 && printf 'Xcursor.size: 48\n' | xrdb -merge 2>/dev/null
+fi
+
+# Red Star OS starts its own window manager (redstar-wm) when none is running.
+# To use another one, set REDSTAR_WM, e.g. REDSTAR_WM=openbox in ~/.xprofile.
+if [ -n "$REDSTAR_WM" ] && [ "$REDSTAR_WM" != builtin ] && command -v "$REDSTAR_WM" >/dev/null 2>&1; then
+    if [ "$REDSTAR_WM" = openbox ]; then
+        # Red Star OS draws its own Alt+Tab switcher: start openbox with its usual settings minus Alt+Tab.
+        RC=""
+        for f in "$HOME/.config/openbox/rc.xml" /etc/xdg/openbox/rc.xml /etc/openbox/rc.xml; do
+            [ -f "$f" ] && { RC="$f"; break; }
+        done
+        if [ -n "$RC" ]; then
+            sed -e '/<keybind key="A-Tab">/,/<\/keybind>/d' -e '/<keybind key="A-S-Tab">/,/<\/keybind>/d' \
+                "$RC" > "$CFG/openbox-rc.xml"
+            openbox --config-file "$CFG/openbox-rc.xml" &
+        else
+            openbox &
+        fi
+    else
+        "$REDSTAR_WM" &
+    fi
+    sleep 0.3
+fi
+
+exec "$APP"

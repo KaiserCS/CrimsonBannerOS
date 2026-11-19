@@ -1,0 +1,61 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="RedStarOS.Views.WriterWindow"
+        Title="Red Star Writer"
+        Width="1083" Height="660"
+        WindowStartupLocation="CenterOwner">
+  <DockPanel>
+    <DockPanel DockPanel.Dock="Top">
+      <TextBlock DockPanel.Dock="Right" Text="Red Star Writer" Classes="brand"
+                 FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0" />
+      <Menu>
+        <MenuItem Header="_File">
+          <MenuItem Header="_New Tab" InputGesture="Ctrl+N" Click="OnNew" />
+          <MenuItem Header="_Open..." InputGesture="Ctrl+O" Click="OnOpen" />
+          <MenuItem x:Name="RecentMenu" Header="Open _Recent" />
+          <Separator />
+          <MenuItem Header="_Save" InputGesture="Ctrl+S" Click="OnSave" />
+          <MenuItem Header="Save _As..." InputGesture="Ctrl+Shift+S" Click="OnSaveAs" />
+          <Separator />
+          <MenuItem Header="_Print" Click="OnPrint" />
+          <Separator />
+          <MenuItem Header="Close _Tab" InputGesture="Ctrl+W" Click="OnCloseTab" />
+          <MenuItem Header="E_xit" Click="OnExit" />
+        </MenuItem>
+        <MenuItem Header="_Edit">
+          <MenuItem Header="_Undo" Click="OnUndo" />
+          <MenuItem Header="_Redo" Click="OnRedo" />
+          <Separator />
+          <MenuItem Header="Cu_t" Click="OnCut" />
+          <MenuItem Header="_Copy" Click="OnCopy" />
+          <MenuItem Header="_Paste" Click="OnPaste" />
+          <Separator />
+          <MenuItem Header="Select _All" Click="OnSelectAll" />
+          <MenuItem Header="_Find and Replace..." InputGesture="Ctrl+F" Click="OnFind" />
+        </MenuItem>
+        <MenuItem Header="_Text Settings">
+          <MenuItem Header="Font Color" Click="OnFontColor" />
+          <MenuItem Header="Font Size" Click="OnFontSize" />
+        </MenuItem>
+      </Menu>
+    </DockPanel>
+
+    <Border x:Name="FindBar" DockPanel.Dock="Top" IsVisible="False" Padding="6"
+            BorderThickness="0,0,0,1" BorderBrush="Gray">
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <TextBox x:Name="FindBox" Width="200" PlaceholderText="Find" />
+        <TextBox x:Name="ReplaceBox" Width="200" PlaceholderText="Replace with" />
+        <Button Content="Next" Click="OnFindNext" />
+        <Button Content="Replace" Click="OnReplace" />
+        <Button Content="Replace All" Click="OnReplaceAll" />
+        <Button Content="Close" Click="OnCloseFind" />
+        <TextBlock x:Name="FindStatus" VerticalAlignment="Center" />
+      </StackPanel>
+    </Border>
+
+    <Border DockPanel.Dock="Bottom" Padding="10,3" BorderThickness="0,1,0,0" BorderBrush="Gray">
+      <TextBlock x:Name="StatusLabel" FontSize="12" />
+    </Border>
+
+    <TabControl x:Name="Tabs" />
+  </DockPanel>
+</Window>
