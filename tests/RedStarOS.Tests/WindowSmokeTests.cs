@@ -22,6 +22,7 @@ public class WindowSmokeTests
     private static bool Environmental(Exception e) =>
         e is DllNotFoundException or EntryPointNotFoundException ||
         e.GetType().Name.Contains("VLC", StringComparison.OrdinalIgnoreCase) ||
+        e.Message.Contains("libvlc", StringComparison.OrdinalIgnoreCase) ||      // VideoWindow without VLC installed
         (e.InnerException != null && Environmental(e.InnerException));
 
     [AvaloniaTheory]

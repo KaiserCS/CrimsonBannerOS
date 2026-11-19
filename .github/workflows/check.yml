@@ -28,9 +28,9 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 8.0.x
 
@@ -45,7 +45,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libfontconfig1 fonts-dejavu-core fonts-noto-core \
-            libx11-dev gcc tar xz-utils zstd p7zip-full shared-mime-info
+            libx11-dev gcc tar xz-utils zstd p7zip-full shared-mime-info libvlc5 vlc-plugin-base
 
       - name: Build
         run: dotnet build RedStarOS/RedStarOS.csproj -c Release
@@ -64,7 +64,7 @@ jobs:
           python3 .github/scripts/summary.py tests TestResults >> "$GITHUB_STEP_SUMMARY" || true
           python3 .github/scripts/summary.py shots screenshots >> "$GITHUB_STEP_SUMMARY" || true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: screenshots
@@ -72,7 +72,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: failure()
         with:
           name: test-results
@@ -84,7 +84,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: X11 build tools and a virtual screen
         run: |
@@ -105,7 +105,7 @@ jobs:
           python3 -m playwright install --with-deps chromium
           python3 wm/test/session_test.py
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: session-screenshots
@@ -118,9 +118,9 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 20
 
@@ -148,7 +148,7 @@ jobs:
           pacman -Syu --noconfirm --needed git gcc meson ninja pkgconf wlroots0.20 wayland wayland-protocols \
             libxkbcommon libxcb xcb-util-wm cairo libdrm pixman xorg-xwayland libx11 ttf-dejavu
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: redstar-comp compiles without warnings
         working-directory: compositor

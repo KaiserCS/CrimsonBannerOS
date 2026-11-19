@@ -20,6 +20,7 @@ public class ScreenshotTests
     private static bool Environmental(Exception e) =>
         e is DllNotFoundException or EntryPointNotFoundException ||
         e.GetType().Name.Contains("VLC", StringComparison.OrdinalIgnoreCase) ||
+        e.Message.Contains("libvlc", StringComparison.OrdinalIgnoreCase) ||      // VideoWindow without VLC installed
         (e.InnerException != null && Environmental(e.InnerException));
 
     /// <summary>Shows the window, saves a picture of it when screenshots are on, closes it.</summary>
