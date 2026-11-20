@@ -322,6 +322,12 @@ sudo pacman -S dotnet-sdk-8.0 webkitgtk-6.0 gtk4 json-glib libsoup3 meson   # th
 dotnet run --project RedStarOS       # development run, no AppImage
 ```
 
+**Offline builds, from Red Star's own package feed.** Package versions and their hashes are fixed in
+`packages.lock.json`. `tools/packages.sh fill` downloads them once (about 1.7 GB with .NET's runtime for x64 and
+arm64) into `~/.local/share/redstaros/packages`; after that `./check.sh` and `./build-appimage.sh` restore from it
+alone and need no network. `tools/packages.sh export feed.tar` / `import feed.tar` carry it to another machine.
+After changing a package version, run `tools/packages.sh fill` and commit the lock files.
+
 Optional self-update support: `GH_REPO=user/repo ./build-appimage.sh` embeds update information
 (also install `zsync` so the `.zsync` file is produced). `.github/workflows/appimage.yml` does this
 in CI and attaches both files to a GitHub release when you push a `v*` tag.

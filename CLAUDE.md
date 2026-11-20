@@ -24,4 +24,7 @@
   (without `.git`, `bin`, `obj`, `node_modules`, `__pycache__`, screenshots, `compositor/build`).
 - Layout: `RedStarOS/` the Avalonia shell (C#), `compositor/` redstar-comp (C, wlroots), `wm/` redstar-wm (X11),
   `browser/` Red Star Online (C, GTK 4 + WebKitGTK),
-  `tests/` C# tests, `compositor/test/` headless compositor tests, `browser/test/` the browser's unit tests and self-test.
+  `tests/` C# tests, `compositor/test/` headless compositor tests, `browser/test/` the browser's unit tests and self-test,
+  `tools/packages.sh` the local NuGet feed.
+- Package versions are exact and locked (`packages.lock.json`, locked mode on CI). Changing one means updating the lock
+  files in the same change (the CI "packages" job prints new ones in its log when they're missing).

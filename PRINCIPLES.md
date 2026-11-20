@@ -44,7 +44,7 @@ same change that adds it, or it doesn't go in.
 | libVLC | video | VideoLAN (non-profit) | LGPL-2.1 | accepted |
 | xUnit, Playwright | tests | community, Microsoft (Playwright) | Apache-2.0, Apache-2.0 | tests only. Playwright is left only in the window manager's optional session test (a Chromium window as a real app); way out: a GTK program in its place |
 | GitHub and GitHub Actions | hosting, CI | Microsoft | proprietary service | **dependent, kept by decision (19 Nov 2026).** Codeberg's terms (July 2026) bar projects mostly written by generative AI and limit private repositories, and self-hosting Forgejo costs upkeep; independence is cheaper to win in other layers. GitHub still only repeats `./check.sh` (see 4). Way out if that changes: self-hosted Forgejo (GPL-3.0-or-later) with its own runner, GitHub as a push mirror. |
-| NuGet, npm registries | package downloads | Microsoft, GitHub (Microsoft) | proprietary services | **dependent.** Way out: a local package cache so builds can run offline. |
+| NuGet registry (nuget.org) | filling our package feed, once | Microsoft | proprietary service | **reduced to a one-time download** (20 Nov 2026). Exact versions and content hashes are in the repository (`packages.lock.json`); `tools/packages.sh` fills our own feed once, and from then on `./check.sh` and `./build-appimage.sh` restore from it alone, offline (CI proves it with nuget.org cut off). A filled feed can be passed on as a tar file, so a member never has to reach nuget.org. npm is gone with Electron. |
 | AI-assisted development | writing and reviewing code | Anthropic (company) | proprietary service | **dependent.** Its output is GPL like all our code; the tool itself is not ours. Nothing in the build or the running system depends on it. |
 
 ## The goal: self-sufficiency to a point, 75% or more
@@ -70,15 +70,15 @@ whenever a layer changes.
 | Tests | xUnit, our own harnesses | commons |
 | Build and release | check.sh, build-appimage.sh | ours |
 | Source hosting and CI | GitHub | dependent |
-| Package sources | NuGet, npm registries | dependent |
+| Package sources | our own feed (`tools/packages.sh`), locked versions and hashes | ours |
 
-**Now: 8 of 12 (67%).** The web engine moved to WebKitGTK (Red Star Online's rewrite, 20 Nov 2026). Source hosting
-stays on GitHub by decision (19 Nov 2026, see the dependency table), so the rest of the way runs through the other
-layers:
+**Now: 9 of 12 (75%): the target is reached, and from here it is the floor.** The web engine moved to WebKitGTK
+(Red Star Online's rewrite, 20 Nov 2026), Electron and npm were removed, and builds restore from our own package feed
+(20 Nov 2026). Source hosting stays on GitHub by decision (19 Nov 2026, see the dependency table).
 
 1. ~~Move the web engine to WebKitGTK~~: done, 8/12 (67%).
-2. Keep a local package feed in the repository's tooling so builds run offline from cached packages. Package
-   sources become ours: **9/12 (75%), the target.**
+2. ~~Keep a local package feed in the repository's tooling so builds run offline from cached packages~~: done,
+   **9/12 (75%).**
 
 .NET and Avalonia are the last two. Replacing them is the largest piece of work and isn't needed for the target.
 
@@ -100,6 +100,10 @@ doesn't make it.
   it ships, a kernel without non-free blobs (Linux-libre), and no steering users towards non-free programs.
 - [Ethical repository criteria](https://www.gnu.org/software/repo-criteria.html): how GNU grades code hosts.
 
+- **Package feed (20 Nov 2026).** Every package in the lock files is under a licence on GNU's free-licence list (MIT,
+  Apache-2.0, BSD). nuget.org is a proprietary service, but it is only a download point: our feed takes it out of
+  every build, which is what GNU's advice on depending on services points towards.
+
 Known differences with that advice, recorded openly:
 - **GitHub** grades poorly on GNU's repository criteria. It's kept by decision (19 Nov 2026, see the dependency
   table).
@@ -114,8 +118,10 @@ Known differences with that advice, recorded openly:
 - `./check.sh` is the authority on whether the project works. CI on a hosted platform is a convenience that runs the
   same checks, never a step that only exists there.
 - The project must build and pass its checks on a member's own machine. The goal is to do this offline, from cached
-  packages.
+  packages. That's done: once the feed is filled (or imported), nothing needs the network.
 - Releases are built by our own scripts (`build-appimage.sh`), which are reproducible from the repository alone.
+- Packages come from our own feed (`tools/packages.sh`): `fill` once, then everything restores offline from it. A
+  change of package version updates the lock files in the same change.
 
 ## 5. Nothing reports home
 

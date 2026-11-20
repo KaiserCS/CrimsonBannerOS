@@ -5,8 +5,8 @@
          project): what the build uses is written down in the repository, and the local feed (tools/packages.sh)
          holds exactly that. -->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-    <!-- No package may change behind our backs: with REDSTAR_LOCKED=1 (tools/packages.sh sets it) the lock files must
-         match. -->
-    <RestoreLockedMode Condition="'$(REDSTAR_LOCKED)' == '1'">true</RestoreLockedMode>
+    <!-- No package may change behind our backs: on CI, and with REDSTAR_LOCKED=1 (tools/packages.sh sets it), the lock
+         files must match. After changing a package version, run tools/packages.sh fill and commit the lock files. -->
+    <RestoreLockedMode Condition="'$(CI)' == 'true' Or '$(REDSTAR_LOCKED)' == '1'">true</RestoreLockedMode>
   </PropertyGroup>
 </Project>
