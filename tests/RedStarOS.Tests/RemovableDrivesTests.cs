@@ -67,3 +67,47 @@ public class RemovableDrivesTests
         Assert.EndsWith("drive", sd.Label);
     }
 }
+
+public class DiskManagerTests
+{
+    private static Variant V(string sig, object v) => new(sig, v);
+    private static byte[] Z(string s) => Encoding.UTF8.GetBytes(s + "\0");
+
+    [Fact]
+    public void A_disk_lists_its_partitions_in_order_and_knows_when_the_system_runs_from_it()
+    {
+        var drive = new ObjectPath("/org/freedesktop/UDisks2/drives/Samsung_SSD");
+        Dictionary<object, object> Part(string dev, uint n, ulong off, ulong size, string type, string? mount) => new()
+        {
+            ["org.freedesktop.UDisks2.Block"] = new Dictionary<object, object>
+            {
+                ["Device"] = V("ay", Z(dev)), ["Size"] = V("t", size), ["IdType"] = V("s", type), ["Drive"] = V("o", drive),
+            },
+            ["org.freedesktop.UDisks2.Partition"] = new Dictionary<object, object> { ["Number"] = V("u", n), ["Offset"] = V("t", off), ["Size"] = V("t", size) },
+            ["org.freedesktop.UDisks2.Filesystem"] = new Dictionary<object, object>
+            {
+                ["MountPoints"] = V("aay", mount == null ? new List<object>() : new List<object> { Z(mount) }),
+            },
+        };
+        var objects = new Dictionary<object, object>
+        {
+            [drive] = new Dictionary<object, object>
+            {
+                ["org.freedesktop.UDisks2.Drive"] = new Dictionary<object, object> { ["Vendor"] = V("s", "Samsung"), ["Model"] = V("s", "SSD"), ["Size"] = V("t", 500_000_000_000UL) },
+            },
+            [new ObjectPath("/org/freedesktop/UDisks2/block_devices/nvme0n1")] = new Dictionary<object, object>
+            {
+                ["org.freedesktop.UDisks2.Block"] = new Dictionary<object, object> { ["Device"] = V("ay", Z("/dev/nvme0n1")), ["Drive"] = V("o", drive) },
+                ["org.freedesktop.UDisks2.PartitionTable"] = new Dictionary<object, object> { ["Type"] = V("s", "gpt") },
+            },
+            [new ObjectPath("/org/freedesktop/UDisks2/block_devices/nvme0n1p2")] = Part("/dev/nvme0n1p2", 2, 1_000_000_000, 400_000_000_000, "ext4", "/"),
+            [new ObjectPath("/org/freedesktop/UDisks2/block_devices/nvme0n1p1")] = Part("/dev/nvme0n1p1", 1, 1_000_000, 999_000_000, "vfat", "/boot"),
+        };
+        var d = Assert.Single(DiskManager.Parse(objects));
+        Assert.Equal("Samsung SSD", d.Name);
+        Assert.Equal("/dev/nvme0n1", d.Device);
+        Assert.Equal(new[] { 1, 2 }, d.Parts.Select(p => p.Number));
+        Assert.True(d.InUseBySystem);
+        Assert.False(d.Removable);
+    }
+}

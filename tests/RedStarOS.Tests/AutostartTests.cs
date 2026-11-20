@@ -151,7 +151,8 @@ public class SystemUpdatesTests
     public void Without_PackageKit_the_package_manager_runs_in_a_terminal()
     {
         var c = SystemUpdates.TerminalCommand(n => n == "pacman" ? "/usr/bin/pacman" : null);
-        Assert.Equal(("sudo", new[] { "pacman", "-Syu" }), (c!.Value.Exe, c.Value.Args.ToArray()));
+        Assert.Equal("sudo", c!.Value.Exe);
+        Assert.Equal(new[] { "pacman", "-Syu" }, c.Value.Args);
         Assert.Null(SystemUpdates.TerminalCommand(_ => null));
     }
 }

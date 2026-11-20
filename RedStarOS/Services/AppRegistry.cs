@@ -47,6 +47,7 @@ public static class AppRegistry
         new("imageviewer", "Image Viewer",       "RSUtilities", () => new ImageViewerWindow()),
         new("camera",      "Camera",             "RSUtilities", () => new CameraWindow()),
         new("screenshot",  "Screenshot",         "RSUtilities", () => new ScreenshotWindow()),
+        new("disks",         "Disks",              "RSUtilities", () => new DisksWindow()),
         new("recorder",    "Screen Recorder",    "RSMedia",     () => new ScreenRecorderWindow()),
         new("voicememos",  "Voice Memos",        "RSMedia",     () => new VoiceMemosWindow()),
         new("paint",       "Paint",              "RSMedia",     () => new PaintWindow()),
@@ -60,7 +61,7 @@ public static class AppRegistry
     private static readonly Dictionary<string, string> WindowApps = new()
     {
         ["BlocksWindow"] = "blocks", ["MahjonggWindow"] = "mahjongg", ["GemsWindow"] = "gems", ["ScreenshotWindow"] = "screenshot", ["AreaPickerWindow"] = "screenshot",
-        ["ScreenRecorderWindow"] = "recorder", ["VoiceMemosWindow"] = "voicememos",
+        ["ScreenRecorderWindow"] = "recorder", ["DisksWindow"] = "disks", ["VoiceMemosWindow"] = "voicememos",
         ["StudioWindow"] = "studio", ["VideoWindow"] = "video", ["WriterWindow"] = "writer", ["RichWriterWindow"] = "writer", ["TerminalWindow"] = "terminal", ["SpreadsheetWindow"] = "sheets", ["SlidesWindow"] = "slides", ["SlideShowWindow"] = "slides", ["SheetChartWindow"] = "sheets",
         ["PongWindow"] = "pong", ["MessengerWindow"] = "messenger", ["FileManagerWindow"] = "files",
         ["CalculatorWindow"] = "calculator", ["NotesWindow"] = "notes", ["ImageViewerWindow"] = "imageviewer",

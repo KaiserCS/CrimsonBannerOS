@@ -20,7 +20,7 @@ public static class AppIcons
         ["online"] = "globe", ["messenger"] = "chat", ["files"] = "folder", ["calculator"] = "calculator", ["notes"] = "note",
         ["imageviewer"] = "image", ["camera"] = "camera", ["calendar"] = "calendar", ["settings"] = "settings", ["terminal"] = "terminal",
         ["paint"] = "palette", ["clock"] = "clock", ["taskmgr"] = "activity",
-        ["blocks"] = "blocks", ["mahjongg"] = "tiles", ["gems"] = "gem", ["screenshot"] = "screenshot", ["recorder"] = "record", ["voicememos"] = "mic"
+        ["blocks"] = "blocks", ["mahjongg"] = "tiles", ["gems"] = "gem", ["screenshot"] = "screenshot", ["recorder"] = "record", ["voicememos"] = "mic", ["disks"] = "drive"
     };
 
     private static readonly Dictionary<string, string> CategoryColors = new()
