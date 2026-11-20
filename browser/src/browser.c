@@ -726,10 +726,8 @@ static GMenuItem *open_item(const char *label, const char *url)
 	return it;
 }
 
-static void fill_menu(Browser *b)
+static void fill_menu(Browser *b, GMenu *m)
 {
-	GMenu *m = b->menu;
-	g_menu_remove_all(m);
 	GMenu *s1 = g_menu_new();
 	g_menu_append(s1, "New Tab", "win.new-tab");
 	g_menu_append(s1, "New Window", "app.new-window");
@@ -813,10 +811,35 @@ static void sync_app_actions(void)
 	g_simple_action_set_state(G_SIMPLE_ACTION(g_action_map_lookup_action(m, "search-engine")), g_variant_new_string(st->search_engine));
 }
 
+/* A fresh menu for each window, set when nothing is in the middle of using the old one: not during the click that
+ * asked for it (after it, from idle), and not while a window's menu is open (later). Emptying a menu GTK is showing
+ * leaves it pointing at entries that are gone. */
+static guint menus_pending;
+
+static gboolean rebuild_menus_now(gpointer data)
+{
+	(void)data;
+	menus_pending = 0;
+	gboolean later = FALSE;
+	for (GList *l = app.windows; l; l = l->next) {
+		Browser *b = l->data;
+		GtkPopover *pop = gtk_menu_button_get_popover(GTK_MENU_BUTTON(b->menu_button));
+		if (pop && gtk_widget_get_visible(GTK_WIDGET(pop))) { later = TRUE; continue; }
+		GMenu *m = g_menu_new();
+		fill_menu(b, m);
+		gtk_menu_button_set_menu_model(GTK_MENU_BUTTON(b->menu_button), G_MENU_MODEL(m));
+		g_object_unref(b->menu);
+		b->menu = m;
+	}
+	if (later) menus_pending = g_timeout_add(400, rebuild_menus_now, NULL);
+	sync_app_actions();
+	return G_SOURCE_REMOVE;
+}
+
 static void rebuild_menus(void)
 {
-	for (GList *l = app.windows; l; l = l->next) fill_menu(l->data);
 	sync_app_actions();
+	if (!menus_pending) menus_pending = g_idle_add(rebuild_menus_now, NULL);
 }
 
 static void apply_filters(void)
@@ -1138,9 +1161,11 @@ static void window_active(GtkWindow *w, GParamSpec *p, Browser *b)
 	/* most recently used first; and pick up changes the shell made (Settings, imports) */
 	app.windows = g_list_remove(app.windows, b);
 	app.windows = g_list_prepend(app.windows, b);
-	online_store_refresh(app.store);
-	rebuild_bookmarks();
-	rebuild_menus();
+	/* only when the shell changed something (Settings, imports): rebuilding on every focus change disturbed menus */
+	if (online_store_refresh(app.store)) {
+		rebuild_bookmarks();
+		rebuild_menus();
+	}
 	browser_update(b);
 }
 
@@ -1284,7 +1309,7 @@ static Browser *browser_new(gboolean private)
 	g_signal_connect(b->win, "close-request", G_CALLBACK(window_close), b);
 	g_signal_connect(b->win, "destroy", G_CALLBACK(window_destroyed), b);
 	app.windows = g_list_prepend(app.windows, b);
-	fill_menu(b);
+	fill_menu(b, b->menu);
 	rebuild_bookmarks();
 	sync_app_actions();
 	return b;
@@ -1318,7 +1343,11 @@ static void follow_red_star_theme(void)
 	}
 	g_object_unref(p);
 	g_free(path);
-	g_object_set(gtk_settings_get_default(), "gtk-application-prefer-dark-theme", dark, NULL);
+	GtkSettings *gs = gtk_settings_get_default();
+	if (g_object_class_find_property(G_OBJECT_GET_CLASS(gs), "gtk-interface-color-scheme"))
+		g_object_set(gs, "gtk-interface-color-scheme", dark ? 2 : 3, NULL);        /* GTK 4.20+: DARK, LIGHT */
+	else
+		g_object_set(gs, "gtk-application-prefer-dark-theme", dark, NULL);
 	/* the pointer at Red Star's size (Accessibility → Large mouse pointer), not whatever another desktop's settings
 	 * say; redstar-comp draws it itself where GTK uses cursor-shape */
 	const char *env = g_getenv("XCURSOR_SIZE");

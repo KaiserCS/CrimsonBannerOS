@@ -200,11 +200,13 @@ void online_store_free(OnlineStore *s)
 
 const char *online_store_path(OnlineStore *s) { return s->path; }
 
-void online_store_refresh(OnlineStore *s)
+gboolean online_store_refresh(OnlineStore *s)
 {
 	char *now = file_stamp(s->path);
-	if (g_strcmp0(now, s->stamp) != 0) load(s);
+	gboolean changed = g_strcmp0(now, s->stamp) != 0;
+	if (changed) load(s);
 	g_free(now);
+	return changed;
 }
 
 const OnlineSettings *online_store_settings(OnlineStore *s) { return &s->settings; }

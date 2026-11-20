@@ -22,8 +22,8 @@ OnlineStore *online_store_new(const char *path);
 void online_store_free(OnlineStore *s);
 const char *online_store_path(OnlineStore *s);
 
-/* Re-reads the file if it changed on disk. */
-void online_store_refresh(OnlineStore *s);
+/* Re-reads the file if it changed on disk; TRUE when it did. */
+gboolean online_store_refresh(OnlineStore *s);
 
 /* Current settings (owned by the store; valid until the next refresh or change). */
 const OnlineSettings *online_store_settings(OnlineStore *s);
