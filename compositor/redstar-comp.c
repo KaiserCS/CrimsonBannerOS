@@ -2903,8 +2903,9 @@ static bool output_configure(struct output *o, bool enabled, struct wlr_output_m
 	wlr_output_state_set_enabled(&st, enabled);
 	if (enabled) {
 		if (!mode && w > 0 && h > 0) mode = find_mode(o->wlr, w, h, mhz);
-		if (mode) wlr_output_state_set_mode(&st, mode);
-		else if (w > 0 && h > 0) wlr_output_state_set_custom_mode(&st, w, h, mhz > 0 ? mhz : 0);
+		if (mode && mode->refresh > 0) wlr_output_state_set_mode(&st, mode);
+		else if (mode) wlr_output_state_set_custom_mode(&st, mode->width, mode->height, 60000);   /* never 0 Hz: GTK 4 divides by it */
+		else if (w > 0 && h > 0) wlr_output_state_set_custom_mode(&st, w, h, mhz > 0 ? mhz : 60000);
 		if (scale >= 0.5 && scale <= 4) wlr_output_state_set_scale(&st, (float)scale);
 		if (transform >= 0 && transform <= 7) wlr_output_state_set_transform(&st, (enum wl_output_transform)transform);
 	}
