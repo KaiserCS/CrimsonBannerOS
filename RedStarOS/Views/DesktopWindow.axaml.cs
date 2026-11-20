@@ -83,6 +83,8 @@ public partial class DesktopWindow : Window
             PortalSetup.Run();                         // inside redstar-comp: screenshots and screen sharing for other apps
             SystemTray.Start();                        // other programs' tray icons (Discord, Steam…) on the taskbar
             OtherAppsNotifications.Start();            // other programs' notifications (org.freedesktop.Notifications)
+            // the administrator password prompt for polkit, when Crimson Banner is the session
+            if (Autostart.IsSession) PolkitAgent.Start(PolkitDialog.Ask);
             // programs that start at sign-in, once the tray and notifications are there for them (only as the session)
             if (Autostart.IsSession && SettingsStore.Current.RunAutostart && !_autostarted)
             {

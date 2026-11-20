@@ -73,3 +73,27 @@ public class SystemAuthTests
         Assert.NotEqual(SystemAuth.Outcome.Accepted, outcome);
     }
 }
+
+public class PolkitAgentTests
+{
+    [Fact]
+    public void The_agent_names_this_process_for_polkit()
+    {
+        var s = PolkitAgent.Subject();
+        Assert.Equal("unix-process", s[0]);
+        var d = (System.Collections.Generic.Dictionary<object, object>)s[1];
+        Assert.Equal((uint)Environment.ProcessId, ((RedStarOS.Services.DBus.Variant)d["pid"]).Value);
+        Assert.True((ulong)((RedStarOS.Services.DBus.Variant)d["start-time"]).Value > 0);
+    }
+
+    [Fact]
+    public void Identities_become_user_names_with_the_signed_in_user_first()
+    {
+        var ids = new System.Collections.Generic.List<object>
+        {
+            new object[] { "unix-user", new System.Collections.Generic.Dictionary<object, object> { ["uid"] = new RedStarOS.Services.DBus.Variant("u", 0u) } },
+            new object[] { "unix-group", new System.Collections.Generic.Dictionary<object, object> { ["gid"] = new RedStarOS.Services.DBus.Variant("u", 10u) } },
+        };
+        Assert.Equal(new[] { "root" }, PolkitAgent.Users(ids));
+    }
+}
