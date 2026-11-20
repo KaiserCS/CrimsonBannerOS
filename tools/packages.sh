@@ -36,7 +36,8 @@ case "${1:-}" in
     done
     # the self-contained AppImage also needs .NET's runtime and app-host packs for each architecture
     for rid in "${RIDS[@]}"; do
-      dotnet restore RedStarOS/RedStarOS.csproj --packages "$FEED" -r "$rid" -p:SelfContained=true "${LOCK[@]}"
+      # (-p:RuntimeIdentifier, not -r: "restore -r" replaces the project's RuntimeIdentifiers, which the lock file records)
+      dotnet restore RedStarOS/RedStarOS.csproj --packages "$FEED" -p:RuntimeIdentifier="$rid" -p:SelfContained=true "${LOCK[@]}"
     done
     echo "Feed filled: $FEED ($(du -sh "$FEED" | cut -f1))"
     ;;
