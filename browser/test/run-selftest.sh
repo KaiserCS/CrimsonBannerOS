@@ -22,11 +22,16 @@ export GSK_RENDERER=cairo LIBGL_ALWAYS_SOFTWARE=1 WEBKIT_DISABLE_DMABUF_RENDERER
 export WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 GDK_BACKEND=wayland NO_AT_BRIDGE=1
 status=0
 RUN="$ONLINE --self-test"
+# REDSTAR_SELFTEST_GDB=1: under gdb, with a backtrace if it crashes
+if [ "${REDSTAR_SELFTEST_GDB:-}" = 1 ] && command -v gdb >/dev/null 2>&1; then
+	RUN="gdb -q -batch -ex 'set pagination off' -ex 'handle SIGPIPE nostop noprint' -ex run -ex 'thread apply all bt 25' --args $RUN"
+fi
 command -v dbus-run-session >/dev/null 2>&1 && RUN="dbus-run-session -- $RUN"
+RUN="$RUN; echo \"redstar-online exited with \$?\" >&2"
 timeout 180 "$COMP" -- sh -c "$RUN" 2>"$WORK/err.log" | tee "$WORK/out.log" || status=$?
 grep -q "^0 failed" "$WORK/out.log" || status=1
 if [ "$status" != 0 ]; then
 	echo "---- log ----"
-	grep -v "^\s*$" "$WORK/err.log" | tail -n 60
+	grep -v "^\s*$" "$WORK/err.log" | tail -n 150
 fi
 exit "$status"

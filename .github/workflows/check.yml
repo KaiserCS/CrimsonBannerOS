@@ -170,7 +170,7 @@ jobs:
         run: |
           pacman -Syu --noconfirm --needed git gcc meson ninja pkgconf webkitgtk-6.0 gtk4 json-glib libsoup3 \
             wlroots0.20 wayland wayland-protocols libxkbcommon libxcb xcb-util-wm cairo libdrm pixman xorg-xwayland \
-            mesa ttf-dejavu dbus
+            mesa ttf-dejavu dbus gdb
 
       - uses: actions/checkout@v5
 
@@ -183,4 +183,6 @@ jobs:
         run: meson test -C browser/build --print-errorlogs
 
       - name: Self-test (the real browser, headless in redstar-comp)
+        env:
+          REDSTAR_SELFTEST_GDB: 1
         run: browser/test/run-selftest.sh
