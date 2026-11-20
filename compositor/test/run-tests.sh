@@ -22,6 +22,14 @@ for x in "$WP/stable/xdg-shell/xdg-shell.xml" "$WP/unstable/xdg-decoration/xdg-d
 done
 gcc -O2 -Wall -Wextra -Werror -I"$WORK" -o "$WORK/nativetest" "$HERE/nativetest.c" "$WORK"/*-protocol.c $(pkg-config --cflags --libs wayland-client)
 gcc -O2 -Wall -Wextra -Werror -I"$WORK" -o "$WORK/inputtest" "$HERE/inputtest.c" "$WORK"/*-protocol.c $(pkg-config --cflags --libs wayland-client xkbcommon)
+gcc -O2 -Wall -Wextra -Werror -o "$WORK/refreshprobe" "$HERE/refreshprobe.c" $(pkg-config --cflags --libs wayland-client)
+# a second redstar-comp as a window inside the first (like the AppImage on KDE), with the probe inside it
+cat > "$WORK/nested.sh" <<NESTED
+#!/bin/sh
+unset DISPLAY REDSTAR_COMP_SOCKET
+exec "$COMP" -- "$WORK/refreshprobe" 2>"$WORK/nested.log"
+NESTED
+chmod +x "$WORK/nested.sh"
 
 mkdir -p "$WORK/runtime" "$WORK/config"
 chmod 700 "$WORK/runtime"
@@ -29,11 +37,12 @@ unset DISPLAY WAYLAND_DISPLAY
 export XDG_RUNTIME_DIR="$WORK/runtime" XDG_CONFIG_HOME="$WORK/config"
 export WLR_BACKENDS=headless WLR_RENDERER=pixman WLR_LIBINPUT_NO_DEVICES=1 WLR_HEADLESS_OUTPUTS=1 REDSTAR_SHADOWS=1
 status=0
-timeout 120 "$COMP" -- sh -c '"$1" && echo "--- native Wayland window ---" && "$2" && echo "--- keyboard and mouse ---" && "$3"' \
-	sh "$WORK/comptest" "$WORK/nativetest" "$WORK/inputtest" \
+timeout 150 "$COMP" -- sh -c '"$1" && echo "--- native Wayland window ---" && "$2" && echo "--- keyboard and mouse ---" && "$3" && echo "--- nested (a window on another desktop) ---" && "$4"' \
+	sh "$WORK/comptest" "$WORK/nativetest" "$WORK/inputtest" "$WORK/nested.sh" \
 	2>"$WORK/comp.log" || status=$?
 if [ "$status" != 0 ]; then
 	echo "---- redstar-comp log ----"
 	tail -n 60 "$WORK/comp.log"
+	[ -s "$WORK/nested.log" ] && { echo "---- nested redstar-comp log ----"; tail -n 30 "$WORK/nested.log"; }
 fi
 exit "$status"

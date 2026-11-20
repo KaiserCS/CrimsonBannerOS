@@ -16,6 +16,13 @@ public class RedStarOnlineTests
         Assert.False(RedStarOnline.IsItsWindow("firefox", "Firefox"));
     }
 
+    [Theory]
+    [InlineData(1, "exit code 1")]
+    [InlineData(136, "signal 8 (SIGFPE)")]           // what .NET reports for a process a signal ended
+    [InlineData(139, "signal 11 (SIGSEGV)")]
+    [InlineData(134, "signal 6 (SIGABRT)")]
+    public void Says_how_it_ended(int code, string text) => Assert.Equal(text, RedStarOnline.Describe(code));
+
     [Fact]
     public void Pages_and_private_windows()
     {

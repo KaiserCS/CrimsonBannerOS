@@ -50,21 +50,31 @@ static struct {
 	void *data;
 } n;
 
+/* A new size for the host window's screen: 60 Hz when the backend takes a rate (GTK 4 programs divide by it), and
+ * never 0 Hz as far as clients can tell (see never_zero_hz in redstar-comp.c). */
+static bool commit_size(struct wlr_output *o, int w, int h)
+{
+	struct wlr_output_state st;
+	wlr_output_state_init(&st);
+	wlr_output_state_set_custom_mode(&st, w, h, 60000);
+	if (!wlr_output_test_state(o, &st)) wlr_output_state_set_custom_mode(&st, w, h, 0);
+	bool ok = wlr_output_commit_state(o, &st);
+	wlr_output_state_finish(&st);
+	if (ok && o->refresh <= 0) o->refresh = 60000;
+	return ok;
+}
+
 /* ───────── Wayland host ───────── */
 
 static void apply_size(void)
 {
 	if (!n.output || n.want_w <= 0 || n.want_h <= 0 || (n.want_w == n.w && n.want_h == n.h)) return;
-	struct wlr_output_state st;
-	wlr_output_state_init(&st);
-	wlr_output_state_set_custom_mode(&st, n.want_w, n.want_h, 0);
-	if (wlr_output_commit_state(n.output, &st)) {
+	if (commit_size(n.output, n.want_w, n.want_h)) {
 		n.w = n.want_w; n.h = n.want_h;
-		wlr_log(WLR_INFO, "host window is now %dx%d", n.w, n.h);
+		wlr_log(WLR_INFO, "host window is now %dx%d (%d mHz)", n.w, n.h, n.output->refresh);
 	} else {
 		wlr_log(WLR_ERROR, "could not resize the host window to %dx%d", n.want_w, n.want_h);
 	}
-	wlr_output_state_finish(&st);
 }
 
 /* wlroots reads the host connection but only handles its own objects' messages; the ones for our window (the
@@ -276,11 +286,7 @@ void nested_x11_output(struct wl_event_loop *loop, struct wlr_output *o, const c
 	xcb_connection_t *c = xcb_connect(host_display, NULL);
 	if (!xcb_connection_has_error(c)) {
 		xcb_screen_t *scr = xcb_setup_roots_iterator(xcb_get_setup(c)).data;
-		struct wlr_output_state st;
-		wlr_output_state_init(&st);
-		wlr_output_state_set_custom_mode(&st, scr->width_in_pixels, scr->height_in_pixels, 0);
-		wlr_output_commit_state(o, &st);
-		wlr_output_state_finish(&st);
+		commit_size(o, scr->width_in_pixels, scr->height_in_pixels);
 	}
 	xcb_disconnect(c);
 	f->display = strdup(host_display);

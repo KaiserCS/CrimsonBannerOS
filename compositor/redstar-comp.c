@@ -271,6 +271,7 @@ static void positions_put(struct view *v);
 static void fade_in(struct view *v);
 static bool roles_check(struct view *v);
 static void set_custom_mode(struct wlr_output *wo, struct wlr_output_state *st, int w, int h, int mhz);
+static void never_zero_hz(struct wlr_output *wo);
 static bool child_of_desktop(struct view *v);
 static void update_capabilities(struct server *s);
 struct ipc_client;
@@ -2914,6 +2915,7 @@ static bool output_configure(struct output *o, bool enabled, struct wlr_output_m
 	wlr_output_state_finish(&st);
 	if (!ok) { snprintf(why, whysize, "the screen didn't accept that mode"); return false; }
 	if (test_only) return true;
+	never_zero_hz(o->wlr);
 	if (enabled) output_place(o, automatic, x, y);
 	else output_unplace(o);
 	return true;
@@ -3096,6 +3098,14 @@ static void set_custom_mode(struct wlr_output *wo, struct wlr_output_state *st, 
 	if (mhz <= 0 && !wlr_output_test_state(wo, st)) wlr_output_state_set_custom_mode(st, w, h, 0);
 }
 
+/* What clients are told the refresh rate is. A window on another desktop has none (its backend refuses custom
+ * rates, so wlroots says 0 Hz), and GTK 4 programs divide by it and crash: tell them 60 Hz. wl_output reads this
+ * field when it sends the mode; nothing else in the nested backends uses it (they pace frames by the host). */
+static void never_zero_hz(struct wlr_output *wo)
+{
+	if (wo->enabled && wo->refresh <= 0) wo->refresh = 60000;
+}
+
 static void new_output(struct wl_listener *l, void *data)
 {
 	struct server *s = wl_container_of(l, s, new_output);
@@ -3135,6 +3145,7 @@ static void new_output(struct wl_listener *l, void *data)
 		saved = NULL;
 	}
 	wlr_output_state_finish(&st);
+	never_zero_hz(wo);
 
 	struct output *o = calloc(1, sizeof *o);
 	if (!o) return;

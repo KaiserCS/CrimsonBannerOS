@@ -5,6 +5,7 @@
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
 #include <json-glib/json-glib.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include "store.h"
@@ -1618,6 +1619,7 @@ static void selftest_start(void)
 
 int main(int argc, char **argv)
 {
+	signal(SIGPIPE, SIG_IGN);       /* our messages go to the shell's log through a pipe; a restarted shell mustn't end us */
 	for (int i = 1; i < argc; i++) if (!strcmp(argv[i], "--self-test")) app.self_test = TRUE;
 	app.gtk = gtk_application_new(APP_ID, G_APPLICATION_HANDLES_COMMAND_LINE | (app.self_test ? G_APPLICATION_NON_UNIQUE : 0));
 	g_set_application_name("Red Star Online");

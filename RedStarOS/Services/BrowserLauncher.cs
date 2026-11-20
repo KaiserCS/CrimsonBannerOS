@@ -23,6 +23,17 @@ public static class BrowserLauncher
 
     private static bool _explained;
 
+    static BrowserLauncher()
+    {
+        // the GTK browser closed right after it opened: say so, and open the page in the previous one instead
+        RedStarOnline.CrashedAtStart += (url, why) => Dispatcher.UIThread.Post(() =>
+        {
+            Notifier.Show("Red Star Online closed", $"It stopped right after opening ({why}). Using the previous browser for now; "
+                + "details are in ~/.config/redstaros/online.log.", "online");
+            _ = LaunchAsync(url);
+        });
+    }
+
     /// <summary>Once per session: why the previous (Electron) browser opened instead of the GTK one.</summary>
     private static void ExplainFallback()
     {
