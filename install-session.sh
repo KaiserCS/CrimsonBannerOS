@@ -75,6 +75,9 @@ if [ -n "$ONLINE" ]; then
   install -Dm755 "$ONLINE" "$BIN/redstar-online"
   install -Dm644 "$HERE/browser/data/org.redstaros.Online.desktop" /usr/local/share/applications/org.redstaros.Online.desktop
   echo "  installed Red Star Online (GTK + WebKitGTK): $BIN/redstar-online"
+  if ! command -v gst-inspect-1.0 >/dev/null 2>&1 || ! gst-inspect-1.0 autoaudiosink >/dev/null 2>&1; then
+    echo "    note: pages will be silent without GStreamer's plugins — sudo pacman -S gst-plugins-good gst-plugins-bad gst-libav"
+  fi
 else
   echo "  not installed: the new Red Star Online — build it first (browser/build.sh); until then the previous browser is used"
 fi

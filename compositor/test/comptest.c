@@ -126,8 +126,21 @@ int main(void)
 	/* a normal window: framed, title bar extents published */
 	Window w = make(0, 0, 400, 300, NULL, 1);
 	long ext[4] = {0};
-	check(wait_cardinals(w, A("_NET_FRAME_EXTENTS"), ext, 4) && ext[2] >= 20 && ext[0] >= 1,
-		"a normal window gets a title bar (_NET_FRAME_EXTENTS)");
+	int framed = wait_cardinals(w, A("_NET_FRAME_EXTENTS"), ext, 4) && ext[2] >= 20 && ext[0] >= 1;
+	if (!framed) {
+		/* where it got stuck, for an intermittent failure on CI */
+		XWindowAttributes wa_;
+		Window rt, parent, *kids = NULL;
+		unsigned nk = 0;
+		XGetWindowAttributes(d, w, &wa_);
+		XQueryTree(d, w, &rt, &parent, &kids, &nk);
+		if (kids) XFree(kids);
+		long st[2] = { -1, -1 };
+		int has_state = get_cardinals(w, A("WM_STATE"), st, 1);
+		printf("  (window 0x%lx: map state %d, parent %s, WM_STATE %s %ld, extents %ld %ld %ld %ld)\n", (unsigned long)w,
+			wa_.map_state, parent == root ? "root" : "a frame", has_state > 0 ? "set" : "unset", st[0], ext[0], ext[1], ext[2], ext[3]);
+	}
+	check(framed, "a normal window gets a title bar (_NET_FRAME_EXTENTS)");
 	pump(200);
 	int x, y; unsigned ww, hh;
 	where(w, &x, &y, &ww, &hh);

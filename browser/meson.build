@@ -1,5 +1,6 @@
 # Red Star Online: GTK 4 + WebKitGTK web browser (GPL-3.0-or-later)
 # Arch / CachyOS: sudo pacman -S --needed webkitgtk-6.0 gtk4 json-glib libsoup3 meson ninja
+# For sound and video in pages (WebKit plays media through GStreamer): gst-plugins-good gst-plugins-bad gst-libav
 project('redstar-online', 'c', version: '1.0', license: 'GPL-3.0-or-later',
   default_options: ['c_std=gnu11', 'warning_level=2', 'buildtype=debugoptimized'])
 

@@ -19,7 +19,8 @@ Avalonia 12 (12.1.6) / .NET 8 port of the original WinForms project, with a much
   EasyPrivacy and Peter Lowe's list converted into WebKit's own content blocker, refreshed every four days, plus
   WebKit's tracking prevention and no third-party cookies. It shares bookmarks, history and settings with the shell
   (`~/.config/redstaros/browser-data.json`). Build it with `browser/build.sh` (Arch/CachyOS:
-  `pacman -S webkitgtk-6.0 gtk4 json-glib libsoup3`) and `install-session.sh` installs it; Red Star then uses it
+  `pacman -S webkitgtk-6.0 gtk4 json-glib libsoup3`, and for sound and video in pages
+  `gst-plugins-good gst-plugins-bad gst-libav`) and `install-session.sh` installs it; Red Star then uses it
   for every link. Not yet in it: reader mode, Save as PDF, picture-in-picture and imports from other browsers —
   Settings → Default apps → "Use the previous Red Star Online" switches back to the Electron one meanwhile.
 - **Other programs' tray icons:** Discord, Steam, Qt programs, update notifiers… show their icons in the taskbar's

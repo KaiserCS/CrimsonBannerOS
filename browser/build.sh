@@ -13,3 +13,6 @@ for d in ../RedStarOS/bin/*/net8.0 ../RedStarOS/bin/*/net8.0/linux-x64; do
 	[ -d "$d" ] && cp build/redstar-online "$d/" && echo "copied to $d"
 done
 echo "built browser/build/redstar-online"
+if ! command -v gst-inspect-1.0 >/dev/null 2>&1 || ! gst-inspect-1.0 autoaudiosink >/dev/null 2>&1; then
+	echo "note: for sound and video in pages install GStreamer's plugins (Arch/CachyOS: sudo pacman -S gst-plugins-good gst-plugins-bad gst-libav)"
+fi
