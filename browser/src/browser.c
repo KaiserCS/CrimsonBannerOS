@@ -7,7 +7,9 @@
 #include <gst/gst.h>
 #include <json-glib/json-glib.h>
 #include <glib/gstdio.h>
+#include <fcntl.h>
 #include <signal.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1799,7 +1801,18 @@ static void selftest_start(void)
 
 int main(int argc, char **argv)
 {
-	signal(SIGPIPE, SIG_IGN);       /* our messages go to the shell's log through a pipe; a restarted shell mustn't end us */
+	signal(SIGPIPE, SIG_IGN);
+	/* Started by the Red Star shell: our messages, and WebKit's page processes' (they inherit these), go to its log
+	 * file. A file, never a pipe: a pipe whose reader has gone kills the next writer with SIGPIPE. */
+	const char *log = g_getenv("REDSTAR_ONLINE_LOG");
+	if (log && *log) {
+		int fd = open(log, O_WRONLY | O_CREAT | O_APPEND, 0600);
+		if (fd >= 0) {
+			dup2(fd, STDOUT_FILENO);
+			dup2(fd, STDERR_FILENO);
+			if (fd > STDERR_FILENO) close(fd);
+		}
+	}
 	for (int i = 1; i < argc; i++) if (!strcmp(argv[i], "--self-test")) app.self_test = TRUE;
 	app.gtk = gtk_application_new(APP_ID, G_APPLICATION_HANDLES_COMMAND_LINE | (app.self_test ? G_APPLICATION_NON_UNIQUE : 0));
 	g_set_application_name("Red Star Online");

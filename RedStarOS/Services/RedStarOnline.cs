@@ -62,31 +62,28 @@ public static class RedStarOnline
         if (!Available || ProgramPath() is not { } exe) return false;
         try
         {
-            var psi = new ProcessStartInfo(exe) { UseShellExecute = false, RedirectStandardError = true, RedirectStandardOutput = true };
+            // Its messages go straight to the log file: the browser opens it itself (REDSTAR_ONLINE_LOG) and WebKit's page
+            // processes inherit it. Not through a pipe to us: a pipe whose reading end goes away kills whatever writes to it
+            // next (SIGPIPE, no core dump) — WebKit's page process, as soon as a video made GStreamer say something.
+            var psi = new ProcessStartInfo(exe) { UseShellExecute = false };
             foreach (var a in Arguments(url, privateWindow)) psi.ArgumentList.Add(a);
-            var p = new Process { StartInfo = psi, EnableRaisingEvents = true };
             var log = LogPath;
+            psi.Environment["REDSTAR_ONLINE_LOG"] = log;
+            var p = new Process { StartInfo = psi, EnableRaisingEvents = true };
             var started = DateTime.UtcNow;
-            try { File.AppendAllText(log, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} starting {exe} {string.Join(' ', psi.ArgumentList)}\n"); } catch { }
-            void Write(string? line)
-            {
-                if (line == null) return;
-                try { lock (LogLock) File.AppendAllText(log, line + "\n"); } catch { }
-            }
-            p.ErrorDataReceived += (_, e) => Write(e.Data);
-            p.OutputDataReceived += (_, e) => Write(e.Data);
+            Write(log, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} starting {exe} {string.Join(' ', psi.ArgumentList)}");
             p.Exited += (_, _) =>
             {
+                lock (Running) Running.Remove(p);
                 int code;
                 try { code = p.ExitCode; } catch { return; }
-                Write($"{DateTime.Now:HH:mm:ss} it ended: {Describe(code)}");
+                Write(log, $"{DateTime.Now:HH:mm:ss} it ended: {Describe(code)}");
                 // a second launch hands its page to the running browser and ends at once with 0: that's fine
                 if (code != 0 && DateTime.UtcNow - started < TimeSpan.FromSeconds(15)) CrashedAtStart?.Invoke(url, Describe(code));
                 p.Dispose();
             };
             if (!p.Start()) return false;
-            p.BeginErrorReadLine();
-            p.BeginOutputReadLine();
+            lock (Running) Running.Add(p);             // kept until it ends, so its Exited event comes
             return true;
         }
         catch (Exception ex)
@@ -97,4 +94,10 @@ public static class RedStarOnline
     }
 
     private static readonly object LogLock = new();
+    private static readonly System.Collections.Generic.HashSet<Process> Running = new();
+
+    private static void Write(string log, string line)
+    {
+        try { lock (LogLock) File.AppendAllText(log, line + "\n"); } catch { }
+    }
 }
