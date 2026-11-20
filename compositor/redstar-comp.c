@@ -2027,6 +2027,7 @@ static struct view *view_by_shell_id(struct server *s, uint64_t id)
 
 static void cursor_theme_set(struct server *s, const char *theme, int size);
 static void idle_rearm(struct server *s);
+static void input_activity(struct server *s);
 static void keymap_set(struct server *s, const char *layout, const char *variant, const char *options);
 static void dpms_set(struct server *s, bool on);
 
