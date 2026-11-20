@@ -129,7 +129,7 @@ public partial class SettingsWindow : Window
     private static Control BuildAppearance()
     {
         var s = SettingsStore.Current;
-        var p = PageOf("Appearance", "Changes apply immediately, including in Red Star Online and Red Star Video.");
+        var p = PageOf("Appearance", "Theme, colours, fonts, the mouse pointer and how other programs look.");
 
         p.Children.Add(Eyebrow("THEME"));
         var theme = new ComboBox { ItemsSource = Themes, SelectedIndex = Math.Max(0, Array.IndexOf(Themes, s.Theme)), HorizontalAlignment = HorizontalAlignment.Stretch };
@@ -155,6 +155,8 @@ public partial class SettingsWindow : Window
         };
         p.Children.Add(accent);
 
+        BuildLook(p);
+
         p.Children.Add(Eyebrow("SCREEN"));
         var full = new CheckBox { Content = "Full-screen desktop (covers the host panel)", IsChecked = s.Fullscreen };
         full.IsCheckedChanged += (_, _) =>
@@ -171,6 +173,116 @@ public partial class SettingsWindow : Window
         welcome.Click += (_, _) => WelcomeWindow.Open();
         p.Children.Add(welcome);
         return p;
+    }
+
+    private const string DefaultChoice = "(default)";
+
+    /// <summary>A drop-down of names with "(default)" first; null is the default.</summary>
+    private static ComboBox Choice(List<string> names, string? current, Action<string?> set)
+    {
+        var items = new List<string> { DefaultChoice };
+        items.AddRange(names);
+        if (!string.IsNullOrEmpty(current) && !items.Contains(current)) items.Add(current);
+        var box = new ComboBox { ItemsSource = items, SelectedItem = string.IsNullOrEmpty(current) ? DefaultChoice : current,
+            HorizontalAlignment = HorizontalAlignment.Stretch, MaxDropDownHeight = 360 };
+        box.SelectionChanged += (_, _) =>
+        {
+            if (box.SelectedItem is not string v) return;
+            set(v == DefaultChoice ? null : v);
+            SettingsStore.Save();
+        };
+        return box;
+    }
+
+    private static TextBlock Caption(string text) => new() { Text = text, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap };
+
+    private static Grid Labelled(string label, Control control)
+    {
+        var g = new Grid { ColumnDefinitions = new ColumnDefinitions("170,*") };
+        var t = new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center };
+        g.Children.Add(t);
+        Grid.SetColumn(control, 1);
+        g.Children.Add(control);
+        return g;
+    }
+
+    /// <summary>Fonts, pointer, icons and the look of GTK and Qt programs (LookAndFeel).</summary>
+    private static void BuildLook(StackPanel p)
+    {
+        var s = SettingsStore.Current;
+
+        p.Children.Add(Eyebrow("FONTS"));
+        var font = Choice(LookAndFeel.Fonts(), s.UiFont, v => { SettingsStore.Current.UiFont = v; LookAndFeel.ApplyShellFont(); LookAndFeel.ApplyOtherPrograms(); });
+        p.Children.Add(Labelled("Interface font", font));
+        var sizes = new[] { 11.0, 12, 13, 14, 15, 16, 18, 20 };
+        var size = new ComboBox { ItemsSource = sizes.Select(v => v == LookAndFeel.DefaultFontSize ? $"{v} px (default)" : $"{v} px").ToList(),
+            SelectedIndex = Math.Max(0, Array.IndexOf(sizes, s.UiFontSize)), HorizontalAlignment = HorizontalAlignment.Stretch };
+        size.SelectionChanged += (_, _) =>
+        {
+            if (size.SelectedIndex < 0) return;
+            SettingsStore.Current.UiFontSize = sizes[size.SelectedIndex];
+            SettingsStore.Save();
+            LookAndFeel.ApplyShellFont();
+            LookAndFeel.ApplyOtherPrograms();
+        };
+        p.Children.Add(Labelled("Text size", size));
+        p.Children.Add(Caption("Red Star's windows change at once. The terminal's font is in Terminal → Profiles, Writer's in Writer."));
+
+        p.Children.Add(Eyebrow("MOUSE POINTER"));
+        var cursors = LookAndFeel.CursorThemes();
+        p.Children.Add(Labelled("Pointer theme", Choice(cursors, s.CursorTheme, v => { SettingsStore.Current.CursorTheme = v; LookAndFeel.ApplyPointer(); })));
+        var csizes = new[] { 24, 32, 40, 48, 64, 96 };
+        var csize = new ComboBox { ItemsSource = csizes.Select(v => v == 24 ? "24 (default)" : v.ToString()).ToList(),
+            SelectedIndex = Math.Max(0, Array.IndexOf(csizes, s.CursorSize)), HorizontalAlignment = HorizontalAlignment.Stretch };
+        csize.SelectionChanged += (_, _) =>
+        {
+            if (csize.SelectedIndex < 0) return;
+            SettingsStore.Current.CursorSize = csizes[csize.SelectedIndex];
+            SettingsStore.Save();
+            LookAndFeel.ApplyPointer();
+        };
+        p.Children.Add(Labelled("Pointer size", csize));
+        p.Children.Add(Caption((cursors.Count == 0 ? "No pointer themes are installed besides the default (Arch/CachyOS: e.g. pacman -S xcursor-themes). " : "")
+            + (InputIsolation.InRedStarComp ? "Changes at once in redstar-comp; some X11 programs follow after they restart."
+                                           : "Programs started from now on follow; everything follows at the next sign-in.")
+            + (s.LargeCursor ? " Accessibility → Large mouse pointer keeps it at 48 or more." : "")));
+
+        p.Children.Add(Eyebrow("OTHER PROGRAMS (GTK AND QT)"));
+        var other = new CheckBox { Content = "Style other programs to match Red Star", IsChecked = LookAndFeel.StylesOtherPrograms };
+        var otherBox = new StackPanel { Spacing = 10, IsEnabled = LookAndFeel.StylesOtherPrograms };
+        other.IsCheckedChanged += (_, _) =>
+        {
+            SettingsStore.Current.StyleOtherApps = other.IsChecked == true;
+            SettingsStore.Save();
+            otherBox.IsEnabled = other.IsChecked == true;
+            LookAndFeel.ApplyEnvironment();
+            LookAndFeel.ApplyOtherPrograms();
+        };
+        p.Children.Add(other);
+        p.Children.Add(Caption("Writes GTK's settings (~/.config/gtk-3.0 and gtk-4.0, and GNOME's interface settings) and tells Qt programs "
+            + "how to look. On by default in a Red Star session; off when Red Star runs on top of another desktop, since those are "
+            + "that desktop's settings too. Light or dark follows the Theme above."));
+        otherBox.Children.Add(Labelled("GTK theme", Choice(LookAndFeel.GtkThemes().Where(t => t != "Adwaita").ToList(), s.GtkTheme,
+            v => { SettingsStore.Current.GtkTheme = v; LookAndFeel.ApplyOtherPrograms(); })));
+        otherBox.Children.Add(Labelled("Icon theme", Choice(LookAndFeel.IconThemes(), s.IconTheme,
+            v => { SettingsStore.Current.IconTheme = v; LookAndFeel.ApplyOtherPrograms(); })));
+        var qtModes = new List<(string Key, string Label)> { ("gtk", "Follow GTK (Qt's own GTK theme support)") };
+        qtModes.Add(("qt6ct", LookAndFeel.Qt6ctInstalled ? "qt6ct (its own settings program)" : "qt6ct (not installed: pacman -S qt6ct)"));
+        qtModes.Add(("off", "Leave Qt programs alone"));
+        var qt = new ComboBox { ItemsSource = qtModes.Select(m => m.Label).ToList(), SelectedIndex = Math.Max(0, qtModes.FindIndex(m => m.Key == s.QtStyle)),
+            HorizontalAlignment = HorizontalAlignment.Stretch };
+        qt.SelectionChanged += (_, _) =>
+        {
+            if (qt.SelectedIndex < 0) return;
+            SettingsStore.Current.QtStyle = qtModes[qt.SelectedIndex].Key;
+            SettingsStore.Save();
+            LookAndFeel.ApplyEnvironment();
+            LookAndFeel.ApplyOtherPrograms();
+        };
+        otherBox.Children.Add(Labelled("Qt programs", qt));
+        otherBox.Children.Add(Caption("Programs that are already open pick up the theme, icons and font the next time they start; "
+            + "GTK 4 programs often at once. Red Star's own apps keep their own icons."));
+        p.Children.Add(otherBox);
     }
 
     private static string InputIsolationStatus() => InputIsolation.Mode switch

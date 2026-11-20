@@ -2006,6 +2006,8 @@ static struct view *view_by_shell_id(struct server *s, uint64_t id)
 	return NULL;
 }
 
+static void cursor_theme_set(struct server *s, const char *theme, int size);
+
 static void ipc_command(struct ipc_client *c, char *line)
 {
 	struct server *s = c->server;
@@ -2031,6 +2033,12 @@ static void ipc_command(struct ipc_client *c, char *line)
 		return;
 	}
 	if (strcmp(line, "switcher-end") == 0) { s->switching = false; return; }
+	if (strcmp(line, "cursor") == 0) {
+		char *theme = arg ? arg : (char *)"", *size = strchr(theme, '\t');
+		if (size) *size++ = 0;
+		cursor_theme_set(s, theme, size ? atoi(size) : 24);
+		return;
+	}
 	if (strcmp(line, "outputs") == 0) { outputs_describe(s, c); return; }
 	if (strcmp(line, "role") == 0) { if (arg) role_command(s, arg); return; }
 	if (strcmp(line, "outputs-save") == 0) { outputs_save(s); return; }
@@ -2783,7 +2791,40 @@ static void request_shape(struct wl_listener *l, void *data)
 	struct wlr_cursor_shape_manager_v1_request_set_shape_event *e = data;
 	if (e->device_type != WLR_CURSOR_SHAPE_MANAGER_V1_DEVICE_TYPE_POINTER) return;
 	if (s->seat->pointer_state.focused_client != e->seat_client) return;
+	s->cursor_name = NULL;                   /* a client's choice: the next frame-drawn cursor is set again */
 	wlr_cursor_set_xcursor(s->cursor, s->xcursor, wlr_cursor_shape_v1_name(e->shape));
+}
+
+/* "cursor\tTHEME\tSIZE" (System Settings → Appearance): the pointer's theme and size from now on, for redstar-comp's
+ * own pointer, the programs that let it draw theirs (cursor-shape-v1), X11 programs' default pointer and programs
+ * started from here. An empty theme is the default one. */
+static void cursor_theme_set(struct server *s, const char *theme, int size)
+{
+	if (size < 12 || size > 256) size = 24;
+	struct wlr_xcursor_manager *m = wlr_xcursor_manager_create(theme && *theme ? theme : NULL, size);
+	if (!m || !wlr_xcursor_manager_load(m, 1)) {
+		wlr_log(WLR_ERROR, "cursor theme %s (%d) couldn't be loaded", theme && *theme ? theme : "(default)", size);
+		if (m) wlr_xcursor_manager_destroy(m);
+		return;
+	}
+	struct wlr_xcursor_manager *old = s->xcursor;
+	s->xcursor = m;
+	const char *name = s->cursor_name ? s->cursor_name : "default";
+	s->cursor_name = NULL;
+	set_cursor(s, name);                     /* the cursor stops pointing into the old manager before it goes */
+	wlr_xcursor_manager_destroy(old);
+	if (s->xwayland) {
+		struct wlr_xcursor *xc = wlr_xcursor_manager_get_xcursor(s->xcursor, "default", 1);
+		if (xc) {
+			struct wlr_xcursor_image *img = xc->images[0];
+			wlr_xwayland_set_cursor(s->xwayland, wlr_xcursor_image_get_buffer(img), img->hotspot_x, img->hotspot_y);
+		}
+	}
+	if (theme && *theme) setenv("XCURSOR_THEME", theme, 1); else unsetenv("XCURSOR_THEME");
+	char sz[16];
+	snprintf(sz, sizeof sz, "%d", size);
+	setenv("XCURSOR_SIZE", sz, 1);
+	wlr_log(WLR_INFO, "cursor theme %s, size %d", theme && *theme ? theme : "(default)", size);
 }
 
 static void request_selection(struct wl_listener *l, void *data)

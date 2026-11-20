@@ -16,6 +16,8 @@ public partial class App : Application
         Diagnostics.Install();                  // unexpected errors → crash.log, the session keeps running
         SettingsStore.Load();
         ThemeService.Apply();
+        LookAndFeel.ApplyShellFont();            // System Settings → Appearance → fonts
+        LookAndFeel.ApplyEnvironment();          // pointer and Qt look for the programs Red Star starts
         AccessibleNames.Install();               // icon-only buttons get names for screen readers
         SettingsWindow.RegisterSearch();         // settings pages show up in Start-menu search
 

@@ -446,6 +446,15 @@ int main(void)
 		wl_display_roundtrip(dpy);
 	}
 
+	/* System Settings changes the pointer's theme and size while running: an unknown theme falls back to the default
+	 * one, and the compositor carries on answering */
+	{
+		const char *c1 = "cursor\tno-such-cursor-theme\t48\n", *c2 = "cursor\t\t24\n";
+		if (write(ipc, c1, strlen(c1)) < 0 || write(ipc, c2, strlen(c2)) < 0) return 1;
+		if (write(ipc, "outputs\n", 8) < 0) return 1;
+		check(wait_line("outputs-end", NULL, 0, 2000), "a new pointer theme and size are taken while running");
+	}
+
 	/* two of the shell's windows with the same title, told apart by the tokens it names them with */
 	{
 		struct wl_surface *sa = wl_compositor_create_surface(compositor), *sb = wl_compositor_create_surface(compositor);

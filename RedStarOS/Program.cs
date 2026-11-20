@@ -86,8 +86,12 @@ internal static class Program
                 Environment.SetEnvironmentVariable("AVALONIA_GLOBAL_SCALE_FACTOR", v);
                 Environment.SetEnvironmentVariable("REDSTAR_UI_SCALE", v);          // Red Star Online and other helpers read this
             }
-            if (root.TryGetProperty("LargeCursor", out var lc) && lc.ValueKind == JsonValueKind.True)
-                Environment.SetEnvironmentVariable("XCURSOR_SIZE", "48");
+            // the pointer (System Settings → Appearance, Accessibility): before redstar-comp or the window manager starts
+            int size = root.TryGetProperty("CursorSize", out var cs) && cs.TryGetInt32(out var n) && n is >= 12 and <= 256 ? n : 24;
+            if (root.TryGetProperty("LargeCursor", out var lc) && lc.ValueKind == JsonValueKind.True) size = Math.Max(48, size);
+            if (size != 24) Environment.SetEnvironmentVariable("XCURSOR_SIZE", size.ToString(CultureInfo.InvariantCulture));
+            if (root.TryGetProperty("CursorTheme", out var ct) && ct.ValueKind == JsonValueKind.String && ct.GetString() is { Length: > 0 } theme)
+                Environment.SetEnvironmentVariable("XCURSOR_THEME", theme);
         }
         catch { }
     }

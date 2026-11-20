@@ -91,7 +91,7 @@ public partial class DesktopWindow : Window
                 Notifier.Show("Keyboard and mouse can't be kept in Red Star OS",
                     "Your other desktop may react to Super and Alt+Tab. Install Xephyr (or Xwayland 23.1+ on Wayland) — see Settings → Desktop & Taskbar.", "settings",
                     new NotificationAction("Details", () => SettingsWindow.OpenPage("Desktop & Taskbar")));
-            if (SettingsStore.Current.LargeCursor) AccessibleNames.ApplyPointerSize();
+            LookAndFeel.ApplyPointer();
             SystemSounds.Play("startup");
             if (!SettingsStore.Current.WelcomeDone)
                 Avalonia.Threading.DispatcherTimer.RunOnce(() => WelcomeWindow.Open(), TimeSpan.FromSeconds(1.2));

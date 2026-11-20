@@ -55,6 +55,7 @@ public static class ThemeService
         if (Color.TryParse(s.Accent, out var fc)) app.Resources["ShellFocusBrush"] = new SolidColorBrush(fc);
         ApplyHighContrast(app, s.HighContrast);
         ApplyNoCompositor(app);
+        LookAndFeel.ApplyOtherPrograms();     // GTK and Qt programs follow light/dark (when Red Star styles them)
 
         Changed?.Invoke();
     }

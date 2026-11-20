@@ -42,18 +42,6 @@ public static class AccessibleNames
         b.Classes.Add("auto-named");                              // may be refreshed when the tooltip changes
     }
 
-    /// <summary>Large pointer: tells X programs started from now on (xrdb Xcursor.size); Red Star itself follows at next sign-in.</summary>
-    public static void ApplyPointerSize()
-    {
-        var xrdb = ProcessUtil.Which("xrdb");
-        if (xrdb == null || Environment.GetEnvironmentVariable("DISPLAY") == null) return;
-        var size = SettingsStore.Current.LargeCursor ? 48 : 24;
-        try
-        {
-            var tmp = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "redstar-xcursor.ad");
-            System.IO.File.WriteAllText(tmp, $"Xcursor.size: {size}\n");
-            _ = ProcessUtil.RunAsync(xrdb, new[] { "-merge", tmp }, 5000);
-        }
-        catch { }
-    }
+    /// <summary>Large pointer: the pointer at its new size (System Settings → Appearance has the rest).</summary>
+    public static void ApplyPointerSize() => LookAndFeel.ApplyPointer();
 }

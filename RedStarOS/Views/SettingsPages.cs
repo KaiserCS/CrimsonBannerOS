@@ -812,7 +812,7 @@ public static class SettingsPages
             return c;
         }
         p.Children.Add(Toggle("High contrast — black and white text, strong borders, thick focus outline", st.HighContrast, v => { st.HighContrast = v; ThemeService.Apply(); }));
-        p.Children.Add(Toggle("Large mouse pointer (new programs now, everything at next sign-in)", st.LargeCursor, v => { st.LargeCursor = v; AccessibleNames.ApplyPointerSize(); }));
+        p.Children.Add(Toggle("Large mouse pointer (at once inside redstar-comp; elsewhere new programs now, everything at next sign-in)", st.LargeCursor, v => { st.LargeCursor = v; AccessibleNames.ApplyPointerSize(); }));
         p.Children.Add(Toggle("Reduce motion — no fades or blinking cursors; web pages are asked to keep still", st.ReduceMotion, v => st.ReduceMotion = v));
 
         p.Children.Add(Eyebrow("HEARING"));

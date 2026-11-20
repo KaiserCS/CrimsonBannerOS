@@ -61,6 +61,14 @@ public sealed class Settings
     public bool HighContrast { get; set; }                     // Accessibility
     public bool ReduceMotion { get; set; }                     // Accessibility: no animations
     public bool LargeCursor { get; set; }                      // Accessibility
+    public string? UiFont { get; set; }                         // Appearance: the shell's font (null: the theme's)
+    public double UiFontSize { get; set; } = 14;                // Appearance: text size in pixels
+    public string? CursorTheme { get; set; }                    // Appearance: pointer theme (null: the system's default)
+    public int CursorSize { get; set; } = 24;                   // Appearance: pointer size (48 at least with LargeCursor)
+    public string? IconTheme { get; set; }                      // Appearance: icon theme for GTK and Qt programs
+    public string? GtkTheme { get; set; }                       // Appearance: GTK programs' theme
+    public string QtStyle { get; set; } = "gtk";                // Appearance: Qt programs follow "gtk", "qt6ct" or are left "off"
+    public bool? StyleOtherApps { get; set; }                   // Appearance: write GTK/Qt settings (null: only in a Red Star session)
     public bool IsolateInput { get; set; } = true;             // own display on top of another desktop (keyboard/mouse stay in Red Star)
     public bool WindowShadows { get; set; } = true;            // drop shadows under windows (picom; next start)
     public bool WaylandCompositor { get; set; }                // experimental: run inside redstar-comp (wlroots) instead of redstar-wm + picom; next start
