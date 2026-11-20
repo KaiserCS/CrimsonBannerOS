@@ -11,8 +11,10 @@
 - No telemetry, analytics or phoning home. Opt out of tools' telemetry in scripts.
 - New code is GPL-3.0-or-later.
 - When work reduces a recorded dependency, update its row and the layer scores ("The goal" in `PRINCIPLES.md`).
-  The aim is at least 75% of layers ours or community commons. Self-sufficiency to a point, not isolation:
-  community GPL projects are welcome.
+  The aim is at least 75% of layers ours or community commons, and once reached 75% is a floor: no change may drop
+  below it. Self-sufficiency to a point, not isolation: community GPL projects are welcome.
+- For critical calls (new dependencies, licences, hosting, distribution) check the FSF's advice (Free Software
+  Directory, GNU licence list, FSDG; links in `PRINCIPLES.md`), say what it recommends, and note any difference.
 
 ## How the owner works
 

@@ -79,6 +79,33 @@ way to the target runs through the other layers:
 
 .NET and Avalonia are the last two. Replacing them is the largest piece of work and isn't needed for the target.
 
+**Once reached, 75% is a floor.** No change may take the score below 75%. A change that would turn an *ours* or
+*commons* layer into *dependent* must win the points back elsewhere in the same piece of work, or it doesn't go in.
+Every change that touches a layer updates its score here.
+
+## Advice from the Free Software Foundation
+
+For the critical calls (a new dependency, a licence, a hosting or distribution question) the project checks what the
+Free Software Foundation and GNU recommend, and records it with the decision. Their advice informs the decision; it
+doesn't make it.
+
+- [Free Software Directory](https://directory.fsf.org): is a program free software, and under which licence.
+- [GNU licence list](https://www.gnu.org/licenses/license-list.html): which licences are free and which can be
+  combined with GPL-3.0-or-later.
+- [Free System Distribution Guidelines](https://www.gnu.org/distros/free-system-distribution-guidelines) (FSDG):
+  the bar for when Red Star becomes a distribution. Among other things: only free software and free firmware in what
+  it ships, a kernel without non-free blobs (Linux-libre), and no steering users towards non-free programs.
+- [Ethical repository criteria](https://www.gnu.org/software/repo-criteria.html): how GNU grades code hosts.
+
+Known differences with that advice, recorded openly:
+- **GitHub** grades poorly on GNU's repository criteria. It's kept by decision (19 Nov 2026, see the dependency
+  table).
+- **Proprietary programs** like Discord and Steam work with Red Star through open standards, such as the system
+  tray. Red Star doesn't ship them or advertise them. To meet the FSDG as a distribution, the defaults, store and
+  recommendations stay free software only.
+- **Chromium (Electron)** is free software, but the FSF prefers browsers without Google's services built in. The
+  WebKitGTK rewrite addresses this too.
+
 ## 4. Build and verify without the platforms
 
 - `./check.sh` is the authority on whether the project works. CI on a hosted platform is a convenience that runs the
@@ -108,3 +135,6 @@ change.
 - Does it send anything off the machine without the user asking? Then it doesn't go in.
 - Is the new code GPL-3.0-or-later, with no added restrictions?
 - Does `./check.sh` cover it?
+- Does the layer score stay at or above 75%?
+- For a dependency, licence or distribution question: what do the FSF's Free Software Directory, licence list and
+  FSDG say?
