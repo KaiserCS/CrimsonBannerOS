@@ -322,6 +322,34 @@ static gboolean media_ok(void)
 	return media_state;
 }
 
+/* Hardware video decoding (GStreamer's VA-API, NVDEC and V4L2 decoders) off: tried first after a page crash, since
+ * those decoders crash with some drivers while software decoding (gst-libav) works. New page processes inherit
+ * GST_PLUGIN_FEATURE_RANK from us. Remembered for three days; REDSTAR_ONLINE_HWDECODE=0/1 overrides. */
+#define NO_HW_DECODERS "vah264dec:NONE,vah265dec:NONE,vavp8dec:NONE,vavp9dec:NONE,vaav1dec:NONE,vampeg2dec:NONE," \
+	"vaapidecodebin:NONE,vaapih264dec:NONE,vaapih265dec:NONE,vaapivp9dec:NONE,vaapiav1dec:NONE," \
+	"nvh264dec:NONE,nvh265dec:NONE,nvvp9dec:NONE,nvav1dec:NONE,v4l2slh264dec:NONE,v4l2slvp9dec:NONE"
+static char *hwdecode_off_path(void) { return g_build_filename(g_get_user_cache_dir(), "redstaros", "online", "hwdecode-off", NULL); }
+
+static gboolean flag_recent(const char *path)
+{
+	GStatBuf st;
+	return g_stat(path, &st) == 0 && g_get_real_time() / G_USEC_PER_SEC - (gint64)st.st_mtime < 3 * 24 * 3600;
+}
+
+static gboolean hwdecode_on(void)
+{
+	const char *r = g_getenv("GST_PLUGIN_FEATURE_RANK");
+	return !r || !strstr(r, "vah264dec:NONE");
+}
+
+static void hwdecode_off(void)
+{
+	const char *old = g_getenv("GST_PLUGIN_FEATURE_RANK");
+	gchar *v = old && *old ? g_strconcat(old, ",", NO_HW_DECODERS, NULL) : g_strdup(NO_HW_DECODERS);
+	g_setenv("GST_PLUGIN_FEATURE_RANK", v, TRUE);
+	g_free(v);
+}
+
 static char *gpu_off_path(void) { return g_build_filename(g_get_user_cache_dir(), "redstaros", "online", "gpu-off", NULL); }
 
 static gboolean gpu_off_remembered(void)
@@ -341,12 +369,22 @@ static gboolean gpu_on(void)
 static void tab_crashed(WebKitWebView *v, WebKitWebProcessTerminationReason why, Tab *t)
 {
 	const char *uri = webkit_web_view_get_uri(v);
-	g_printerr("online: the page's process ended (%s) at %s; GPU drawing %s\n",
+	g_printerr("online: the page's process ended (%s) at %s; hardware video decoding %s, GPU drawing %s\n",
 		why == WEBKIT_WEB_PROCESS_EXCEEDED_MEMORY_LIMIT ? "memory limit" : why == WEBKIT_WEB_PROCESS_TERMINATED_BY_API ? "stopped" : "crashed",
-		uri ? uri : "?", gpu_on() ? "on" : "off");
+		uri ? uri : "?", hwdecode_on() ? "on" : "off", gpu_on() ? "on" : "off");
 	if (why == WEBKIT_WEB_PROCESS_CRASHED && !media_ok()) {
 		/* not the GPU: the media plugins (see media_ok) */
 		show_error(t, uri, "This page stopped working", "It plays sound or video, and GStreamer's plugins aren't installed. " MEDIA_HINT);
+		return;
+	}
+	if (why == WEBKIT_WEB_PROCESS_CRASHED && hwdecode_on() && g_strcmp0(g_getenv("REDSTAR_ONLINE_HWDECODE"), "1") != 0) {
+		/* first suspect: the GPU's video decoders */
+		hwdecode_off();
+		gchar *p = hwdecode_off_path();
+		g_file_set_contents(p, "the page process crashed with hardware video decoding on\n", -1, NULL);
+		g_free(p);
+		g_printerr("online: hardware video decoding is off now (for three days); reloading the page\n");
+		if (uri) { t->recorded = TRUE; webkit_web_view_load_uri(v, uri); }
 		return;
 	}
 	if (why == WEBKIT_WEB_PROCESS_CRASHED && gpu_on() && g_strcmp0(g_getenv("REDSTAR_ONLINE_GPU"), "1") != 0) {
@@ -361,7 +399,8 @@ static void tab_crashed(WebKitWebView *v, WebKitWebProcessTerminationReason why,
 	}
 	show_error(t, uri, "This page stopped working",
 		why == WEBKIT_WEB_PROCESS_EXCEEDED_MEMORY_LIMIT ? "It used too much memory."
-		: "Its process ended unexpectedly, also when drawing with the CPU. ~/.config/redstaros/online.log has the details.");
+		: "Its process ended unexpectedly, also with video decoded and pages drawn by the CPU. "
+		  "~/.config/redstaros/online.log has the details; coredumpctl info WebKitWebProcess shows where it crashed.");
 }
 
 static void tab_hover(WebKitWebView *v, WebKitHitTestResult *hit, guint mods, Tab *t)
@@ -1456,6 +1495,13 @@ static void startup(GApplication *gapp, gpointer data)
 	webkit_settings_set_enable_back_forward_navigation_gestures(app.settings, TRUE);
 	webkit_settings_set_enable_smooth_scrolling(app.settings, TRUE);
 	if (app.self_test) webkit_settings_set_javascript_can_open_windows_automatically(app.settings, TRUE);
+	const char *hw = g_getenv("REDSTAR_ONLINE_HWDECODE");
+	gchar *hwp = hwdecode_off_path();
+	if (!g_strcmp0(hw, "0") || (g_strcmp0(hw, "1") != 0 && flag_recent(hwp))) {
+		hwdecode_off();
+		g_printerr("online: hardware video decoding is off (%s)\n", hw ? "REDSTAR_ONLINE_HWDECODE=0" : "a page crashed with it on, less than three days ago");
+	}
+	g_free(hwp);
 	const char *gpu = g_getenv("REDSTAR_ONLINE_GPU");
 	if (!g_strcmp0(gpu, "0") || (g_strcmp0(gpu, "1") != 0 && gpu_off_remembered())) {
 		webkit_settings_set_hardware_acceleration_policy(app.settings, WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER);
