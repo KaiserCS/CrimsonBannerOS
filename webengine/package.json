@@ -1,8 +1,0 @@
-{
-  "name": "redstar-webengine",
-  "productName": "Red Star Web Engine",
-  "version": "1.0.0",
-  "description": "Headless Chromium page renderer for the native Red Star Online browser",
-  "main": "main.js",
-  "private": true
-}

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Avalonia.Threading;
 
 namespace RedStarOS.Services;
@@ -31,38 +32,6 @@ public sealed class BrowserStore
     public List<string> Session { get; set; } = new();
 }
 
-public sealed record FilterListInfo(string Name, int Rules, DateTime? Updated, string Error);
-
-/// <summary>State of the web engine's ad blocker (filled from its "filters" messages).</summary>
-public static class AdblockStatus
-{
-    public static string State { get; private set; } = "";
-    public static int Network { get; private set; }
-    public static int Cosmetic { get; private set; }
-    public static List<FilterListInfo> Lists { get; private set; } = new();
-    public static event Action? Changed;
-
-    public static void Update(JsonElement m)
-    {
-        State = m.TryGetProperty("state", out var st) ? st.GetString() ?? "" : "";
-        Network = m.TryGetProperty("network", out var n) && n.TryGetInt32(out var ni) ? ni : 0;
-        Cosmetic = m.TryGetProperty("cosmetic", out var c) && c.TryGetInt32(out var ci) ? ci : 0;
-        var lists = new List<FilterListInfo>();
-        if (m.TryGetProperty("lists", out var arr) && arr.ValueKind == JsonValueKind.Array)
-            foreach (var l in arr.EnumerateArray())
-            {
-                double up = l.TryGetProperty("updated", out var u) && u.TryGetDouble(out var ud) ? ud : 0;
-                lists.Add(new FilterListInfo(
-                    l.TryGetProperty("name", out var nm) ? nm.GetString() ?? "" : "",
-                    l.TryGetProperty("rules", out var r) && r.TryGetInt32(out var ri) ? ri : 0,
-                    up > 0 ? DateTimeOffset.FromUnixTimeMilliseconds((long)up).LocalDateTime : null,
-                    l.TryGetProperty("error", out var er) ? er.GetString() ?? "" : ""));
-            }
-        Lists = lists;
-        Changed?.Invoke();
-    }
-}
-
 /// <summary>Bookmarks, history, settings and the last session for Red Star Online, saved as one JSON file.</summary>
 public static class BrowserData
 {
@@ -89,6 +58,25 @@ public static class BrowserData
     public static string SearchTemplate =>
         Engines.FirstOrDefault(e => e.Name == Settings.SearchEngine).Template ?? Engines[0].Template;
 
+    /// <summary>What the address bar makes of what was typed: a web address as it is, a host name with https://,
+    /// anything else a search.</summary>
+    public static string Normalize(string input, string? searchTemplate = null)
+    {
+        searchTemplate ??= SearchTemplate;
+        input = input.Trim();
+        if (input.Length == 0) return "about:blank";
+        if (Regex.IsMatch(input, @"^[a-zA-Z][a-zA-Z0-9+.\-]*://") || Regex.IsMatch(input, @"^(about|data|view-source|file|mailto|javascript):", RegexOptions.IgnoreCase))
+            return input;
+        if (!input.Contains(' '))
+        {
+            var host = input.Split('/', '?', '#')[0];
+            bool local = host.StartsWith("localhost", StringComparison.OrdinalIgnoreCase) || Regex.IsMatch(host, @"^\d{1,3}(\.\d{1,3}){3}(:\d+)?$");
+            if (local) return "http://" + input;
+            if (host.Contains('.') && !host.EndsWith(".") && Regex.IsMatch(host, @"^[\w\-\.]+(:\d+)?$")) return "https://" + input;
+        }
+        return string.Format(searchTemplate, Uri.EscapeDataString(input));
+    }
+
     private static void Load()
     {
         if (_loaded) return;
@@ -108,7 +96,6 @@ public static class BrowserData
         try { if (File.Exists(FilePath)) _s = JsonSerializer.Deserialize<BrowserStore>(File.ReadAllText(FilePath)) ?? new(); }
         catch { _s = new(); }
         _stamp = Stamp();
-        WebTab.SearchTemplate = SearchTemplate;
     }
 
     /// <summary>Red Star Online (the GTK browser, its own process) writes this file too: pick up its changes, unless
@@ -125,7 +112,6 @@ public static class BrowserData
     {
         _dirty = true;
         Changed?.Invoke();
-        WebTab.SearchTemplate = SearchTemplate;
         _timer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };
         _timer.Tick -= Flush; _timer.Tick += Flush;
         _timer.Stop(); _timer.Start();

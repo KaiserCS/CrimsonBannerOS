@@ -5,7 +5,7 @@
   <!--
     [Start] [pinned + running apps ............] [app tray] | [system tray] [clock]
     - Pinned launchers and running windows share one row: a pinned app that is running is the same button.
-    - Native apps and Electron apps (Online, Video) are listed identically.
+    - Native apps and other programs' windows are listed identically.
     - App tray: icons of background things (notifications, media controls of Red Star Video, ...).
     - System tray: network / volume / battery in one button that opens Quick Settings.
   -->

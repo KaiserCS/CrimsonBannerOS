@@ -12,8 +12,8 @@ permissions:
 
 jobs:
   appimage:
-    # 22.04 keeps the glibc requirement low so the AppImage runs on older distros.
-    runs-on: ubuntu-22.04
+    # 24.04: the oldest Ubuntu with WebKitGTK 6.0, which Red Star Online (built into the AppImage) needs.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
 
@@ -21,12 +21,11 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 20
-
-      - name: Tools for AppImage creation and delta updates
-        run: sudo apt-get update && sudo apt-get install -y zsync libfuse2
+      - name: Tools for AppImage creation and delta updates, and Red Star Online's libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zsync libfuse2t64 meson ninja-build pkg-config libgtk-4-dev libwebkitgtk-6.0-dev \
+            libjson-glib-dev libsoup-3.0-dev libgstreamer1.0-dev
 
       - name: Build AppImage
         env:

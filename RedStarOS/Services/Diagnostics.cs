@@ -77,14 +77,25 @@ public static class Diagnostics
             ("Compositor", InputIsolation.InRedStarComp ? "redstar-comp" + (CompIpc.Connected ? ", connected" : ", not connected") : X11Props.CompositorRunning() ? "an X11 compositor" : "none"),
             ("Screenshots", InputIsolation.InRedStarComp ? $"grim {Tool("grim")}, screen sharing portal (xdg-desktop-portal-wlr) {(PortalSetup.WlrInstalled ? "yes" : "no")}"
                 : $"scrot {Tool("scrot")}, maim {Tool("maim")}, import {Tool("import")}"),
-            ("Web engine", WebEngine.ChromeVersion is { Length: > 0 } v ? "Chromium " + v : ElectronLauncher.FindElectron() != null ? "Electron found (not started)" : "Electron missing"),
+            ("Web browser", RedStarOnline.ProgramPath() is { } online ? "Red Star Online (WebKitGTK), " + online : "Red Star Online not installed"),
             ("Graphics", GraphicsFact()),
             ("Red Star windows", Graphics.ShellRenderer + (Graphics.ShellReason.Length > 0 ? " — " + Graphics.ShellReason : "")),
-            ("Browser graphics", WebEngine.GpuStatus ?? "(starts with Red Star Online)"),
+            ("Browser fallbacks", OnlineFallbacks()),
             ("Video (libvlc)", File.Exists("/usr/lib/x86_64-linux-gnu/libvlc.so.5") || File.Exists("/usr/lib/libvlc.so.5") || File.Exists("/usr/lib64/libvlc.so.5") ? "yes" : "not found"),
             ("Tools", $"nmcli {Tool("nmcli")}, pactl {Tool("pactl")}, bluetoothctl {Tool("bluetoothctl")}, xrandr {Tool("xrandr")}, cups {Tool("lpstat")}, setsid {Tool("setsid")}, python3 {Tool("python3")}, xdg-open {Tool("xdg-open")}"),
             ("Memory", Read("/proc/meminfo").Split('\n').FirstOrDefault(l => l.StartsWith("MemTotal"))?.Replace("MemTotal:", "").Trim() ?? "?"),
         };
+    }
+
+    /// <summary>Red Star Online turns these off by itself after a page crash (~/.cache/redstaros/online).</summary>
+    private static string OnlineFallbacks()
+    {
+        var dir = Path.Combine(Environment.GetEnvironmentVariable("XDG_CACHE_HOME") is { Length: > 0 } c ? c
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cache"), "redstaros", "online");
+        var off = new List<string>();
+        if (File.Exists(Path.Combine(dir, "hwdecode-off"))) off.Add("hardware video decoding off");
+        if (File.Exists(Path.Combine(dir, "gpu-off"))) off.Add("GPU drawing off");
+        return off.Count == 0 ? "none" : string.Join(", ", off);
     }
 
     private static string GraphicsFact()

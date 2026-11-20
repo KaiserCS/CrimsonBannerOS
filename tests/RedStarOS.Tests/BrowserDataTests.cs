@@ -8,9 +8,9 @@ public class BrowserDataTests
     [Fact]
     public void Address_bar_text_becomes_a_url_or_a_search()
     {
-        Assert.Equal("https://example.com", WebTab.Normalize("example.com").TrimEnd('/'));
-        Assert.StartsWith("https://duckduckgo.com/?q=", WebTab.Normalize("how tall is everest", "https://duckduckgo.com/?q={0}"));
-        Assert.Equal("http://localhost:8080", WebTab.Normalize("localhost:8080").TrimEnd('/'));
+        Assert.Equal("https://example.com", BrowserData.Normalize("example.com").TrimEnd('/'));
+        Assert.StartsWith("https://duckduckgo.com/?q=", BrowserData.Normalize("how tall is everest", "https://duckduckgo.com/?q={0}"));
+        Assert.Equal("http://localhost:8080", BrowserData.Normalize("localhost:8080").TrimEnd('/'));
     }
 
     [Fact]

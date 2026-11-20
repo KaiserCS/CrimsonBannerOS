@@ -1,101 +1,46 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 using System;
 using Avalonia.Threading;
-using RedStarOS.Views;
 
 namespace RedStarOS.Services;
 
 /// <summary>
-/// Red Star Online. The native window (tabs and menus in Avalonia, pages rendered by the headless web engine)
-/// is primary; if Electron or the engine can't start, the classic single-window Electron browser opens instead.
+/// Opens web pages: in the browser chosen in Settings → Default apps, otherwise in Red Star Online (browser/, GTK 4 +
+/// WebKitGTK). When Red Star Online isn't installed or won't start, the user is told why and how to fix it.
 /// </summary>
 public static class BrowserLauncher
 {
-    private static bool _starting;
+    static BrowserLauncher()
+    {
+        RedStarOnline.CrashedAtStart += (_, why) => Dispatcher.UIThread.Post(() =>
+            Notifier.Show("Red Star Online closed", $"It stopped right after opening ({why}). Details are in ~/.config/redstaros/online.log.", "online"));
+    }
 
     public static void Launch(string? url = null)
     {
         // another browser chosen in Settings → Default apps
         if (!string.IsNullOrEmpty(url) && !url.StartsWith("file:") && DefaultApps.TryOpenWithLinuxApp("web", url)) return;
-        if (RedStarOnline.Launch(url)) return;                 // the GTK + WebKitGTK browser, when it's installed
-        ExplainFallback();
-        Dispatcher.UIThread.Post(() => _ = LaunchAsync(url));
+        if (RedStarOnline.Launch(url)) return;
+        Missing(url);
     }
 
-    private static bool _explained;
-
-    static BrowserLauncher()
-    {
-        // the GTK browser closed right after it opened: say so, and open the page in the previous one instead
-        RedStarOnline.CrashedAtStart += (url, why) => Dispatcher.UIThread.Post(() =>
-        {
-            Notifier.Show("Red Star Online closed", $"It stopped right after opening ({why}). Using the previous browser for now; "
-                + "details are in ~/.config/redstaros/online.log.", "online");
-            _ = LaunchAsync(url);
-        });
-    }
-
-    /// <summary>Once per session: why the previous (Electron) browser opened instead of the GTK one.</summary>
-    private static void ExplainFallback()
-    {
-        if (_explained || SettingsStore.Current.ClassicBrowser) return;
-        _explained = true;
-        var why = RedStarOnline.ProgramPath() == null
-            ? "The new Red Star Online isn't built: install webkitgtk-6.0 gtk4 json-glib libsoup3, then rebuild Red Star (or run browser/build.sh)."
-            : "The new Red Star Online didn't start; see ~/.config/redstaros/session.log.";
-        Dispatcher.UIThread.Post(() => Notifier.Show("Using the previous browser", why, "online"));
-    }
-
-    /// <summary>Opens an extra window whose pages live in an in-memory session that is wiped when it closes.</summary>
+    /// <summary>A window whose pages live in a session that is wiped when it closes.</summary>
     public static void LaunchPrivate()
     {
-        if (RedStarOnline.Launch(null, privateWindow: true)) return;
-        ExplainFallback();
-        Dispatcher.UIThread.Post(() => _ = LaunchPrivateAsync());
+        if (!RedStarOnline.Launch(null, privateWindow: true)) Missing(null);
     }
 
-    private static async System.Threading.Tasks.Task LaunchPrivateAsync()
+    /// <summary>Red Star Online isn't there: say how to get it, and hand a page to the system's browser meanwhile.</summary>
+    private static void Missing(string? url)
     {
-        var win = new WebBrowserWindow(true);
-        WindowManager.Open(win, "online");
-        if (!await win.StartAsync(null))
+        var why = RedStarOnline.ProgramPath() == null
+            ? "Red Star Online isn't installed. Install webkitgtk-6.0, gtk4, json-glib and libsoup3, then rebuild Red Star (or run browser/build.sh and install-session.sh)."
+            : "Red Star Online didn't start; see ~/.config/redstaros/online.log.";
+        if (!string.IsNullOrEmpty(url) && ProcessUtil.Which("xdg-open") is { } open)
         {
-            win.Close();
-            Notifier.Show("Red Star Online", "Private browsing needs the web engine: " + (WebEngine.Error ?? "it could not start") + ".", "online");
+            try { System.Diagnostics.Process.Start(open, new[] { url })?.Dispose(); why += " The page was opened in the system's default browser."; }
+            catch { }
         }
-    }
-
-    private static async System.Threading.Tasks.Task LaunchAsync(string? url)
-    {
-        if (WebBrowserWindow.Instance is { } open)
-        {
-            if (!string.IsNullOrEmpty(url)) open.OpenUrl(url);
-            open.Raise();
-            return;
-        }
-        if (_starting) return;
-        _starting = true;
-        try
-        {
-            var win = new WebBrowserWindow();
-            WindowManager.Open(win, "online");
-            if (!await win.StartAsync(url))
-            {
-                var why = WebEngine.Error;
-                win.Close();
-                Notifier.Show("Red Star Online", "Using the classic browser (" + (why ?? "the web engine could not start") + ").", "online");
-                ElectronLauncher.Launch("online", "redstar-browser", "browser", "Red Star Online",
-                    string.IsNullOrEmpty(url) ? Array.Empty<string>() : new[] { url });
-            }
-        }
-        catch (Exception ex)
-        {
-            // never fail silently: log it, tell the user and fall back to the classic browser
-            try { System.IO.File.WriteAllText(AppPaths.ConfigFile("browser-error.log"), DateTime.Now + "\n" + ex); } catch { }
-            if (WebBrowserWindow.Instance is { } broken) { try { broken.Close(); } catch { } }
-            Notifier.Show("Red Star Online", "The new browser failed to start (" + ex.GetType().Name + ": " + ex.Message + "). Using the classic browser.", "online");
-            ElectronLauncher.Launch("online", "redstar-browser", "browser", "Red Star Online",
-                string.IsNullOrEmpty(url) ? Array.Empty<string>() : new[] { url });
-        }
-        finally { _starting = false; }
+        Dispatcher.UIThread.Post(() => Notifier.Show("Red Star Online", why, "online"));
     }
 }

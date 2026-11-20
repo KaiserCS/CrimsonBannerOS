@@ -270,18 +270,6 @@ public class NativeWaylandShellTests
     }
 }
 
-public class WebEnginePlatformTests
-{
-    [Fact]
-    public void The_hidden_engine_runs_on_X11_when_there_is_an_X_server()
-    {
-        Assert.Equal("--ozone-platform=x11", WebEngine.OzoneFlag("", hasX: true));            // X11 or Xwayland
-        Assert.Equal("--ozone-platform-hint=auto", WebEngine.OzoneFlag("", hasX: false));     // Wayland without Xwayland
-        Assert.Equal("--ozone-platform=wayland", WebEngine.OzoneFlag("wayland", hasX: true)); // REDSTAR_WEB_OZONE
-        Assert.Equal("--ozone-platform=x11", WebEngine.OzoneFlag("nonsense", hasX: true));
-    }
-}
-
 [Collection("environment")]     // shares CompIpc's state with the other connection tests
 public class WindowTokenTests
 {

@@ -10,7 +10,7 @@ namespace RedStarOS.Services;
 public enum SnapMode { Left, Right, Full, Restore }
 
 /// <summary>
-/// Tracks every open app window for the taskbar (native windows and Electron windows alike),
+/// Tracks every open app window for the taskbar,
 /// remembers window geometry and the pinned taskbar apps.
 /// </summary>
 public static class WindowManager
@@ -65,11 +65,10 @@ public static class WindowManager
 
     private static void OnForeignWindows(IReadOnlyList<X11Desktop.ForeignWindow> windows, long active)
     {
-        // Red Star's own windows (same process) are already left out; so are its Electron apps (bridge pids)
-        var bridged = ShellBridge.ConnectedPids();
+        // Red Star's own windows (same process) are already left out
         var nativeIds = new HashSet<long>(_tasks.OfType<NativeTask>()
             .Select(t => t.Window.TryGetPlatformHandle()?.Handle.ToInt64() ?? 0));
-        var wanted = windows.Where(w => !bridged.Contains(w.Pid) && !nativeIds.Contains(w.Id) && !IsOwnClass(w)).ToList();
+        var wanted = windows.Where(w => !nativeIds.Contains(w.Id) && !IsOwnClass(w)).ToList();
         bool changed = false;
         var byId = _tasks.OfType<X11Task>().ToDictionary(t => t.Window);
         foreach (var w in wanted)
@@ -79,17 +78,6 @@ public static class WindowManager
         }
         foreach (var gone in byId.Values) { _tasks.Remove(gone); changed = true; }
         if (changed) Changed?.Invoke();
-    }
-
-    internal static void AddExternal(ExternalTask task)
-    {
-        _tasks.Add(task);
-        Changed?.Invoke();
-    }
-
-    internal static void RemoveExternal(ExternalTask task)
-    {
-        if (_tasks.Remove(task)) Changed?.Invoke();
     }
 
     private static void Register(Window w, string? appId)
@@ -179,7 +167,6 @@ public static class WindowManager
 
     /// <summary>
     /// Screen rectangle (in pixels) for Snap Left / Right / Fill: the work area minus the taskbar.
-    /// Shared by native windows and Electron windows.
     /// </summary>
     public static bool TryComputeSnap(Window reference, SnapMode mode, out PixelPoint position,
         out int width, out int height, out double scale)

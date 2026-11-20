@@ -65,7 +65,7 @@ internal static class Program
 
     /// <summary>
     /// Settings that must be in place before the first window exists: the size of everything (Avalonia's global
-    /// scale factor, also passed on to Electron apps) and the mouse-pointer size. Values the user already set in
+    /// scale factor) and the mouse-pointer size. Values the user already set in
     /// the environment win.
     /// </summary>
     private static void ApplyEarlyAccessibility()
@@ -84,7 +84,7 @@ internal static class Program
             {
                 var v = scale.ToString("0.##", CultureInfo.InvariantCulture);
                 Environment.SetEnvironmentVariable("AVALONIA_GLOBAL_SCALE_FACTOR", v);
-                Environment.SetEnvironmentVariable("REDSTAR_UI_SCALE", v);          // Electron apps read this
+                Environment.SetEnvironmentVariable("REDSTAR_UI_SCALE", v);          // Red Star Online and other helpers read this
             }
             if (root.TryGetProperty("LargeCursor", out var lc) && lc.ValueKind == JsonValueKind.True)
                 Environment.SetEnvironmentVariable("XCURSOR_SIZE", "48");

@@ -18,13 +18,11 @@ public partial class App : Application
         ThemeService.Apply();
         AccessibleNames.Install();               // icon-only buttons get names for screen readers
         SettingsWindow.RegisterSearch();         // settings pages show up in Start-menu search
-        ShellBridge.Start();                    // Electron apps connect here (taskbar, tray, theme)
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Closing the desktop shell ("Shutdown") ends the whole session, Electron apps included.
+            // Closing the desktop shell ("Shutdown") ends the whole session.
             desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
-            desktop.Exit += (_, _) => ShellBridge.Shutdown();
             desktop.MainWindow = new DesktopWindow();
         }
         base.OnFrameworkInitializationCompleted();

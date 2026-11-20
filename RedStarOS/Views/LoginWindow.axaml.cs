@@ -9,7 +9,7 @@ using RedStarOS.Services;
 
 namespace RedStarOS.Views;
 
-/// <summary>Lock / log-off screen. While it is up, Electron app windows are minimised too.</summary>
+/// <summary>Lock / log-off screen.</summary>
 public partial class LoginWindow : Window
 {
     private readonly DispatcherTimer _clock = new() { Interval = TimeSpan.FromSeconds(1) };
@@ -38,7 +38,6 @@ public partial class LoginWindow : Window
 
         Opened += (_, _) =>
         {
-            ShellBridge.SetLocked(true);
             if (noPassword) Focus(); else PasswordBox.Focus();
         };
     }
@@ -86,7 +85,6 @@ public partial class LoginWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         _clock.Stop();
-        ShellBridge.SetLocked(false);
         base.OnClosed(e);
     }
 }

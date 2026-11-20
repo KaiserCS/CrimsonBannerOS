@@ -12,7 +12,7 @@ Avalonia 12 (12.1.6) / .NET 8 port of the original WinForms project, with a much
 - **Search everything** (Super, or the Start button): apps, settings pages, recent documents, files in your home
   folder (indexed in the background; hidden and build folders skipped), quick sums ("12*7" → copy the result),
   and "Open site" / "Search the web" in Red Star Online.
-- **Red Star Online (new: GTK 4 + WebKitGTK, `browser/`):** a native browser in its own window, so typing,
+- **Red Star Online (GTK 4 + WebKitGTK, `browser/`):** a native browser in its own window, so typing,
   scrolling and the clipboard go straight to the page. Tabs, an address bar that opens addresses or searches,
   bookmarks bar, history, downloads (Ctrl+J), find in page (Ctrl+F), zoom per site, print, developer tools (F12),
   permissions asked once per site, private windows (Ctrl+Shift+N), and the ad and tracker blocker: EasyList,
@@ -21,8 +21,10 @@ Avalonia 12 (12.1.6) / .NET 8 port of the original WinForms project, with a much
   (`~/.config/redstaros/browser-data.json`). Build it with `browser/build.sh` (Arch/CachyOS:
   `pacman -S webkitgtk-6.0 gtk4 json-glib libsoup3`, and for sound and video in pages
   `gst-plugins-good gst-plugins-bad gst-libav`) and `install-session.sh` installs it; Red Star then uses it
-  for every link. Not yet in it: reader mode, Save as PDF, picture-in-picture and imports from other browsers —
-  Settings → Default apps → "Use the previous Red Star Online" switches back to the Electron one meanwhile.
+  for every link. Reader view (F9), Save as PDF (Ctrl+S), and in System Settings → Red Star Online: search engine,
+  blocked sites, clearing browsing data, site permissions and imports from Firefox and the Chromium family. Not
+  carried over from the old Electron browser: picture-in-picture (WebKitGTK has none), "Open page in Writer" and the
+  tray icon. Electron and npm are gone from Red Star entirely.
 - **Other programs' tray icons:** Discord, Steam, Qt programs, update notifiers… show their icons in the taskbar's
   tray (freedesktop StatusNotifierItem): left click opens the program (or its menu, for Steam-style icons), right
   click its menu (DBusMenu, with submenus and ticks), middle click its second action, the wheel scrolls. In its own
@@ -103,12 +105,8 @@ Red Star and not to the desktop underneath.
     tooltips, menus, popups, the desktop, the taskbar and see-through undecorated windows never get a shadow box.
     With another window manager the shadows go by window type instead. xcompmgr draws no shadows (it can't leave out
     tooltips). Accessibility → Reduce motion turns fades off. With a compositor running, popups, menus and the Alt+Tab panel are rounded and translucent again.
-  - Diagnostics shows what is in use: GPU access, compositor, renderer of Red Star's windows, and the browser's
-    rendering / video-decoding status with the GPU's name. `webengine/test/gpu.test.js` checks the engine's switches.
-* **Smooth video in Red Star Online**: the web engine writes only the rows of the page that changed (a playing
-  video is a band, not the whole page) into shared memory; Red Star copies just those rows from a memory mapping on
-  the engine's connection thread — not the UI thread — and acknowledges right away, so the next frame is painted
-  while this one is drawn.
+  - Diagnostics shows what is in use: GPU access, compositor, renderer of Red Star's windows, and whether Red Star
+    Online has turned hardware video decoding or GPU drawing off after a page crash.
 * **Ctrl+Shift** releases the keyboard and mouse (to reach the other desktop), and captures them again.
 * **Shut down** Red Star OS to return to the desktop underneath.
 * Turn it off in **Settings → Desktop & Taskbar** (it shows whether isolation is active), or start with
@@ -275,8 +273,8 @@ their own (Chrome's tab strip, apps that ask for client-side decorations), so th
 
 ## Accessibility and identity
 
-* **Settings → Accessibility**: size of text and controls (100–200 %, used from the next sign-in, Electron apps
-  included), high contrast (black-on-white / white-on-black text and borders, thick yellow or blue focus outline;
+* **Settings → Accessibility**: size of text and controls (100–200 %, used from the next sign-in, Red Star
+  Online included), high contrast (black-on-white / white-on-black text and borders, thick yellow or blue focus outline;
   follows Light/Dark), large mouse pointer, reduce motion (no splash fade, no blinking terminal cursor, web pages get
   `prefers-reduced-motion`), system sounds with previews, keyboard notes and a link to all shortcuts.
 * **Keyboard focus** is visible everywhere: whatever Tab reaches gets an outline in the accent colour.
@@ -298,7 +296,8 @@ their own (Chrome's tab strip, apps that ask for client-side decorations), so th
 ## Checking a build
 `./check.sh` builds the shell and runs the automated checks: every window is opened and closed headlessly
 (catches XAML that compiles but crashes at runtime), the terminal emulator and a real pty, browser data,
-and the ad blocker. `./check.sh --full` adds the web-engine tests (needs Playwright); `./check.sh --screenshots`
+and, when their libraries are installed, redstar-wm, redstar-comp and Red Star Online (its unit tests and a
+self-test of the real browser inside redstar-comp). `./check.sh --screenshots`
 also draws every window (Skia) into `screenshots/` — open `screenshots/index.html` to see them all side by side.
 
 **On GitHub** every push and pull request runs `.github/workflows/check.yml`, four jobs in parallel:
@@ -307,20 +306,19 @@ also draws every window (Skia) into `screenshots/` — open `screenshots/index.h
   with their messages; the **screenshots** artifact holds the pictures (open `index.html`).
 * **Window manager** — redstar-wm must compile with no warnings (`-Wall -Wextra -Werror`), then its behaviour and
   click tests run on Xvfb, then a real Chromium session under it (**session-screenshots** artifact).
-* **Web engine** — ad blocker, GPU switches and the engine tests with Playwright's Chromium.
 * **Wayland compositor** — in an Arch Linux container (for wlroots 0.20): redstar-comp must compile with
   warnings as errors, then its behaviour tests run headless through Xwayland.
+* **Red Star Online** — in an Arch Linux container: the browser's unit tests, then its self-test (the real browser
+  headless inside redstar-comp: pages, tabs, the blocker, downloads, reader view, Save as PDF).
 
 A red mark means a change broke the build, a test or a window; the failing step's log says which.
 
 ## Build
 
 ```bash
-sudo pacman -S dotnet-sdk-8.0 nodejs npm   # or: sudo apt install dotnet-sdk-8.0 nodejs npm
+sudo pacman -S dotnet-sdk-8.0 webkitgtk-6.0 gtk4 json-glib libsoup3 meson   # the shell and Red Star Online
 ./build-appimage.sh                  # -> dist/RedStarOS-x86_64.AppImage
 ./build-appimage.sh arm64            # on an arm64 host
-SKIP_ELECTRON=1 ./build-appimage.sh  # smaller build without the Electron browser
-(cd browser && npm run setup)        # once, downloads Electron for the browser when using the line below
 dotnet run --project RedStarOS       # development run, no AppImage
 ```
 
@@ -333,39 +331,27 @@ Login-screen sessions: `sudo ./install-session.sh` (it finds what you built: the
 with redstar-wm) and, when redstar-comp is built, **Red Star OS (Wayland)**. `sudo ./uninstall-session.sh` takes them
 off the login screen again (`--dry-run` lists what it would remove; your settings and the program itself stay).
 
-## Red Star Online – native browser
-Tabs, address bar and menus are native Avalonia; pages are rendered by a hidden Electron/Chromium "web engine" (`webengine/`) and drawn inline, so it works on X11 and Wayland and behaves like the other apps.
-- **Core:** bookmarks (☆ / Ctrl+D, bookmarks bar, manager with rename and HTML export), history page (search, delete, clear by time range), new-tab page (search + bookmarks and most-visited tiles), session restore, address-bar suggestions from history and bookmarks, padlock / site-info panel, search-engine choice (DuckDuckGo, Google, Bing, Brave, Startpage, Wikipedia), tab favicons, per-site zoom, remembered per-site permissions.
-- **Privacy and safety:** private windows (Ctrl+Shift+N; separate in-memory session, no history, wiped when the window closes), ad and tracker blocker using EasyList, EasyPrivacy and Peter Lowe's list (downloaded on first start, refreshed every 4 days, built-in starter list offline; blocks requests and hides leftover ad boxes; strips YouTube video ads) with a per-site switch and blocked count, Clear browsing data dialog (Ctrl+Shift+Del), certificate-error page with "Proceed anyway", your own blocked-sites list (Settings).
-- **Shell integration:** tray icon with menu (show, new tab, private window, downloads, close) and active-download badge, "Open page in Writer" (article text and images become a Writer document), "Send link to Messenger" (copies the link and opens Messenger), downloads panel with Show in folder in the native File Manager, dark/light follows the shell theme (`prefers-color-scheme`).
-- **Extras:** reader mode, Save as PDF / Print (Ctrl+S / Ctrl+P, uses `lp` when present), picture-in-picture, mute-tab button and audio indicator, developer tools (F12), keyboard-shortcuts page, Chromium's built-in PDF viewer.
-- Internal pages: `redstar://newtab`, `history`, `bookmarks`, `settings`, `shortcuts`. Data lives in `browser-data.json` in the config folder.
-- Picture-in-picture is native: the video fills its tab and a small always-on-top window shows it (play/pause, back to tab), so it works on Wayland too. HTTP sign-in prompts, pop-up windows that keep `window.opener` (sign-in with Google/Microsoft), and page fullscreen are supported.
-- "Send link to Messenger" posts the page into the Messenger chat (double-click a message with a link to open it). "Open page in Writer" picks the article, keeps its pictures and adds a source line.
-- The hidden engine runs on X11 (Xwayland on a Wayland desktop) whenever an X server is there: on Wayland Chromium
-  puts its hidden page windows on screen. `REDSTAR_WEB_OZONE=wayland|x11` overrides.
-- Diagnostics: `~/.config/redstaros/browser.log`. Engine tests: `webengine/test/` (see its README).
-- Human verification (Cloudflare, hCaptcha, reCAPTCHA, GeeTest, Arkose, DataDome): those checks are never blocked by
-  the ad blocker, and when one appears Red Star offers **Open in a window** (also in the page's right-click menu): the
-  page opens in a real Chromium window sharing the tab's cookies, where sliders and puzzles get input directly;
-  closing that window reloads the tab, already verified.
-- Known gaps: no extensions, no password manager, `<select>` drop-downs and IME input are limited in offscreen mode, no GPU compositing (heavy WebGL / 4K video is slower), DRM video is unsupported. If the engine can't start, the classic Electron browser opens instead.
+## Red Star Online – the browser (`browser/`)
+C, GTK 4 and WebKitGTK: its own native window on X11 and Wayland. See the feature list at the top. Its messages go to
+`~/.config/redstaros/online.log`; after a page crash it turns hardware video decoding off, then GPU drawing
+(`~/.cache/redstaros/online/`; `REDSTAR_ONLINE_HWDECODE` / `REDSTAR_ONLINE_GPU` override). Tests: `meson test -C
+browser/build` and `browser/test/run-selftest.sh` (the real browser, headless inside redstar-comp). The earlier
+Electron browser and its hidden "web engine" were removed on 20 Nov 2026.
 
 ## Fit and finish round (apps and polish)
 - **New apps:** *Task Manager* (CPU / memory / uptime, filter, sort, End task), *Clock* (stopwatch with laps, countdown timer that notifies when done; keep its window open), *Red Star Paint* (pen, eraser, colours, size, undo, save PNG).
 - **Settings** is one resizable window with a sidebar. Appearance, Desktop & Taskbar (labels, 12/24 h clock, Do Not Disturb, pinned apps) and Games are pages; Network, Account, Wallpapers and Updates open their existing windows.
-- **Login** has a frosted card, big clock, shake on a wrong password, Enter to sign in (also when no password is set), Restart / Shut down, and hides Electron windows while locked.
+- **Login** has a frosted card, big clock, shake on a wrong password, Enter to sign in (also when no password is set), Restart / Shut down.
 - **Notes**: search, pinning, previews and dates, "Saving... / Saved", word count, Ctrl+N, delete with Undo.
 - **Camera**: self-timer (3 / 10 s), recording timer badge, red recording icon in the app tray (stop from there), strip of recent photos that open in Image Viewer.
 - **Ping Pong**: resizable playfield, Solo and Versus-computer (first to 7) modes, keyboard + mouse, pause (P/Space, auto-pause on focus loss), saved scores.
-- **Red Star Terminal** (native, `Views/TerminalWindow`, `Views/TerminalView`, `Services/TermEmulator`, `Services/Pty`): the shell runs on a real pseudo-terminal opened through libc and started with `setsid -c` (python3 as a fallback), so job control, Ctrl+C/Z and resizing work; no Electron, xterm.js or native module. The emulator is xterm-compatible: 16/256/true colour, bold/italic/underline/strike, alternate screen (vim, htop, less, mc), mouse reporting (incl. SGR), bracketed paste, focus events, cursor shapes, OSC titles, OSC 7 folders, OSC 8 links, OSC 52 copy, wide characters and emoji, 10 000 lines of scrollback that re-wrap when the window is resized. Tabs (Ctrl+Shift+T / W, Ctrl+PgUp/PgDn, Alt+1-9), copy / paste (Ctrl+Shift+C / V, Ctrl/Shift+Insert, middle-click), word / line selection, find (Ctrl+Shift+F), Ctrl+click opens links in Red Star Online, clear scrollback (Ctrl+Shift+K), zoom (Ctrl+= / - / 0, remembered), full screen (F11), follows the theme and accent. New tabs open in the current tab's folder; tab titles show the folder or the running program; closing a tab or the window asks first when a program is still running. "Open Terminal" on a folder and apps with `Terminal=true` open in a new tab. Split panes: Ctrl+Shift+E (right) / Ctrl+Shift+O (down), drag the divider to resize, Alt+Shift+arrows to move between panes, Ctrl+Shift+Z maximises / restores a pane, Ctrl+Shift+W closes a pane (and the tab with its last pane). Profiles (menu → Profiles and colours…, or ▾ next to ＋ to open a tab with one): font and size, colour scheme (Red Star — follows the desktop theme — plus Red Star Dark / Light, Solarized Dark / Light, Tango, Dracula, Gruvbox, Nord, Green on Black), cursor shape and blinking, a command instead of the shell, start folder, scrollback length, visual bell, bold-as-bright; edits apply to open terminals at once (saved in `terminal.json`). Input methods (fcitx / IBus) show the text being composed at the cursor and place their candidate window there. The old Electron version in `terminal/` is no longer used.
+- **Red Star Terminal** (native, `Views/TerminalWindow`, `Views/TerminalView`, `Services/TermEmulator`, `Services/Pty`): the shell runs on a real pseudo-terminal opened through libc and started with `setsid -c` (python3 as a fallback), so job control, Ctrl+C/Z and resizing work; no Electron, xterm.js or native module. The emulator is xterm-compatible: 16/256/true colour, bold/italic/underline/strike, alternate screen (vim, htop, less, mc), mouse reporting (incl. SGR), bracketed paste, focus events, cursor shapes, OSC titles, OSC 7 folders, OSC 8 links, OSC 52 copy, wide characters and emoji, 10 000 lines of scrollback that re-wrap when the window is resized. Tabs (Ctrl+Shift+T / W, Ctrl+PgUp/PgDn, Alt+1-9), copy / paste (Ctrl+Shift+C / V, Ctrl/Shift+Insert, middle-click), word / line selection, find (Ctrl+Shift+F), Ctrl+click opens links in Red Star Online, clear scrollback (Ctrl+Shift+K), zoom (Ctrl+= / - / 0, remembered), full screen (F11), follows the theme and accent. New tabs open in the current tab's folder; tab titles show the folder or the running program; closing a tab or the window asks first when a program is still running. "Open Terminal" on a folder and apps with `Terminal=true` open in a new tab. Split panes: Ctrl+Shift+E (right) / Ctrl+Shift+O (down), drag the divider to resize, Alt+Shift+arrows to move between panes, Ctrl+Shift+Z maximises / restores a pane, Ctrl+Shift+W closes a pane (and the tab with its last pane). Profiles (menu → Profiles and colours…, or ▾ next to ＋ to open a tab with one): font and size, colour scheme (Red Star — follows the desktop theme — plus Red Star Dark / Light, Solarized Dark / Light, Tango, Dracula, Gruvbox, Nord, Green on Black), cursor shape and blinking, a command instead of the shell, start folder, scrollback length, visual bell, bold-as-bright; edits apply to open terminals at once (saved in `terminal.json`). Input methods (fcitx / IBus) show the text being composed at the cursor and place their candidate window there.
 
 ## Shell redesign: one design system, one taskbar, two trays
 
 **Taskbar** (`Views/Taskbar.axaml`) – a single dark-glass strip:
 `[Start] [pinned + running apps] [app tray] | [system tray] [clock]`
 - Pinned launchers (default: File Manager, Online, Video) and running windows share one row. A pinned app that is running *is* the same button, with a running dot (a longer bar when focused). Right-click: Restore / Minimize / Snap / **Pin or Unpin** / Close. Start menu apps can be pinned with right-click too.
-- **Electron apps are on the taskbar.** Red Star Online and Red Star Video get a button the moment they are launched ("Red Star Video…" while starting), show their window title, focus/minimise on click, and support Snap Left/Right/Fill and Close from the right-click menu, exactly like native windows. Launching an app that is already running just focuses it.
 - With more than 5 windows the buttons collapse to icons (titles move to tooltips).
 - The old fixed Folder / Power / Wallpaper / Calendar buttons are gone: Folder is a pinned app, Power is in Start and Quick Settings, wallpaper commands are in the desktop right-click menu and Quick Settings, Calendar opens from the clock.
 
@@ -374,13 +360,6 @@ Tabs, address bar and menus are native Avalonia; pages are rendered by a hidden 
 **System tray** – network / volume / battery in one button that opens **Quick Settings**: profile, network tile, dark-mode tile, Do Not Disturb tile, next wallpaper, volume slider with mute, battery, Log off / Restart / Shut down. The **clock** (HH:mm + date) opens a calendar panel with today's agenda.
 
 **Design system** (`Styles/Shell.axaml`) – shared tokens and classes used by every window: `h1 / h2 / caption / eyebrow / brand` text, `card`, `primary / flat / tile / hubtile` buttons, theme-aware borders/hover colours, accent brushes driven by Settings → Appearance. `Services/AppIcons.cs` gives each app one glyph + colour used by the taskbar, Start menu, notifications, toasts and Settings. Hard-coded colours/sizes in the app windows were replaced, window titles now match the app names (e.g. "RSMessanger" → "Red Star Messenger").
-
-**Electron apps follow the theme.** The shell passes the dark/light mode and accent colour to Online and Video and pushes changes live; Online was restyled (rounded address bar, load progress bar, light/dark), Video uses the accent colour.
-
-### How the Electron integration works (`Services/ShellBridge.cs`, `shared/shell-bridge.js`)
-The shell listens on a Unix socket (`$XDG_RUNTIME_DIR/redstaros-shell-<pid>.sock`, mode 0600) and starts Electron apps with `REDSTAR_SHELL_SOCKET` set. The app connects and speaks newline-delimited JSON: it reports its window (title, focused, minimised), tray icons and notifications; the shell sends focus / minimise / restore / close / bounds (snap) / theme / tray-menu messages. It works the same on X11 and Wayland because no window-manager tricks are used. Without the variable (plain `npm start`) the apps run stand-alone. To integrate another Electron app: copy the `loadBridge()` / `attach(win)` lines from `video/main.js`, add an entry to `AppRegistry` and a launcher that calls `ElectronLauncher.Launch("<id>", ...)`. On shutdown the shell asks all Electron apps to quit.
-
-Notes: the bridge covers Red Star's own Electron apps. Third-party apps' tray icons (StatusNotifierItem / D-Bus) are **not** hosted. Electron windows are raised above the full-screen shell with an always-on-top flip; if your window manager still keeps them behind, turn off Settings → Appearance → Full-screen desktop. Alt+arrow snapping is for native windows; Electron windows snap from the taskbar menu.
 
 ## Start menu (redesigned)
 Opens with the Start button, **Win** or **Ctrl+Esc**. Search box on top, category rail on the left (All apps, Recent, Office, Media, Games, Online, Utilities, System, then your installed Linux apps grouped by type), app list with coloured icon tiles on the right, and a footer with your avatar, Settings and a Power menu (Log Off / Shutdown / Restart).
@@ -391,7 +370,7 @@ Opens with the Start button, **Win** or **Ctrl+Esc**. Search box on top, categor
 ## Red Star Video (native, LibVLC)
 A native Avalonia player built on **LibVLCSharp** (Start menu → **RSMedia → Red Star Video**; also opens for video/audio files). It plays everything VLC does (MKV/AVI/WMV/FLV/HEVC included), so the old "can't decode" gaps are gone.
 
-- **Needs libvlc on the machine**: `sudo apt install vlc libvlc-dev` (Debian/Ubuntu) or your distro's equivalent. If it is missing the shell falls back to the classic Electron player in `video/` and shows a hint.
+- **Needs libvlc on the machine**: `sudo apt install vlc libvlc-dev` (Debian/Ubuntu) or your distro's equivalent. If it is missing, opening a video says what to install.
 - Playlist (add/remove/clear, click to play, no duplicates, drag and drop), repeat off/all/one, auto-advance, seek bar, volume + mute, speed 0.25x–3x, subtitles (`.srt .vtt .ass .ssa .sub` auto-loaded beside the file; **S** loads another, **V** toggles), resume position per file, error message with *Open with system player*.
 - Remembers volume, mute, speed, repeat, subtitles and playlist visibility; tray icon with play/pause, previous, next, show, close.
 - Opening another file while it runs adds it to the playlist.
@@ -409,7 +388,6 @@ A native Avalonia player built on **LibVLCSharp** (Start menu → **RSMedia → 
 - **Messenger** no longer ships sample messages or the fake "typing..." line (old sample messages are purged from saved history). The placeholder contact list is removed too.
 - **Full-screen desktop by default** (Settings → Appearance can switch it back to a maximised window).
 - **Ping Pong has a normal title bar** and a *Restart the Level* menu entry (also F1); Esc still exits.
-- **Red Star Online now runs on Electron** (`browser/`, home page https://duckduckgo.com): address bar with search, back/forward/reload/home, links that open new windows load in the same tab, single instance. It needs these host libraries, which any GTK desktop already has: gtk3, nss, alsa-lib, libxss. Adds roughly 250 MB to the AppImage.
 
 ## What's new in 1.3
 
@@ -467,11 +445,8 @@ Building requires `AllowUnsafeBlocks` (already set in `RedStarOS.csproj`).
 - Formatting: paragraph styles (Normal, Heading 1–3, Quote, Code), font, size, bold/italic/underline/strike, super/subscript, text colour, highlight, clear formatting, alignment (left/centre/right/justify), bullets, numbering, indent/outdent, line spacing, links (Ctrl+click opens), pictures (insert, drop, paste), tables (Tab moves between cells, Tab in the last cell adds a row, row/column menu), horizontal line, page break.
 - Documents: tabs with an unsaved dot, caret and scroll restored per tab, autosave crash recovery every 4 s, undo/redo, find/replace (highlighted matches, match case, replace all), word/character count, zoom 50–250 % (Ctrl+wheel), page view (A4/Letter with page guides and page numbers) or web view.
 - Files: `.docx` (own reader/writer: styles, lists, tables, images, links, footers with page numbers), `.html`, `.md`, `.txt`; PDF export is a real vector PDF with selectable text; Print sends that PDF to the default printer (`lp`) or opens it in your viewer.
-- Opening another file while Writer is running adds a tab. The old Electron `writer/` folder is no longer packaged or launched.
-- Differences from the old Electron Writer: no spell-check underlines (Avalonia has no spell-checker; install nothing, it is simply not there), table cells hold one paragraph each, pictures are their own block (not inline with text), and column widths in tables are equal.
-- Rich text ribbon: paragraph styles, font, size, bold / italic / underline / strike, super/subscript, text colour, highlight, alignment, bullets, numbering, indent, line spacing, links, pictures, tables, rules, page breaks.
-- Files: **.docx** (own reader/writer: styles, lists, tables, pictures, links, page numbers), .html, .txt and .md. PDF export and printing use Chromium's print engine, with A4 or Letter.
-- Page view with page-break guides, web view, zoom (Ctrl+wheel), find & replace with highlighting, word / character count, spell-check underlines (Chromium's built-in checker), tabs with a dot for unsaved changes, each tab remembers its scroll position and caret, crash recovery (autosaved every 4 s, offered on next start), `--file=` arguments and file-manager opening go to the running instance.
+- Opening another file while Writer is running adds a tab.
+- Not there: spell-check underlines (Avalonia has no spell-checker; install nothing, it is simply not there), table cells hold one paragraph each, pictures are their own block (not inline with text), and column widths in tables are equal.
 - Not included: per-tab undo history (undo restarts when you switch tabs), headers / footers other than page numbers, comments and tracked changes.
 
 **Red Star Sheets** was rebuilt around a custom-drawn grid, so only the visible cells are ever created.
@@ -484,8 +459,6 @@ Building requires `AllowUnsafeBlocks` (already set in `RedStarOS.csproj`).
 - Not included: several sheets in one workbook, merged cells, inserting or deleting rows / columns, charts embedded in the grid, formulas that refer to other sheets, row insertion adjusting references.
 
 **Studio** now shows recent documents from Writer, Sheets and Slides, plus **Open file…** and three "New" buttons. The File Manager and any "open" action route `.docx .txt .md .html` to Writer, `.xlsx .csv .tsv` to Sheets and `.rsslides` to Slides.
-
-Build note: `build-appimage.sh` copies `writer/` into the AppImage (no `npm install` is needed for it).
 
 ## Licence
 Copyright (C) 2026 The Red Star OS contributors.

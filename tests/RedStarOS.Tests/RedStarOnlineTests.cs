@@ -33,24 +33,19 @@ public class RedStarOnlineTests
     }
 
     [Fact]
-    public void Found_through_REDSTAR_ONLINE_unless_the_previous_browser_is_chosen()
+    public void Found_through_REDSTAR_ONLINE()
     {
         var fake = Path.Combine(Path.GetTempPath(), "redstar-online-" + Guid.NewGuid().ToString("N"));
         File.WriteAllText(fake, "#!/bin/sh\n");
         var old = Environment.GetEnvironmentVariable("REDSTAR_ONLINE");
-        bool classic = SettingsStore.Current.ClassicBrowser;
         try
         {
             Environment.SetEnvironmentVariable("REDSTAR_ONLINE", fake);
             Assert.Equal(fake, RedStarOnline.ProgramPath());
-            SettingsStore.Current.ClassicBrowser = false;
             Assert.True(RedStarOnline.Available);
-            SettingsStore.Current.ClassicBrowser = true;
-            Assert.False(RedStarOnline.Available);                 // Settings → Default apps: the previous browser
         }
         finally
         {
-            SettingsStore.Current.ClassicBrowser = classic;
             Environment.SetEnvironmentVariable("REDSTAR_ONLINE", old);
             File.Delete(fake);
         }

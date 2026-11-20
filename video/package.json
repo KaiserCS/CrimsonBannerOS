@@ -1,8 +1,0 @@
-{
-  "name": "redstar-video",
-  "productName": "Red Star Video",
-  "version": "1.0.0",
-  "description": "Video player for Red Star OS (runs on the Electron binary installed in ../browser)",
-  "main": "main.js",
-  "private": true
-}

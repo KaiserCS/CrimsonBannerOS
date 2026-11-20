@@ -25,7 +25,7 @@ public static class RecentDocs
         catch (Exception) { /* a recent list is never worth an error */ }
     }
 
-    /// <summary>Existing recent documents, newest first. Includes files Red Star Writer (Electron) opened.</summary>
+    /// <summary>Existing recent documents, newest first.</summary>
     public static List<string> List(int max = 12)
     {
         var all = new List<string>(SettingsStore.Current.RecentFiles);

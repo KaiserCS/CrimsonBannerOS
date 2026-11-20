@@ -38,12 +38,11 @@ same change that adds it, or it doesn't go in.
 | D-Bus (the session bus) | system tray, portals | community (freedesktop.org) | GPL-2.0/AFL | accepted; we talk to it with our own client (`Services/DBus.cs`), no D-Bus library |
 | .NET runtime and SDK | the shell | .NET Foundation, steered by Microsoft | MIT | **dependent.** Kept by decision (18 Nov 2026): a rewrite would cost more than it frees. Rules: no Windows-only APIs, telemetry off, nothing that ties us to Microsoft services. Way out: the shell's logic stays portable; the X11 and Wayland parts are already plain C. |
 | Avalonia (incl. Avalonia.Wayland) | the shell's UI | AvaloniaUI OÜ (company) | MIT | **dependent.** Pinned versions; the native Wayland path reduces reliance on X11. Way out: none cheap. Watch the licence and governance at every upgrade. |
-| WebKitGTK | Red Star Online's web engine (since 20 Nov 2026) | WebKit project (upstream led largely by Apple); the GTK port and its releases by Igalia (a worker-owned cooperative) and the GNOME community | LGPL-2.1, BSD | **commons.** Free software under licences on GNU's free-licence list; LGPL keeps it open. If upstream ever turns against the port, the port's maintainers and its users are the way out. |
+| WebKitGTK | Red Star Online's web engine (since 20 Nov 2026; it replaced Chromium via Electron, removed the same day with npm) | WebKit project (upstream led largely by Apple); the GTK port and its releases by Igalia (a worker-owned cooperative) and the GNOME community | LGPL-2.1, BSD | **commons.** Free software under licences on GNU's free-licence list; LGPL keeps it open. If upstream ever turns against the port, the port's maintainers and its users are the way out. |
 | GTK 4, json-glib, libsoup | Red Star Online's window, data file, filter-list downloads | GNOME Foundation (non-profit) | LGPL-2.1 | accepted (commons) |
 | GStreamer, FFmpeg (gst-libav) | sound and video in Red Star Online's pages | community (freedesktop.org; FFmpeg project) | LGPL-2.1 | accepted (commons); system packages, not bundled |
-| Chromium via Electron | the previous Red Star Online, Red Star Video | Google (Chromium), OpenJS Foundation (Electron) | BSD, MIT | **dependent, on its way out.** Red Star Online no longer needs it; it stays as the previous browser (Settings → Default apps) until the new one has reader mode, PDF saving, picture-in-picture and imports, and for Red Star Video. Way out: those features in Red Star Online, Red Star Video on GStreamer or libVLC. |
 | libVLC | video | VideoLAN (non-profit) | LGPL-2.1 | accepted |
-| xUnit, Playwright | tests | community, Microsoft (Playwright) | Apache-2.0, Apache-2.0 | tests only; Playwright replaceable by the engine's own test harness |
+| xUnit, Playwright | tests | community, Microsoft (Playwright) | Apache-2.0, Apache-2.0 | tests only. Playwright is left only in the window manager's optional session test (a Chromium window as a real app); way out: a GTK program in its place |
 | GitHub and GitHub Actions | hosting, CI | Microsoft | proprietary service | **dependent, kept by decision (19 Nov 2026).** Codeberg's terms (July 2026) bar projects mostly written by generative AI and limit private repositories, and self-hosting Forgejo costs upkeep; independence is cheaper to win in other layers. GitHub still only repeats `./check.sh` (see 4). Way out if that changes: self-hosted Forgejo (GPL-3.0-or-later) with its own runner, GitHub as a push mirror. |
 | NuGet, npm registries | package downloads | Microsoft, GitHub (Microsoft) | proprietary services | **dependent.** Way out: a local package cache so builds can run offline. |
 | AI-assisted development | writing and reviewing code | Anthropic (company) | proprietary service | **dependent.** Its output is GPL like all our code; the tool itself is not ours. Nothing in the build or the running system depends on it. |
@@ -107,9 +106,8 @@ Known differences with that advice, recorded openly:
 - **Proprietary programs** like Discord and Steam work with Red Star through open standards, such as the system
   tray. Red Star doesn't ship them or advertise them. To meet the FSDG as a distribution, the defaults, store and
   recommendations stay free software only.
-- **Chromium (Electron)** is free software, but the FSF prefers browsers without Google's services built in. Red Star
-  Online now runs on WebKitGTK; Electron remains only for the previous browser and Red Star Video until they're
-  replaced.
+- **Chromium (Electron)** is free software, but the FSF prefers browsers without Google's services built in. It's gone:
+  Red Star Online runs on WebKitGTK, Red Star Video on libVLC, and Electron was removed (20 Nov 2026).
 
 ## 4. Build and verify without the platforms
 

@@ -8,7 +8,7 @@ namespace RedStarOS.Services;
 
 /// <summary>
 /// One entry per built-in app. Either <paramref name="Create"/> builds a window, or
-/// <paramref name="Run"/> starts something else (such as the Electron browser).
+/// <paramref name="Run"/> starts something else (such as Red Star Online, its own program).
 /// </summary>
 public sealed record AppInfo(
     string Id,
@@ -53,7 +53,7 @@ public static class AppRegistry
     // Which app a window belongs to (icon + taskbar pinning). Settings sub-dialogs count as Settings.
     private static readonly Dictionary<string, string> WindowApps = new()
     {
-        ["StudioWindow"] = "studio", ["WebBrowserWindow"] = "online", ["VideoWindow"] = "video", ["WriterWindow"] = "writer", ["RichWriterWindow"] = "writer", ["TerminalWindow"] = "terminal", ["SpreadsheetWindow"] = "sheets", ["SlidesWindow"] = "slides", ["SlideShowWindow"] = "slides", ["SheetChartWindow"] = "sheets",
+        ["StudioWindow"] = "studio", ["VideoWindow"] = "video", ["WriterWindow"] = "writer", ["RichWriterWindow"] = "writer", ["TerminalWindow"] = "terminal", ["SpreadsheetWindow"] = "sheets", ["SlidesWindow"] = "slides", ["SlideShowWindow"] = "slides", ["SheetChartWindow"] = "sheets",
         ["PongWindow"] = "pong", ["MessengerWindow"] = "messenger", ["FileManagerWindow"] = "files",
         ["CalculatorWindow"] = "calculator", ["NotesWindow"] = "notes", ["ImageViewerWindow"] = "imageviewer",
         ["CameraWindow"] = "camera", ["PaintWindow"] = "paint", ["ClockWindow"] = "clock", ["TaskManagerWindow"] = "taskmgr", ["CalendarWindow"] = "calendar", ["SettingsWindow"] = "settings",

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Builds Red Star OS and runs every automated check. Run this before ./build-appimage.sh.
-#   ./check.sh          build + C# tests (every window opens, terminal emulator, pty, browser data) + ad-blocker tests
-#   ./check.sh --full   also the web-engine tests (needs: npm i -g playwright && npx playwright install chromium)
+#   ./check.sh          build + C# tests (every window opens, terminal emulator, pty, browser data), and the window
+#                       manager, compositor and Red Star Online tests when their libraries are installed
 #   ./check.sh --screenshots   also saves a picture of every window in ./screenshots (open screenshots/index.html)
 # The same checks run on GitHub for every push (.github/workflows/check.yml).
 set -euo pipefail
 # no telemetry from the .NET tools (PRINCIPLES.md, 5)
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
-FULL=0; SHOTS=0
-for a in "$@"; do case "$a" in --full) FULL=1 ;; --screenshots) SHOTS=1 ;; esac; done
+SHOTS=0
+for a in "$@"; do case "$a" in --screenshots) SHOTS=1 ;; esac; done
 cd "$(dirname "$0")"
 ok() { printf '\033[32m✔ %s\033[0m\n' "$1"; }
 
@@ -27,18 +27,6 @@ else
   ok "C# tests"
 fi
 
-if command -v node >/dev/null 2>&1; then
-  echo "==> Ad-blocker tests"
-  node webengine/test/adblock.test.js | tail -1
-  ok "ad blocker"
-  node webengine/test/gpu.test.js | tail -1
-  ok "web engine GPU switches"
-  if [ "$FULL" = 1 ]; then
-    echo "==> Web engine tests"
-    node webengine/test/run-tests.js | tail -1
-    ok "web engine"
-  fi
-fi
 if command -v Xvfb >/dev/null 2>&1 && command -v gcc >/dev/null 2>&1 && [ -f /usr/include/X11/Xlib.h ]; then
   echo "==> Window manager tests (Xvfb)"
   wm/test/run-tests.sh | grep "passed"

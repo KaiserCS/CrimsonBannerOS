@@ -128,7 +128,7 @@ public static class SearchIndex
         }
 
         // the web
-        var url = WebTab.Normalize(q, BrowserData.SearchTemplate);
+        var url = BrowserData.Normalize(q, BrowserData.SearchTemplate);
         bool looksLikeSite = !q.Contains(' ') && q.Contains('.') && !url.Contains("?q=") && !url.Contains("search");
         hits.Add(looksLikeSite
             ? new Hit("web", "Open " + q, "Red Star Online", "globe", () => BrowserLauncher.Launch(url))

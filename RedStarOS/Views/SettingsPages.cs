@@ -661,13 +661,9 @@ public static class SettingsPages
         }
         p.Children.Add(systemWide);
         p.Children.Add(Note("Terminal programs (Terminal=true) open in Red Star Terminal."));
-        var classic = new CheckBox { Content = "Use the previous Red Star Online (Electron)", IsChecked = SettingsStore.Current.ClassicBrowser };
-        classic.IsCheckedChanged += (_, _) => { SettingsStore.Current.ClassicBrowser = classic.IsChecked == true; SettingsStore.Save(); };
-        p.Children.Add(classic);
         p.Children.Add(Note(RedStarOnline.ProgramPath() is { } online
-            ? "Red Star Online is the new GTK + WebKitGTK browser (" + online + "): its own window, typing goes straight to the page. "
-              + "The previous one still has reader mode, PDF saving, picture-in-picture and imports from other browsers, which the new one doesn't have yet."
-            : "The new Red Star Online (GTK + WebKitGTK) isn't installed: build it with browser/build.sh and run install-session.sh."));
+            ? "Red Star Online: " + online + ". Its own settings are under Red Star Online in this window."
+            : "Red Star Online (GTK + WebKitGTK) isn't installed: build it with browser/build.sh and run install-session.sh."));
         return p;
     }
 

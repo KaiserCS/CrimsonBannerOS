@@ -20,7 +20,7 @@ public interface IShellPanel
 }
 
 /// <summary>
-/// The taskbar: Start button, pinned + running apps (native and Electron), the app tray
+/// The taskbar: Start button, pinned + running apps, the app tray
 /// (notification centre, app icons such as media controls) and the system tray (quick settings, clock).
 /// </summary>
 public partial class Taskbar : UserControl
@@ -323,7 +323,7 @@ public partial class Taskbar : UserControl
         var title = task?.Title ?? app?.Name ?? linux?.Name ?? "App";
         var active = task?.IsActive == true;
         var showLabel = labels && task != null;
-        var starting = task is ExternalTask { Starting: true };
+        var starting = false;
 
         bool sameTask = ReferenceEquals(slot.Task, task) && slot.PinId == pinId;
         slot.PinId = pinId; slot.Task = task;

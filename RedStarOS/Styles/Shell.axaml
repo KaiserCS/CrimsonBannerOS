@@ -3,7 +3,7 @@
 
   <!-- =====================================================================================
        Red Star OS design tokens + shared styles.
-       Every window, panel and Electron app takes its colours, type sizes and shapes from here,
+       Every window and panel takes its colours, type sizes and shapes from here,
        so the whole system looks like one product. Accent colour: ThemeService (Settings > Appearance).
        Taskbar and tray stay a dark glass strip in both themes; flyouts and windows follow the theme.
        ===================================================================================== -->

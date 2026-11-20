@@ -15,7 +15,7 @@ public static class ThemeService
         ("Purple", "#744DA9"), ("Teal", "#00828A"), ("Gray", "#5D5A58")
     };
 
-    /// <summary>True when the shell (and the Electron apps) should use their dark look right now.</summary>
+    /// <summary>True when the shell should use their dark look right now.</summary>
     public static bool IsDark =>
         SettingsStore.Current.Theme switch
         {
@@ -56,7 +56,6 @@ public static class ThemeService
         ApplyHighContrast(app, s.HighContrast);
         ApplyNoCompositor(app);
 
-        ShellBridge.BroadcastTheme();         // Electron apps follow theme / accent changes immediately
         Changed?.Invoke();
     }
 

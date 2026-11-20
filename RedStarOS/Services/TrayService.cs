@@ -47,8 +47,7 @@ public sealed class TrayEntry
 }
 
 /// <summary>
-/// Registry of app-tray icons. Built-in shell items and apps (Electron apps through the
-/// shell bridge) add and remove their icons here; the taskbar renders them.
+/// Registry of app-tray icons. Built-in shell items and apps add and remove their icons here; the taskbar renders them.
 /// </summary>
 public static class TrayService
 {

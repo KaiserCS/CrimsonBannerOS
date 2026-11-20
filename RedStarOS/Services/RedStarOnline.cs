@@ -7,8 +7,7 @@ namespace RedStarOS.Services;
 
 /// <summary>
 /// Red Star Online, the GTK 4 + WebKitGTK browser (browser/): its own native window, sharing bookmarks, history and
-/// settings with the shell (browser-data.json). Used when it's installed, unless Settings → Default apps says to keep
-/// the previous browser (Electron), which stays until the new one has everything.
+/// settings with the shell (browser-data.json).
 /// </summary>
 public static class RedStarOnline
 {
@@ -24,7 +23,7 @@ public static class RedStarOnline
         return ProcessUtil.Which("redstar-online");
     }
 
-    public static bool Available => !SettingsStore.Current.ClassicBrowser && ProgramPath() != null;
+    public static bool Available => ProgramPath() != null;
 
     /// <summary>A window of Red Star Online (so the taskbar shows it as the Red Star Online app).</summary>
     public static bool IsItsWindow(string instance, string cls) =>

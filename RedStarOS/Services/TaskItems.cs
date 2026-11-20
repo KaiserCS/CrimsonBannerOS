@@ -4,8 +4,7 @@ using Avalonia.Controls;
 namespace RedStarOS.Services;
 
 /// <summary>
-/// One taskbar entry. Native Avalonia windows (<see cref="NativeTask"/>), windows of Electron apps
-/// (<see cref="ExternalTask"/>, reported through the shell bridge) and windows of any other program
+/// One taskbar entry. Native Avalonia windows (<see cref="NativeTask"/>) and windows of any other program
 /// (<see cref="X11Task"/>, seen through the window manager) look and behave the same to the taskbar.
 /// </summary>
 public abstract class TaskItem
@@ -112,68 +111,6 @@ public sealed class NativeTask : TaskItem
     }
 
     public override void Close() => Window.Close();
-}
-
-/// <summary>
-/// A window that belongs to an Electron app. State arrives from the app over the shell bridge,
-/// commands go back the same way. Before the app has connected it is a "starting" placeholder,
-/// so a taskbar button appears the moment the app is launched.
-/// </summary>
-public sealed class ExternalTask : TaskItem
-{
-    private readonly string _name;
-    private string _title;
-
-    internal BridgeConnection? Connection { get; set; }
-    internal bool Focused { get; set; }
-    internal bool Minimized { get; set; }
-    internal long LastFocusAt { get; set; }
-    internal long LastBlurAt { get; set; }
-
-    public ExternalTask(string appId, string name)
-    {
-        AppId = appId;
-        _name = name;
-        _title = name;
-    }
-
-    public bool Starting => Connection == null;
-
-    public override string Title => _title;
-    public override bool IsActive => Focused && !Minimized;
-    public override bool IsMinimized => Minimized;
-
-    internal void SetTitle(string? title) => _title = string.IsNullOrWhiteSpace(title) ? _name : title!;
-
-    private void Cmd(string cmd) => Connection?.SendCommand(cmd);
-
-    public override void ToggleFromTaskbar()
-    {
-        if (Connection == null) return;                                     // still starting
-        var justBlurred = Environment.TickCount64 - LastBlurAt < 500 && LastBlurAt >= LastFocusAt;
-        if (Minimized) Cmd("restore");
-        else if (Focused || justBlurred) Cmd("minimize");
-        else Cmd("focus");
-    }
-
-    public override void Activate() => Cmd(Minimized ? "restore" : "focus");
-    public override void Minimize() => Cmd("minimize");
-    public override void Restore() => Cmd("restore");
-
-    public override void Snap(SnapMode mode)
-    {
-        if (Connection == null) return;
-        if (mode == SnapMode.Restore) { Cmd("restore"); return; }
-        if (WindowManager.Desktop != null &&
-            WindowManager.TryComputeSnap(WindowManager.Desktop, mode, out var pos, out var w, out var h, out _))
-            Connection.SendBounds(pos.X, pos.Y, w, h);
-    }
-
-    public override void Close()
-    {
-        if (Connection != null) Cmd("close");
-        else ShellBridge.CancelLaunch(this);                                // placeholder: just drop it
-    }
 }
 
 /// <summary>

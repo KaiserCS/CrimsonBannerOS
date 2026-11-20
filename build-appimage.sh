@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Builds RedStarOS-<arch>.AppImage from source.
 #
-# Requirements (build machine): .NET 8 SDK, curl (or an existing appimagetool), a Linux host.
+# Requirements (build machine): .NET 8 SDK, curl (or an existing appimagetool), a Linux host; for Red Star Online,
+# webkitgtk-6.0, gtk4, json-glib, libsoup3 and meson.
 # Usage:   ./build-appimage.sh            # x86_64
 #          ./build-appimage.sh arm64      # aarch64
 set -euo pipefail
@@ -34,42 +35,12 @@ cp packaging/redstaros.png "$APPDIR/redstaros.png"
 cp packaging/redstaros.png "$APPDIR/.DirIcon"
 chmod +x "$APPDIR/AppRun" "$APPDIR/usr/bin/RedStarOS"
 
-# Red Star Online runs on Electron. The Electron binary (~200 MB) is downloaded by npm.
-# Set SKIP_ELECTRON=1 to build a smaller AppImage without the browser.
-if [ "${SKIP_ELECTRON:-0}" != "1" ]; then
-  if ! command -v npm >/dev/null 2>&1; then
-    echo "npm was not found. Install Node.js (e.g. 'sudo pacman -S nodejs npm') or run with SKIP_ELECTRON=1."
-    exit 1
-  fi
-  echo "==> Installing Electron browser"
-  BROWSER_DST="$APPDIR/usr/lib/redstar-browser"
-  mkdir -p "$BROWSER_DST"
-  cp browser/package.json browser/main.js browser/preload.js browser/index.html browser/renderer.js browser/icon.png browser/setup.sh "$BROWSER_DST/"
-  # Shared shell bridge: lets the Electron apps appear in the taskbar / app tray and follow the theme.
-  SHARED_DST="$APPDIR/usr/lib/redstar-shared"
-  mkdir -p "$SHARED_DST"
-  cp shared/shell-bridge.js "$SHARED_DST/"
-  # setup.sh runs npm install and, if npm blocks or skips Electron's installer, downloads the binary itself.
-  bash "$BROWSER_DST/setup.sh"
-  if [ ! -x "$BROWSER_DST/node_modules/electron/dist/electron" ]; then
-    echo "Electron binary was not downloaded. Check your network connection, or build with SKIP_ELECTRON=1."
-    exit 1
-  fi
-
-  # Red Star Video is native (LibVLC); its Electron version is packaged only as a fallback for machines without libvlc.
-  echo "==> Adding Red Star Video"
-  VIDEO_DST="$APPDIR/usr/lib/redstar-video"
-  mkdir -p "$VIDEO_DST"
-  cp video/package.json video/main.js video/preload.js video/helpers.js video/index.html \
-     video/renderer.js video/style.css video/icon.png "$VIDEO_DST/"
-
-  # Native browser engine: headless Chromium page renderer (reuses the Electron binary installed above).
-  echo "==> Adding the web engine"
-  ENGINE_DST="$APPDIR/usr/lib/redstar-webengine"
-  mkdir -p "$ENGINE_DST"
-  cp webengine/package.json webengine/main.js webengine/adblock.js webengine/filters-builtin.txt "$ENGINE_DST/"
-
-  # Red Star Terminal is native now (RedStarOS/Views/TerminalWindow): nothing to package here.
+# Red Star Online (browser/, GTK 4 + WebKitGTK) is built and copied in by the publish step above when its libraries
+# are installed. WebKitGTK, GTK and GStreamer come from the system, not the AppImage.
+if [ -x "$APPDIR/usr/bin/redstar-online" ]; then
+  echo "==> Red Star Online included"
+else
+  echo "==> Red Star Online not included (install webkitgtk-6.0 gtk4 json-glib libsoup3 meson to build it)"
 fi
 
 TOOL="${APPIMAGETOOL:-}"

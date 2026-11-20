@@ -112,7 +112,7 @@ public static class Icons
 
     private static readonly HashSet<string> Filled = new() { "record", "play", "star-filled" };
 
-    /// <summary>Emoji that older parts of the shell (and Electron apps) still send, mapped to icons.</summary>
+    /// <summary>Emoji that older parts of the shell still send, mapped to icons.</summary>
     private static readonly Dictionary<string, string> FromEmoji = new()
     {
         ["📋"] = "clipboard", ["📝"] = "document", ["📊"] = "sheet", ["📽"] = "slides", ["🎬"] = "film", ["🏓"] = "game",

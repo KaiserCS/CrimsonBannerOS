@@ -7,8 +7,7 @@ using RedStarOS.Views;
 namespace RedStarOS.Services;
 
 /// <summary>
-/// Red Star Video. The native LibVLC player is primary; if libvlc isn't installed we fall back to the
-/// Electron player ("video" folder) and tell the user how to get the native one.
+/// Red Star Video, on libVLC. When libvlc isn't installed the user is told how to get it.
 /// </summary>
 public static class VideoLauncher
 {
@@ -32,12 +31,11 @@ public static class VideoLauncher
         var lib = VideoEngine.Get();
         if (lib == null)
         {
-            if (!_warned)
+            if (!_warned || files.Count > 0)
             {
                 _warned = true;
-                Notifier.Show("Red Star Video", "libvlc is not installed, so the classic player is used. Install it (e.g. 'sudo apt install vlc libvlc-dev') for the native player.", "video");
+                Notifier.Show("Red Star Video", "Red Star Video needs libVLC, which isn't installed. Install it with your package manager (vlc, or libvlc and its plugins), then open the video again.", "video");
             }
-            ElectronLauncher.Launch("video", "redstar-video", "video", "Red Star Video", files);
             return;
         }
 
