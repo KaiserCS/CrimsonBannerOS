@@ -41,7 +41,7 @@ same change that adds it, or it doesn't go in.
 | Chromium via Electron | Red Star Online's web engine | Google (Chromium), OpenJS Foundation (Electron) | BSD, MIT | **dependent: the largest one.** Way out to evaluate: WebKitGTK (community-maintained, LGPL). |
 | libVLC | video | VideoLAN (non-profit) | LGPL-2.1 | accepted |
 | xUnit, Playwright | tests | community, Microsoft (Playwright) | Apache-2.0, Apache-2.0 | tests only; Playwright replaceable by the engine's own test harness |
-| GitHub and GitHub Actions | hosting, CI | Microsoft | proprietary service | **dependent.** GitHub is a mirror, not the authority (see 4). Way out: mirror to a community forge such as Codeberg (Forgejo) and run CI there or on our own runner. |
+| GitHub and GitHub Actions | hosting, CI | Microsoft | proprietary service | **dependent, kept by decision (19 Nov 2026).** Codeberg's terms (July 2026) bar projects mostly written by generative AI and limit private repositories, and self-hosting Forgejo costs upkeep; independence is cheaper to win in other layers. GitHub still only repeats `./check.sh` (see 4). Way out if that changes: self-hosted Forgejo (GPL-3.0-or-later) with its own runner, GitHub as a push mirror. |
 | NuGet, npm registries | package downloads | Microsoft, GitHub (Microsoft) | proprietary services | **dependent.** Way out: a local package cache so builds can run offline. |
 | AI-assisted development | writing and reviewing code | Anthropic (company) | proprietary service | **dependent.** Its output is GPL like all our code; the tool itself is not ours. Nothing in the build or the running system depends on it. |
 
@@ -70,12 +70,12 @@ whenever a layer changes.
 | Source hosting and CI | GitHub | dependent |
 | Package sources | NuGet, npm registries | dependent |
 
-**Now: 7 of 12 (58%).** The way to the target:
+**Now: 7 of 12 (58%).** Source hosting stays on GitHub by decision (19 Nov 2026, see the dependency table), so the
+way to the target runs through the other layers:
 
-1. Make a community forge (Codeberg) the main home and keep GitHub as a mirror. Hosting becomes commons: 8/12 (67%).
-2. Keep a local package feed in the repository's tooling so builds run offline from cached packages. Package
-   sources become ours: **9/12 (75%), the target.**
-3. Move the web engine to WebKitGTK (LGPL, community-maintained): 10/12 (83%).
+1. Keep a local package feed in the repository's tooling so builds run offline from cached packages. Package
+   sources become ours: 8/12 (67%).
+2. Move the web engine to WebKitGTK (LGPL, community-maintained), the browser rewrite: **9/12 (75%), the target.**
 
 .NET and Avalonia are the last two. Replacing them is the largest piece of work and isn't needed for the target.
 
