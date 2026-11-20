@@ -3103,8 +3103,12 @@ static void new_output(struct wl_listener *l, void *data)
 	if (saved && saved->enabled && find_mode(wo, saved->w, saved->h, saved->mhz)) mode = find_mode(wo, saved->w, saved->h, saved->mhz);
 	int nw, nh;
 	nested_initial_size(&nw, &nh);
+	/* outputs without modes (a window on another desktop, the headless test screen) say 60 Hz rather than 0:
+	 * GTK 4 divides by the refresh rate */
 	if (mode) wlr_output_state_set_mode(&st, mode);
-	else if (nw > 0 && nh > 0) wlr_output_state_set_custom_mode(&st, nw, nh, 0);   /* our host window's size */
+	else if (nw > 0 && nh > 0) wlr_output_state_set_custom_mode(&st, nw, nh, 60000);   /* our host window's size */
+	else if (wl_list_empty(&wo->modes) && wo->width > 0 && wo->height > 0 && wo->refresh <= 0)
+		wlr_output_state_set_custom_mode(&st, wo->width, wo->height, 60000);
 	if (saved && saved->enabled) {
 		wlr_output_state_set_scale(&st, (float)saved->scale);
 		wlr_output_state_set_transform(&st, (enum wl_output_transform)saved->transform);

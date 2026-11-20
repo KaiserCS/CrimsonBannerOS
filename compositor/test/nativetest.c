@@ -63,6 +63,19 @@ static void deco_configure(void *d, struct zxdg_toplevel_decoration_v1 *z, uint3
 }
 static const struct zxdg_toplevel_decoration_v1_listener deco_listener = { .configure = deco_configure };
 
+/* the screen's mode, as clients see it: GTK 4 divides by its refresh rate, so it must not be 0 */
+static int output_refresh = -1;
+static void out_geometry(void *d, struct wl_output *o, int32_t x, int32_t y, int32_t pw, int32_t ph, int32_t sp, const char *mk,
+	const char *md, int32_t tr) { (void)d; (void)o; (void)x; (void)y; (void)pw; (void)ph; (void)sp; (void)mk; (void)md; (void)tr; }
+static void out_mode(void *d, struct wl_output *o, uint32_t flags, int32_t w, int32_t h, int32_t refresh)
+{
+	(void)d; (void)o; (void)w; (void)h;
+	if (flags & WL_OUTPUT_MODE_CURRENT) output_refresh = refresh;
+}
+static void out_done(void *d, struct wl_output *o) { (void)d; (void)o; }
+static void out_scale(void *d, struct wl_output *o, int32_t f) { (void)d; (void)o; (void)f; }
+static const struct wl_output_listener out_listener = { .geometry = out_geometry, .mode = out_mode, .done = out_done, .scale = out_scale };
+
 static void global(void *d, struct wl_registry *r, uint32_t name, const char *iface, uint32_t v)
 {
 	(void)d; (void)v;
@@ -75,6 +88,10 @@ static void global(void *d, struct wl_registry *r, uint32_t name, const char *if
 		xdg_wm_base_add_listener(wm, &wm_listener, NULL);
 	} else if (!strcmp(iface, zxdg_decoration_manager_v1_interface.name))
 		deco_mgr = wl_registry_bind(r, name, &zxdg_decoration_manager_v1_interface, 1);
+	else if (!strcmp(iface, wl_output_interface.name) && output_refresh < 0) {
+		struct wl_output *o = wl_registry_bind(r, name, &wl_output_interface, 2);
+		wl_output_add_listener(o, &out_listener, NULL);
+	}
 }
 static void global_remove(void *d, struct wl_registry *r, uint32_t n) { (void)d; (void)r; (void)n; }
 static const struct wl_registry_listener reg_listener = { .global = global, .global_remove = global_remove };
@@ -489,6 +506,7 @@ int main(void)
 	}
 
 	/* what screenshot, screen-sharing, display and clipboard tools look for */
+	check(output_refresh > 0, "the screen reports a refresh rate (GTK 4 apps divide by it)");
 	check(strstr(globals, " zwlr_screencopy_manager_v1 ") != NULL, "screencopy (grim, xdg-desktop-portal-wlr)");
 	check(strstr(globals, " ext_image_copy_capture_manager_v1 ") != NULL, "ext-image-copy-capture (newer screen sharing)");
 	check(strstr(globals, " zwlr_output_manager_v1 ") != NULL, "output management (wlr-randr, kanshi)");
