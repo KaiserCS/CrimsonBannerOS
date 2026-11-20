@@ -113,7 +113,13 @@ int main(void)
     const long TH = 32, BW = 3;
 
     printf("Window manager is present\n");
-    Window chk = (Window)card(root, "_NET_SUPPORTING_WM_CHECK", XA_WINDOW, 0);
+    /* the test may start before redstar-wm has set up its root properties: give it up to 5 s */
+    Window chk = 0;
+    for (int i = 0; i < 100; i++) {
+        chk = (Window)card(root, "_NET_SUPPORTING_WM_CHECK", XA_WINDOW, 0);
+        if (chk && chk != (Window)-12345 && has_atom(root, "_NET_SUPPORTED", "_NET_WM_MOVERESIZE")) break;
+        usleep(50000);
+    }
     CHECK(chk && chk != (Window)-12345, "_NET_SUPPORTING_WM_CHECK is set");
     CHECK(card(root, "_NET_NUMBER_OF_DESKTOPS", XA_CARDINAL, 0) == 1, "a single workspace");
     CHECK(has_atom(root, "_NET_SUPPORTED", "_NET_WM_MOVERESIZE"), "supports _NET_WM_MOVERESIZE");
