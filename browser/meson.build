@@ -13,9 +13,9 @@ soup = dependency('libsoup-3.0')
 gst = dependency('gstreamer-1.0')     # only to check that WebKit's media plugins are there
 
 gnome = import('gnome')
-# the built-in starter filter list, inside the program (also used by the old Electron engine until it goes)
+# the built-in starter filter list and the reader-view script, inside the program
 resources = gnome.compile_resources('online-resources', 'data/online.gresource.xml',
-  source_dir: '../webengine', c_name: 'online')
+  source_dir: 'data', c_name: 'online')
 
 executable('redstar-online',
   'src/browser.c', 'src/store.c', 'src/filters.c', 'src/adblock.c', 'src/util.c', resources,

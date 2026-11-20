@@ -93,6 +93,26 @@ public static class RedStarOnline
         }
     }
 
+    /// <summary>Clears cookies and site data ("cookies") and/or the cache ("cache") for all time, in the running browser
+    /// or in a short-lived one that opens no window. False when Red Star Online isn't installed.</summary>
+    public static bool ClearData(params string[] what)
+    {
+        if (what.Length == 0 || ProgramPath() is not { } exe) return false;
+        try
+        {
+            var psi = new ProcessStartInfo(exe) { UseShellExecute = false };
+            psi.ArgumentList.Add("--clear-data=" + string.Join(',', what));
+            psi.Environment["REDSTAR_ONLINE_LOG"] = LogPath;
+            using var p = Process.Start(psi);
+            return p != null;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine("online: couldn't clear data: " + ex.Message);
+            return false;
+        }
+    }
+
     private static readonly object LogLock = new();
     private static readonly System.Collections.Generic.HashSet<Process> Running = new();
 

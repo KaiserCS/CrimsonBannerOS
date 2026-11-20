@@ -30,6 +30,8 @@ typedef struct {
 	GtkWidget *label_box, *icon, *title;
 	gboolean recorded;          /* this load's visit is in the history */
 	char *uri;                  /* kept here: the view is gone by the time the tab is freed (for Ctrl+Shift+T) */
+	gboolean reader, entering_reader;   /* showing the reader view of reader_of */
+	char *reader_of;
 } Tab;
 
 struct Browser {
@@ -62,8 +64,9 @@ static struct {
 	GList *windows;              /* Browser* */
 	GtkWidget *downloads_list;  /* shared by every window's downloads popover */
 	GPtrArray *downloads;
-	gboolean self_test;
+	gboolean self_test, dark;
 	int exit_status;
+	GHashTable *live_tabs;      /* Tab* still open: async callbacks check here before touching one */
 } app;
 
 static Tab *tab_new(Browser *b, WebKitWebView *related, const char *url, gboolean focus);
@@ -271,6 +274,10 @@ static void tab_load_changed(WebKitWebView *v, WebKitLoadEvent ev, Tab *t)
 {
 	const char *uri = webkit_web_view_get_uri(v);
 	if (ev == WEBKIT_LOAD_STARTED) t->recorded = FALSE;
+	if (ev == WEBKIT_LOAD_COMMITTED) {
+		if (t->entering_reader) t->entering_reader = FALSE;
+		else t->reader = FALSE;
+	}
 	if (ev == WEBKIT_LOAD_COMMITTED) {
 		gchar *host = online_host(uri);
 		webkit_web_view_set_zoom_level(v, *host ? online_store_zoom(app.store, host) : 1.0);
@@ -540,6 +547,8 @@ static void tab_middle_click(GtkGestureClick *g, int n, double x, double y, Tab 
 
 static void tab_free(Tab *t)
 {
+	if (app.live_tabs) g_hash_table_remove(app.live_tabs, t);
+	g_free(t->reader_of);
 	if (t->uri && strcmp(t->uri, START_URL) && !t->b->private) g_ptr_array_add(t->b->closed, t->uri);
 	else g_free(t->uri);
 	g_free(t);
@@ -549,6 +558,8 @@ static Tab *tab_new(Browser *b, WebKitWebView *related, const char *url, gboolea
 {
 	Tab *t = g_new0(Tab, 1);
 	t->b = b;
+	if (!app.live_tabs) app.live_tabs = g_hash_table_new(NULL, NULL);
+	g_hash_table_add(app.live_tabs, t);
 	if (related)
 		t->view = WEBKIT_WEB_VIEW(g_object_new(WEBKIT_TYPE_WEB_VIEW, "related-view", related, NULL));
 	else
@@ -869,6 +880,8 @@ static void fill_menu(Browser *b, GMenu *m)
 	g_menu_append(zoom, "Zoom Out", "win.zoom-out");
 	g_menu_append(zoom, "Actual Size", "win.zoom-reset");
 	g_menu_append_submenu(s3, "Zoom", G_MENU_MODEL(zoom));
+	g_menu_append(s3, "Reader View", "win.reader");
+	g_menu_append(s3, "Save as PDF…", "win.save-pdf");
 	g_menu_append(s3, "Print…", "win.print");
 	g_menu_append_section(m, NULL, G_MENU_MODEL(s3));
 
@@ -939,10 +952,35 @@ static void rebuild_menus(void)
 	if (!menus_pending) menus_pending = g_idle_add(rebuild_menus_now, NULL);
 }
 
+static char *filters_applied;            /* what the blocker was last set up with */
+
+static char *filters_key(void)
+{
+	const OnlineSettings *st = online_store_settings(app.store);
+	gchar *allow = st->allow_sites ? g_strjoinv("\n", st->allow_sites) : g_strdup("");
+	char *k = g_strdup_printf("%d\n%s", st->block_trackers, allow);
+	g_free(allow);
+	return k;
+}
+
 static void apply_filters(void)
 {
 	const OnlineSettings *st = online_store_settings(app.store);
+	g_free(filters_applied);
+	filters_applied = filters_key();
 	online_filters_apply(app.filters, st->block_trackers, (const char *const *)st->allow_sites, NULL, NULL);
+}
+
+/* after System Settings changed blocking or its allow list */
+static void apply_filters_if_changed(void)
+{
+	char *k = filters_key();
+	gboolean changed = g_strcmp0(k, filters_applied) != 0;
+	g_free(k);
+	if (changed && app.filters) {
+		apply_filters();
+		if (online_store_settings(app.store)->block_trackers) online_filters_update(app.filters, FALSE);
+	}
 }
 
 // ───────────────────────────── actions ─────────────────────────────
@@ -1014,6 +1052,132 @@ WIN_ACTION(act_print)
 	webkit_print_operation_run_dialog(op, b->win);
 	g_object_unref(op);
 }
+// ── reader view ──
+static void reader_extracted(GObject *src, GAsyncResult *res, gpointer data)
+{
+	Tab *t = data;
+	GError *err = NULL;
+	JSCValue *v = webkit_web_view_evaluate_javascript_finish(WEBKIT_WEB_VIEW(src), res, &err);
+	if (!g_hash_table_contains(app.live_tabs, t)) { if (v) g_object_unref(v); g_clear_error(&err); return; }
+	gchar *json = v && jsc_value_is_string(v) ? jsc_value_to_string(v) : NULL;
+	if (v) g_object_unref(v);
+	JsonParser *jp = json_parser_new();
+	const char *title = NULL, *body = NULL;
+	if (json && json_parser_load_from_data(jp, json, -1, NULL) && JSON_NODE_HOLDS_OBJECT(json_parser_get_root(jp))) {
+		JsonObject *o = json_node_get_object(json_parser_get_root(jp));
+		title = json_object_get_string_member_with_default(o, "title", "");
+		body = json_object_get_string_member_with_default(o, "html", "");
+	}
+	if (!body) {
+		g_printerr("online: reader view: %s\n", err ? err->message : "no article found");
+	} else {
+		const char *orig = webkit_web_view_get_uri(t->view);
+		gchar *host = online_host(orig), *et = online_html_escape(title), *eh = online_html_escape(host);
+		gchar *html = g_strdup_printf("<!doctype html><meta charset=utf-8><title>%s</title><style>"
+			"body{background:%s;color:%s;font:19px/1.7 Georgia,'Noto Serif',serif;margin:0}"
+			"main{max-width:720px;margin:0 auto;padding:48px 24px 96px}h1{font:700 32px/1.25 system-ui,sans-serif;margin:0 0 24px}"
+			"img{max-width:100%%;height:auto;border-radius:6px}a{color:%s}pre,code{font-size:15px;white-space:pre-wrap}"
+			"blockquote{border-left:3px solid #8884;margin-left:0;padding-left:16px;color:#888}table{border-collapse:collapse}"
+			"td,th{border:1px solid #8884;padding:4px 8px}</style><main><p style=\"font:13px system-ui;opacity:.6\">%s · Reader view</p>"
+			"<h1>%s</h1>%s</main>", et, app.dark ? "#1b1b1f" : "#fbfbf8", app.dark ? "#e4e4e8" : "#222",
+			app.dark ? "#8ab4ff" : "#1a56c4", eh, et, body);
+		g_free(t->reader_of);
+		t->reader_of = g_strdup(orig);
+		t->reader = TRUE;
+		t->entering_reader = TRUE;
+		/* the page's own address stays (and its links and pictures resolve against it); no scripts came along */
+		webkit_web_view_load_alternate_html(t->view, html, orig, orig);
+		g_free(html); g_free(host); g_free(et); g_free(eh);
+	}
+	g_object_unref(jp);
+	g_free(json);
+	g_clear_error(&err);
+}
+
+WIN_ACTION(act_reader)
+{
+	UNUSED;
+	Tab *t = current_tab(data);
+	if (!t) return;
+	if (t->reader && t->reader_of) { gchar *u = g_strdup(t->reader_of); load(t, u); g_free(u); return; }   /* back to the page */
+	GBytes *js = g_resources_lookup_data("/org/redstaros/Online/reader.js", 0, NULL);
+	if (!js) return;
+	gsize len;
+	const char *code = g_bytes_get_data(js, &len);
+	webkit_web_view_evaluate_javascript(t->view, code, (gssize)len, NULL, NULL, NULL, reader_extracted, t);
+	g_bytes_unref(js);
+}
+
+// ── save as PDF: the page printed to a file ──
+static void pdf_finished(WebKitPrintOperation *op, gpointer data)
+{
+	(void)data;
+	gchar *name = g_path_get_basename(g_object_get_data(G_OBJECT(op), "path"));
+	if (!app.self_test) {
+		GNotification *n = g_notification_new("Saved as PDF");
+		g_notification_set_body(n, name);
+		g_application_send_notification(G_APPLICATION(app.gtk), NULL, n);
+		g_object_unref(n);
+	}
+	g_free(name);
+	g_object_unref(op);
+	if (app.self_test) selftest_event("pdf");
+}
+
+static void pdf_failed(WebKitPrintOperation *op, GError *err, gpointer data)
+{
+	(void)data;
+	g_printerr("online: couldn't save %s as PDF: %s\n", (char *)g_object_get_data(G_OBJECT(op), "path"), err->message);
+}
+
+static void save_pdf(Tab *t, const char *path)
+{
+	WebKitPrintOperation *op = webkit_print_operation_new(t->view);
+	GtkPrintSettings *ps = gtk_print_settings_new();
+	gchar *uri = g_filename_to_uri(path, NULL, NULL);
+	gtk_print_settings_set_printer(ps, "Print to File");
+	gtk_print_settings_set(ps, GTK_PRINT_SETTINGS_OUTPUT_URI, uri);
+	gtk_print_settings_set(ps, GTK_PRINT_SETTINGS_OUTPUT_FILE_FORMAT, "pdf");
+	webkit_print_operation_set_print_settings(op, ps);
+	g_object_set_data_full(G_OBJECT(op), "path", g_strdup(path), g_free);
+	g_signal_connect(op, "finished", G_CALLBACK(pdf_finished), NULL);
+	g_signal_connect(op, "failed", G_CALLBACK(pdf_failed), NULL);
+	webkit_print_operation_print(op);
+	g_object_unref(ps);
+	g_free(uri);
+}
+
+static void pdf_chosen(GObject *src, GAsyncResult *res, gpointer data)
+{
+	Tab *t = data;
+	GFile *f = gtk_file_dialog_save_finish(GTK_FILE_DIALOG(src), res, NULL);
+	if (f && g_hash_table_contains(app.live_tabs, t)) {
+		gchar *path = g_file_get_path(f);
+		if (path) save_pdf(t, path);
+		g_free(path);
+	}
+	if (f) g_object_unref(f);
+}
+
+WIN_ACTION(act_save_pdf)
+{
+	UNUSED;
+	Browser *b = data;
+	Tab *t = current_tab(b);
+	if (!t) return;
+	const char *title = webkit_web_view_get_title(t->view);
+	gchar *name = g_strdup_printf("%s.pdf", title && *title ? title : "Page");
+	g_strdelimit(name, "/\\:*?\"<>|", '-');
+	GtkFileDialog *d = gtk_file_dialog_new();
+	gtk_file_dialog_set_title(d, "Save as PDF");
+	gtk_file_dialog_set_initial_name(d, name);
+	const char *docs = g_get_user_special_dir(G_USER_DIRECTORY_DOCUMENTS);
+	if (docs) { GFile *folder = g_file_new_for_path(docs); gtk_file_dialog_set_initial_folder(d, folder); g_object_unref(folder); }
+	gtk_file_dialog_save(d, b->win, NULL, pdf_chosen, t);
+	g_object_unref(d);
+	g_free(name);
+}
+
 WIN_ACTION(act_inspector) { UNUSED; Tab *t = current_tab(data); if (t) webkit_web_inspector_show(webkit_web_view_get_inspector(t->view)); }
 WIN_ACTION(act_bookmark)
 {
@@ -1102,6 +1266,7 @@ static const GActionEntry win_actions[] = {
 	{ "find-prev", act_find_prev, NULL, NULL, NULL, { 0 } }, { "zoom-in", act_zoom_in, NULL, NULL, NULL, { 0 } },
 	{ "zoom-out", act_zoom_out, NULL, NULL, NULL, { 0 } }, { "zoom-reset", act_zoom_reset, NULL, NULL, NULL, { 0 } },
 	{ "print", act_print, NULL, NULL, NULL, { 0 } }, { "inspector", act_inspector, NULL, NULL, NULL, { 0 } },
+	{ "reader", act_reader, NULL, NULL, NULL, { 0 } }, { "save-pdf", act_save_pdf, NULL, NULL, NULL, { 0 } },
 	{ "bookmark", act_bookmark, NULL, NULL, NULL, { 0 } }, { "next-tab", act_next_tab, NULL, NULL, NULL, { 0 } },
 	{ "prev-tab", act_prev_tab, NULL, NULL, NULL, { 0 } }, { "select-tab", act_select_tab, "i", NULL, NULL, { 0 } },
 	{ "fullscreen", act_fullscreen, NULL, NULL, NULL, { 0 } }, { "downloads", act_downloads, NULL, NULL, NULL, { 0 } },
@@ -1126,7 +1291,7 @@ static void set_accels(void)
 		{ "win.find", { "<Control>f" } }, { "win.find-next", { "<Control>g" } }, { "win.find-prev", { "<Control><Shift>g" } },
 		{ "win.zoom-in", { "<Control>plus", "<Control>equal", "<Control>KP_Add" } },
 		{ "win.zoom-out", { "<Control>minus", "<Control>KP_Subtract" } }, { "win.zoom-reset", { "<Control>0", "<Control>KP_0" } },
-		{ "win.print", { "<Control>p" } }, { "win.inspector", { "F12", "<Control><Shift>i" } }, { "win.bookmark", { "<Control>d" } },
+		{ "win.print", { "<Control>p" } }, { "win.reader", { "F9", "<Control><Alt>r" } }, { "win.save-pdf", { "<Control>s" } }, { "win.inspector", { "F12", "<Control><Shift>i" } }, { "win.bookmark", { "<Control>d" } },
 		{ "win.next-tab", { "<Control>Tab", "<Control>Page_Down" } }, { "win.prev-tab", { "<Control><Shift>Tab", "<Control>Page_Up" } },
 		{ "win.fullscreen", { "F11" } }, { "win.downloads", { "<Control>j" } },
 		{ "app.new-window", { "<Control>n" } }, { "app.new-private-window", { "<Control><Shift>n", "<Control><Shift>p" } },
@@ -1262,6 +1427,7 @@ static void window_active(GtkWindow *w, GParamSpec *p, Browser *b)
 	if (online_store_refresh(app.store)) {
 		rebuild_bookmarks();
 		rebuild_menus();
+		apply_filters_if_changed();
 	}
 	browser_update(b);
 }
@@ -1448,6 +1614,7 @@ static void follow_red_star_theme(void)
 	gchar *path = g_build_filename(g_get_user_config_dir(), "redstaros", "settings.json", NULL);
 	JsonParser *p = json_parser_new();
 	gboolean dark = FALSE, large = FALSE;
+	(void)dark;
 	if (json_parser_load_from_file(p, path, NULL)) {
 		JsonNode *r = json_parser_get_root(p);
 		if (r && JSON_NODE_HOLDS_OBJECT(r)) {
@@ -1458,6 +1625,7 @@ static void follow_red_star_theme(void)
 	}
 	g_object_unref(p);
 	g_free(path);
+	app.dark = dark;
 	GtkSettings *gs = gtk_settings_get_default();
 	if (g_object_class_find_property(G_OBJECT_GET_CLASS(gs), "gtk-interface-color-scheme"))
 		g_object_set(gs, "gtk-interface-color-scheme", dark ? 2 : 3, NULL);        /* GTK 4.20+: DARK, LIGHT */
@@ -1550,15 +1718,45 @@ static void startup(GApplication *gapp, gpointer data)
 	}
 }
 
+static void data_cleared(GObject *src, GAsyncResult *res, gpointer data)
+{
+	(void)data;
+	GError *err = NULL;
+	if (!webkit_website_data_manager_clear_finish(WEBKIT_WEBSITE_DATA_MANAGER(src), res, &err))
+		g_printerr("online: couldn't clear browsing data: %s\n", err->message);
+	g_clear_error(&err);
+	g_application_release(G_APPLICATION(app.gtk));
+}
+
+/* --clear-data=cookies,cache (System Settings → Red Star Online): site data and the cache, for all time */
+static void clear_data(const char *what)
+{
+	WebKitWebsiteDataTypes types = 0;
+	gchar **parts = g_strsplit(what, ",", -1);
+	for (gchar **w = parts; *w; w++) {
+		if (!strcmp(*w, "cookies"))
+			types |= WEBKIT_WEBSITE_DATA_COOKIES | WEBKIT_WEBSITE_DATA_LOCAL_STORAGE | WEBKIT_WEBSITE_DATA_INDEXEDDB_DATABASES
+				| WEBKIT_WEBSITE_DATA_SERVICE_WORKER_REGISTRATIONS | WEBKIT_WEBSITE_DATA_SESSION_STORAGE | WEBKIT_WEBSITE_DATA_HSTS_CACHE
+				| WEBKIT_WEBSITE_DATA_DOM_CACHE | WEBKIT_WEBSITE_DATA_ITP;
+		else if (!strcmp(*w, "cache"))
+			types |= WEBKIT_WEBSITE_DATA_MEMORY_CACHE | WEBKIT_WEBSITE_DATA_DISK_CACHE;
+	}
+	g_strfreev(parts);
+	if (!types) return;
+	g_application_hold(G_APPLICATION(app.gtk));          /* until it's done, even with no window open */
+	webkit_website_data_manager_clear(webkit_network_session_get_website_data_manager(app.session), types, 0, NULL, data_cleared, NULL);
+}
+
 static int command_line(GApplication *gapp, GApplicationCommandLine *cl, gpointer data)
 {
 	(void)gapp; (void)data;
 	int argc;
 	gchar **argv = g_application_command_line_get_arguments(cl, &argc);
-	gboolean private = FALSE, new_window = FALSE;
+	gboolean private = FALSE, new_window = FALSE, cleared = FALSE;
 	GPtrArray *urls = g_ptr_array_new_with_free_func(g_free);
 	for (int i = 1; i < argc; i++) {
-		if (!strcmp(argv[i], "--private")) private = TRUE;
+		if (g_str_has_prefix(argv[i], "--clear-data=")) { clear_data(argv[i] + strlen("--clear-data=")); cleared = TRUE; }
+		else if (!strcmp(argv[i], "--private")) private = TRUE;
 		else if (!strcmp(argv[i], "--new-window")) new_window = TRUE;
 		else if (!strcmp(argv[i], "--self-test")) continue;
 		else if (argv[i][0] == '-') continue;
@@ -1572,6 +1770,7 @@ static int command_line(GApplication *gapp, GApplicationCommandLine *cl, gpointe
 	}
 	g_strfreev(argv);
 	if (app.self_test) { g_ptr_array_unref(urls); selftest_start(); return 0; }
+	if (cleared && !urls->len && !private && !new_window) { g_ptr_array_unref(urls); return 0; }   /* no window for that */
 
 	Browser *b = new_window ? NULL : last_window(private);
 	if (!b) {
@@ -1593,7 +1792,7 @@ static int command_line(GApplication *gapp, GApplicationCommandLine *cl, gpointe
 // Runs the real browser through its paces on local pages: the blocker (network and element hiding), the address
 // bar, back, bookmarks, history, find, target=_blank tabs, closing and reopening tabs, downloads.
 
-static struct { int step, failed, retries; char *dir; Browser *b; guint timeout; char *pending_check; } st;
+static struct { int step, failed, retries; char *dir, *pdf; Browser *b; guint timeout; char *pending_check; } st;
 
 static void check(gboolean ok, const char *what)
 {
@@ -1640,6 +1839,9 @@ static void js_done(GObject *src, GAsyncResult *res, gpointer data)
 	g_clear_error(&err);
 	if (v) g_object_unref(v);
 	gchar **f = g_strsplit(s, "|", -1);
+	if (st.step == 9) {
+		check(g_strv_length(f) == 3 && !strcmp(f[1], "true") && !strcmp(f[2], "true"), "it has the page's text and none of its scripts");
+	}
 	if (st.step == 1) {
 		check(g_strv_length(f) == 4, "the test page's script ran");
 		if (g_strv_length(f) == 4) {
@@ -1738,6 +1940,28 @@ static void selftest_next(void)
 		gchar *alt = d ? g_build_filename(d, "file.bin", NULL) : g_strdup(p);
 		check(g_file_test(p, G_FILE_TEST_EXISTS) || g_file_test(alt, G_FILE_TEST_EXISTS), "a download is saved to Downloads");
 		g_free(p); g_free(alt);
+		g_action_group_activate_action(G_ACTION_GROUP(b->win), "reader", NULL);
+		st.pending_check = "loaded";
+		break;
+	}
+	case 9:
+		check(t && t->reader, "Reader view shows the article");
+		webkit_web_view_evaluate_javascript(t->view,
+			"document.title+'|'+(document.querySelector('script')===null)+'|'+document.body.innerText.includes('second page')",
+			-1, NULL, NULL, NULL, js_done, NULL);
+		break;
+	case 10: {
+		st.pdf = g_build_filename(st.dir, "page.pdf", NULL);
+		save_pdf(t, st.pdf);
+		st.pending_check = "pdf";
+		break;
+	}
+	case 11: {
+		gchar *head = NULL;
+		gsize n = 0;
+		g_file_get_contents(st.pdf, &head, &n, NULL);
+		check(head && n > 100 && g_str_has_prefix(head, "%PDF"), "Save as PDF writes a PDF");
+		g_free(head);
 		if (st.timeout) g_source_remove(st.timeout);
 		st.timeout = 0;
 		selftest_finish();

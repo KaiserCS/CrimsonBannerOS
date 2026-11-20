@@ -834,4 +834,147 @@ public static class SettingsPages
         p.Children.Add(Card(Note("Buttons and fields carry names for assistive technology (icon buttons use their tooltip). On Linux, Orca reading Red Star apps depends on the accessibility support of the Avalonia toolkit, which is still limited; web pages in Red Star Online are read through Chromium's own support.")));
         return p;
     }
+
+    // ═════════════════════════════════ Red Star Online ═════════════════════════════════
+    /// <summary>The browser's settings. Red Star Online reads the same file (browser-data.json) and picks changes up when
+    /// one of its windows is next focused. Each handler reads <see cref="BrowserData.Settings"/> afresh, because the file
+    /// is reloaded when the browser writes it.</summary>
+    public static Control OnlinePage()
+    {
+        static BrowserSettings S() => BrowserData.Settings;
+        var p = Page("Red Star Online", "Search, privacy, blocked sites and imports for the web browser.");
+        if (RedStarOnline.ProgramPath() == null)
+            p.Children.Add(Card(Note("Red Star Online isn't installed: build it with browser/build.sh and run install-session.sh. These settings are kept for when it is.")));
+        CheckBox Toggle(string text, bool value, Action<bool> set)
+        {
+            var c = new CheckBox { Content = text, IsChecked = value };
+            c.IsCheckedChanged += (_, _) => { set(c.IsChecked == true); BrowserData.Save(); };
+            return c;
+        }
+
+        p.Children.Add(Eyebrow("SEARCH"));
+        var engines = new ComboBox { ItemsSource = BrowserData.Engines.Select(e => e.Name).ToList(), SelectedItem = S().SearchEngine, MinWidth = 200 };
+        engines.SelectionChanged += (_, _) => { if (engines.SelectedItem is string n) { S().SearchEngine = n; BrowserData.Save(); } };
+        p.Children.Add(Row(new TextBlock { Text = "Search engine", Width = 160, VerticalAlignment = VerticalAlignment.Center }, engines));
+
+        p.Children.Add(Eyebrow("GENERAL"));
+        p.Children.Add(Toggle("Show the bookmarks bar", S().ShowBookmarksBar, v => S().ShowBookmarksBar = v));
+        p.Children.Add(Toggle("Reopen the previous tabs when Red Star Online starts", S().RestoreSession, v => S().RestoreSession = v));
+        p.Children.Add(Toggle("Remember browsing history", S().SaveHistory, v => S().SaveHistory = v));
+
+        p.Children.Add(Eyebrow("PRIVACY AND SAFETY"));
+        p.Children.Add(Toggle("Block ads and trackers (EasyList, EasyPrivacy, Peter Lowe's list)", S().BlockTrackers, v => S().BlockTrackers = v));
+        p.Children.Add(Note("The lists are downloaded by the browser and refreshed every few days; its menu shows how many rules are in use."));
+        var allow = new StackPanel { Spacing = 4 };
+        void FillAllow()
+        {
+            allow.Children.Clear();
+            var sites = S().TrackerAllowSites.ToList();
+            if (sites.Count == 0) { allow.Children.Add(Note("Blocking is on for every site.")); return; }
+            allow.Children.Add(Note("Sites where blocking is turned off:"));
+            foreach (var h in sites)
+            {
+                var host = h;
+                allow.Children.Add(Row(new TextBlock { Text = host, VerticalAlignment = VerticalAlignment.Center, Width = 260 },
+                    Btn("Block again", () => { S().TrackerAllowSites.Remove(host); BrowserData.Save(); FillAllow(); })));
+            }
+        }
+        FillAllow();
+        p.Children.Add(allow);
+
+        p.Children.Add(Note("Blocked sites: one address per line. These sites and their subdomains won't load."));
+        var blocked = new TextBox { Text = S().BlockedSites, AcceptsReturn = true, Height = 110, MaxWidth = 480, HorizontalAlignment = HorizontalAlignment.Left,
+            PlaceholderText = "example.com\nanother-site.org", TextWrapping = TextWrapping.NoWrap };
+        blocked.LostFocus += (_, _) => { S().BlockedSites = blocked.Text ?? ""; BrowserData.Save(); };
+        p.Children.Add(blocked);
+
+        p.Children.Add(Eyebrow("CLEAR BROWSING DATA"));
+        var range = new ComboBox { ItemsSource = new[] { "Last hour", "Last 24 hours", "Last 7 days", "All time" }, SelectedIndex = 3, MinWidth = 160 };
+        var hist = new CheckBox { Content = "Browsing history (in the time range)", IsChecked = true };
+        var cook = new CheckBox { Content = "Cookies and other site data (all time; signs you out of sites)", IsChecked = false };
+        var cache = new CheckBox { Content = "Cached images and files (all time)", IsChecked = true };
+        var site = new CheckBox { Content = "Site permissions and zoom levels", IsChecked = false };
+        var clearNote = Note("");
+        p.Children.Add(Row(new TextBlock { Text = "History from", Width = 160, VerticalAlignment = VerticalAlignment.Center }, range));
+        p.Children.Add(hist); p.Children.Add(cook); p.Children.Add(cache); p.Children.Add(site);
+        p.Children.Add(Btn("Clear data", () =>
+        {
+            var done = new List<string>();
+            if (hist.IsChecked == true)
+            {
+                long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                long cutoff = range.SelectedIndex switch { 0 => now - 3600, 1 => now - 86400, 2 => now - 7 * 86400, _ => 0 };
+                BrowserData.Store.History.RemoveAll(h => h.Time >= cutoff);
+                done.Add("history");
+            }
+            if (site.IsChecked == true) { S().SitePermissions.Clear(); S().SiteZoom.Clear(); done.Add("site permissions and zoom"); }
+            if (done.Count > 0) BrowserData.FlushNow();
+            var what = new List<string>();
+            if (cook.IsChecked == true) what.Add("cookies");
+            if (cache.IsChecked == true) what.Add("cache");
+            if (what.Count > 0)
+            {
+                if (RedStarOnline.ClearData(what.ToArray())) done.AddRange(what.Select(w => w == "cookies" ? "cookies and site data" : "the cache"));
+                else done.Add("(cookies and the cache need Red Star Online installed)");
+            }
+            clearNote.Text = done.Count > 0 ? "Cleared: " + string.Join(", ", done) + "." : "Nothing was cleared.";
+        }, true));
+        p.Children.Add(clearNote);
+
+        p.Children.Add(Eyebrow("SITE PERMISSIONS"));
+        var perms = new StackPanel { Spacing = 4 };
+        void FillPerms()
+        {
+            perms.Children.Clear();
+            var all = S().SitePermissions.OrderBy(k => k.Key).ToList();
+            if (all.Count == 0) { perms.Children.Add(Note("No saved choices for camera, microphone, location or notifications.")); return; }
+            foreach (var kv in all)
+            {
+                var key = kv.Key; var parts = key.Split('|');
+                perms.Children.Add(Row(new TextBlock { Text = (kv.Value ? "Allowed: " : "Blocked: ") + parts[0] + " — " + (parts.Length > 1 ? parts[1] : ""), VerticalAlignment = VerticalAlignment.Center },
+                    Btn("Forget", () => { S().SitePermissions.Remove(key); BrowserData.Save(); FillPerms(); })));
+            }
+        }
+        FillPerms();
+        p.Children.Add(perms);
+
+        p.Children.Add(Eyebrow("PAGE ZOOM"));
+        var zooms = new StackPanel { Spacing = 4 };
+        void FillZoom()
+        {
+            zooms.Children.Clear();
+            var all = S().SiteZoom.OrderBy(k => k.Key).ToList();
+            if (all.Count == 0) { zooms.Children.Add(Note("No sites have their own zoom.")); return; }
+            foreach (var kv in all)
+            {
+                var key = kv.Key;
+                zooms.Children.Add(Row(new TextBlock { Text = key + " — " + (int)Math.Round(kv.Value * 100) + "%", VerticalAlignment = VerticalAlignment.Center },
+                    Btn("Reset", () => { S().SiteZoom.Remove(key); BrowserData.Save(); FillZoom(); })));
+            }
+        }
+        FillZoom();
+        p.Children.Add(zooms);
+
+        p.Children.Add(Eyebrow("IMPORT BOOKMARKS AND HISTORY"));
+        p.Children.Add(Note("Copies from Firefox, Chrome, Chromium, Brave, Edge, Vivaldi or Opera on this computer. Nothing is duplicated or removed."));
+        var importStatus = Note("");
+        var found = BrowserImport.Detect();
+        if (found.Count == 0) p.Children.Add(Note("No other browsers were found on this computer."));
+        foreach (var src in found)
+        {
+            var sc = src;
+            Button? btn = null;
+            btn = Btn("Import", async () =>
+            {
+                btn!.IsEnabled = false;
+                importStatus.Text = "Importing from " + sc.Name + "…";
+                var r = await BrowserImport.ImportAsync(sc, true, true);
+                btn.IsEnabled = true;
+                importStatus.Text = $"{sc.Name}: {r.Bookmarks} new bookmarks, {r.History} history entries." + (r.Note != null ? " " + r.Note : "");
+            });
+            p.Children.Add(Row(btn, new TextBlock { Text = sc.Name, VerticalAlignment = VerticalAlignment.Center }));
+        }
+        p.Children.Add(importStatus);
+        return p;
+    }
 }

@@ -80,6 +80,7 @@ public partial class SettingsWindow : Window
             new("Displays", "monitor", AppIcons.Brush("#4A5568"), SettingsPages.Displays),
             new("Printers", "printer", AppIcons.Brush("#2F855A"), SettingsPages.Printers),
             new("Default apps", "apps", AppIcons.Brush("#DD6B20"), SettingsPages.DefaultAppsPage),
+            new("Red Star Online", "globe", AppIcons.Brush("#C8102E"), SettingsPages.OnlinePage),
             new("Accessibility", "accessibility", AppIcons.Brush("#2B6CB0"), SettingsPages.Accessibility),
             new("Account", "👤", AppIcons.Brush("#DD6B20"), () => PageLauncher("Account", "Password, profile photo and account type.", "Open Account", () => WindowManager.Open(new AccountWindow()))),
             new("Software Updates", "refresh", AppIcons.Brush("#2B6CB0"), SettingsPages.Updates),

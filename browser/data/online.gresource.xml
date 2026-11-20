@@ -2,5 +2,6 @@
 <gresources>
   <gresource prefix="/org/redstaros/Online">
     <file>filters-builtin.txt</file>
+    <file>reader.js</file>
   </gresource>
 </gresources>
