@@ -270,6 +270,7 @@ static bool positions_get(struct view *v, struct wlr_box *box);
 static void positions_put(struct view *v);
 static void fade_in(struct view *v);
 static bool roles_check(struct view *v);
+static void set_custom_mode(struct wlr_output *wo, struct wlr_output_state *st, int w, int h, int mhz);
 static bool child_of_desktop(struct view *v);
 static void update_capabilities(struct server *s);
 struct ipc_client;
@@ -2904,8 +2905,8 @@ static bool output_configure(struct output *o, bool enabled, struct wlr_output_m
 	if (enabled) {
 		if (!mode && w > 0 && h > 0) mode = find_mode(o->wlr, w, h, mhz);
 		if (mode && mode->refresh > 0) wlr_output_state_set_mode(&st, mode);
-		else if (mode) wlr_output_state_set_custom_mode(&st, mode->width, mode->height, 60000);   /* never 0 Hz: GTK 4 divides by it */
-		else if (w > 0 && h > 0) wlr_output_state_set_custom_mode(&st, w, h, mhz > 0 ? mhz : 60000);
+		else if (mode) set_custom_mode(o->wlr, &st, mode->width, mode->height, 0);
+		else if (w > 0 && h > 0) set_custom_mode(o->wlr, &st, w, h, mhz);
 		if (scale >= 0.5 && scale <= 4) wlr_output_state_set_scale(&st, (float)scale);
 		if (transform >= 0 && transform <= 7) wlr_output_state_set_transform(&st, (enum wl_output_transform)transform);
 	}
@@ -3087,6 +3088,14 @@ static void output_destroy(struct wl_listener *l, void *data)
 	if (wl_list_empty(&s->outputs)) wl_display_terminate(s->display);   /* the nested window was closed */
 }
 
+/* A custom mode at 60 Hz rather than 0, which GTK 4 divides by; but the nested backends (a window on another
+ * desktop) refuse custom refresh rates, so there it stays 0. */
+static void set_custom_mode(struct wlr_output *wo, struct wlr_output_state *st, int w, int h, int mhz)
+{
+	wlr_output_state_set_custom_mode(st, w, h, mhz > 0 ? mhz : 60000);
+	if (mhz <= 0 && !wlr_output_test_state(wo, st)) wlr_output_state_set_custom_mode(st, w, h, 0);
+}
+
 static void new_output(struct wl_listener *l, void *data)
 {
 	struct server *s = wl_container_of(l, s, new_output);
@@ -3107,15 +3116,16 @@ static void new_output(struct wl_listener *l, void *data)
 	/* outputs without modes (a window on another desktop, the headless test screen) say 60 Hz rather than 0:
 	 * GTK 4 divides by the refresh rate */
 	if (mode && mode->refresh > 0) wlr_output_state_set_mode(&st, mode);
-	else if (mode) wlr_output_state_set_custom_mode(&st, mode->width, mode->height, 60000);
-	else if (nw > 0 && nh > 0) wlr_output_state_set_custom_mode(&st, nw, nh, 60000);   /* our host window's size */
-	else if (wo->width > 0 && wo->height > 0)
-		wlr_output_state_set_custom_mode(&st, wo->width, wo->height, 60000);
+	else if (mode) set_custom_mode(wo, &st, mode->width, mode->height, 0);
+	else if (nw > 0 && nh > 0) set_custom_mode(wo, &st, nw, nh, 0);   /* our host window's size */
+	else if (wo->width > 0 && wo->height > 0) set_custom_mode(wo, &st, wo->width, wo->height, 0);
 	if (saved && saved->enabled) {
 		wlr_output_state_set_scale(&st, (float)saved->scale);
 		wlr_output_state_set_transform(&st, (enum wl_output_transform)saved->transform);
 	}
-	if (!wlr_output_commit_state(wo, &st) && saved) {
+	bool committed = wlr_output_commit_state(wo, &st);
+	if (!committed) wlr_log(WLR_ERROR, "output %s: its first setting was refused%s", wo->name, saved ? ", trying its preferred mode" : "");
+	if (!committed && saved) {
 		/* what was saved doesn't work any more (another monitor on that port?): its preferred mode, unscaled */
 		wlr_output_state_finish(&st);
 		wlr_output_state_init(&st);
