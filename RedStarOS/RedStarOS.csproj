@@ -41,6 +41,18 @@
     <Copy SourceFiles="../compositor/build/redstar-comp" DestinationFolder="$(PublishDir)" ContinueOnError="true" />
   </Target>
 
+  <!-- Red Star Online, the GTK 4 + WebKitGTK browser (C): built from browser/ when WebKitGTK 6.0, GTK 4, json-glib,
+       libsoup 3 and meson are installed, then copied next to RedStarOS (and into the AppImage), where the shell finds
+       it. Without them the build carries on and the previous (Electron) browser is used. -->
+  <Target Name="BuildRedStarOnline" AfterTargets="Build" Condition="'$(OS)' != 'Windows_NT'">
+    <Exec Command="cd &quot;$(MSBuildProjectDirectory)/../browser&quot; &amp;&amp; if pkg-config --exists webkitgtk-6.0 gtk4 json-glib-1.0 libsoup-3.0 &amp;&amp; command -v meson &gt;/dev/null 2&gt;&amp;1; then ( [ -d build ] || meson setup build &gt;/dev/null ) &amp;&amp; meson compile -C build redstar-online; else echo &quot;redstar-online: skipped (needs webkitgtk-6.0, gtk4, json-glib, libsoup3 and meson)&quot;; fi"
+          ContinueOnError="true" />
+    <Copy SourceFiles="../browser/build/redstar-online" DestinationFolder="$(OutDir)" Condition="Exists('../browser/build/redstar-online')" ContinueOnError="true" />
+  </Target>
+  <Target Name="PublishRedStarOnline" AfterTargets="Publish" Condition="Exists('../browser/build/redstar-online')">
+    <Copy SourceFiles="../browser/build/redstar-online" DestinationFolder="$(PublishDir)" ContinueOnError="true" />
+  </Target>
+
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="12.1.6" />
     <PackageReference Include="Avalonia.Desktop" Version="12.1.6" />

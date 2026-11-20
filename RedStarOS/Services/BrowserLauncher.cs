@@ -17,13 +17,28 @@ public static class BrowserLauncher
         // another browser chosen in Settings → Default apps
         if (!string.IsNullOrEmpty(url) && !url.StartsWith("file:") && DefaultApps.TryOpenWithLinuxApp("web", url)) return;
         if (RedStarOnline.Launch(url)) return;                 // the GTK + WebKitGTK browser, when it's installed
+        ExplainFallback();
         Dispatcher.UIThread.Post(() => _ = LaunchAsync(url));
+    }
+
+    private static bool _explained;
+
+    /// <summary>Once per session: why the previous (Electron) browser opened instead of the GTK one.</summary>
+    private static void ExplainFallback()
+    {
+        if (_explained || SettingsStore.Current.ClassicBrowser) return;
+        _explained = true;
+        var why = RedStarOnline.ProgramPath() == null
+            ? "The new Red Star Online isn't built: install webkitgtk-6.0 gtk4 json-glib libsoup3, then rebuild Red Star (or run browser/build.sh)."
+            : "The new Red Star Online didn't start; see ~/.config/redstaros/session.log.";
+        Dispatcher.UIThread.Post(() => Notifier.Show("Using the previous browser", why, "online"));
     }
 
     /// <summary>Opens an extra window whose pages live in an in-memory session that is wiped when it closes.</summary>
     public static void LaunchPrivate()
     {
         if (RedStarOnline.Launch(null, privateWindow: true)) return;
+        ExplainFallback();
         Dispatcher.UIThread.Post(() => _ = LaunchPrivateAsync());
     }
 
