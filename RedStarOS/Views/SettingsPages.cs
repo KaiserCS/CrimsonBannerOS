@@ -1304,4 +1304,69 @@ public static class SettingsPages
         }
         return p;
     }
+
+    // ═════════════════════════════════ Users ═════════════════════════════════
+    /// <summary>The computer's accounts (AccountsService); every change asks for the administrator password.</summary>
+    public static Control UsersPage()
+    {
+        var p = Page("Users", "The people who can sign in to this computer.");
+        var list = new StackPanel { Spacing = 8 };
+        var note = Note("Loading…");
+        p.Children.Add(note);
+        p.Children.Add(list);
+        var add = Btn("Add a user…", async () =>
+        {
+            var d = new AddUserDialog();
+            if (TopLevel.GetTopLevel(p) is Window owner) await d.ShowDialog(owner); else d.Show();
+            if (d.Added) await Fill();
+        }, true);
+        p.Children.Add(add);
+        add.IsVisible = false;
+        _ = Fill();
+        async Task Fill()
+        {
+            if (!await UserAccounts.AvailableAsync())
+            {
+                note.Text = "Install AccountsService to manage users here (Arch/CachyOS: pacman -S accountsservice).";
+                return;
+            }
+            List<UserAccount> users;
+            try { users = await UserAccounts.ListAsync(); }
+            catch (Exception ex) { note.Text = "Couldn't list the users: " + ex.Message; return; }
+            add.IsVisible = true;
+            note.Text = "Administrators can install software and change system settings. Changes ask for the administrator password.";
+            list.Children.Clear();
+            foreach (var u in users)
+            {
+                var a = u;
+                var name = new TextBlock { Text = (a.RealName.Length > 0 ? a.RealName : a.UserName) + (a.IsMe ? " (you)" : ""), FontWeight = FontWeight.SemiBold };
+                var sub = new TextBlock { Text = a.UserName + " · " + (a.Admin ? "Administrator" : "Standard user"), Classes = { "caption" } };
+                var status = Note("");
+                async Task Run(Task<string?> t, string ok) { var err = await t; status.Text = err == null ? ok : "Couldn't: " + err; if (err == null) await Fill(); }
+                var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+                buttons.Children.Add(Btn("Set password…", async () =>
+                {
+                    if (TopLevel.GetTopLevel(p) is not Window owner) return;
+                    var pw = await Dialogs.Prompt(owner, "Set password", "New password for " + a.UserName);
+                    if (string.IsNullOrEmpty(pw)) return;
+                    var err = await UserAccounts.SetPasswordAsync(a, pw);
+                    status.Text = err == null ? "Password changed." : "Couldn't: " + err;
+                }));
+                if (!a.IsMe)
+                {
+                    buttons.Children.Add(Btn(a.Admin ? "Make standard user" : "Make administrator",
+                        () => _ = Run(UserAccounts.SetAdminAsync(a, !a.Admin), "Changed.")));
+                    buttons.Children.Add(Btn("Remove…", async () =>
+                    {
+                        if (TopLevel.GetTopLevel(p) is not Window owner) return;
+                        int choice = await Dialogs.Ask(owner, "Remove " + a.UserName, $"Remove {a.UserName}'s account? Their home folder can be kept or deleted.",
+                            "Keep their files", "Delete their files", "Cancel");
+                        if (choice is 0 or 1) await Run(UserAccounts.DeleteAsync(a, choice == 1), "Removed.");
+                    }));
+                }
+                list.Children.Add(Card(new StackPanel { Spacing = 4, Children = { name, sub, buttons, status } }));
+            }
+        }
+        return p;
+    }
 }

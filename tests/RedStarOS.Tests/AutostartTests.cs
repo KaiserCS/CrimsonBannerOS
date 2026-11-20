@@ -155,3 +155,33 @@ public class SystemUpdatesTests
         Assert.Null(SystemUpdates.TerminalCommand(_ => null));
     }
 }
+
+public class UserAccountsTests
+{
+    [Theory]
+    [InlineData("ada", true)]
+    [InlineData("ada_l-2", true)]
+    [InlineData("Ada", false)]
+    [InlineData("2ada", false)]
+    [InlineData("", false)]
+    [InlineData("a b", false)]
+    public void User_names_follow_useradds_rules(string name, bool ok) => Assert.Equal(ok, UserAccounts.ValidUserName(name));
+
+    [Fact]
+    public void A_user_name_is_suggested_from_the_full_name()
+    {
+        Assert.Equal("ada", UserAccounts.SuggestUserName("Ada Lovelace"));
+        Assert.Equal("user", UserAccounts.SuggestUserName("  "));
+    }
+
+    [Fact]
+    public void Passwords_are_hashed_with_a_fresh_salt()
+    {
+        string a, b;
+        try { a = UserAccounts.Hash("secret"); b = UserAccounts.Hash("secret"); }
+        catch (DllNotFoundException) { Assert.Skip("libcrypt isn't installed"); return; }
+        Assert.StartsWith("$", a);
+        Assert.NotEqual(a, b);
+        Assert.DoesNotContain("secret", a);
+    }
+}

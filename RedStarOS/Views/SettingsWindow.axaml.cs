@@ -83,6 +83,7 @@ public partial class SettingsWindow : Window
             new("Startup apps", "power", AppIcons.Brush("#2F855A"), SettingsPages.StartupPage),
             new("Power & battery", "battery", AppIcons.Brush("#D69E2E"), SettingsPages.PowerPage),
             new("Date & time", "clock", AppIcons.Brush("#2B6CB0"), SettingsPages.DateTimePage),
+            new("Users", "user", AppIcons.Brush("#2C7A7B"), SettingsPages.UsersPage),
             new("Region & keyboard", "keyboard", AppIcons.Brush("#6B46C1"), SettingsPages.RegionPage),
             new("Crimson Online", "globe", AppIcons.Brush("#C8102E"), SettingsPages.OnlinePage),
             new("Accessibility", "accessibility", AppIcons.Brush("#2B6CB0"), SettingsPages.Accessibility),
