@@ -1096,4 +1096,148 @@ public static class SettingsPages
         }
         note.Text = "Power saver lowers performance to make the battery last; Performance lets the processor run fastest.";
     }
+
+    // ═════════════════════════════════ Date & time ═════════════════════════════════
+    public static Control DateTimePage()
+    {
+        var p = Page("Date & time", "The time zone, setting the clock from the internet, and how the clock looks.");
+        var status = Note("");
+        var zone = new ComboBox { MinWidth = 280, MaxDropDownHeight = 420, IsEnabled = false };
+        var ntp = new CheckBox { Content = "Set the time automatically (network time)", IsEnabled = false };
+        p.Children.Add(Eyebrow("TIME ZONE"));
+        p.Children.Add(zone);
+        p.Children.Add(ntp);
+        p.Children.Add(status);
+        p.Children.Add(Eyebrow("CLOCK"));
+        var h24 = new CheckBox { Content = "24-hour clock", IsChecked = SettingsStore.Current.Clock24h };
+        h24.IsCheckedChanged += (_, _) => { SettingsStore.Current.Clock24h = h24.IsChecked == true; SettingsStore.Save(); };
+        p.Children.Add(h24);
+        _ = Fill();
+        async System.Threading.Tasks.Task Fill()
+        {
+            var info = await RegionSettings.TimeAsync();
+            if (info == null) { status.Text = "timedatectl (systemd) isn't available, so the time zone can't be changed here."; return; }
+            var zones = await RegionSettings.TimezonesAsync();
+            bool loading = true;
+            zone.ItemsSource = zones;
+            zone.SelectedItem = info.Timezone;
+            zone.IsEnabled = ntp.IsEnabled = true;
+            ntp.IsChecked = info.Ntp;
+            loading = false;
+            status.Text = $"Now: {DateTime.Now:dddd d MMMM, HH:mm} ({info.Timezone})" + (info.Ntp ? info.Synchronized ? ", set from the network." : ", waiting for the network time." : ".");
+            zone.SelectionChanged += async (_, _) =>
+            {
+                if (loading || zone.SelectedItem is not string z || z == info.Timezone) return;
+                var err = await RegionSettings.RunAsync("timedatectl", "set-timezone", z);
+                status.Text = err == null ? $"Time zone: {z}." : "Couldn't change it: " + err;
+                if (err == null) { info = info with { Timezone = z }; TimeZoneInfo.ClearCachedData(); }
+            };
+            ntp.IsCheckedChanged += async (_, _) =>
+            {
+                if (loading) return;
+                var err = await RegionSettings.RunAsync("timedatectl", "set-ntp", ntp.IsChecked == true ? "true" : "false");
+                status.Text = err == null ? (ntp.IsChecked == true ? "The time is set from the network." : "Network time is off.") : "Couldn't change it: " + err;
+            };
+        }
+        return p;
+    }
+
+    // ═════════════════════════════════ Region & keyboard ═════════════════════════════════
+    public static Control RegionPage()
+    {
+        var p = Page("Region & keyboard", "Keyboard layouts and the system's language.");
+        var s = SettingsStore.Current;
+        p.Children.Add(Eyebrow("KEYBOARD LAYOUTS"));
+        var list = new StackPanel { Spacing = 6 };
+        p.Children.Add(list);
+        void Save() { SettingsStore.Save(); RegionSettings.ApplyKeyboard(); Fill(); }
+        void Fill()
+        {
+            list.Children.Clear();
+            var cur = SettingsStore.Current.KeyboardLayouts;
+            if (cur.Count == 0) list.Children.Add(Note("The system's layout is used. Add one to choose your own."));
+            for (int i = 0; i < cur.Count; i++)
+            {
+                int k = i;
+                var row = Row(new TextBlock { Text = RegionSettings.Describe(RegionSettings.Layout.Parse(cur[k])), Width = 300, VerticalAlignment = VerticalAlignment.Center },
+                    Btn("Up", () => { if (k > 0) { (cur[k - 1], cur[k]) = (cur[k], cur[k - 1]); Save(); } }),
+                    Btn("Remove", () => { cur.RemoveAt(k); Save(); }));
+                list.Children.Add(row);
+            }
+        }
+        Fill();
+        var layouts = RegionSettings.Layouts();
+        var layoutBox = new ComboBox { ItemsSource = layouts.Select(l => l.Name).ToList(), MinWidth = 260, MaxDropDownHeight = 420, PlaceholderText = "Layout" };
+        var variantBox = new ComboBox { MinWidth = 220, MaxDropDownHeight = 420, PlaceholderText = "Variant" };
+        layoutBox.SelectionChanged += (_, _) =>
+        {
+            if (layoutBox.SelectedIndex < 0) return;
+            var l = layouts[layoutBox.SelectedIndex];
+            variantBox.ItemsSource = new[] { "Standard" }.Concat(l.Variants.Select(v => v.Name)).ToList();
+            variantBox.SelectedIndex = 0;
+        };
+        p.Children.Add(Row(layoutBox, variantBox, Btn("Add", () =>
+        {
+            if (layoutBox.SelectedIndex < 0) return;
+            var l = layouts[layoutBox.SelectedIndex];
+            var v = variantBox.SelectedIndex > 0 ? l.Variants[variantBox.SelectedIndex - 1].Variant : "";
+            var code = new RegionSettings.Layout(l.Code, v).ToString();
+            var cur = SettingsStore.Current.KeyboardLayouts;
+            if (!cur.Contains(code)) cur.Add(code);
+            Save();
+        })));
+        if (layouts.Count == 0) p.Children.Add(Note("XKB's list of layouts wasn't found (xkeyboard-config)."));
+
+        ComboBox Option(string[] keys, string[] labels, string current, Action<string> set)
+        {
+            var c = new ComboBox { ItemsSource = labels, SelectedIndex = Math.Max(0, Array.IndexOf(keys, current)), MinWidth = 260 };
+            c.SelectionChanged += (_, _) => { if (c.SelectedIndex >= 0) { set(keys[c.SelectedIndex]); SettingsStore.Save(); RegionSettings.ApplyKeyboard(); } };
+            return c;
+        }
+        p.Children.Add(Row(new TextBlock { Text = "Switch layouts with", Width = 160, VerticalAlignment = VerticalAlignment.Center },
+            Option(new[] { "grp:alt_shift_toggle", "grp:win_space_toggle", "grp:ctrl_shift_toggle", "grp:caps_toggle" },
+                   new[] { "Alt+Shift", "Super+Space", "Ctrl+Shift", "Caps Lock" }, s.KeyboardSwitch, v => SettingsStore.Current.KeyboardSwitch = v)));
+        p.Children.Add(Row(new TextBlock { Text = "Compose key", Width = 160, VerticalAlignment = VerticalAlignment.Center },
+            Option(new[] { "", "compose:ralt", "compose:menu", "compose:rctrl" }, new[] { "None", "Right Alt", "Menu", "Right Ctrl" },
+                   s.KeyboardCompose, v => SettingsStore.Current.KeyboardCompose = v)));
+        p.Children.Add(Row(new TextBlock { Text = "Caps Lock", Width = 160, VerticalAlignment = VerticalAlignment.Center },
+            Option(new[] { "", "caps:escape", "ctrl:nocaps", "caps:none" }, new[] { "Caps Lock", "Escape", "Another Ctrl", "Nothing" },
+                   s.KeyboardCapsLock, v => SettingsStore.Current.KeyboardCapsLock = v)));
+        p.Children.Add(Note(InputIsolation.InRedStarComp ? "Changes take effect at once." : "Changes take effect at once for this display, and in full at the next sign-in."));
+        var sysNote = Note("");
+        p.Children.Add(Btn("Use these layouts at the login screen too", async () =>
+        {
+            var (l, v, o) = RegionSettings.Xkb(SettingsStore.Current);
+            if (l.Length == 0) { sysNote.Text = "Add a layout first."; return; }
+            var err = await RegionSettings.RunAsync("localectl", "set-x11-keymap", l, "", v, o);
+            sysNote.Text = err == null ? "The login screen and new sessions use them too." : "Couldn't change it: " + err;
+        }));
+        p.Children.Add(sysNote);
+
+        p.Children.Add(Eyebrow("LANGUAGE"));
+        var lang = new ComboBox { MinWidth = 280, MaxDropDownHeight = 420, IsEnabled = false };
+        var langNote = Note("");
+        p.Children.Add(lang);
+        p.Children.Add(langNote);
+        _ = FillLang();
+        async System.Threading.Tasks.Task FillLang()
+        {
+            var (current, all) = await RegionSettings.LocalesAsync();
+            if (all.Count == 0) { langNote.Text = "localectl (systemd) isn't available, or no languages are generated (see /etc/locale.gen)."; return; }
+            bool loading = true;
+            lang.ItemsSource = all;
+            lang.SelectedItem = all.FirstOrDefault(x => x == current);
+            lang.IsEnabled = true;
+            loading = false;
+            langNote.Text = "The system's language and formats (dates, numbers), from the next sign-in. Only languages generated in /etc/locale.gen are listed.";
+            lang.SelectionChanged += async (_, _) =>
+            {
+                if (loading || lang.SelectedItem is not string l || l == current) return;
+                var err = await RegionSettings.RunAsync("localectl", "set-locale", "LANG=" + l);
+                langNote.Text = err == null ? $"Language: {l}, from the next sign-in." : "Couldn't change it: " + err;
+                if (err == null) current = l;
+            };
+        }
+        return p;
+    }
 }

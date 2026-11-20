@@ -2,7 +2,9 @@ using Avalonia;
 using System;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
+using RedStarOS.Services;
 
 // Red Star OS is a Linux desktop: Linux-only APIs (file modes, ptys, X11) are fine everywhere in it.
 [assembly: System.Runtime.Versioning.SupportedOSPlatform("linux")]
@@ -90,6 +92,19 @@ internal static class Program
             int size = root.TryGetProperty("CursorSize", out var cs) && cs.TryGetInt32(out var n) && n is >= 12 and <= 256 ? n : 24;
             if (root.TryGetProperty("LargeCursor", out var lc) && lc.ValueKind == JsonValueKind.True) size = Math.Max(48, size);
             if (size != 24) Environment.SetEnvironmentVariable("XCURSOR_SIZE", size.ToString(CultureInfo.InvariantCulture));
+            // keyboard layouts (System Settings → Region & keyboard): before redstar-comp starts
+            if (root.TryGetProperty("KeyboardLayouts", out var kl) && kl.ValueKind == JsonValueKind.Array && kl.GetArrayLength() > 0)
+            {
+                var st = new Settings();
+                st.KeyboardLayouts = kl.EnumerateArray().Select(e => e.GetString() ?? "").Where(x => x.Length > 0).ToList();
+                if (root.TryGetProperty("KeyboardSwitch", out var ks) && ks.ValueKind == JsonValueKind.String) st.KeyboardSwitch = ks.GetString() ?? "";
+                if (root.TryGetProperty("KeyboardCompose", out var kc) && kc.ValueKind == JsonValueKind.String) st.KeyboardCompose = kc.GetString() ?? "";
+                if (root.TryGetProperty("KeyboardCapsLock", out var kk) && kk.ValueKind == JsonValueKind.String) st.KeyboardCapsLock = kk.GetString() ?? "";
+                var (l, v, o) = RegionSettings.Xkb(st);
+                if (l.Length > 0) Environment.SetEnvironmentVariable("XKB_DEFAULT_LAYOUT", l);
+                if (v.Length > 0) Environment.SetEnvironmentVariable("XKB_DEFAULT_VARIANT", v);
+                if (o.Length > 0) Environment.SetEnvironmentVariable("XKB_DEFAULT_OPTIONS", o);
+            }
             if (root.TryGetProperty("CursorTheme", out var ct) && ct.ValueKind == JsonValueKind.String && ct.GetString() is { Length: > 0 } theme)
                 Environment.SetEnvironmentVariable("XCURSOR_THEME", theme);
         }

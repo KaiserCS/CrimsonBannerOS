@@ -97,6 +97,8 @@ public partial class DesktopWindow : Window
             // drives: shown in Files, and "plugged in" notifications when Crimson Banner is the session
             RemovableDrives.Arrived += v => { if (Autostart.IsSession) DriveArrived(v); };
             _ = RemovableDrives.StartAsync();
+            // keyboard layouts (redstar-comp got them at start; X11 needs setxkbmap)
+            if (SettingsStore.Current.KeyboardLayouts.Count > 0 && !InputIsolation.InRedStarComp) RegionSettings.ApplyKeyboard();
             // screen off, lock and sleep when nobody uses the computer (System Settings → Power)
             if (Autostart.IsSession) IdleManager.Start();
             // the administrator password prompt for polkit, when Crimson Banner is the session

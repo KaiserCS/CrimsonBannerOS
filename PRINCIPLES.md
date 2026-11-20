@@ -106,6 +106,12 @@ doesn't make it.
   every build, which is what GNU's advice on depending on services points towards.
 
 Known differences with that advice, recorded openly:
+- **The kernel: mainline Linux, not Linux-libre (decided 20 Nov 2026).** The FSDG asks a distribution for a kernel
+  without non-free firmware blobs, and the FSF's endorsed distributions (Parabola, Trisquel, Guix System and others)
+  ship Linux-libre. Crimson Banner keeps the mainline kernel so that hardware works (Wi-Fi cards, GPUs and other
+  devices whose firmware isn't free). This means that, as a distribution, it wouldn't meet the FSDG. Mainline Linux is
+  still community-governed free software, so the kernel layer stays *commons*. What would change this: free firmware
+  for the hardware people use, or a Linux-libre edition next to the main one.
 - **GitHub** grades poorly on GNU's repository criteria. It's kept by decision (19 Nov 2026, see the dependency
   table).
 - **Proprietary programs** like Discord and Steam work with Crimson Banner through open standards, such as the system

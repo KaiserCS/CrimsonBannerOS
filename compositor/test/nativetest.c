@@ -455,6 +455,13 @@ int main(void)
 		check(wait_line("outputs-end", NULL, 0, 2000), "a new pointer theme and size are taken while running");
 	}
 
+	/* the keyboard layout changes while running; a layout that doesn't exist leaves the old one in place */
+	{
+		const char *a = "keymap\tus,de\t,nodeadkeys\tgrp:alt_shift_toggle\nkeymap\tno-such-layout\t\t\noutputs\n";
+		if (write(ipc, a, strlen(a)) < 0) return 1;
+		check(wait_line("outputs-end", NULL, 0, 3000), "keyboard layouts are taken while running");
+	}
+
 	/* idle: held off while something inhibits it, then "idle" after the timeout; screens off and on again */
 	{
 		const char *a = "inhibit\t1\nidle-timeout\t1\n";

@@ -108,3 +108,31 @@ public class IdleManagerTests
     public void The_first_step_comes_after_the_shortest_time(int screenOff, int sleep, int seconds) =>
         Assert.Equal(seconds, IdleManager.FirstStepSeconds(screenOff, sleep));
 }
+
+public class RegionSettingsTests
+{
+    [Fact]
+    public void Chosen_layouts_become_xkb_names()
+    {
+        var s = new Settings { KeyboardLayouts = new() { "us", "de:nodeadkeys" }, KeyboardSwitch = "grp:alt_shift_toggle", KeyboardCompose = "compose:ralt" };
+        Assert.Equal(("us,de", ",nodeadkeys", "grp:alt_shift_toggle,compose:ralt"), RegionSettings.Xkb(s));
+        // one layout: no switching key, no variants
+        s.KeyboardLayouts = new() { "fr" };
+        s.KeyboardCompose = "";
+        Assert.Equal(("fr", "", ""), RegionSettings.Xkb(s));
+    }
+
+    [Fact]
+    public void Layouts_and_variants_are_read_from_xkbs_list()
+    {
+        var f = Path.Combine(Path.GetTempPath(), "rs-evdev-" + Guid.NewGuid().ToString("N") + ".lst");
+        File.WriteAllText(f, "! model\n  pc105  Generic 105-key PC\n\n! layout\n  us   English (US)\n  de   German\n\n! variant\n  nodeadkeys  de: German (no dead keys)\n  intl  us: English (US, intl., with dead keys)\n\n! option\n  grp  Switching\n");
+        try
+        {
+            var l = RegionSettings.Layouts(f);
+            Assert.Equal(new[] { "English (US)", "German" }, l.Select(x => x.Name));
+            Assert.Equal(("nodeadkeys", "German (no dead keys)"), l[1].Variants.Single());
+        }
+        finally { File.Delete(f); }
+    }
+}

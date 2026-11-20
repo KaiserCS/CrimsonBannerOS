@@ -76,7 +76,7 @@
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_cursor_shape_v1.h>
 #include <wlr/types/wlr_idle_inhibit_v1.h>
-#include <wlr/types/wlr_idle_notifier_v1.h>
+#include <wlr/types/wlr_idle_notify_v1.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
@@ -170,6 +170,7 @@ struct keyboard {
 	struct server *server;
 	struct wlr_keyboard *wlr;
 	struct wl_listener modifiers, key, destroy;
+	bool own_keymap;                    /* a virtual keyboard's: left as it is */
 };
 
 struct server {
@@ -203,6 +204,9 @@ struct server {
 	int64_t last_input_ms;
 	struct wl_event_source *idle_timer;
 	bool idle, dpms_off;
+
+	/* keyboard layout from System Settings → Region & keyboard ("keymap"); NULL: XKB_DEFAULT_* or the system's */
+	char *kb_layout, *kb_variant, *kb_options;
 
 	struct view *focused;
 	enum grab grab;
@@ -2023,6 +2027,7 @@ static struct view *view_by_shell_id(struct server *s, uint64_t id)
 
 static void cursor_theme_set(struct server *s, const char *theme, int size);
 static void idle_rearm(struct server *s);
+static void keymap_set(struct server *s, const char *layout, const char *variant, const char *options);
 static void dpms_set(struct server *s, bool on);
 
 static void ipc_command(struct ipc_client *c, char *line)
@@ -2050,6 +2055,12 @@ static void ipc_command(struct ipc_client *c, char *line)
 		return;
 	}
 	if (strcmp(line, "switcher-end") == 0) { s->switching = false; return; }
+	if (strcmp(line, "keymap") == 0) {               /* "keymap\tLAYOUTS\tVARIANTS\tOPTIONS" */
+		char *layout = arg ? arg : (char *)"", *variant = strchr(layout, '\t'), *options = NULL;
+		if (variant) { *variant++ = 0; options = strchr(variant, '\t'); if (options) *options++ = 0; }
+		keymap_set(s, layout, variant, options);
+		return;
+	}
 	if (strcmp(line, "idle-timeout") == 0) {          /* seconds without input before "idle-start"; 0: never */
 		s->idle_timeout = arg ? atoi(arg) : 0;
 		if (s->idle_timeout < 0) s->idle_timeout = 0;
@@ -2543,6 +2554,36 @@ static void keyboard_destroy(struct wl_listener *l, void *data)
 }
 
 /* own_keymap: a virtual keyboard brings its own key map (the protocol requires it) */
+/* the keyboard layouts in use: "us,de" with variants ",nodeadkeys" and options such as "grp:alt_shift_toggle" */
+static struct xkb_keymap *server_keymap(struct server *s)
+{
+	struct xkb_context *ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+	struct xkb_rule_names names = { .layout = s->kb_layout, .variant = s->kb_variant, .options = s->kb_options };
+	struct xkb_keymap *km = xkb_keymap_new_from_names(ctx, &names, XKB_KEYMAP_COMPILE_NO_FLAGS);
+	xkb_context_unref(ctx);
+	return km;
+}
+
+static void keymap_set(struct server *s, const char *layout, const char *variant, const char *options)
+{
+	char *ol = s->kb_layout, *ov = s->kb_variant, *oo = s->kb_options;
+	s->kb_layout = layout && *layout ? strdup(layout) : NULL;
+	s->kb_variant = variant && *variant ? strdup(variant) : NULL;
+	s->kb_options = options && *options ? strdup(options) : NULL;
+	struct xkb_keymap *km = server_keymap(s);
+	if (!km) {
+		wlr_log(WLR_ERROR, "keyboard layout %s (%s) couldn't be made; keeping the old one", layout ? layout : "", variant ? variant : "");
+		free(s->kb_layout); free(s->kb_variant); free(s->kb_options);
+		s->kb_layout = ol; s->kb_variant = ov; s->kb_options = oo;
+		return;
+	}
+	free(ol); free(ov); free(oo);
+	struct keyboard *k;
+	wl_list_for_each(k, &s->keyboards, link) if (!k->own_keymap) wlr_keyboard_set_keymap(k->wlr, km);
+	xkb_keymap_unref(km);
+	wlr_log(WLR_INFO, "keyboard layout %s", layout && *layout ? layout : "(default)");
+}
+
 static void add_keyboard(struct server *s, struct wlr_input_device *dev, bool own_keymap)
 {
 	struct wlr_keyboard *wk = wlr_keyboard_from_input_device(dev);
@@ -2550,13 +2591,17 @@ static void add_keyboard(struct server *s, struct wlr_input_device *dev, bool ow
 	if (!k) return;
 	k->server = s;
 	k->wlr = wk;
+	k->own_keymap = own_keymap;
 	if (!own_keymap) {
-		/* the layout from XKB_DEFAULT_LAYOUT etc. (or the system default) */
-		struct xkb_context *ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-		struct xkb_keymap *km = xkb_keymap_new_from_names(ctx, NULL, XKB_KEYMAP_COMPILE_NO_FLAGS);
-		wlr_keyboard_set_keymap(wk, km);
-		xkb_keymap_unref(km);
-		xkb_context_unref(ctx);
+		/* the layout chosen in Settings, else XKB_DEFAULT_LAYOUT etc. (or the system default) */
+		struct xkb_keymap *km = server_keymap(s);
+		if (!km) {
+			char *ol = s->kb_layout, *ov = s->kb_variant, *oo = s->kb_options;
+			s->kb_layout = s->kb_variant = s->kb_options = NULL;
+			km = server_keymap(s);
+			s->kb_layout = ol; s->kb_variant = ov; s->kb_options = oo;
+		}
+		if (km) { wlr_keyboard_set_keymap(wk, km); xkb_keymap_unref(km); }
 		wlr_keyboard_set_repeat_info(wk, 25, 600);
 	}
 	k->modifiers.notify = keyboard_modifiers;
