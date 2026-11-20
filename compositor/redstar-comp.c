@@ -3105,9 +3105,10 @@ static void new_output(struct wl_listener *l, void *data)
 	nested_initial_size(&nw, &nh);
 	/* outputs without modes (a window on another desktop, the headless test screen) say 60 Hz rather than 0:
 	 * GTK 4 divides by the refresh rate */
-	if (mode) wlr_output_state_set_mode(&st, mode);
+	if (mode && mode->refresh > 0) wlr_output_state_set_mode(&st, mode);
+	else if (mode) wlr_output_state_set_custom_mode(&st, mode->width, mode->height, 60000);
 	else if (nw > 0 && nh > 0) wlr_output_state_set_custom_mode(&st, nw, nh, 60000);   /* our host window's size */
-	else if (wl_list_empty(&wo->modes) && wo->width > 0 && wo->height > 0 && wo->refresh <= 0)
+	else if (wo->width > 0 && wo->height > 0)
 		wlr_output_state_set_custom_mode(&st, wo->width, wo->height, 60000);
 	if (saved && saved->enabled) {
 		wlr_output_state_set_scale(&st, (float)saved->scale);

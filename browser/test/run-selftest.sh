@@ -24,8 +24,7 @@ status=0
 RUN="$ONLINE --self-test"
 # REDSTAR_SELFTEST_GDB=1: under gdb, with a backtrace if it crashes
 if [ "${REDSTAR_SELFTEST_GDB:-}" = 1 ] && command -v gdb >/dev/null 2>&1; then
-	export DEBUGINFOD_URLS="${DEBUGINFOD_URLS:-https://debuginfod.archlinux.org}"
-	RUN="gdb -q -batch -ex 'set debuginfod enabled on' -ex 'set pagination off' -ex 'handle SIGPIPE nostop noprint' -ex run -ex 'thread apply all bt 25' --args $RUN"
+	RUN="gdb -q -batch -ex 'set debuginfod enabled off' -ex 'set pagination off' -ex 'handle SIGPIPE nostop noprint' -ex run -ex 'bt 30' -ex 'info registers rip' -ex 'x/6i $pc-12' --args $RUN"
 fi
 command -v dbus-run-session >/dev/null 2>&1 && RUN="dbus-run-session -- $RUN"
 RUN="$RUN; echo \"redstar-online exited with \$?\" >&2"
