@@ -97,3 +97,14 @@ public class PolkitAgentTests
         Assert.Equal(new[] { "root" }, PolkitAgent.Users(ids));
     }
 }
+
+public class IdleManagerTests
+{
+    [Theory]
+    [InlineData(10, 0, 600)]     // screen off only
+    [InlineData(0, 30, 1800)]    // sleep only
+    [InlineData(10, 30, 600)]    // screen off first, sleep later
+    [InlineData(0, 0, 0)]        // never
+    public void The_first_step_comes_after_the_shortest_time(int screenOff, int sleep, int seconds) =>
+        Assert.Equal(seconds, IdleManager.FirstStepSeconds(screenOff, sleep));
+}

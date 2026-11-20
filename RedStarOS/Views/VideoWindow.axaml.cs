@@ -146,9 +146,12 @@ public partial class VideoWindow : Window
             if (PlayList.SelectedItem is PlayItem it) PlayIndex(_items.IndexOf(it));
         };
 
-        _player.Playing += (_, _) => Ui(g => { _playing = true; OnPlaying(); });
-        _player.Paused += (_, _) => Ui(g => { _playing = false; RefreshPlayState(); });
-        _player.Stopped += (_, _) => Ui(g => { _playing = false; RefreshPlayState(); });
+        // while a video plays, the screen stays on (System Settings → Power)
+        var keepOn = "Video" + GetHashCode();
+        _player.Playing += (_, _) => Ui(g => { _playing = true; IdleManager.Inhibit(keepOn, true); OnPlaying(); });
+        _player.Paused += (_, _) => Ui(g => { _playing = false; IdleManager.Inhibit(keepOn, false); RefreshPlayState(); });
+        _player.Stopped += (_, _) => Ui(g => { _playing = false; IdleManager.Inhibit(keepOn, false); RefreshPlayState(); });
+        Closed += (_, _) => IdleManager.Inhibit(keepOn, false);
         _player.LengthChanged += (_, e) => { var l = e.Length; Ui(g => { _length = l; LenText.Text = Fmt(l); }); };
         _player.TimeChanged += (_, e) => { var t = e.Time; Ui(g => OnTime(t)); };
         _player.EndReached += (_, _) => Ui(g => OnEnded());

@@ -19,6 +19,17 @@ namespace RedStarOS.Views;
 /// <summary>The desktop shell: wallpaper, icons, toasts and the taskbar (see <see cref="Taskbar"/>).</summary>
 public partial class DesktopWindow : Window
 {
+    private static void DriveArrived(DriveVolume v) =>
+        Notifier.Show("Drive connected", $"“{v.Label}” is plugged in.", "files", new NotificationAction("Open", () => Dispatcher.UIThread.Post(async () =>
+        {
+            try
+            {
+                var at = await RemovableDrives.Mount(RemovableDrives.Volumes.FirstOrDefault(x => x.ObjectPath == v.ObjectPath) ?? v);
+                WindowManager.Open(new FileManagerWindow(at), "files");
+            }
+            catch (Exception ex) { Notifier.Show("Drive", $"Couldn't open “{v.Label}”: {ex.Message}", "files"); }
+        })));
+
     private static bool _autostarted;
 
     private sealed class DesktopItem
@@ -83,6 +94,11 @@ public partial class DesktopWindow : Window
             PortalSetup.Run();                         // inside redstar-comp: screenshots and screen sharing for other apps
             SystemTray.Start();                        // other programs' tray icons (Discord, Steam…) on the taskbar
             OtherAppsNotifications.Start();            // other programs' notifications (org.freedesktop.Notifications)
+            // drives: shown in Files, and "plugged in" notifications when Crimson Banner is the session
+            RemovableDrives.Arrived += v => { if (Autostart.IsSession) DriveArrived(v); };
+            _ = RemovableDrives.StartAsync();
+            // screen off, lock and sleep when nobody uses the computer (System Settings → Power)
+            if (Autostart.IsSession) IdleManager.Start();
             // the administrator password prompt for polkit, when Crimson Banner is the session
             if (Autostart.IsSession) PolkitAgent.Start(PolkitDialog.Ask);
             // programs that start at sign-in, once the tray and notifications are there for them (only as the session)

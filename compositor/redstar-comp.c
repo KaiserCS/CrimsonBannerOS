@@ -75,6 +75,8 @@
 #include <wlr/types/wlr_viewporter.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_cursor_shape_v1.h>
+#include <wlr/types/wlr_idle_inhibit_v1.h>
+#include <wlr/types/wlr_idle_notifier_v1.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
@@ -192,6 +194,15 @@ struct server {
 	struct wlr_cursor *cursor;
 	struct wlr_xcursor_manager *xcursor;
 	const char *cursor_name;
+
+	/* idle: the shell asks for "idle-start" after so many seconds without input; programs can hold it off (videos) */
+	struct wlr_idle_notifier_v1 *idle_notifier;
+	struct wl_listener new_inhibitor;
+	int inhibitors, shell_inhibit;          /* idle-inhibit-v1 surfaces; the shell's own "inhibit 1" */
+	int idle_timeout;                       /* seconds, 0: never */
+	int64_t last_input_ms;
+	struct wl_event_source *idle_timer;
+	bool idle, dpms_off;
 
 	struct view *focused;
 	enum grab grab;
@@ -2011,6 +2022,8 @@ static struct view *view_by_shell_id(struct server *s, uint64_t id)
 }
 
 static void cursor_theme_set(struct server *s, const char *theme, int size);
+static void idle_rearm(struct server *s);
+static void dpms_set(struct server *s, bool on);
 
 static void ipc_command(struct ipc_client *c, char *line)
 {
@@ -2037,6 +2050,18 @@ static void ipc_command(struct ipc_client *c, char *line)
 		return;
 	}
 	if (strcmp(line, "switcher-end") == 0) { s->switching = false; return; }
+	if (strcmp(line, "idle-timeout") == 0) {          /* seconds without input before "idle-start"; 0: never */
+		s->idle_timeout = arg ? atoi(arg) : 0;
+		if (s->idle_timeout < 0) s->idle_timeout = 0;
+		idle_rearm(s);
+		return;
+	}
+	if (strcmp(line, "dpms") == 0) { dpms_set(s, !(arg && strcmp(arg, "off") == 0)); return; }
+	if (strcmp(line, "inhibit") == 0) {                /* the shell holds idle off (its own video player, a D-Bus inhibitor) */
+		s->shell_inhibit = arg && atoi(arg) > 0;
+		wlr_idle_notifier_v1_set_inhibited(s->idle_notifier, s->inhibitors > 0 || s->shell_inhibit);
+		return;
+	}
 	if (strcmp(line, "cursor") == 0) {
 		char *theme = arg ? arg : (char *)"", *size = strchr(theme, '\t');
 		if (size) *size++ = 0;
@@ -2480,6 +2505,7 @@ static void keyboard_key(struct wl_listener *l, void *data)
 	struct server *s = k->server;
 	struct wlr_keyboard_key_event *e = data;
 	uint32_t keycode = e->keycode + 8;
+	input_activity(s);
 	const xkb_keysym_t *syms;
 	int n = xkb_state_key_get_syms(k->wlr->xkb_state, keycode, &syms);
 	bool handled = false, pressed = e->state == WL_KEYBOARD_KEY_STATE_PRESSED;
@@ -2632,6 +2658,7 @@ static void cursor_motion(struct wl_listener *l, void *data)
 	struct server *s = wl_container_of(l, s, cursor_motion);
 	struct wlr_pointer_motion_event *e = data;
 	wlr_cursor_move(s->cursor, &e->pointer->base, e->delta_x, e->delta_y);
+	input_activity(s);
 	process_motion(s, e->time_msec);
 }
 
@@ -2640,6 +2667,7 @@ static void cursor_motion_abs(struct wl_listener *l, void *data)
 	struct server *s = wl_container_of(l, s, cursor_motion_abs);
 	struct wlr_pointer_motion_absolute_event *e = data;
 	wlr_cursor_warp_absolute(s->cursor, &e->pointer->base, e->x, e->y);
+	input_activity(s);
 	process_motion(s, e->time_msec);
 }
 
@@ -2684,6 +2712,7 @@ static void cursor_button(struct wl_listener *l, void *data)
 {
 	struct server *s = wl_container_of(l, s, cursor_button);
 	struct wlr_pointer_button_event *e = data;
+	input_activity(s);
 	uint32_t state = e->state;
 	bool pressed = state == WL_POINTER_BUTTON_STATE_PRESSED;
 
@@ -2767,6 +2796,7 @@ static void cursor_axis(struct wl_listener *l, void *data)
 {
 	struct server *s = wl_container_of(l, s, cursor_axis);
 	struct wlr_pointer_axis_event *e = data;
+	input_activity(s);
 	wlr_seat_pointer_notify_axis(s->seat, e->time_msec, e->orientation, e->delta, e->delta_discrete, e->source,
 		e->relative_direction);
 }
@@ -2829,6 +2859,93 @@ static void cursor_theme_set(struct server *s, const char *theme, int size)
 	snprintf(sz, sizeof sz, "%d", size);
 	setenv("XCURSOR_SIZE", sz, 1);
 	wlr_log(WLR_INFO, "cursor theme %s, size %d", theme && *theme ? theme : "(default)", size);
+}
+
+// ── idle ──
+
+static int64_t mono_ms(void)
+{
+	struct timespec t;
+	clock_gettime(CLOCK_MONOTONIC, &t);
+	return (int64_t)t.tv_sec * 1000 + t.tv_nsec / 1000000;
+}
+
+/* Screens off (DPMS) and on again, without touching the layout: windows stay where they are. */
+static void dpms_set(struct server *s, bool on)
+{
+	if (s->dpms_off == !on) return;
+	struct output *o;
+	wl_list_for_each(o, &s->outputs, link) {
+		if (!o->in_layout) continue;
+		struct wlr_output_state st;
+		wlr_output_state_init(&st);
+		wlr_output_state_set_enabled(&st, on);
+		if (!wlr_output_commit_state(o->wlr, &st)) wlr_log(WLR_ERROR, "screen %s couldn't be turned %s", o->wlr->name, on ? "on" : "off");
+		wlr_output_state_finish(&st);
+		if (on) wlr_output_schedule_frame(o->wlr);
+	}
+	s->dpms_off = !on;
+	wlr_log(WLR_INFO, "screens %s", on ? "on" : "off");
+}
+
+static int idle_fire(void *data)
+{
+	struct server *s = data;
+	if (s->idle_timeout <= 0 || s->idle) return 0;
+	int64_t left = s->last_input_ms + (int64_t)s->idle_timeout * 1000 - mono_ms();
+	if (s->inhibitors > 0 || s->shell_inhibit) left = (int64_t)s->idle_timeout * 1000;      /* a video is playing: ask again later */
+	else if (left <= 0) {
+		s->idle = true;
+		ipc_send(s, NULL, "idle-start");
+		return 0;
+	}
+	wl_event_source_timer_update(s->idle_timer, (int)(left > 0 ? left : 1000));
+	return 0;
+}
+
+static void idle_rearm(struct server *s)
+{
+	if (!s->idle_timer) return;
+	wl_event_source_timer_update(s->idle_timer, s->idle_timeout > 0 ? s->idle_timeout * 1000 : 0);
+}
+
+/* any input: the screens come back, the shell hears "idle-end" once, and the countdown starts again */
+static void input_activity(struct server *s)
+{
+	s->last_input_ms = mono_ms();
+	if (s->idle_notifier) wlr_idle_notifier_v1_notify_activity(s->idle_notifier, s->seat);
+	if (s->dpms_off) dpms_set(s, true);
+	if (s->idle) {
+		s->idle = false;
+		ipc_send(s, NULL, "idle-end");
+		idle_rearm(s);
+	}
+}
+
+struct inhibitor { struct server *server; struct wl_listener destroy; };
+
+static void inhibitor_destroy(struct wl_listener *l, void *data)
+{
+	(void)data;
+	struct inhibitor *in = wl_container_of(l, in, destroy);
+	struct server *s = in->server;
+	s->inhibitors--;
+	wlr_idle_notifier_v1_set_inhibited(s->idle_notifier, s->inhibitors > 0 || s->shell_inhibit);
+	wl_list_remove(&in->destroy.link);
+	free(in);
+}
+
+static void new_inhibitor(struct wl_listener *l, void *data)
+{
+	struct server *s = wl_container_of(l, s, new_inhibitor);
+	struct wlr_idle_inhibitor_v1 *inh = data;
+	struct inhibitor *in = calloc(1, sizeof *in);
+	if (!in) return;
+	in->server = s;
+	in->destroy.notify = inhibitor_destroy;
+	wl_signal_add(&inh->events.destroy, &in->destroy);
+	s->inhibitors++;
+	wlr_idle_notifier_v1_set_inhibited(s->idle_notifier, true);
 }
 
 static void request_selection(struct wl_listener *l, void *data)
@@ -3447,6 +3564,12 @@ int main(int argc, char **argv)
 	s->seat = wlr_seat_create(s->display, "seat0");
 	s->request_cursor.notify = request_cursor;
 	wl_signal_add(&s->seat->events.request_set_cursor, &s->request_cursor);
+	s->idle_notifier = wlr_idle_notifier_v1_create(s->display);           /* ext-idle-notify-v1, for other programs */
+	struct wlr_idle_inhibit_manager_v1 *inhibit = wlr_idle_inhibit_v1_create(s->display);
+	s->new_inhibitor.notify = new_inhibitor;
+	wl_signal_add(&inhibit->events.new_inhibitor, &s->new_inhibitor);
+	s->idle_timer = wl_event_loop_add_timer(s->loop, idle_fire, s);
+	s->last_input_ms = mono_ms();
 	struct wlr_cursor_shape_manager_v1 *shapes = wlr_cursor_shape_manager_v1_create(s->display, 1);
 	s->request_shape.notify = request_shape;
 	wl_signal_add(&shapes->events.request_set_shape, &s->request_shape);

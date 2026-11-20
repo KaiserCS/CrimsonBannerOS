@@ -17,7 +17,26 @@ public static class ShellActions
     /// <summary>Super+L: the lock screen.</summary>
     public static void Lock()
     {
-        if (WindowManager.Desktop != null) new LoginWindow().Show(WindowManager.Desktop);
+        if (WindowManager.Desktop == null || IsLocked) return;
+        new LoginWindow().Show(WindowManager.Desktop);
+    }
+
+    /// <summary>The lock screen is up.</summary>
+    public static bool IsLocked =>
+        (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Windows.Any(w => w is Views.LoginWindow) == true;
+
+    /// <summary>Puts the computer to sleep through systemd-logind (locking first when Power says so).</summary>
+    public static void Suspend()
+    {
+        if (SettingsStore.Current.LockOnScreenOff) Lock();
+        var sc = ProcessUtil.Which("systemctl") ?? ProcessUtil.Which("loginctl");
+        if (sc == null) { Notifier.Show("Sleep", "This system has no systemd-logind to put it to sleep.", "settings"); return; }
+        _ = System.Threading.Tasks.Task.Run(async () =>
+        {
+            await System.Threading.Tasks.Task.Delay(600);           // the lock screen is drawn before the screen goes
+            var (code, text) = await ProcessUtil.RunAsync(sc, new[] { "suspend" }, 15000);
+            if (code != 0) Avalonia.Threading.Dispatcher.UIThread.Post(() => Notifier.Show("Sleep", "The computer refused: " + text.Trim(), "settings"));
+        });
     }
 
     /// <summary>As the login session: ends it, back to the login screen. On another desktop: the lock screen.</summary>

@@ -81,6 +81,7 @@ public partial class SettingsWindow : Window
             new("Printers", "printer", AppIcons.Brush("#2F855A"), SettingsPages.Printers),
             new("Default apps", "apps", AppIcons.Brush("#DD6B20"), SettingsPages.DefaultAppsPage),
             new("Startup apps", "power", AppIcons.Brush("#2F855A"), SettingsPages.StartupPage),
+            new("Power & battery", "battery", AppIcons.Brush("#D69E2E"), SettingsPages.PowerPage),
             new("Crimson Online", "globe", AppIcons.Brush("#C8102E"), SettingsPages.OnlinePage),
             new("Accessibility", "accessibility", AppIcons.Brush("#2B6CB0"), SettingsPages.Accessibility),
             new("Account", "👤", AppIcons.Brush("#DD6B20"), () => PageLauncher("Account", "Password, profile photo and account type.", "Open Account", () => WindowManager.Open(new AccountWindow()))),

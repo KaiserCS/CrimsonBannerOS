@@ -1025,4 +1025,75 @@ public static class SettingsPages
         })));
         return p;
     }
+
+    // ═════════════════════════════════ Power & battery ═════════════════════════════════
+    /// <summary>Screen off, lock and sleep when idle (IdleManager), the power mode (power-profiles-daemon), the battery.</summary>
+    public static Control PowerPage()
+    {
+        var p = Page("Power & battery", "What happens when you leave the computer, and how it uses power.");
+        var s = SettingsStore.Current;
+        if (SystemInfo.BatteryInfo() is { } b)
+        {
+            p.Children.Add(Eyebrow("BATTERY"));
+            p.Children.Add(new TextBlock { Text = $"{b.Percent}%" + (b.Charging ? ", charging" : ", on battery"), FontSize = 20, FontWeight = FontWeight.SemiBold });
+            p.Children.Add(new ProgressBar { Value = b.Percent, Maximum = 100, Height = 8, MaxWidth = 320, HorizontalAlignment = HorizontalAlignment.Left });
+        }
+
+        p.Children.Add(Eyebrow("WHEN I'M AWAY"));
+        int[] offChoices = { 0, 1, 2, 5, 10, 15, 30, 60 }, sleepChoices = { 0, 10, 15, 30, 60, 120 };
+        string Min(int m) => m == 0 ? "Never" : m < 60 ? $"After {m} minute{(m == 1 ? "" : "s")}" : $"After {m / 60} hour{(m == 60 ? "" : "s")}";
+        ComboBox Pick(int[] choices, int current, Action<int> set)
+        {
+            var c = new ComboBox { ItemsSource = choices.Select(Min).ToList(), SelectedIndex = Math.Max(0, Array.IndexOf(choices, current)), MinWidth = 200 };
+            c.SelectionChanged += (_, _) => { if (c.SelectedIndex >= 0) { set(choices[c.SelectedIndex]); SettingsStore.Save(); IdleManager.Apply(); } };
+            return c;
+        }
+        p.Children.Add(Row(new TextBlock { Text = "Turn the screen off", Width = 180, VerticalAlignment = VerticalAlignment.Center },
+            Pick(offChoices, s.ScreenOffMinutes, v => SettingsStore.Current.ScreenOffMinutes = v)));
+        p.Children.Add(Row(new TextBlock { Text = "Put the computer to sleep", Width = 180, VerticalAlignment = VerticalAlignment.Center },
+            Pick(sleepChoices, s.SleepMinutes, v => SettingsStore.Current.SleepMinutes = v)));
+        var lockBox = new CheckBox { Content = "Lock the screen when it turns off and before sleeping", IsChecked = s.LockOnScreenOff };
+        lockBox.IsCheckedChanged += (_, _) => { SettingsStore.Current.LockOnScreenOff = lockBox.IsChecked == true; SettingsStore.Save(); };
+        p.Children.Add(lockBox);
+        var keeping = IdleManager.Inhibitors;
+        p.Children.Add(Note(!Autostart.IsSession ? "Crimson Banner OS is running on top of another desktop, which decides this itself."
+            : keeping.Count > 0 ? "Keeping the screen on right now: " + string.Join(", ", keeping) + "."
+            : "Videos playing in Crimson Online, Video and other players keep the screen on."));
+        p.Children.Add(Row(Btn("Lock now", ShellActions.Lock), Btn("Sleep now", ShellActions.Suspend)));
+
+        p.Children.Add(Eyebrow("POWER MODE"));
+        var modeNote = Note("");
+        var modes = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        p.Children.Add(modes);
+        p.Children.Add(modeNote);
+        _ = FillPowerModes(modes, modeNote);
+        return p;
+    }
+
+    private static readonly (string Key, string Label)[] PowerModes = { ("power-saver", "Power saver"), ("balanced", "Balanced"), ("performance", "Performance") };
+
+    private static async System.Threading.Tasks.Task FillPowerModes(StackPanel modes, TextBlock note)
+    {
+        var ppc = ProcessUtil.Which("powerprofilesctl");
+        if (ppc == null) { note.Text = "Install power-profiles-daemon to choose a power mode (pacman -S power-profiles-daemon, then enable its service)."; return; }
+        var (code, current) = await ProcessUtil.RunAsync(ppc, new[] { "get" }, 5000);
+        var (_, list) = await ProcessUtil.RunAsync(ppc, new[] { "list" }, 5000);
+        if (code != 0) { note.Text = "power-profiles-daemon isn't running (systemctl enable --now power-profiles-daemon)."; return; }
+        current = current.Trim();
+        modes.Children.Clear();
+        foreach (var (key, label) in PowerModes)
+        {
+            if (!list.Contains(key)) continue;
+            var k = key;
+            var r = new RadioButton { Content = label, GroupName = "powermode", IsChecked = current == key };
+            r.IsCheckedChanged += async (_, _) =>
+            {
+                if (r.IsChecked != true) return;
+                var (c, text) = await ProcessUtil.RunAsync(ppc, new[] { "set", k }, 10000);
+                note.Text = c == 0 ? label + " is on." : "Couldn't change it: " + text.Trim();
+            };
+            modes.Children.Add(r);
+        }
+        note.Text = "Power saver lowers performance to make the battery last; Performance lets the processor run fastest.";
+    }
 }

@@ -43,6 +43,8 @@ public static class CompIpc
 
     /// <summary>Raised on the reader thread for a global shortcut (same names as <see cref="X11Desktop.Shortcut"/>).</summary>
     public static event Action<string>? Key;
+    /// <summary>The user went idle (true) or came back (false), by redstar-comp's "idle-timeout" (on the reader thread).</summary>
+    public static event Action<bool>? IdleChanged;
 
     private static volatile Dictionary<long, NativeWindow> _windows = new();
     private static volatile Dictionary<string, long> _tokens = new();
@@ -269,6 +271,12 @@ public static class CompIpc
             case "token" when f.Length >= 3 && long.TryParse(f[2], out var tid):
                 _tokens = new Dictionary<string, long>(_tokens) { [f[1]] = tid };
                 Changed?.Invoke();
+                break;
+            case "idle-start":                  // no input for the time System Settings → Power set
+                IdleChanged?.Invoke(true);
+                break;
+            case "idle-end":
+                IdleChanged?.Invoke(false);
                 break;
             case "key" when f.Length >= 2:
                 Key?.Invoke(f.Length > 2 ? f[1] + "\t" + f[2] : f[1]);     // e.g. "screenshot-window\tx,y wxh"

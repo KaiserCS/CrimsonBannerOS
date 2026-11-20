@@ -770,12 +770,21 @@ public partial class FileManagerWindow
         BuildSidebar();
     }
 
+    /// <summary>Mounts a drive that isn't open yet and goes there.</summary>
+    private async Task OpenVolume(DriveVolume v)
+    {
+        try { Navigate(await RemovableDrives.Mount(v), true); }
+        catch (Exception ex) { await Dialogs.ShowMessage(this, "Open drive", "Couldn't open “" + v.Label + "”: " + ex.Message); }
+        BuildSidebar();
+    }
+
     private async Task EjectDrive(string mount, string label)
     {
         LeaveIfInside(mount);
         try
         {
-            await RemoteMounts.Eject(mount);
+            if (RemovableDrives.AtMount(mount) is { } vol) await RemovableDrives.Eject(vol);
+            else await RemoteMounts.Eject(mount);
             Notifier.Show("Safe to remove", $"“{label}” can be unplugged now.", "files");
         }
         catch (Exception ex) { await Dialogs.ShowMessage(this, "Eject", ex.Message); }

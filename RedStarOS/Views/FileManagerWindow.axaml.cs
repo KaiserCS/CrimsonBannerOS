@@ -149,7 +149,9 @@ public partial class FileManagerWindow : Window
         AddHandler(KeyDownEvent, OnKeys, RoutingStrategies.Tunnel);
 
         _reloadSoon.Tick += (_, _) => { _reloadSoon.Stop(); Reload(keepSelection: true); };
-        Closed += (_, _) => { _bgCts.Cancel(); _watcher?.Dispose(); _searchCts?.Cancel(); _thumbCts?.Cancel(); FileTransfer.UndoChanged -= UpdateUndo; };
+        Action drivesChanged = () => Avalonia.Threading.Dispatcher.UIThread.Post(BuildSidebar);
+        RemovableDrives.Changed += drivesChanged;
+        Closed += (_, _) => { _bgCts.Cancel(); _watcher?.Dispose(); _searchCts?.Cancel(); _thumbCts?.Cancel(); FileTransfer.UndoChanged -= UpdateUndo; RemovableDrives.Changed -= drivesChanged; };
         UpdateUndo();
 
         var start = startPath;
@@ -194,7 +196,9 @@ public partial class FileManagerWindow : Window
         }
 
         var drives = Drives();
-        if (drives.Count > 0)
+        // drives UDisks2 knows but nothing has mounted yet (in a Crimson Banner session nothing mounts them by itself)
+        var unmounted = RemovableDrives.Volumes.Where(v => v.MountPoint == null).ToList();
+        if (drives.Count > 0 || unmounted.Count > 0)
         {
             Section("DEVICES");
             foreach (var (mount, label, total, free) in drives)
@@ -202,6 +206,11 @@ public partial class FileManagerWindow : Window
                 var m = mount;
                 Nav("drive", label, mount, total > 0 ? (double)(total - free) / total : -1, total > 0 ? $"{FileOps.FormatSize(free)} free of {FileOps.FormatSize(total)}" : null,
                     RemoteMounts.IsRemovableMount(mount) ? (Action)(() => _ = EjectDrive(m, label)) : null);
+            }
+            foreach (var v in unmounted)
+            {
+                var vol = v;
+                Nav(v.Removable ? "usb" : "drive", v.Label, "", -1, $"{v.Device} · not opened yet", null, () => _ = OpenVolume(vol)).Opacity = 0.8;
             }
         }
 

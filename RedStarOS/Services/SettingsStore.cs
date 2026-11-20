@@ -48,6 +48,9 @@ public sealed class Settings
     public int PongBest { get; set; }                          // solo mode: longest rally
     public int PongAiWins { get; set; }                        // versus-computer wins
     public bool LockWithSystemPassword { get; set; } = true;  // the lock screen checks the Linux password (PAM)
+    public int ScreenOffMinutes { get; set; } = 10;            // Power: screen off after so long without input (0: never)
+    public bool LockOnScreenOff { get; set; } = true;          // Power: lock when the screen goes off, and before sleep
+    public int SleepMinutes { get; set; }                      // Power: sleep after so long without input (0: never)
     public bool RunAutostart { get; set; } = true;             // start ~/.config/autostart and /etc/xdg/autostart programs at sign-in
     public int BlocksBest { get; set; }                        // Blocks: best score
     public int GemsBest { get; set; }                          // Gems: best score

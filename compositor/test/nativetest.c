@@ -455,6 +455,19 @@ int main(void)
 		check(wait_line("outputs-end", NULL, 0, 2000), "a new pointer theme and size are taken while running");
 	}
 
+	/* idle: held off while something inhibits it, then "idle" after the timeout; screens off and on again */
+	{
+		const char *a = "inhibit\t1\nidle-timeout\t1\n";
+		if (write(ipc, a, strlen(a)) < 0) return 1;
+		check(!wait_line("idle-start", NULL, 0, 2500), "no idle while something holds it off (a video playing)");
+		const char *b = "inhibit\t0\n";
+		if (write(ipc, b, strlen(b)) < 0) return 1;
+		check(wait_line("idle-start", NULL, 0, 4000), "\"idle-start\" after a second without input");
+		const char *c = "dpms\toff\ndpms\ton\nidle-timeout\t0\noutputs\n";
+		if (write(ipc, c, strlen(c)) < 0) return 1;
+		check(wait_line("outputs-end", NULL, 0, 3000), "screens go off and on again, and the compositor carries on");
+	}
+
 	/* two of the shell's windows with the same title, told apart by the tokens it names them with */
 	{
 		struct wl_surface *sa = wl_compositor_create_surface(compositor), *sb = wl_compositor_create_surface(compositor);
@@ -517,6 +530,8 @@ int main(void)
 	/* what screenshot, screen-sharing, display and clipboard tools look for */
 	if (output_refresh <= 0) printf("  (screen refresh as sent: %d mHz)\n", output_refresh);
 	check(output_refresh > 0, "the screen reports a refresh rate (GTK 4 apps divide by it)");
+	check(strstr(globals, " ext_idle_notifier_v1 ") != NULL && strstr(globals, " zwp_idle_inhibit_manager_v1 ") != NULL,
+	      "idle notification and inhibiting (screen lockers, video players)");
 	check(strstr(globals, " wp_cursor_shape_manager_v1 ") != NULL, "cursor-shape (programs' pointers drawn at Red Star's size)");
 	check(strstr(globals, " zwlr_screencopy_manager_v1 ") != NULL, "screencopy (grim, xdg-desktop-portal-wlr)");
 	check(strstr(globals, " ext_image_copy_capture_manager_v1 ") != NULL, "ext-image-copy-capture (newer screen sharing)");
