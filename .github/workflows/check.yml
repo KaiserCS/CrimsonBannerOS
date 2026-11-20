@@ -7,6 +7,8 @@ name: Check
 #                    session (artifact "session-screenshots")
 #   • compositor     redstar-comp (wlroots 0.20, in an Arch Linux container) built with warnings as errors, then its
 #                    behaviour tests on wlroots' virtual screen through Xwayland
+#   • packages       Red Star's own package feed (tools/packages.sh): filled once, then the shell is restored, built
+#                    and published with nuget.org cut off
 #   • browser        Red Star Online (GTK 4 + WebKitGTK, in an Arch Linux container): unit tests and the real
 #                    browser's self-test, headless inside redstar-comp
 # The same checks run locally with ./check.sh.
@@ -114,6 +116,53 @@ jobs:
           path: session-screenshots
           if-no-files-found: ignore
           retention-days: 14
+
+  packages:
+    name: Own package feed (offline build)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Fill the feed (the only step that uses the network)
+        run: tools/packages.sh fill
+
+      - name: The lock files in the repository are the ones restored
+        run: |
+          if git ls-files --error-unmatch RedStarOS/packages.lock.json >/dev/null 2>&1; then
+            git diff --exit-code -- '*packages.lock.json'
+          else
+            echo "::warning::packages.lock.json isn't in the repository yet: commit the files from the lock-files artifact"
+          fi
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: lock-files
+          path: |
+            RedStarOS/packages.lock.json
+            tests/RedStarOS.Tests/packages.lock.json
+          retention-days: 14
+
+      - name: Cut off nuget.org and empty every package cache
+        run: |
+          rm -rf ~/.nuget/packages ~/.local/share/NuGet
+          echo "0.0.0.0 api.nuget.org www.nuget.org nuget.org globalcdn.nuget.org" | sudo tee -a /etc/hosts
+          if curl -fsS -m 10 https://api.nuget.org/v3/index.json >/dev/null 2>&1; then echo "nuget.org still reachable"; exit 1; fi
+
+      - name: Restore, build and test from the feed alone
+        run: |
+          tools/packages.sh restore
+          dotnet build RedStarOS/RedStarOS.csproj -c Release --no-restore
+          dotnet build tests/RedStarOS.Tests/RedStarOS.Tests.csproj -c Release --no-restore
+
+      - name: The AppImage's self-contained build from the feed alone
+        run: >
+          dotnet publish RedStarOS/RedStarOS.csproj -c Release -r linux-x64 --self-contained true
+          --source "$(tools/packages.sh where)" -p:NuGetAudit=false -p:REDSTAR_LOCKED=1 -o "$RUNNER_TEMP/publish"
 
   compositor:
     name: Wayland compositor (wlroots 0.20)

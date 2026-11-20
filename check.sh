@@ -3,27 +3,42 @@
 #   ./check.sh          build + C# tests (every window opens, terminal emulator, pty, browser data), and the window
 #                       manager, compositor and Red Star Online tests when their libraries are installed
 #   ./check.sh --screenshots   also saves a picture of every window in ./screenshots (open screenshots/index.html)
+#   ./check.sh --offline       packages only from Red Star's own feed (tools/packages.sh); that's also the default
+#                              once the feed is filled. --online uses nuget.org instead.
 # The same checks run on GitHub for every push (.github/workflows/check.yml).
 set -euo pipefail
 # no telemetry from the .NET tools (PRINCIPLES.md, 5)
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
-SHOTS=0
-for a in "$@"; do case "$a" in --screenshots) SHOTS=1 ;; esac; done
+SHOTS=0; OFFLINE=auto
+for a in "$@"; do case "$a" in --screenshots) SHOTS=1 ;; --offline) OFFLINE=1 ;; --online) OFFLINE=0 ;; esac; done
 cd "$(dirname "$0")"
 ok() { printf '\033[32m✔ %s\033[0m\n' "$1"; }
 
+FEED="$(tools/packages.sh where)"
+if [ "$OFFLINE" = auto ]; then
+  OFFLINE=0
+  [ -n "$(ls -A "$FEED" 2>/dev/null)" ] && [ -f RedStarOS/packages.lock.json ] && OFFLINE=1
+fi
+NORESTORE=()
+if [ "$OFFLINE" = 1 ]; then
+  echo "==> Packages from Red Star's own feed ($FEED)"
+  tools/packages.sh restore >/dev/null
+  NORESTORE=(--no-restore)
+  ok "packages (offline, versions and hashes from packages.lock.json)"
+fi
+
 echo "==> Building"
-dotnet build RedStarOS/RedStarOS.csproj -c Release -nologo -v quiet
+dotnet build RedStarOS/RedStarOS.csproj -c Release -nologo -v quiet "${NORESTORE[@]}"
 ok "build"
 
 echo "==> C# tests"
 if [ "$SHOTS" = 1 ]; then
   rm -rf screenshots
-  REDSTAR_SCREENSHOTS="$PWD/screenshots" dotnet test tests/RedStarOS.Tests/RedStarOS.Tests.csproj -c Release -nologo --logger "console;verbosity=minimal"
+  REDSTAR_SCREENSHOTS="$PWD/screenshots" dotnet test tests/RedStarOS.Tests/RedStarOS.Tests.csproj -c Release -nologo "${NORESTORE[@]}" --logger "console;verbosity=minimal"
   python3 .github/scripts/summary.py shots screenshots | head -1
   ok "C# tests (screenshots in screenshots/index.html)"
 else
-  dotnet test tests/RedStarOS.Tests/RedStarOS.Tests.csproj -c Release -nologo --logger "console;verbosity=minimal"
+  dotnet test tests/RedStarOS.Tests/RedStarOS.Tests.csproj -c Release -nologo "${NORESTORE[@]}" --logger "console;verbosity=minimal"
   ok "C# tests"
 fi
 

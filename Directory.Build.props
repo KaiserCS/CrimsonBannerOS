@@ -1,0 +1,12 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<Project>
+  <PropertyGroup>
+    <!-- Every package, direct or not, at an exact version with its content hash (packages.lock.json next to each
+         project): what the build uses is written down in the repository, and the local feed (tools/packages.sh)
+         holds exactly that. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <!-- No package may change behind our backs: with REDSTAR_LOCKED=1 (tools/packages.sh sets it) the lock files must
+         match. -->
+    <RestoreLockedMode Condition="'$(REDSTAR_LOCKED)' == '1'">true</RestoreLockedMode>
+  </PropertyGroup>
+</Project>

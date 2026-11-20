@@ -22,8 +22,16 @@ APPDIR="$OUT/RedStarOS.AppDir"
 rm -rf "$OUT"
 mkdir -p "$APPDIR/usr/bin"
 
+# packages from Red Star's own feed when it's filled (tools/packages.sh), else from nuget.org
+SOURCE=()
+FEED="$(tools/packages.sh where)"
+if [ -n "$(ls -A "$FEED" 2>/dev/null)" ] && [ -f RedStarOS/packages.lock.json ] && [ "${REDSTAR_ONLINE_PACKAGES:-0}" != 1 ]; then
+  echo "==> Packages from Red Star's own feed ($FEED)"
+  SOURCE=(--source "$FEED" -p:NuGetAudit=false -p:REDSTAR_LOCKED=1)
+fi
+
 echo "==> Publishing self-contained build ($RID)"
-dotnet publish RedStarOS/RedStarOS.csproj \
+dotnet publish RedStarOS/RedStarOS.csproj "${SOURCE[@]}" \
   -c Release -r "$RID" --self-contained true \
   -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false \
   -o "$APPDIR/usr/bin"
