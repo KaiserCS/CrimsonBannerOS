@@ -1468,6 +1468,20 @@ static void follow_red_star_theme(void)
 	g_object_set(gtk_settings_get_default(), "gtk-cursor-theme-size", size, NULL);
 }
 
+/* REDSTAR_ONLINE_PLAIN: leave out some of our WebKit setup, to find which part a problem comes from (WebKit's own
+ * MiniBrowser uses none of it). "all", or a comma list of: session (WebKit's default data folders), itp, cookies,
+ * favicons, filters, settings. */
+static gboolean plain(const char *what)
+{
+	const char *p = g_getenv("REDSTAR_ONLINE_PLAIN");
+	if (!p || !*p) return FALSE;
+	if (!strcmp(p, "all")) return TRUE;
+	gchar **parts = g_strsplit(p, ",", -1);
+	gboolean hit = g_strv_contains((const gchar *const *)parts, what);
+	g_strfreev(parts);
+	return hit;
+}
+
 static void startup(GApplication *gapp, gpointer data)
 {
 	(void)gapp; (void)data;
@@ -1483,17 +1497,22 @@ static void startup(GApplication *gapp, gpointer data)
 
 	gchar *data_dir = g_build_filename(g_get_user_data_dir(), "redstaros", "online", NULL);
 	gchar *cache_dir = g_build_filename(g_get_user_cache_dir(), "redstaros", "online", NULL);
-	app.session = webkit_network_session_new(data_dir, cache_dir);
-	webkit_network_session_set_itp_enabled(app.session, TRUE);                  /* WebKit's tracking prevention */
-	webkit_cookie_manager_set_accept_policy(webkit_network_session_get_cookie_manager(app.session), WEBKIT_COOKIE_POLICY_ACCEPT_NO_THIRD_PARTY);
-	webkit_website_data_manager_set_favicons_enabled(webkit_network_session_get_website_data_manager(app.session), TRUE);
+	if (g_getenv("REDSTAR_ONLINE_PLAIN")) g_printerr("online: REDSTAR_ONLINE_PLAIN=%s — some of the usual setup left out\n", g_getenv("REDSTAR_ONLINE_PLAIN"));
+	app.session = plain("session") ? g_object_ref(webkit_network_session_get_default()) : webkit_network_session_new(data_dir, cache_dir);
+	if (!plain("itp")) webkit_network_session_set_itp_enabled(app.session, TRUE);                  /* WebKit's tracking prevention */
+	if (!plain("cookies"))
+		webkit_cookie_manager_set_accept_policy(webkit_network_session_get_cookie_manager(app.session), WEBKIT_COOKIE_POLICY_ACCEPT_NO_THIRD_PARTY);
+	if (!plain("favicons"))
+		webkit_website_data_manager_set_favicons_enabled(webkit_network_session_get_website_data_manager(app.session), TRUE);
 	g_signal_connect(app.session, "download-started", G_CALLBACK(download_started), NULL);
 
 	app.ucm = webkit_user_content_manager_new();
 	app.settings = webkit_settings_new();
-	webkit_settings_set_enable_developer_extras(app.settings, TRUE);
-	webkit_settings_set_enable_back_forward_navigation_gestures(app.settings, TRUE);
-	webkit_settings_set_enable_smooth_scrolling(app.settings, TRUE);
+	if (!plain("settings")) {
+		webkit_settings_set_enable_developer_extras(app.settings, TRUE);
+		webkit_settings_set_enable_back_forward_navigation_gestures(app.settings, TRUE);
+		webkit_settings_set_enable_smooth_scrolling(app.settings, TRUE);
+	}
 	if (app.self_test) webkit_settings_set_javascript_can_open_windows_automatically(app.settings, TRUE);
 	const char *hw = g_getenv("REDSTAR_ONLINE_HWDECODE");
 	gchar *hwp = hwdecode_off_path();
@@ -1523,7 +1542,7 @@ static void startup(GApplication *gapp, gpointer data)
 
 	g_action_map_add_action_entries(G_ACTION_MAP(app.gtk), app_actions, G_N_ELEMENTS(app_actions), NULL);
 	set_accels();
-	if (!app.self_test) {
+	if (!app.self_test && !plain("filters")) {
 		apply_filters();
 		online_filters_update(app.filters, FALSE);
 	}
