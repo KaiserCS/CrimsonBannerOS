@@ -1,0 +1,20 @@
+[Desktop Entry]
+Type=Application
+Name=Red Star Online
+GenericName=Web Browser
+Comment=Browse the web
+Exec=redstar-online %U
+Icon=web-browser
+Terminal=false
+Categories=Network;WebBrowser;
+MimeType=text/html;x-scheme-handler/http;x-scheme-handler/https;
+StartupWMClass=org.redstaros.Online
+Actions=new-window;private-window;
+
+[Desktop Action new-window]
+Name=New Window
+Exec=redstar-online --new-window
+
+[Desktop Action private-window]
+Name=New Private Window
+Exec=redstar-online --private

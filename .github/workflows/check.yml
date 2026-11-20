@@ -159,3 +159,28 @@ jobs:
 
       - name: Behaviour tests (headless, through Xwayland)
         run: compositor/test/run-tests.sh
+
+  browser:
+    name: Red Star Online (GTK 4 + WebKitGTK)
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    timeout-minutes: 30
+    steps:
+      - name: WebKitGTK, GTK 4 and build tools (and wlroots for the compositor it runs in)
+        run: |
+          pacman -Syu --noconfirm --needed git gcc meson ninja pkgconf webkitgtk-6.0 gtk4 json-glib libsoup3 \
+            wlroots0.20 wayland wayland-protocols libxkbcommon libxcb xcb-util-wm cairo libdrm pixman xorg-xwayland \
+            mesa ttf-dejavu dbus
+
+      - uses: actions/checkout@v5
+
+      - name: Builds
+        run: |
+          (cd compositor && meson setup build && meson compile -C build)
+          (cd browser && meson setup build && meson compile -C build)
+
+      - name: Unit tests (filters, address bar, bookmarks and history file)
+        run: meson test -C browser/build --print-errorlogs
+
+      - name: Self-test (the real browser, headless in redstar-comp)
+        run: browser/test/run-selftest.sh

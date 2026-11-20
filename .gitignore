@@ -12,6 +12,7 @@ session-screenshots/
 TestResults/
 
 compositor/build/
+browser/build/
 compositor/test/comptest
 
 # test binaries and caches
