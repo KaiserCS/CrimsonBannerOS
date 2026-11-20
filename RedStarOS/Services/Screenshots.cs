@@ -35,6 +35,33 @@ public static class Screenshots
         return null;
     }
 
+    /// <summary>Takes a picture of every screen (or of <paramref name="geometry"/> inside redstar-comp) into
+    /// <paramref name="file"/>. Null when it worked, else why not.</summary>
+    public static async Task<string?> Capture(string file, string? geometry = null)
+    {
+        bool wayland = InputIsolation.InRedStarComp;
+        var cmd = Command(file, geometry != null, geometry, wayland, ProcessUtil.Which);
+        if (cmd == null)
+            return wayland ? "Install grim to take screenshots (Arch: pacman -S grim · Debian/Ubuntu: apt install grim)."
+                           : "Install scrot, maim or ImageMagick to take screenshots.";
+        try { Directory.CreateDirectory(Path.GetDirectoryName(file)!); } catch { }
+        var (code, output) = await ProcessUtil.RunAsync(cmd.Value.Exe, cmd.Value.Args);
+        if (code != 0 || !File.Exists(file))
+            return "The screenshot didn't work: " + (output.Trim().Length > 0 ? output.Trim() : $"{Path.GetFileName(cmd.Value.Exe)} failed");
+        return null;
+    }
+
+    /// <summary>Puts a PNG on the clipboard (wl-copy inside redstar-comp, else xclip). False when neither is installed.</summary>
+    public static bool CopyImage(string file)
+    {
+        // both stay running to serve the clipboard: started on their own, not waited for
+        if (InputIsolation.InRedStarComp && ProcessUtil.Which("wl-copy") is { } wl)
+            return ProcessUtil.StartDetached("/bin/sh", new[] { "-c", "exec \"$0\" -t image/png < \"$1\" >/dev/null 2>&1", wl, file });
+        if (ProcessUtil.Which("xclip") is { } xc)
+            return ProcessUtil.StartDetached(xc, new[] { "-selection", "clipboard", "-t", "image/png", "-i", file });
+        return false;
+    }
+
     /// <summary>"screenshot" or "screenshot-window\t&lt;x,y wxh&gt;" from the global shortcuts.</summary>
     public static async Task Take(string shortcut)
     {

@@ -60,7 +60,7 @@ public partial class SettingsWindow : Window
         ("Account", "password user photo child parental", "user"),
         ("Software Updates", "update upgrade version release", "refresh"),
         ("Diagnostics", "crash log error bug report system info", "bug"),
-        ("Games", "pong", "game"),
+        ("Games", "pong blocks mahjongg gems scores", "game"),
     };
 
     public SettingsWindow()
@@ -394,8 +394,17 @@ public partial class SettingsWindow : Window
         var p = PageOf("Games", "Scores are kept on this computer.");
         p.Children.Add(new TextBlock { Text = $"Ping Pong - best solo rally: {s.PongBest}" });
         p.Children.Add(new TextBlock { Text = $"Ping Pong - wins against the computer: {s.PongAiWins}" });
+        p.Children.Add(new TextBlock { Text = $"Blocks - best score: {s.BlocksBest:N0}" });
+        p.Children.Add(new TextBlock { Text = $"Gems - best score: {s.GemsBest:N0}" });
+        p.Children.Add(new TextBlock { Text = $"Mahjongg - boards cleared: {s.MahjonggWins}" });
         var reset = new Button { Content = "Reset scores", Classes = { "flat" }, HorizontalAlignment = HorizontalAlignment.Left };
-        reset.Click += (_, _) => { SettingsStore.Current.PongBest = 0; SettingsStore.Current.PongAiWins = 0; SettingsStore.Save(); reset.Content = "Scores reset"; };
+        reset.Click += (_, _) =>
+        {
+            var c = SettingsStore.Current;
+            c.PongBest = c.PongAiWins = c.BlocksBest = c.GemsBest = c.MahjonggWins = 0;
+            SettingsStore.Save();
+            reset.Content = "Scores reset";
+        };
         p.Children.Add(reset);
         return p;
     }

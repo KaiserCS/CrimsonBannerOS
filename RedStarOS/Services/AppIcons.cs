@@ -19,7 +19,8 @@ public static class AppIcons
         ["studio"] = "clipboard", ["writer"] = "document", ["sheets"] = "sheet", ["slides"] = "slides", ["video"] = "film", ["pong"] = "game",
         ["online"] = "globe", ["messenger"] = "chat", ["files"] = "folder", ["calculator"] = "calculator", ["notes"] = "note",
         ["imageviewer"] = "image", ["camera"] = "camera", ["calendar"] = "calendar", ["settings"] = "settings", ["terminal"] = "terminal",
-        ["paint"] = "palette", ["clock"] = "clock", ["taskmgr"] = "activity"
+        ["paint"] = "palette", ["clock"] = "clock", ["taskmgr"] = "activity",
+        ["blocks"] = "blocks", ["mahjongg"] = "tiles", ["gems"] = "gem", ["screenshot"] = "screenshot", ["recorder"] = "record", ["voicememos"] = "mic"
     };
 
     private static readonly Dictionary<string, string> CategoryColors = new()
