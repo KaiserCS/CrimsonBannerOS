@@ -23,6 +23,7 @@ typedef struct {
 	GtkWidget *status;
 	GtkWidget *label_box, *icon, *title;
 	gboolean recorded;          /* this load's visit is in the history */
+	char *uri;                  /* kept here: the view is gone by the time the tab is freed (for Ctrl+Shift+T) */
 } Tab;
 
 struct Browser {
@@ -238,6 +239,7 @@ static void tab_title_changed(WebKitWebView *v, GParamSpec *p, Tab *t)
 	(void)p;
 	const char *title = webkit_web_view_get_title(v);
 	const char *uri = webkit_web_view_get_uri(v);
+	if (uri && g_strcmp0(uri, t->uri)) { g_free(t->uri); t->uri = g_strdup(uri); }
 	gtk_label_set_text(GTK_LABEL(t->title), title && *title ? title : uri && strcmp(uri, START_URL) ? uri : "New tab");
 	gtk_widget_set_tooltip_text(t->label_box, title && *title ? title : uri);
 	if (!t->b->private && title && *title) online_store_update_title(app.store, uri, title);
@@ -439,8 +441,8 @@ static void tab_middle_click(GtkGestureClick *g, int n, double x, double y, Tab 
 
 static void tab_free(Tab *t)
 {
-	const char *uri = webkit_web_view_get_uri(t->view);
-	if (uri && strcmp(uri, START_URL) && !t->b->private) g_ptr_array_add(t->b->closed, g_strdup(uri));
+	if (t->uri && strcmp(t->uri, START_URL) && !t->b->private) g_ptr_array_add(t->b->closed, t->uri);
+	else g_free(t->uri);
 	g_free(t);
 }
 
