@@ -698,6 +698,70 @@ public static class SettingsPages
         p.Children.Add(result);
         if (!string.IsNullOrEmpty(st.SkippedVersion))
             p.Children.Add(Row(Note($"Skipped version: {st.SkippedVersion}"), Btn("Don't skip", () => { st.SkippedVersion = null; SettingsStore.Save(); })));
+
+        // everything else on the system: its packages, through PackageKit
+        p.Children.Add(Eyebrow("SYSTEM PACKAGES"));
+        var sysNote = Note("Looking for PackageKit…");
+        var sysList = new StackPanel { Spacing = 2 };
+        var bar = new ProgressBar { Maximum = 100, Height = 6, MaxWidth = 360, HorizontalAlignment = HorizontalAlignment.Left, IsVisible = false };
+        var sysButtons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        p.Children.Add(sysNote);
+        p.Children.Add(sysButtons);
+        p.Children.Add(bar);
+        p.Children.Add(sysList);
+        List<PackageUpdate> pending = new();
+        Button? checkSys = null, install = null;
+        async System.Threading.Tasks.Task Check(bool refresh)
+        {
+            checkSys!.IsEnabled = install!.IsEnabled = false;
+            sysNote.Text = refresh ? "Refreshing the package lists…" : "Checking…";
+            var (list, err) = await SystemUpdates.CheckAsync(refresh);
+            checkSys.IsEnabled = true;
+            pending = list;
+            sysList.Children.Clear();
+            if (err != null) { sysNote.Text = "Couldn't check: " + err; return; }
+            int sec = list.Count(u => u.Security);
+            sysNote.Text = list.Count == 0 ? "The system is up to date."
+                : $"{list.Count} update{(list.Count == 1 ? "" : "s")} waiting" + (sec > 0 ? $", {sec} for security." : ".");
+            foreach (var u in list.Take(60))
+                sysList.Children.Add(new TextBlock { Text = (u.Security ? "● " : "  ") + u.Name + "  " + u.Version, Classes = { "caption" } });
+            if (list.Count > 60) sysList.Children.Add(Note($"…and {list.Count - 60} more."));
+            install.IsEnabled = list.Count > 0;
+            SettingsStore.Current.LastSystemUpdateCheck = DateTime.Now; SettingsStore.Save();
+        }
+        checkSys = Btn("Check for system updates", () => _ = Check(true));
+        install = Btn("Install updates", async () =>
+        {
+            install!.IsEnabled = checkSys!.IsEnabled = false;
+            bar.IsVisible = true; bar.Value = 0;
+            sysNote.Text = "Installing… (you'll be asked for the administrator password)";
+            var err = await SystemUpdates.InstallAsync(pending, pct => Avalonia.Threading.Dispatcher.UIThread.Post(() => bar.Value = pct));
+            bar.IsVisible = false;
+            checkSys.IsEnabled = true;
+            if (err != null) { sysNote.Text = "The updates weren't installed: " + err; install.IsEnabled = true; return; }
+            sysNote.Text = "Updates installed. Restart if the kernel or graphics drivers were among them.";
+            sysList.Children.Clear();
+            pending = new();
+        }, true);
+        install.IsEnabled = false;
+        _ = System.Threading.Tasks.Task.Run(async () =>
+        {
+            bool pk = await SystemUpdates.AvailableAsync();
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                if (pk)
+                {
+                    sysButtons.Children.Add(checkSys);
+                    sysButtons.Children.Add(install);
+                    sysNote.Text = SettingsStore.Current.LastSystemUpdateCheck is { } t ? $"Last checked {t:d MMM yyyy, HH:mm}." : "Not checked yet.";
+                    _ = Check(false);
+                    return;
+                }
+                sysNote.Text = "Install PackageKit to see and install the system's updates here (Arch/CachyOS: pacman -S packagekit).";
+                if (SystemUpdates.TerminalCommand(ProcessUtil.Which) is { } cmd)
+                    sysButtons.Children.Add(Btn("Update in Terminal", () => ProcessUtil.RunInTerminal(cmd.Exe, cmd.Args)));
+            });
+        });
         return p;
     }
 

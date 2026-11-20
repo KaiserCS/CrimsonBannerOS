@@ -136,3 +136,22 @@ public class RegionSettingsTests
         finally { File.Delete(f); }
     }
 }
+
+public class SystemUpdatesTests
+{
+    [Fact]
+    public void PackageKit_ids_are_split_into_name_and_version()
+    {
+        var u = SystemUpdates.Parse(8, "openssl;3.4.1-1;x86_64;core", "The Open Source toolkit for SSL");
+        Assert.Equal(("openssl", "3.4.1-1", true), (u.Name, u.Version, u.Security));
+        Assert.False(SystemUpdates.Parse(2, "zstd;1.5.6-1;x86_64;core", "").Security);
+    }
+
+    [Fact]
+    public void Without_PackageKit_the_package_manager_runs_in_a_terminal()
+    {
+        var c = SystemUpdates.TerminalCommand(n => n == "pacman" ? "/usr/bin/pacman" : null);
+        Assert.Equal(("sudo", new[] { "pacman", "-Syu" }), (c!.Value.Exe, c.Value.Args.ToArray()));
+        Assert.Null(SystemUpdates.TerminalCommand(_ => null));
+    }
+}

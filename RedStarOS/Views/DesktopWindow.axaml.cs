@@ -101,6 +101,8 @@ public partial class DesktopWindow : Window
             if (SettingsStore.Current.KeyboardLayouts.Count > 0 && !InputIsolation.InRedStarComp) RegionSettings.ApplyKeyboard();
             // screen off, lock and sleep when nobody uses the computer (System Settings → Power)
             if (Autostart.IsSession) IdleManager.Start();
+            // the system's package updates, once a day (PackageKit)
+            if (Autostart.IsSession && SettingsStore.Current.AutoUpdateCheck) SystemUpdates.CheckInBackground();
             // the administrator password prompt for polkit, when Crimson Banner is the session
             if (Autostart.IsSession) PolkitAgent.Start(PolkitDialog.Ask);
             // programs that start at sign-in, once the tray and notifications are there for them (only as the session)
