@@ -12,6 +12,16 @@ Avalonia 12 (12.1.6) / .NET 8 port of the original WinForms project, with a much
 - **Search everything** (Super, or the Start button): apps, settings pages, recent documents, files in your home
   folder (indexed in the background; hidden and build folders skipped), quick sums ("12*7" → copy the result),
   and "Open site" / "Search the web" in Red Star Online.
+- **Red Star Online (new: GTK 4 + WebKitGTK, `browser/`):** a native browser in its own window, so typing,
+  scrolling and the clipboard go straight to the page. Tabs, an address bar that opens addresses or searches,
+  bookmarks bar, history, downloads (Ctrl+J), find in page (Ctrl+F), zoom per site, print, developer tools (F12),
+  permissions asked once per site, private windows (Ctrl+Shift+N), and the ad and tracker blocker: EasyList,
+  EasyPrivacy and Peter Lowe's list converted into WebKit's own content blocker, refreshed every four days, plus
+  WebKit's tracking prevention and no third-party cookies. It shares bookmarks, history and settings with the shell
+  (`~/.config/redstaros/browser-data.json`). Build it with `browser/build.sh` (Arch/CachyOS:
+  `pacman -S webkitgtk-6.0 gtk4 json-glib libsoup3`) and `install-session.sh` installs it; Red Star then uses it
+  for every link. Not yet in it: reader mode, Save as PDF, picture-in-picture and imports from other browsers —
+  Settings → Default apps → "Use the previous Red Star Online" switches back to the Electron one meanwhile.
 - **Other programs' tray icons:** Discord, Steam, Qt programs, update notifiers… show their icons in the taskbar's
   tray (freedesktop StatusNotifierItem): left click opens the program (or its menu, for Steam-style icons), right
   click its menu (DBusMenu, with submenus and ticks), middle click its second action, the wheel scrolls. In its own

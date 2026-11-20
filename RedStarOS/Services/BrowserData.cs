@@ -83,7 +83,7 @@ public static class BrowserData
 
     public static event Action? Changed;
 
-    public static BrowserStore Store { get { Load(); return _s; } }
+    public static BrowserStore Store { get { Load(); ReloadIfChanged(); return _s; } }
     public static BrowserSettings Settings => Store.Settings;
 
     public static string SearchTemplate =>
@@ -93,9 +93,32 @@ public static class BrowserData
     {
         if (_loaded) return;
         _loaded = true;
+        Read();
+    }
+
+    private static string _stamp = "";
+    private static string Stamp()
+    {
+        try { var f = new FileInfo(FilePath); return f.Exists ? f.LastWriteTimeUtc.Ticks + ":" + f.Length : ""; }
+        catch { return ""; }
+    }
+
+    private static void Read()
+    {
         try { if (File.Exists(FilePath)) _s = JsonSerializer.Deserialize<BrowserStore>(File.ReadAllText(FilePath)) ?? new(); }
         catch { _s = new(); }
+        _stamp = Stamp();
         WebTab.SearchTemplate = SearchTemplate;
+    }
+
+    /// <summary>Red Star Online (the GTK browser, its own process) writes this file too: pick up its changes, unless
+    /// ours aren't saved yet (it re-reads before writing, so it keeps them).</summary>
+    private static long _lastCheck;
+    private static void ReloadIfChanged()
+    {
+        if (_dirty || Environment.TickCount64 - _lastCheck < 1000) return;     // Store is read in loops: once a second is plenty
+        _lastCheck = Environment.TickCount64;
+        if (Stamp() != _stamp) Read();
     }
 
     public static void Save()
@@ -123,6 +146,7 @@ public static class BrowserData
             var tmp = FilePath + ".tmp";
             File.WriteAllText(tmp, JsonSerializer.Serialize(_s));
             File.Move(tmp, FilePath, true);
+            _stamp = Stamp();
         }
         catch { }
     }

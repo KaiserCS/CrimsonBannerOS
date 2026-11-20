@@ -206,8 +206,9 @@ public sealed class X11Task : TaskItem
         if (w.Instance != Instance || w.Class != Class)
         {
             Instance = w.Instance; Class = w.Class;
-            App = DesktopEntries.ForWindow(Instance, Class);
-            AppId = App?.Id;
+            // Red Star Online's own window is the Red Star Online app (its pinned button and icon)
+            App = RedStarOnline.IsItsWindow(Instance, Class) ? null : DesktopEntries.ForWindow(Instance, Class);
+            AppId = RedStarOnline.IsItsWindow(Instance, Class) ? "online" : App?.Id;
             changed = true;
         }
         if (w.IconVersion != _iconVersion) { _iconVersion = w.IconVersion; _icon = null; }

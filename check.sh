@@ -69,4 +69,29 @@ if pkg-config --exists wlroots-0.20 2>/dev/null && command -v meson >/dev/null 2
 else
   echo "(compositor tests skipped: they need wlroots 0.20, meson and Xwayland — Arch/CachyOS: pacman -S wlroots0.20 meson xorg-xwayland)"
 fi
+if pkg-config --exists webkitgtk-6.0 gtk4 json-glib-1.0 libsoup-3.0 2>/dev/null && command -v meson >/dev/null 2>&1; then
+  echo "==> Red Star Online (GTK 4 + WebKitGTK)"
+  if ! build_out="$(browser/build.sh 2>&1)"; then
+    printf '%s\n' "$build_out" | grep -E "error|Error|FAILED" | head -n 30
+    echo "Red Star Online didn't build"
+    exit 1
+  fi
+  if ! out="$(meson test -C browser/build --print-errorlogs 2>&1)"; then
+    printf '%s\n' "$out" | tail -n 40
+    exit 1
+  fi
+  printf '%s\n' "$out" | grep -E "^Ok:|^Fail:"
+  # the real browser, headless inside redstar-comp (when that's built)
+  if [ -x compositor/build/redstar-comp ]; then
+    if out="$(browser/test/run-selftest.sh 2>&1)"; then
+      printf '%s\n' "$out" | grep -E "^[0-9]+ failed"
+    else
+      printf '%s\n' "$out" | grep -E "^FAIL|failed|exited with" | tail -n 40
+      exit 1
+    fi
+  fi
+  ok "Red Star Online"
+else
+  echo "(Red Star Online skipped: it needs WebKitGTK 6.0, GTK 4, json-glib, libsoup 3 and meson — Arch/CachyOS: pacman -S webkitgtk-6.0 gtk4 json-glib libsoup3 meson)"
+fi
 echo "All checks passed."

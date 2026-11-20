@@ -66,6 +66,19 @@ else
   echo "  not added: \"Red Star OS (Wayland)\" — build redstar-comp first (compositor/build.sh), then run this again"
 fi
 
+# ── Red Star Online, the GTK + WebKitGTK browser (the previous one is used without it) ──
+ONLINE=""
+for c in "$HERE/browser/build/redstar-online" "$(dirname "$APP")/redstar-online"; do
+  [ -z "$ONLINE" ] && [ -x "$c" ] && ONLINE="$c"
+done
+if [ -n "$ONLINE" ]; then
+  install -Dm755 "$ONLINE" "$BIN/redstar-online"
+  install -Dm644 "$HERE/browser/data/org.redstaros.Online.desktop" /usr/local/share/applications/org.redstaros.Online.desktop
+  echo "  installed Red Star Online (GTK + WebKitGTK): $BIN/redstar-online"
+else
+  echo "  not installed: the new Red Star Online — build it first (browser/build.sh); until then the previous browser is used"
+fi
+
 echo
 echo "Log out. On the login screen pick the session before signing in — on KDE's login screen (SDDM) it's the"
 echo "session menu at the bottom left. If a session returns straight to the login screen, see"

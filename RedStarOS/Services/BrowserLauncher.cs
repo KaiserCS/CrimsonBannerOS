@@ -16,11 +16,16 @@ public static class BrowserLauncher
     {
         // another browser chosen in Settings → Default apps
         if (!string.IsNullOrEmpty(url) && !url.StartsWith("file:") && DefaultApps.TryOpenWithLinuxApp("web", url)) return;
+        if (RedStarOnline.Launch(url)) return;                 // the GTK + WebKitGTK browser, when it's installed
         Dispatcher.UIThread.Post(() => _ = LaunchAsync(url));
     }
 
     /// <summary>Opens an extra window whose pages live in an in-memory session that is wiped when it closes.</summary>
-    public static void LaunchPrivate() => Dispatcher.UIThread.Post(() => _ = LaunchPrivateAsync());
+    public static void LaunchPrivate()
+    {
+        if (RedStarOnline.Launch(null, privateWindow: true)) return;
+        Dispatcher.UIThread.Post(() => _ = LaunchPrivateAsync());
+    }
 
     private static async System.Threading.Tasks.Task LaunchPrivateAsync()
     {

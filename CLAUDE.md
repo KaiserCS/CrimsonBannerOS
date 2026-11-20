@@ -23,4 +23,5 @@
 - After a change: commit to `main` on KaiserCS/RedStarOS-Linux, and send a zip of the tree as `RedStarOS-Linux.zip`
   (without `.git`, `bin`, `obj`, `node_modules`, `__pycache__`, screenshots, `compositor/build`).
 - Layout: `RedStarOS/` the Avalonia shell (C#), `compositor/` redstar-comp (C, wlroots), `wm/` redstar-wm (X11),
-  `webengine/` the browser engine (Electron), `tests/` C# tests, `compositor/test/` headless compositor tests.
+  `browser/` Red Star Online (C, GTK 4 + WebKitGTK), `webengine/` the previous browser engine (Electron, on its way out),
+  `tests/` C# tests, `compositor/test/` headless compositor tests, `browser/test/` the browser's unit tests and self-test.
