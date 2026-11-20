@@ -1065,9 +1065,12 @@ static void xdg_map(struct wl_listener *l, void *data)
 	v->kind = v->xdg->parent && !child_of_desktop(v) ? K_DIALOG : K_NORMAL;
 	if (!token_take(v, v->xdg->title)) view_set_title(v, v->xdg->title);
 	if (roles_check(v)) {
-		/* one of the shell's own windows with a role (its desktop, running natively on Wayland) */
+		/* one of the shell's own windows with a role (its desktop, running natively on Wayland); a frameless one
+		 * still gets the state it asked for (the lock screen and slide show are full-screen) */
 		view_place(v, false);
 		view_map(v, v->xdg->base->surface);
+		if (v->kind == K_UTILITY && v->xdg->requested.maximized) view_set_maximized(v, true);
+		if (v->kind == K_UTILITY && v->xdg->requested.fullscreen) view_set_fullscreen(v, true);
 		return;
 	}
 	if (v->kind == K_DIALOG) {
@@ -2148,6 +2151,10 @@ static void role_apply(struct view *v, struct shell_role *r)
 {
 	struct server *s = v->server;
 	bool changed = v->kind != r->kind;
+	/* the desktop, the taskbar and notifications are never full-screen or maximised; the shell's other frameless
+	 * windows keep what they asked for (its lock screen is full-screen: the role can arrive after it mapped) */
+	bool keeps_state = r->kind == K_NORMAL || r->kind == K_UTILITY;
+	bool wants_full = keeps_state && (v->fullscreen || (!v->x11 && v->xdg && v->xdg->requested.fullscreen));
 	memcpy(v->strut, r->strut, sizeof v->strut);
 	if (r->bare && !v->bare) {
 		/* no frame and not on the taskbar: the shell's switcher and other chrome of its own */
@@ -2160,7 +2167,7 @@ static void role_apply(struct view *v, struct shell_role *r)
 		v->kind = r->kind;
 		v->decorated = r->kind == K_NORMAL ? v->decorated : false;
 		v->title_w = -1;
-		v->maximized = v->fullscreen = false;
+		if (!keeps_state) v->maximized = v->fullscreen = false;
 		if (r->kind == K_DOCK && r->strut[3]) {      /* a bottom panel: along the bottom of the screen */
 			struct wlr_box ob = output_box_for(v);
 			v->x = ob.x; v->w = ob.width; v->h = (int)r->strut[3]; v->y = ob.y + ob.height - v->h;
@@ -2171,6 +2178,7 @@ static void role_apply(struct view *v, struct shell_role *r)
 			view_apply_geometry(v);
 		}
 	}
+	if (wants_full && v->mapped && !v->fullscreen) view_set_fullscreen(v, true);
 	if (v->mapped) update_workarea(s);
 }
 

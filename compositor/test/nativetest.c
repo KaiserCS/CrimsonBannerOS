@@ -383,6 +383,42 @@ int main(void)
 			xdg_toplevel_destroy(t6); xdg_surface_destroy(x6); wl_surface_destroy(s6); wl_buffer_destroy(b6);
 			wl_display_roundtrip(dpy);
 		}
+		/* the shell's lock screen: frameless and full-screen. Its role is known when it appears (A), or arrives
+		 * after it appeared (B: Red Star names its windows with a token title first); neither may lose the full screen */
+		for (int round = 0; round < 2; round++) {
+			const char *title = round == 0 ? "comptest-lock" : "comptest-lock2";
+			char lock[256];
+			int ln = snprintf(lock, sizeof lock, "role\tbare\t%d\t%s\t0\t0\t0\t0\n", (int)getpid(), title);
+			if (write(ipc, lock, (size_t)ln) < 0) return 1;
+			wait_line("\x01never", NULL, 0, 200);
+			struct wl_surface *s7 = wl_compositor_create_surface(compositor);
+			struct xdg_surface *x7 = xdg_wm_base_get_xdg_surface(wm, s7);
+			configured = false;
+			xdg_surface_add_listener(x7, &surf_listener, NULL);
+			struct xdg_toplevel *t7 = xdg_surface_get_toplevel(x7);
+			xdg_toplevel_add_listener(t7, &top_listener, NULL);
+			xdg_toplevel_set_title(t7, round == 0 ? title : "comptest-lock-token");
+			xdg_toplevel_set_fullscreen(t7, NULL);              /* asked before it appears, like Avalonia does */
+			wl_surface_commit(s7);
+			for (int i = 0; i < 20 && !configured; i++) wl_display_roundtrip(dpy);
+			conf_w = conf_h = 0;
+			struct wl_buffer *b7 = make_buffer(420, 300);       /* its own size until told otherwise */
+			wl_surface_attach(s7, b7, 0, 0);
+			wl_surface_commit(s7);
+			if (round == 1) {
+				wait_line("\x01never", NULL, 0, 200);
+				xdg_toplevel_set_title(t7, title);              /* now the role applies */
+				wl_surface_commit(s7);
+			}
+			double end7 = now_ms() + 2000;
+			while (now_ms() < end7 && !(conf_w == 1280 && conf_h == 720)) wait_line("\x01never", NULL, 0, 50);
+			check(conf_w == 1280 && conf_h == 720, round == 0
+				? "a frameless shell window asking for full screen (the lock screen) fills the screen"
+				: "it stays full-screen when its role arrives after it appeared");
+			if (round == 0) check(!wait_line(title, NULL, 0, 300), "the lock screen isn't put on the taskbar");
+			xdg_toplevel_destroy(t7); xdg_surface_destroy(x7); wl_surface_destroy(s7); wl_buffer_destroy(b7);
+			wl_display_roundtrip(dpy);
+		}
 
 		if (write(ipc, "outputs\n", 8) < 0) return 1;
 		wait_line("outputs-end", NULL, 0, 1000);
