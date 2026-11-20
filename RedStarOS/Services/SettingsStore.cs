@@ -47,6 +47,7 @@ public sealed class Settings
     public List<string> RecentServers { get; set; } = new();    // File Manager: Connect to server history
     public int PongBest { get; set; }                          // solo mode: longest rally
     public int PongAiWins { get; set; }                        // versus-computer wins
+    public bool RunAutostart { get; set; } = true;             // start ~/.config/autostart and /etc/xdg/autostart programs at sign-in
     public int BlocksBest { get; set; }                        // Blocks: best score
     public int GemsBest { get; set; }                          // Gems: best score
     public int MahjonggWins { get; set; }                      // Mahjongg: boards cleared

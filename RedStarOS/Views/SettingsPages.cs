@@ -973,4 +973,56 @@ public static class SettingsPages
         p.Children.Add(importStatus);
         return p;
     }
+
+    // ═════════════════════════════════ Startup apps ═════════════════════════════════
+    /// <summary>Programs that start at sign-in (the standard autostart folders; Autostart).</summary>
+    public static Control StartupPage()
+    {
+        var p = Page("Startup apps", "Programs that start when you sign in to Crimson Banner OS.");
+        var run = new CheckBox { Content = "Start these programs when I sign in", IsChecked = SettingsStore.Current.RunAutostart };
+        run.IsCheckedChanged += (_, _) => { SettingsStore.Current.RunAutostart = run.IsChecked == true; SettingsStore.Save(); };
+        p.Children.Add(run);
+        p.Children.Add(Note(Autostart.IsSession
+            ? "They come from ~/.config/autostart and /etc/xdg/autostart, the same folders other desktops use."
+            : "Crimson Banner OS is running on top of another desktop, which starts these itself; switching them on or off here changes it for that desktop too."));
+        var list = new StackPanel { Spacing = 6 };
+        void Fill()
+        {
+            list.Children.Clear();
+            var all = Autostart.All();
+            var desktops = Autostart.Desktops();
+            if (all.Count == 0) list.Children.Add(Note("Nothing starts at sign-in."));
+            foreach (var e in all)
+            {
+                var entry = e;
+                var notHere = !entry.Hidden && !entry.RunsHere(desktops);
+                var box = new CheckBox { Content = entry.Name + (notHere ? "  (only for other desktops)" : ""), IsChecked = !entry.Hidden, IsEnabled = !notHere };
+                ToolTip.SetTip(box, (entry.Comment is { Length: > 0 } c ? c + "\n" : "") + entry.Exec);
+                box.IsCheckedChanged += (_, _) =>
+                {
+                    try { Autostart.SetEnabled(entry, box.IsChecked == true); }
+                    catch (Exception ex) { Notifier.Show("Startup apps", "Couldn't change it: " + ex.Message, "settings"); }
+                    Fill();
+                };
+                if (entry.UserFile && !entry.HasSystemFile)
+                    list.Children.Add(Row(box, Btn("Remove", () => { try { Autostart.Remove(entry); } catch { } Fill(); })));
+                else list.Children.Add(box);
+            }
+        }
+        Fill();
+        p.Children.Add(Eyebrow("STARTS AT SIGN-IN"));
+        p.Children.Add(list);
+
+        p.Children.Add(Eyebrow("ADD A PROGRAM"));
+        var apps = DesktopEntries.All().OrderBy(a => a.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        var pick = new ComboBox { ItemsSource = apps.Select(a => a.Name).ToList(), MinWidth = 280, PlaceholderText = "Choose an installed program" };
+        p.Children.Add(Row(pick, Btn("Add", () =>
+        {
+            if (pick.SelectedIndex < 0) return;
+            try { Autostart.Add(apps[pick.SelectedIndex]); } catch (Exception ex) { Notifier.Show("Startup apps", "Couldn't add it: " + ex.Message, "settings"); }
+            pick.SelectedIndex = -1;
+            Fill();
+        })));
+        return p;
+    }
 }

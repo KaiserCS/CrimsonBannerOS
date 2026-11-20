@@ -19,6 +19,7 @@ namespace RedStarOS.Views;
 /// <summary>The desktop shell: wallpaper, icons, toasts and the taskbar (see <see cref="Taskbar"/>).</summary>
 public partial class DesktopWindow : Window
 {
+    private static bool _autostarted;
 
     private sealed class DesktopItem
     {
@@ -82,6 +83,16 @@ public partial class DesktopWindow : Window
             PortalSetup.Run();                         // inside redstar-comp: screenshots and screen sharing for other apps
             SystemTray.Start();                        // other programs' tray icons (Discord, Steam…) on the taskbar
             OtherAppsNotifications.Start();            // other programs' notifications (org.freedesktop.Notifications)
+            // programs that start at sign-in, once the tray and notifications are there for them (only as the session)
+            if (Autostart.IsSession && SettingsStore.Current.RunAutostart && !_autostarted)
+            {
+                _autostarted = true;
+                DispatcherTimer.RunOnce(() =>
+                {
+                    var started = Autostart.RunAll();
+                    if (started.Count > 0) Console.Error.WriteLine("autostart: " + string.Join(", ", started));
+                }, TimeSpan.FromSeconds(2));
+            }
             UpdateChecker.StartBackground();
             if (InputIsolation.IsNested)
                 Notifier.Show("Keyboard and mouse are in Crimson Banner OS",
