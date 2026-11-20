@@ -1527,10 +1527,11 @@ static void selftest_next(void)
 		st.pending_check = "loaded";
 		break;
 	case 6:
-		/* a new tab can report an empty first document before the page itself: wait for the page */
-		if ((!t || g_strcmp0(webkit_web_view_get_title(t->view), "Page B")) && st.retries++ < 10) {
+		/* a new tab can report an empty first document before the page, and its title a moment after: wait for both */
+		if ((!t || g_strcmp0(webkit_web_view_get_title(t->view), "Page B")) && st.retries++ < 50) {
+			/* its title can arrive just after the load ends: look again shortly */
 			st.step--;
-			st.pending_check = "loaded";
+			g_timeout_add_once(100, (GSourceOnceFunc)selftest_next, NULL);
 			break;
 		}
 		check(gtk_notebook_get_n_pages(b->tabs) == 2, "a target=_blank link opens a new tab");
