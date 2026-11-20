@@ -72,6 +72,12 @@ static void set_status(OnlineFilters *f)
 	else f->status = g_strdup_printf("Blocking ads and trackers: %d list%s, %d rules", f->installed, f->installed == 1 ? "" : "s", f->rules);
 }
 
+static void removed(GObject *src, GAsyncResult *res, gpointer data)
+{
+	(void)data;
+	webkit_user_content_filter_store_remove_finish(WEBKIT_USER_CONTENT_FILTER_STORE(src), res, NULL);
+}
+
 static void remove_old_ids(GObject *src, GAsyncResult *res, gpointer data)
 {
 	OnlineFilters *f = data;
@@ -79,7 +85,7 @@ static void remove_old_ids(GObject *src, GAsyncResult *res, gpointer data)
 	for (gchar **i = ids; i && *i; i++) {
 		gboolean used = FALSE;
 		for (guint k = 0; k < f->ids->len; k++) if (!strcmp(f->ids->pdata[k], *i)) used = TRUE;
-		if (!used) webkit_user_content_filter_store_remove(f->store, *i, NULL, NULL, NULL);
+		if (!used) webkit_user_content_filter_store_remove(f->store, *i, NULL, removed, NULL);
 	}
 	g_strfreev(ids);
 }

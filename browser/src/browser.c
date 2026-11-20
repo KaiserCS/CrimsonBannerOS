@@ -4,6 +4,7 @@
 //   redstar-online [--private] [--new-window] [URL…]    redstar-online --self-test
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
+#include <gst/gst.h>
 #include <json-glib/json-glib.h>
 #include <glib/gstdio.h>
 #include <signal.h>
@@ -305,6 +306,22 @@ static gboolean tab_tls_failed(WebKitWebView *v, char *uri, GTlsCertificate *cer
 
 /* GPU drawing off: after a page's process crashed with it on (remembered for three days, like the previous
  * browser's "three GPU crashes and it's the CPU"), or with REDSTAR_ONLINE_GPU=0. REDSTAR_ONLINE_GPU=1 keeps it on. */
+/* WebKit plays sound and video through GStreamer. Without its audio sink (gst-plugins-good) the page's process
+ * crashes as soon as a page plays media (YouTube's previews): checked once, said in a bar and on the crash page. */
+#define MEDIA_HINT "Pages that play sound or video need GStreamer's plugins: sudo pacman -S gst-plugins-good gst-plugins-bad gst-libav"
+static int media_state = -1;
+static gboolean media_ok(void)
+{
+	if (media_state < 0) {
+		if (!gst_is_initialized()) gst_init(NULL, NULL);
+		GstElementFactory *f = gst_element_factory_find("autoaudiosink");
+		media_state = f != NULL;
+		if (f) gst_object_unref(f);
+		if (!media_state) g_printerr("online: GStreamer's audio sink is missing — %s\n", MEDIA_HINT);
+	}
+	return media_state;
+}
+
 static char *gpu_off_path(void) { return g_build_filename(g_get_user_cache_dir(), "redstaros", "online", "gpu-off", NULL); }
 
 static gboolean gpu_off_remembered(void)
@@ -327,6 +344,11 @@ static void tab_crashed(WebKitWebView *v, WebKitWebProcessTerminationReason why,
 	g_printerr("online: the page's process ended (%s) at %s; GPU drawing %s\n",
 		why == WEBKIT_WEB_PROCESS_EXCEEDED_MEMORY_LIMIT ? "memory limit" : why == WEBKIT_WEB_PROCESS_TERMINATED_BY_API ? "stopped" : "crashed",
 		uri ? uri : "?", gpu_on() ? "on" : "off");
+	if (why == WEBKIT_WEB_PROCESS_CRASHED && !media_ok()) {
+		/* not the GPU: the media plugins (see media_ok) */
+		show_error(t, uri, "This page stopped working", "It plays sound or video, and GStreamer's plugins aren't installed. " MEDIA_HINT);
+		return;
+	}
 	if (why == WEBKIT_WEB_PROCESS_CRASHED && gpu_on() && g_strcmp0(g_getenv("REDSTAR_ONLINE_GPU"), "1") != 0) {
 		/* most such crashes are in GPU drawing: draw with the CPU from now on, and try the page again */
 		webkit_settings_set_hardware_acceleration_policy(app.settings, WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER);
@@ -1233,6 +1255,8 @@ static gboolean window_close(GtkWindow *w, Browser *b)
 
 static void window_destroyed(GtkWidget *w, Browser *b) { (void)w; g_ptr_array_unref(b->closed); g_object_unref(b->menu); g_free(b); }
 
+static void hide_banner(GtkButton *btn, GtkWidget *bar) { (void)btn; gtk_widget_set_visible(bar, FALSE); }
+
 static Browser *browser_new(gboolean private)
 {
 	Browser *b = g_new0(Browser, 1);
@@ -1300,6 +1324,21 @@ static Browser *browser_new(gboolean private)
 	gtk_window_set_titlebar(b->win, header);
 
 	GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	if (!media_ok()) {
+		GtkWidget *bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+		gtk_widget_add_css_class(bar, "media-banner");
+		GtkWidget *msg = gtk_label_new(MEDIA_HINT);
+		gtk_label_set_wrap(GTK_LABEL(msg), TRUE);
+		gtk_label_set_selectable(GTK_LABEL(msg), TRUE);
+		gtk_label_set_xalign(GTK_LABEL(msg), 0);
+		gtk_widget_set_hexpand(msg, TRUE);
+		GtkWidget *close = gtk_button_new_from_icon_name("window-close-symbolic");
+		gtk_widget_add_css_class(close, "flat");
+		g_signal_connect(close, "clicked", G_CALLBACK(hide_banner), bar);
+		gtk_box_append(GTK_BOX(bar), msg);
+		gtk_box_append(GTK_BOX(bar), close);
+		gtk_box_append(GTK_BOX(box), bar);
+	}
 	b->bookmarks_bar = gtk_scrolled_window_new();
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(b->bookmarks_bar), GTK_POLICY_EXTERNAL, GTK_POLICY_NEVER);
 	gtk_widget_add_css_class(b->bookmarks_bar, "bookmarks-bar");
@@ -1357,6 +1396,7 @@ static const char *app_css =
 	".tab-close { min-width: 18px; min-height: 18px; padding: 0; margin: 0; }"
 	"notebook > header > tabs > tab:checked { box-shadow: inset 0 -3px #c62828; }"
 	".bookmarks-bar { border-bottom: 1px solid alpha(@borders, 0.5); }"
+	".media-banner { background: alpha(#e0a800, 0.18); padding: 4px 4px 4px 12px; border-bottom: 1px solid alpha(@borders, 0.5); }"
 	".bookmarks-bar button { padding: 2px 8px; min-height: 26px; }"
 	"window.private headerbar { background: #3a1f4d; color: white; }"
 	"window.private headerbar entry { background: alpha(white, 0.12); color: white; }";

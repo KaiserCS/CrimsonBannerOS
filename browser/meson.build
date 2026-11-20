@@ -10,6 +10,7 @@ gtk = dependency('gtk4', version: '>= 4.12')
 webkit = dependency('webkitgtk-6.0', version: '>= 2.42')
 json = dependency('json-glib-1.0', version: '>= 1.6')
 soup = dependency('libsoup-3.0')
+gst = dependency('gstreamer-1.0')     # only to check that WebKit's media plugins are there
 
 gnome = import('gnome')
 # the built-in starter filter list, inside the program (also used by the old Electron engine until it goes)
@@ -18,7 +19,7 @@ resources = gnome.compile_resources('online-resources', 'data/online.gresource.x
 
 executable('redstar-online',
   'src/browser.c', 'src/store.c', 'src/filters.c', 'src/adblock.c', 'src/util.c', resources,
-  dependencies: [glib, gio, gtk, webkit, json, soup],
+  dependencies: [glib, gio, gtk, webkit, json, soup, gst],
   install: true)
 
 unit = executable('online-unit', 'test/unit.c', 'src/adblock.c', 'src/util.c', dependencies: [glib])
