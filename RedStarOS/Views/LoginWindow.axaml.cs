@@ -32,9 +32,10 @@ public partial class LoginWindow : Window
         var avatar = ShellUi.LoadAvatar();
         if (avatar != null) AvatarImage.Source = avatar;
 
-        var noPassword = !PasswordUtil.HasPassword;
+        var noPassword = !UsesSystemPassword && !PasswordUtil.HasPassword;
         PasswordBox.IsVisible = !noPassword;
         HintLabel.IsVisible = noPassword;
+        if (UsesSystemPassword) PasswordBox.PlaceholderText = "Your Linux password";
 
         Opened += (_, _) =>
         {
@@ -51,9 +52,34 @@ public partial class LoginWindow : Window
 
     private void OnLogin(object? sender, RoutedEventArgs e) => TryLogin();
 
-    private void TryLogin()
+    /// <summary>The lock screen asks for the user's Linux password (PAM), unless Account says to use Crimson Banner's
+    /// own lock password instead or PAM isn't there.</summary>
+    public static bool UsesSystemPassword => SettingsStore.Current.LockWithSystemPassword && SystemAuth.Available;
+
+    private bool _checking;
+
+    private async void TryLogin()
     {
-        if (PasswordUtil.Verify(PasswordBox.Text))
+        if (_checking) return;
+        bool ok;
+        if (UsesSystemPassword)
+        {
+            _checking = true;
+            PasswordBox.IsEnabled = false;
+            ErrorLabel.IsVisible = false;
+            var (outcome, why) = await SystemAuth.CheckAsync(PasswordBox.Text ?? "");
+            _checking = false;
+            PasswordBox.IsEnabled = true;
+            if (outcome == SystemAuth.Outcome.Unavailable)
+            {
+                // PAM itself is broken here: Crimson Banner's own lock password (if any) still works
+                Console.Error.WriteLine("lock screen: PAM: " + why);
+                ok = PasswordUtil.Verify(PasswordBox.Text);
+            }
+            else ok = outcome == SystemAuth.Outcome.Accepted;
+        }
+        else ok = PasswordUtil.Verify(PasswordBox.Text);
+        if (ok)
         {
             SystemSounds.Play("login");
             Close();

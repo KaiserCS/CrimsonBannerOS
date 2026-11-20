@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using RedStarOS.Services;
 using Xunit;
 
@@ -59,5 +60,16 @@ public class AutostartTests : IDisposable
         Assert.False(e.Hidden);
         Assert.False(File.Exists(Path.Combine(User, "s.desktop")));         // the override went again
         Assert.Equal(before, File.ReadAllText(Path.Combine(Sys, "s.desktop")));
+    }
+}
+
+public class SystemAuthTests
+{
+    [Fact]
+    public async Task An_unknown_user_is_never_let_in()
+    {
+        if (!SystemAuth.Available) Assert.Skip("libpam isn't installed");
+        var (outcome, _) = await SystemAuth.CheckAsync("not the password", "no-such-user-crimson-" + Guid.NewGuid().ToString("N")[..8]);
+        Assert.NotEqual(SystemAuth.Outcome.Accepted, outcome);
     }
 }

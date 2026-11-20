@@ -1,0 +1,4 @@
+#%PAM-1.0
+# Crimson Banner OS lock screen: the same rules as signing in at the console.
+auth     include  login
+account  include  login

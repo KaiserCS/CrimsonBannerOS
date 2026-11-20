@@ -30,7 +30,7 @@ public static class Autostart
     public static IReadOnlyCollection<string> Desktops()
     {
         var names = (Environment.GetEnvironmentVariable("XDG_CURRENT_DESKTOP") ?? "").Split(':', StringSplitOptions.RemoveEmptyEntries).ToList();
-        foreach (var n in new[] { "CrimsonBanner", "RedStarOS" }) if (!names.Contains(n)) names.Add(n);
+        foreach (var n in new[] { "CrimsonBanner", "RedStar" }) if (!names.Contains(n)) names.Add(n);
         return names;
     }
 

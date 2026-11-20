@@ -50,6 +50,9 @@ echo "Crimson Banner OS: $APP"
 sed "s#@APPIMAGE@#$APP#" "$HERE/packaging/redstaros-session" > "$BIN/redstaros-session"
 chmod 755 "$BIN/redstaros-session"
 install -Dm644 "$HERE/packaging/redstaros-xsession.desktop" "$XS"
+# the lock screen checks the Linux password with the console sign-in rules (PAM service "crimson-banner")
+install -Dm644 "$HERE/packaging/crimson-banner.pam" /etc/pam.d/crimson-banner
+echo "  added the lock screen's sign-in rules (/etc/pam.d/crimson-banner)"
 echo "  added \"Crimson Banner OS\" ($XS)"
 
 # ── the Wayland session needs redstar-comp ──

@@ -21,6 +21,7 @@ FILES=(
   /usr/local/bin/redstar-comp                            # the compositor copy install-session.sh put there
   /usr/local/bin/redstar-online                          # Red Star Online (GTK + WebKitGTK)
   /usr/local/share/applications/org.redstaros.Online.desktop
+  /etc/pam.d/crimson-banner                              # the lock screen's sign-in rules
 )
 
 # signed in to a Red Star session right now? removing it is fine, but say so

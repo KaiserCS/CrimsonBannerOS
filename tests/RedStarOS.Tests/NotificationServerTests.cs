@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using RedStarOS.Services;
+using RedStarOS.Services.DBus;
 using Xunit;
 
 namespace RedStarOS.Tests;

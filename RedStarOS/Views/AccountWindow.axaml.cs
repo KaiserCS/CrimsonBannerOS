@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System;
 using System.IO;
 using Avalonia.Controls;
@@ -20,6 +21,24 @@ public partial class AccountWindow : Window
         AdminRadio.IsChecked = s.AccountType == "Admin";
         DevRadio.IsChecked = s.AccountType == "Developer";
         ChildRadio.IsChecked = s.AccountType == "Child";
+
+        // the lock screen: the Linux password (PAM) or Crimson Banner's own lock password below
+        if (StatusLabel.Parent is Panel panel)
+        {
+            var sys = new CheckBox
+            {
+                Content = "The lock screen asks for my Linux password",
+                IsChecked = s.LockWithSystemPassword, IsEnabled = SystemAuth.Available,
+            };
+            ToolTip.SetTip(sys, SystemAuth.Available
+                ? "Checked by the system's sign-in rules (PAM, service \"" + SystemAuth.ServiceName + "\"). Turn off to use the lock password above instead."
+                : "PAM (libpam) isn't available here, so the lock password above is used.");
+            sys.IsCheckedChanged += (_, _) => { SettingsStore.Current.LockWithSystemPassword = sys.IsChecked == true; SettingsStore.Save(); };
+            var passwd = new Button { Content = "Change my Linux password…" };
+            passwd.Click += (_, _) => ProcessUtil.RunInTerminal("passwd", new List<string>());
+            panel.Children.Insert(panel.Children.IndexOf(StatusLabel), sys);
+            panel.Children.Insert(panel.Children.IndexOf(StatusLabel), passwd);
+        }
 
         if (!string.IsNullOrEmpty(s.AvatarPath) && File.Exists(s.AvatarPath))
         {
