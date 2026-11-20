@@ -5,6 +5,7 @@
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
 #include <json-glib/json-glib.h>
+#include <glib/gstdio.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -302,10 +303,43 @@ static gboolean tab_tls_failed(WebKitWebView *v, char *uri, GTlsCertificate *cer
 	return TRUE;
 }
 
+/* GPU drawing off: after a page's process crashed with it on (remembered for three days, like the previous
+ * browser's "three GPU crashes and it's the CPU"), or with REDSTAR_ONLINE_GPU=0. REDSTAR_ONLINE_GPU=1 keeps it on. */
+static char *gpu_off_path(void) { return g_build_filename(g_get_user_cache_dir(), "redstaros", "online", "gpu-off", NULL); }
+
+static gboolean gpu_off_remembered(void)
+{
+	gchar *p = gpu_off_path();
+	GStatBuf st;
+	gboolean recent = g_stat(p, &st) == 0 && g_get_real_time() / G_USEC_PER_SEC - (gint64)st.st_mtime < 3 * 24 * 3600;
+	g_free(p);
+	return recent;
+}
+
+static gboolean gpu_on(void)
+{
+	return webkit_settings_get_hardware_acceleration_policy(app.settings) != WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER;
+}
+
 static void tab_crashed(WebKitWebView *v, WebKitWebProcessTerminationReason why, Tab *t)
 {
-	show_error(t, webkit_web_view_get_uri(v), "This page stopped working",
-		why == WEBKIT_WEB_PROCESS_EXCEEDED_MEMORY_LIMIT ? "It used too much memory." : "Its process ended unexpectedly.");
+	const char *uri = webkit_web_view_get_uri(v);
+	g_printerr("online: the page's process ended (%s) at %s; GPU drawing %s\n",
+		why == WEBKIT_WEB_PROCESS_EXCEEDED_MEMORY_LIMIT ? "memory limit" : why == WEBKIT_WEB_PROCESS_TERMINATED_BY_API ? "stopped" : "crashed",
+		uri ? uri : "?", gpu_on() ? "on" : "off");
+	if (why == WEBKIT_WEB_PROCESS_CRASHED && gpu_on() && g_strcmp0(g_getenv("REDSTAR_ONLINE_GPU"), "1") != 0) {
+		/* most such crashes are in GPU drawing: draw with the CPU from now on, and try the page again */
+		webkit_settings_set_hardware_acceleration_policy(app.settings, WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER);
+		gchar *p = gpu_off_path();
+		g_file_set_contents(p, "the page process crashed with GPU drawing on\n", -1, NULL);
+		g_free(p);
+		g_printerr("online: GPU drawing is off now (for three days); reloading the page\n");
+		if (uri) { t->recorded = TRUE; webkit_web_view_load_uri(v, uri); }
+		return;
+	}
+	show_error(t, uri, "This page stopped working",
+		why == WEBKIT_WEB_PROCESS_EXCEEDED_MEMORY_LIMIT ? "It used too much memory."
+		: "Its process ended unexpectedly, also when drawing with the CPU. ~/.config/redstaros/online.log has the details.");
 }
 
 static void tab_hover(WebKitWebView *v, WebKitHitTestResult *hit, guint mods, Tab *t)
@@ -1382,6 +1416,11 @@ static void startup(GApplication *gapp, gpointer data)
 	webkit_settings_set_enable_back_forward_navigation_gestures(app.settings, TRUE);
 	webkit_settings_set_enable_smooth_scrolling(app.settings, TRUE);
 	if (app.self_test) webkit_settings_set_javascript_can_open_windows_automatically(app.settings, TRUE);
+	const char *gpu = g_getenv("REDSTAR_ONLINE_GPU");
+	if (!g_strcmp0(gpu, "0") || (g_strcmp0(gpu, "1") != 0 && gpu_off_remembered())) {
+		webkit_settings_set_hardware_acceleration_policy(app.settings, WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER);
+		g_printerr("online: GPU drawing is off (%s)\n", gpu ? "REDSTAR_ONLINE_GPU=0" : "a page crashed with it on, less than three days ago");
+	}
 	webkit_web_context_register_uri_scheme(webkit_web_context_get_default(), "redstar", scheme_request, NULL, NULL);
 
 	app.downloads = g_ptr_array_new();
