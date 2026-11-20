@@ -506,6 +506,7 @@ int main(void)
 	}
 
 	/* what screenshot, screen-sharing, display and clipboard tools look for */
+	if (output_refresh <= 0) printf("  (screen refresh as sent: %d mHz)\n", output_refresh);
 	check(output_refresh > 0, "the screen reports a refresh rate (GTK 4 apps divide by it)");
 	check(strstr(globals, " zwlr_screencopy_manager_v1 ") != NULL, "screencopy (grim, xdg-desktop-portal-wlr)");
 	check(strstr(globals, " ext_image_copy_capture_manager_v1 ") != NULL, "ext-image-copy-capture (newer screen sharing)");
