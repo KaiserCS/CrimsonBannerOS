@@ -46,8 +46,8 @@ if command -v Xvfb >/dev/null 2>&1 && command -v gcc >/dev/null 2>&1 && [ -f /us
   echo "==> Window manager tests (Xvfb)"
   wm/test/run-tests.sh | grep "passed"
   ok "window manager"
-  if python3 -c "import playwright" 2>/dev/null; then
-    echo "==> Isolated session with a real app (Chromium under redstar-wm)"
+  if python3 -c "import gi; gi.require_version('Gtk', '3.0'); from gi.repository import Gtk" 2>/dev/null; then
+    echo "==> Isolated session with a real program (GTK under redstar-wm)"
     python3 wm/test/session_test.py | tail -1
     ok "isolated session"
   fi

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-End-to-end test of Red Star's isolated environment pieces with a real, complex X11 app (Chromium):
-redstar-wm manages a Red Star-like desktop window and a Chromium window; real mouse/keyboard events are injected
+End-to-end test of Red Star's isolated environment pieces with a real X11 program: redstar-wm manages a Red Star-like
+desktop window and a GTK 3 window that draws its own title bar (gtkapp.py); real mouse/keyboard events are injected
 through the X server (XTest), the same way a user's clicks arrive.
 
-    python3 wm/test/session_test.py            (needs Xvfb, Playwright's Chromium, gcc-built redstar-wm)
+    python3 wm/test/session_test.py            (needs Xvfb, gcc, PyGObject with GTK 3, gcc-built redstar-wm)
 """
 import ctypes, ctypes.util, json, os, subprocess, sys, time, tempfile, threading
 
@@ -106,35 +106,19 @@ def wait_for(fn, timeout=8.0, step=0.05):
         time.sleep(step)
     return fn()
 
-# ───────────────────────── the page Chromium shows ─────────────────────────
-PAGE = r"""<!doctype html><html><head><title>Red Star test page</title><style>
-body{margin:0;font:16px sans-serif;background:#f4f4f4} .b{position:absolute;width:220px;height:90px;font-size:18px}
-#bt{left:40px;top:40px} #tip{left:300px;top:40px} #fs{left:560px;top:40px} #pop{left:820px;top:40px}
-#sel{position:absolute;left:40px;top:180px;width:220px;height:40px;font-size:18px}
-#inp{position:absolute;left:300px;top:180px;width:300px;height:36px;font-size:18px}
-#hov{position:absolute;left:40px;top:260px;width:300px;height:120px;background:#ddd}
-#hov:hover{background:#c8102e}
-</style></head><body>
-<button class=b id=bt>Click me</button>
-<button class=b id=tip title="A tooltip that should stay steady">Hover for tooltip</button>
-<button class=b id=fs>Full screen</button>
-<button class=b id=pop>Open window</button>
-<select id=sel><option>one</option><option>two</option><option>three</option><option>four</option></select>
-<input id=inp placeholder="type here">
-<div id=hov>hover area</div>
-<script>
-window.log = {click:0, down:0, up:0, enter:0, leave:0, hoverEnter:0, hoverLeave:0};
-bt.addEventListener('click', () => log.click++);
-bt.addEventListener('pointerdown', () => log.down++);
-bt.addEventListener('pointerup', () => log.up++);
-hov.addEventListener('pointerenter', () => log.hoverEnter++);
-hov.addEventListener('pointerleave', () => log.hoverLeave++);
-fs.addEventListener('click', () => document.documentElement.requestFullscreen());
-pop.addEventListener('click', () => window.open('about:blank', 'p', 'width=500,height=360'));
-</script></body></html>"""
+# ───────────────────────── the program under test ─────────────────────────
+STATE = None
+def log():
+    try:
+        with open(STATE) as f: return json.load(f)
+    except Exception: return {}
+def center_of(name):
+    w = wait_for(lambda: log().get('widgets', {}).get(name), 3)
+    x0, y0, ww, hh = w
+    return x0 + ww / 2, y0 + hh / 2
 
 def main():
-    global d, root
+    global d, root, STATE
     procs = []
     tmp = tempfile.mkdtemp(prefix='rs-session-')
     wmlog = open(os.path.join(tmp, 'wm.log'), 'w')
@@ -151,139 +135,131 @@ def main():
     procs.append(subprocess.Popen([ct, 'client', 'desk', 'desktop'], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
     desk = wait_for(lambda: next((w for w in client_list() if title(w) == 'desk'), 0))
 
-    page_file = os.path.join(tmp, 'page.html'); open(page_file, 'w').write(PAGE)
-    from playwright.sync_api import sync_playwright
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=False, env=env, args=['--no-sandbox', '--disable-gpu', '--window-size=1200,700', '--window-position=200,80'])
-        ctx = browser.new_context(no_viewport=True)
-        page = ctx.new_page()
-        page.goto('file://' + page_file)
-        time.sleep(1.5)
-        chrome = wait_for(lambda: next((w for w in client_list() if 'test page' in title(w)), 0), 10)
-        print('Chromium window under redstar-wm')
-        check(chrome, 'Chromium window is managed', hex(chrome) if chrome else 'not found')
-        if not chrome: raise SystemExit(1)
-        check(active() == chrome, 'it is the active window')
-        shot('01-chromium')
+    STATE = os.path.join(tmp, 'app.json')
+    app_env = dict(env, GDK_BACKEND='x11', NO_AT_BRIDGE='1', GTK_A11Y='none', GDK_SCALE='1', GTK_THEME='Adwaita')
+    applog = open(os.path.join(tmp, 'app.log'), 'w')
+    app = subprocess.Popen([sys.executable, os.path.join(HERE, 'gtkapp.py'), STATE], env=app_env, stdout=applog, stderr=applog)
+    procs.append(app)
+    win = wait_for(lambda: next((w for w in client_list() if 'test page' in title(w)), 0), 15)
+    print('GTK window under redstar-wm')
+    check(win, 'the GTK window is managed', hex(win) if win else 'not found')
+    if not win:
+        applog.flush(); print(open(os.path.join(tmp, 'app.log')).read()[-2000:]); raise SystemExit(1)
+    wait_for(lambda: 'bt' in log().get('widgets', {}), 5)
+    time.sleep(0.5)
+    check(active() == win, 'it is the active window')
+    shot('01-gtk')
 
-        def vp_origin():
-            # where the page's (0,0) is on screen: the window's position + browser UI height
-            gx, gy, gw, gh = root_geom(chrome)
-            m = page.evaluate('({ow: outerWidth, oh: outerHeight, iw: innerWidth, ih: innerHeight})')
-            return gx + (gw - m['iw']) // 2, gy + gh - m['ih']
-        def center_of(sel):
-            ox, oy = vp_origin()
-            bb = page.locator(sel).bounding_box()
-            return ox + bb['x'] + bb['width'] / 2, oy + bb['y'] + bb['height'] / 2
-        def log(): return page.evaluate('log')
+    print('Clicking in the focused window')
+    bx, by = center_of('bt')
+    l0 = log()
+    for _ in range(10): click(bx, by); time.sleep(0.08)
+    time.sleep(0.3); l1 = log()
+    check(l1['click'] - l0['click'] == 10, '10 clicks → 10 click events', f"{l1['click'] - l0['click']} (down {l1['down'] - l0['down']}, up {l1['up'] - l0['up']})")
 
-        print('Clicking in the focused window')
-        bx, by = center_of('#bt')
-        l0 = log()
-        for _ in range(10): click(bx, by); time.sleep(0.08)
-        l1 = log()
-        check(l1['click'] - l0['click'] == 10, '10 clicks → 10 click events', f"{l1['click'] - l0['click']} (down {l1['down'] - l0['down']}, up {l1['up'] - l0['up']})")
+    print('First click after another window had focus')
+    click(W - 30, H - 15)                       # the "taskbar" of the desktop window
+    check(wait_for(lambda: active() == desk, 2), 'clicking the desktop focuses it')
+    l0 = log(); click(bx, by); time.sleep(0.4); l1 = log()
+    check(l1['click'] - l0['click'] == 1, 'one click focuses the window and presses the button', f"{l1['click'] - l0['click']} click(s)")
+    check(active() == win, 'the GTK window is active again')
 
-        print('First click after another window had focus')
-        click(W - 30, H - 15)                       # the "taskbar" of the desktop window
-        check(wait_for(lambda: active() == desk, 2), 'clicking the desktop focuses it')
-        l0 = log(); click(bx, by); time.sleep(0.3); l1 = log()
-        check(l1['click'] - l0['click'] == 1, 'one click focuses Chromium and presses the button', f"{l1['click'] - l0['click']} click(s)")
-        check(active() == chrome, 'Chromium is active again')
+    print('Hover (no flicker)')
+    hx, hy = center_of('hov')
+    l0 = log(); move(hx - 200, hy); time.sleep(0.2); move(hx, hy); time.sleep(0.6)
+    for i in range(10): move(hx + (i % 3) * 4, hy + (i % 2) * 3); time.sleep(0.05)
+    time.sleep(0.2); l1 = log()
+    check(l1['hoverEnter'] - l0['hoverEnter'] == 1 and l1['hoverLeave'] - l0['hoverLeave'] == 0,
+          'hover area entered once, never left while the pointer stays', f"enter {l1['hoverEnter'] - l0['hoverEnter']}, leave {l1['hoverLeave'] - l0['hoverLeave']}")
 
-        print('Hover (no flicker)')
-        hx, hy = center_of('#hov')
-        l0 = log(); move(hx - 200, hy); time.sleep(0.2); move(hx, hy); time.sleep(0.6)
-        for i in range(10): move(hx + (i % 3) * 4, hy + (i % 2) * 3); time.sleep(0.05)
-        l1 = log()
-        check(l1['hoverEnter'] - l0['hoverEnter'] == 1 and l1['hoverLeave'] - l0['hoverLeave'] == 0,
-              'hover area entered once, never left while the pointer stays', f"enter {l1['hoverEnter'] - l0['hoverEnter']}, leave {l1['hoverLeave'] - l0['hoverLeave']}")
+    print('Tooltip')
+    tx, ty = center_of('tip')
+    before = set(children(root))
+    move(tx, ty); time.sleep(0.2); move(tx + 2, ty + 1)
+    tip = wait_for(lambda: [w for w in children(root) if w not in before and attrs(w) and attrs(w).override_redirect and attrs(w).map_state == 2], 5)
+    check(bool(tip), 'tooltip window appears (override-redirect, not managed)')
+    if tip:
+        t = tip[0]
+        samples = [attrs(t) is not None and attrs(t).map_state == 2 for _ in range(30) if not time.sleep(0.05)]
+        check(all(samples), 'tooltip stays up while hovering (no flicker)', f"{samples.count(False)} of {len(samples)} samples hidden")
+        check(t not in client_list(), 'tooltip is not given a frame')
+        top = children(root)[-1] if children(root) else 0
+        check(top == t, 'tooltip is above every window')
+        shot('02-tooltip')
 
-        print('Tooltip')
-        tx, ty = center_of('#tip')
-        before = set(children(root))
-        move(tx, ty); time.sleep(0.2); move(tx + 2, ty + 1)
-        tip = wait_for(lambda: [w for w in children(root) if w not in before and attrs(w) and attrs(w).override_redirect and attrs(w).map_state == 2], 4)
-        check(bool(tip), 'tooltip window appears (override-redirect, not managed)')
-        if tip:
-            t = tip[0]
-            samples = [attrs(t) is not None and attrs(t).map_state == 2 for _ in range(30) if not time.sleep(0.05)]
-            check(all(samples), 'tooltip stays up while hovering (no flicker)', f"{samples.count(False)} of {len(samples)} samples hidden")
-            check(t not in client_list(), 'tooltip is not given a frame')
-            top = children(root)[-1] if children(root) else 0
-            check(top == t, 'tooltip is above every window')
-            shot('02-tooltip')
+    print('Drop-down list')
+    sx, sy = center_of('sel')
+    before = set(children(root))
+    click(sx, sy)
+    menu = wait_for(lambda: [w for w in children(root) if w not in before and attrs(w) and attrs(w).override_redirect and attrs(w).map_state == 2
+                             and attrs(w).height > 60], 3)
+    check(bool(menu), 'drop-down opens as a popup window')
+    if menu:
+        shot('03-select')
+        mx, my, mw, mh = root_geom(menu[0])
+        click(mx + mw / 2, my + mh * 0.62)          # the third or fourth entry
+        time.sleep(0.4)
+    val = log().get('combo')
+    check(val in ('three', 'four'), 'an entry can be picked with one click', val)
 
-        print('Drop-down list (<select>)')
-        sx, sy = center_of('#sel')
-        before = set(children(root))
-        click(sx, sy)
-        menu = wait_for(lambda: [w for w in children(root) if w not in before and attrs(w) and attrs(w).override_redirect and attrs(w).map_state == 2], 3)
-        check(bool(menu), 'drop-down opens as a popup window')
-        if menu:
-            shot('03-select')
-            mx, my, mw, mh = root_geom(menu[0])
-            click(mx + mw / 2, my + mh * 0.62)          # third option
-            time.sleep(0.4)
-        val = page.evaluate('sel.value')
-        check(val in ('three', 'four'), 'an option can be picked with one click', val)
+    print('Keyboard')
+    ix, iy = center_of('inp')
+    click(ix, iy); time.sleep(0.2)
+    for ch in 'redstar': key(ch)
+    time.sleep(0.2)
+    check(log().get('entry') == 'redstar', 'typing reaches the focused field', log().get('entry'))
 
-        print('Keyboard')
-        ix, iy = center_of('#inp')
-        click(ix, iy); time.sleep(0.2)
-        for ch in 'redstar': key(ch)
-        check(page.evaluate('inp.value') == 'redstar', 'typing reaches the focused field', page.evaluate('inp.value'))
+    print('A second window')
+    px, py = center_of('pop')
+    n0 = len(client_list())
+    click(px, py)
+    pw_ = wait_for(lambda: len(client_list()) > n0 and [w for w in client_list() if w not in (desk, win)], 5)
+    check(bool(pw_), 'the new window is managed')
+    if pw_:
+        pwin = pw_[-1]
+        check(wait_for(lambda: active() == pwin, 2), 'and focused')
+        shot('04-popup')
+        time.sleep(0.3)
+        click(*center_of('popup-close')); time.sleep(0.6)
+        check(wait_for(lambda: pwin not in client_list(), 2), 'closing it removes it')
+        check(wait_for(lambda: active() == win, 2), 'focus returns to the first window', hex(active()))
 
-        print('New window (window.open)')
-        px, py = center_of('#pop')
-        n0 = len(client_list())
-        with ctx.expect_page(timeout=5000) as pinfo:
-            click(px, py)
-        popup = pinfo.value
-        pw_ = wait_for(lambda: len(client_list()) > n0 and [w for w in client_list() if w not in (desk, chrome)], 5)
-        check(bool(pw_), 'the new window is managed')
-        if pw_:
-            pwin = pw_[-1]
-            check(wait_for(lambda: active() == pwin, 2), 'and focused')
-            shot('04-popup')
-            popup.close(); time.sleep(0.6)
-            check(pwin not in client_list(), 'closing it removes it')
-            check(wait_for(lambda: active() == chrome, 2), 'focus returns to Chromium', hex(active()))
+    print('Full screen (F11)')
+    click(*center_of('inp')); time.sleep(0.2)
+    key('F11'); time.sleep(1.2)
+    g = root_geom(win)
+    check(g == (0, 0, W, H), 'full screen fills the display', g)
+    check('_NET_WM_STATE_FULLSCREEN' in states(win), 'state says full screen')
+    shot('05-fullscreen')
+    key('F11'); time.sleep(1.0)
+    g = root_geom(win)
+    check(g[2] < W or g[3] < H, 'F11 again leaves full screen', g)
 
-        print('Full screen (F11; page full screen behaves the same without Playwright)')
-        click(*center_of('#inp')); time.sleep(0.2)
-        key('F11'); time.sleep(1.2)
-        g = root_geom(chrome)
-        check(g == (0, 0, W, H), 'full screen fills the display', g)
-        check('_NET_WM_STATE_FULLSCREEN' in states(chrome), 'state says full screen')
-        shot('05-fullscreen')
-        key('F11'); time.sleep(1.0)
-        g = root_geom(chrome)
-        check(g[2] < W or g[3] < H, 'F11 again leaves full screen', g)
+    print("Maximise and drag through the window's own title bar (_NET_WM_STATE, _NET_WM_MOVERESIZE)")
+    time.sleep(0.3)
+    ax, ay, aw, ah = root_geom(win)
+    # the header bar: an empty strip left of the close button
+    click(ax + aw - 260, ay + 14); click(ax + aw - 260, ay + 14); time.sleep(0.8)
+    maxed = wait_for(lambda: '_NET_WM_STATE_MAXIMIZED_VERT' in states(win), 2)
+    check(maxed, 'double-click on its own title bar maximises', states(win))
+    if maxed:
+        gx, gy, gw, gh = root_geom(win)
+        wa = prop(root, '_NET_WORKAREA', 6)
+        check(gy + gh <= wa[1] + wa[3] + 1, 'maximised window stops above the taskbar', (gx, gy, gw, gh, wa[:4]))
+        click(gx + gw - 260, gy + 14); click(gx + gw - 260, gy + 14); time.sleep(0.8)
+        wait_for(lambda: '_NET_WM_STATE_MAXIMIZED_VERT' not in states(win), 2)
+        time.sleep(0.3)
+    ax, ay, aw, ah = root_geom(win)
+    move(ax + aw - 300, ay + 14); press(); time.sleep(0.15)
+    for i in range(1, 9): move(ax + aw - 300 - i * 15, ay + 14 + i * 10); time.sleep(0.04)
+    release(); time.sleep(0.5)
+    nx, ny, _, _ = root_geom(win)
+    # GTK starts the move after its drag threshold, from where the pointer is then
+    check(abs((ax - nx) - 120) <= 24 and abs((ny - ay) - 80) <= 18, 'dragging its title bar moves the window with the pointer', (ax, ay, '→', nx, ny))
+    shot('06-final')
 
-        print('Maximise and drag through Chromium\'s own title bar (_NET_WM_STATE, _NET_WM_MOVERESIZE)')
-        page.evaluate('0')
-        ax, ay, aw, ah = root_geom(chrome)
-        # Chromium draws its own title bar: double-click on its empty strip right of the tabs
-        click(ax + aw - 260, ay + 12); click(ax + aw - 260, ay + 12); time.sleep(0.8)
-        maxed = '_NET_WM_STATE_MAXIMIZED_VERT' in states(chrome)
-        check(maxed, 'double-click on Chromium\'s own title bar maximises', states(chrome))
-        if maxed:
-            gx, gy, gw, gh = root_geom(chrome)
-            wa = prop(root, '_NET_WORKAREA', 6)
-            check(gy + gh <= wa[1] + wa[3] + 1, 'maximised window stops above the taskbar', (gx, gy, gw, gh, wa[:4]))
-            click(gx + gw - 260, gy + 12); click(gx + gw - 260, gy + 12); time.sleep(0.8)
-        ax, ay, aw, ah = root_geom(chrome)
-        move(ax + aw - 300, ay + 12); press(); time.sleep(0.15)
-        for i in range(1, 9): move(ax + aw - 300 - i * 15, ay + 12 + i * 10); time.sleep(0.04)
-        release(); time.sleep(0.5)
-        nx, ny, _, _ = root_geom(chrome)
-        # Chromium only starts the move after its drag threshold (one step here), from where the pointer is then
-        check(abs((ax - nx) - 120) <= 20 and abs((ny - ay) - 80) <= 14, 'dragging Chromium\'s title bar moves the window with the pointer', (ax, ay, '→', nx, ny))
-        shot('06-final')
-
-        print('Window manager health')
-        browser.close()
+    print('Window manager health')
+    app.terminate()
     time.sleep(0.3)
     alive = procs[1].poll() is None
     check(alive, 'redstar-wm is still running')

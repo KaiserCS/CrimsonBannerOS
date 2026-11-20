@@ -3,7 +3,7 @@ name: Check
 # Every push and pull request gets a green or red mark. These jobs run side by side:
 #   • app            build + every C# test (every window opens, Files, archives, batch rename, terminal, …) and a
 #                    screenshot of every window (artifact "screenshots": open index.html)
-#   • window-manager redstar-wm on a virtual screen: its behaviour tests, click delivery, and a real Chromium
+#   • window-manager redstar-wm on a virtual screen: its behaviour tests, click delivery, and a real GTK program
 #                    session (artifact "session-screenshots")
 #   • compositor     redstar-comp (wlroots 0.20, in an Arch Linux container) built with warnings as errors, then its
 #                    behaviour tests on wlroots' virtual screen through Xwayland
@@ -93,7 +93,8 @@ jobs:
       - name: X11 build tools and a virtual screen
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends gcc libx11-dev libxtst-dev libxi-dev xvfb x11-utils imagemagick
+          sudo apt-get install -y --no-install-recommends gcc libx11-dev libxtst-dev libxi-dev xvfb x11-utils imagemagick \
+            python3-gi gir1.2-gtk-3.0
 
       - name: redstar-wm compiles without warnings
         run: gcc -O2 -Wall -Wextra -Werror -o /tmp/redstar-wm wm/redstar-wm.c -lX11 -ldl -lm
@@ -101,13 +102,10 @@ jobs:
       - name: Behaviour and click tests
         run: wm/test/run-tests.sh
 
-      - name: Real session with Chromium
+      - name: Real session with a GTK program
         env:
           SESSION_SHOTS: ${{ github.workspace }}/session-screenshots
-        run: |
-          python3 -m pip install --quiet playwright
-          python3 -m playwright install --with-deps chromium
-          python3 wm/test/session_test.py
+        run: /usr/bin/python3 wm/test/session_test.py
 
       - uses: actions/upload-artifact@v5
         if: always()

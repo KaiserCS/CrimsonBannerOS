@@ -114,7 +114,7 @@ int main(void)
 	XFlush(d);
 	long wa[4] = {0};
 	int got = 0;
-	for (int i = 0; i < 150; i++) {
+	for (int i = 0; i < 500; i++) {      /* up to 10 s, like the first window's frame below */
 		if (get_cardinals(root, A("_NET_WORKAREA"), wa, 4) >= 4 && wa[3] == sh - 48) { got = 1; break; }
 		pump(20);
 	}
@@ -136,7 +136,14 @@ int main(void)
 		XQueryTree(d, w, &rt, &parent, &kids, &nk);
 		if (kids) XFree(kids);
 		long st[2] = { -1, -1 };
-		int has_state = get_cardinals(w, A("WM_STATE"), st, 1);
+		int has_state = 0;
+		{
+			Atom type; int fmt; unsigned long n, after; unsigned char *data = NULL;   /* WM_STATE is of type WM_STATE */
+			if (XGetWindowProperty(d, w, A("WM_STATE"), 0, 2, False, AnyPropertyType, &type, &fmt, &n, &after, &data) == Success && data) {
+				if (n > 0) { st[0] = ((long *)data)[0]; has_state = 1; }
+				XFree(data);
+			}
+		}
 		printf("  (window 0x%lx: map state %d, parent %s, WM_STATE %s %ld, extents %ld %ld %ld %ld)\n", (unsigned long)w,
 			wa_.map_state, parent == root ? "root" : "a frame", has_state > 0 ? "set" : "unset", st[0], ext[0], ext[1], ext[2], ext[3]);
 	}

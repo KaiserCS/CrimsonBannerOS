@@ -84,7 +84,7 @@ Red Star and not to the desktop underneath.
   once, the first click on an unfocused window both focuses it and works, and the WM adds about 1 ms.
   Only unfocused windows have their clicks routed through the WM (click-to-focus); the focused window gets them
   straight from the X server. `REDSTAR_WM_DEBUG=1` logs clicks, focus changes and window requests to `~/.config/redstaros/session.log`.
-  `wm/test/session_test.py` runs a real Chromium under redstar-wm with input injected through the X server (26 checks:
+  `wm/test/session_test.py` runs a real GTK program (`wm/test/gtkapp.py`, with its own title bar) under redstar-wm with input injected through the X server (26 checks:
   clicks, first click on an unfocused window, hover without flicker, tooltips, drop-downs, typing, new windows, full
   screen, maximise and dragging through the app's own title bar). New windows that would land exactly on another
   are cascaded, and windows shown "without activation" (like the Alt+Tab panel) don't steal focus.
@@ -305,7 +305,7 @@ also draws every window (Skia) into `screenshots/` — open `screenshots/index.h
   dialogs, batch rename and Files with a folder open). The run's summary page lists the result and any failures
   with their messages; the **screenshots** artifact holds the pictures (open `index.html`).
 * **Window manager** — redstar-wm must compile with no warnings (`-Wall -Wextra -Werror`), then its behaviour and
-  click tests run on Xvfb, then a real Chromium session under it (**session-screenshots** artifact).
+  click tests run on Xvfb, then a real GTK program under it (**session-screenshots** artifact).
 * **Wayland compositor** — in an Arch Linux container (for wlroots 0.20): redstar-comp must compile with
   warnings as errors, then its behaviour tests run headless through Xwayland.
 * **Red Star Online** — in an Arch Linux container: the browser's unit tests, then its self-test (the real browser

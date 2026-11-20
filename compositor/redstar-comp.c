@@ -1673,6 +1673,10 @@ static void x_associate(struct wl_listener *l, void *data)
 	wl_signal_add(&v->xs->surface->events.unmap, &v->unmap);
 	v->commit.notify = x_commit;
 	wl_signal_add(&v->xs->surface->events.commit, &v->commit);
+	/* Xwayland may have committed the window's first picture before the window and its surface were matched up: then
+	 * the surface is mapped already and its map signal has gone by. Without this the window was never framed or
+	 * placed, and a dock's strut never reached the work area (an intermittent failure in the headless tests). */
+	if (v->xs->surface->mapped) x_map(&v->map, NULL);
 }
 
 static void x_dissociate(struct wl_listener *l, void *data)
