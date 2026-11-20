@@ -7,6 +7,7 @@
 #include <json-glib/json-glib.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "store.h"
 #include "filters.h"
@@ -1306,17 +1307,23 @@ static void follow_red_star_theme(void)
 {
 	gchar *path = g_build_filename(g_get_user_config_dir(), "redstaros", "settings.json", NULL);
 	JsonParser *p = json_parser_new();
-	gboolean dark = FALSE;
+	gboolean dark = FALSE, large = FALSE;
 	if (json_parser_load_from_file(p, path, NULL)) {
 		JsonNode *r = json_parser_get_root(p);
 		if (r && JSON_NODE_HOLDS_OBJECT(r)) {
-			const char *theme = json_object_get_string_member_with_default(json_node_get_object(r), "Theme", "");
-			dark = !g_ascii_strcasecmp(theme, "Dark");
+			JsonObject *o = json_node_get_object(r);
+			dark = !g_ascii_strcasecmp(json_object_get_string_member_with_default(o, "Theme", ""), "Dark");
+			large = json_object_get_boolean_member_with_default(o, "LargeCursor", FALSE);
 		}
 	}
 	g_object_unref(p);
 	g_free(path);
 	g_object_set(gtk_settings_get_default(), "gtk-application-prefer-dark-theme", dark, NULL);
+	/* the pointer at Red Star's size (Accessibility → Large mouse pointer), not whatever another desktop's settings
+	 * say; redstar-comp draws it itself where GTK uses cursor-shape */
+	const char *env = g_getenv("XCURSOR_SIZE");
+	int size = env && atoi(env) > 0 ? atoi(env) : large ? 48 : 24;
+	g_object_set(gtk_settings_get_default(), "gtk-cursor-theme-size", size, NULL);
 }
 
 static void startup(GApplication *gapp, gpointer data)

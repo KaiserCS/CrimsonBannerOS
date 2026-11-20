@@ -31,6 +31,7 @@ protocols = {
   'ext-image-capture-source-v1': wp_dir / 'staging/ext-image-capture-source/ext-image-capture-source-v1.xml',
   'ext-image-copy-capture-v1': wp_dir / 'staging/ext-image-copy-capture/ext-image-copy-capture-v1.xml',
   'xdg-activation-v1': wp_dir / 'staging/xdg-activation/xdg-activation-v1.xml',
+  'cursor-shape-v1': wp_dir / 'staging/cursor-shape/cursor-shape-v1.xml',
 }
 # Only xdg-shell and xdg-decoration need their interface code here: nested.c is a client of the host's xdg-shell.
 # For the others the headers are enough — wlroots has the code (and some of it refers to further protocols).

@@ -74,6 +74,7 @@
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_viewporter.h>
 #include <wlr/types/wlr_xcursor_manager.h>
+#include <wlr/types/wlr_cursor_shape_v1.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
@@ -231,6 +232,7 @@ struct server {
 	struct wl_listener new_output, layout_change, new_input, new_toplevel, new_popup, new_decoration,
 		request_cursor, request_selection, request_primary, request_drag, start_drag, cursor_motion,
 		cursor_motion_abs, cursor_button, cursor_axis, cursor_frame, xwayland_ready, new_xsurface;
+	struct wl_listener request_shape;    /* cursor-shape-v1: a program names its cursor, we draw it */
 };
 
 /* ───────────────────────── look (matches redstar-wm) ───────────────────────── */
@@ -2772,6 +2774,18 @@ static void request_cursor(struct wl_listener *l, void *data)
 		wlr_cursor_set_surface(s->cursor, e->surface, e->hotspot_x, e->hotspot_y);
 }
 
+/* cursor-shape-v1: programs (GTK 4, Qt 6, Chromium) name the cursor they want and redstar-comp draws it from its own
+ * theme, at its own size (XCURSOR_SIZE; 48 with Settings → Accessibility → Large mouse pointer): every program's
+ * pointer matches instead of each drawing its own at whatever size its toolkit picked */
+static void request_shape(struct wl_listener *l, void *data)
+{
+	struct server *s = wl_container_of(l, s, request_shape);
+	struct wlr_cursor_shape_manager_v1_request_set_shape_event *e = data;
+	if (e->device_type != WLR_CURSOR_SHAPE_MANAGER_V1_DEVICE_TYPE_POINTER) return;
+	if (s->seat->pointer_state.focused_client != e->seat_client) return;
+	wlr_cursor_set_xcursor(s->cursor, s->xcursor, wlr_cursor_shape_v1_name(e->shape));
+}
+
 static void request_selection(struct wl_listener *l, void *data)
 {
 	struct server *s = wl_container_of(l, s, request_selection);
@@ -3388,6 +3402,9 @@ int main(int argc, char **argv)
 	s->seat = wlr_seat_create(s->display, "seat0");
 	s->request_cursor.notify = request_cursor;
 	wl_signal_add(&s->seat->events.request_set_cursor, &s->request_cursor);
+	struct wlr_cursor_shape_manager_v1 *shapes = wlr_cursor_shape_manager_v1_create(s->display, 1);
+	s->request_shape.notify = request_shape;
+	wl_signal_add(&shapes->events.request_set_shape, &s->request_shape);
 	s->request_selection.notify = request_selection;
 	wl_signal_add(&s->seat->events.request_set_selection, &s->request_selection);
 	s->request_primary.notify = request_primary;
@@ -3456,6 +3473,7 @@ int main(int argc, char **argv)
 	wl_list_remove(&s->cursor_axis.link);
 	wl_list_remove(&s->cursor_frame.link);
 	wl_list_remove(&s->request_cursor.link);
+	wl_list_remove(&s->request_shape.link);
 	wl_list_remove(&s->request_selection.link);
 	wl_list_remove(&s->request_primary.link);
 	wl_list_remove(&s->request_drag.link);
