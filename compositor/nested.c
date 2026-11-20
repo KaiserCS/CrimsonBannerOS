@@ -166,7 +166,7 @@ bool nested_create_output(bool fullscreen, void (*on_close)(void *), void *data)
 		xdg_surface_add_listener(n.xsurface, &xsurface_listener, NULL);
 		n.toplevel = xdg_surface_get_toplevel(n.xsurface);
 		xdg_toplevel_add_listener(n.toplevel, &toplevel_listener, NULL);
-		xdg_toplevel_set_title(n.toplevel, "Red Star OS");
+		xdg_toplevel_set_title(n.toplevel, "Crimson Banner OS");
 		xdg_toplevel_set_app_id(n.toplevel, "redstaros");
 		if (fullscreen) xdg_toplevel_set_fullscreen(n.toplevel, NULL);
 		n.want_w = 1280; n.want_h = 720;
@@ -177,7 +177,7 @@ bool nested_create_output(bool fullscreen, void (*on_close)(void *), void *data)
 	if (!n.output) {
 		wlr_log(WLR_ERROR, "could not make our own host window; using a plain one");
 		struct wlr_output *o = wlr_wl_output_create(n.backend);
-		if (o) wlr_wl_output_set_title(o, "Red Star OS");
+		if (o) wlr_wl_output_set_title(o, "Crimson Banner OS");
 		return o != NULL;
 	}
 	apply_size();
@@ -185,7 +185,7 @@ bool nested_create_output(bool fullscreen, void (*on_close)(void *), void *data)
 	wl_event_source_timer_update(n.pump, 16);
 	if (n.inhibit_mgr && n.seat) {
 		n.inhibitor = zwp_keyboard_shortcuts_inhibit_manager_v1_inhibit_shortcuts(n.inhibit_mgr, n.surface, n.seat);
-		wlr_log(WLR_INFO, "asked the host to pass its shortcuts through to Red Star");
+		wlr_log(WLR_INFO, "asked the host to pass its shortcuts through to Crimson Banner");
 	} else {
 		wlr_log(WLR_INFO, "the host can't pass its shortcuts through (no keyboard-shortcuts-inhibit)");
 	}
@@ -278,8 +278,8 @@ void nested_x11_output(struct wl_event_loop *loop, struct wlr_output *o, const c
 	static int count;
 	struct x11_fs *f = calloc(1, sizeof *f);
 	if (!f) return;
-	if (count++) snprintf(f->title, sizeof f->title, "Red Star OS (%d)", count);
-	else snprintf(f->title, sizeof f->title, "Red Star OS");
+	if (count++) snprintf(f->title, sizeof f->title, "Crimson Banner OS (%d)", count);
+	else snprintf(f->title, sizeof f->title, "Crimson Banner OS");
 	wlr_x11_output_set_title(o, f->title);
 	if (!fullscreen || !host_display) { free(f); return; }
 	/* the host screen's size first, then full screen once the host's window manager has the window */

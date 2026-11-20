@@ -3319,7 +3319,7 @@ static void usage(const char *me)
 {
 	fprintf(stderr,
 		"Usage: %s [-d] [-- command args…]\n"
-		"  Red Star OS's Wayland compositor. Runs the command with DISPLAY (Xwayland) and WAYLAND_DISPLAY set,\n"
+		"  Crimson Banner OS's Wayland compositor. Runs the command with DISPLAY (Xwayland) and WAYLAND_DISPLAY set,\n"
 		"  and quits when it exits.\n"
 		"  -d   debug messages\n"
 		"  -w   on another desktop, open as an ordinary window instead of full screen (or REDSTAR_COMP_WINDOWED=1)\n"
@@ -3468,7 +3468,7 @@ int main(int argc, char **argv)
 		wl_signal_add(&s->xwayland->events.new_surface, &s->new_xsurface);
 		setenv("DISPLAY", s->xwayland->display_name, true);
 	} else {
-		wlr_log(WLR_ERROR, "Xwayland could not start: X11 apps (Red Star's own windows) won't work");
+		wlr_log(WLR_ERROR, "Xwayland could not start: X11 apps (Crimson Banner's own windows) won't work");
 	}
 
 	const char *socket = wl_display_add_socket_auto(s->display);

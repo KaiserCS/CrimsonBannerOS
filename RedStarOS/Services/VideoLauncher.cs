@@ -34,7 +34,7 @@ public static class VideoLauncher
             if (!_warned || files.Count > 0)
             {
                 _warned = true;
-                Notifier.Show("Red Star Video", "Red Star Video needs libVLC, which isn't installed. Install it with your package manager (vlc, or libvlc and its plugins), then open the video again.", "video");
+                Notifier.Show("Video", "Video needs libVLC, which isn't installed. Install it with your package manager (vlc, or libvlc and its plugins), then open the video again.", "video");
             }
             return;
         }

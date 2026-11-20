@@ -188,7 +188,7 @@ public partial class SlidesWindow : Window
 
     private void NewDeck()
     {
-        _deck = new Deck { Theme = "Red Star" };
+        _deck = new Deck { Theme = "Crimson Banner" };
         _deck.Slides.Add(SlideLayouts.Make("Title Slide", DeckTheme, _font));
         _undo.Clear();
         _redo.Clear();
@@ -263,7 +263,7 @@ public partial class SlidesWindow : Window
     private void UpdateTitle()
     {
         var name = _path == null ? "Untitled" : Path.GetFileNameWithoutExtension(_path);
-        Title = $"{(_modified ? "*" : "")}{name} - Red Star Slides";
+        Title = $"{(_modified ? "*" : "")}{name} - Slides";
     }
 
     private void MarkModified()
@@ -636,7 +636,7 @@ public partial class SlidesWindow : Window
     {
         if (!_modified) return true;
         var name = _path == null ? "Untitled" : Path.GetFileName(_path);
-        int r = await Dialogs.Ask(this, "Red Star Slides", $"Save changes to {name}?", "Save", "Don't save", "Cancel");
+        int r = await Dialogs.Ask(this, "Slides", $"Save changes to {name}?", "Save", "Don't save", "Cancel");
         if (r == 0) return await SaveDeck(false);
         return r == 1;
     }
@@ -648,7 +648,7 @@ public partial class SlidesWindow : Window
         if (await ConfirmDiscard()) { _forceClose = true; Close(); }
     }
 
-    private static FilePickerFileType DeckType => new("Red Star presentation") { Patterns = new[] { "*.rsslides" } };
+    private static FilePickerFileType DeckType => new("Crimson Banner presentation") { Patterns = new[] { "*.rsslides" } };
 
     private async Task OpenDeck()
     {

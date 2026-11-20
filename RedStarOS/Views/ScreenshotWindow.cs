@@ -28,7 +28,7 @@ public sealed class AreaPickerWindow : Window
     {
         _shot = shot;
         Title = "Select an area";
-        SystemDecorations = SystemDecorations.None;
+        WindowDecorations = WindowDecorations.None;
         WindowState = WindowState.FullScreen;
         Topmost = true;
         Cursor = new Cursor(StandardCursorType.Cross);

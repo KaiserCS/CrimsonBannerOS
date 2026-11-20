@@ -43,7 +43,7 @@ public static class WaylandShell
             {
                 crashed = true;
                 File.Delete(Marker);
-                FellBackReason ??= "Red Star OS stopped while starting natively on Wayland last time, so this time it uses Xwayland.";
+                FellBackReason ??= "Crimson Banner OS stopped while starting natively on Wayland last time, so this time it uses Xwayland.";
             }
         }
         catch { }
@@ -127,7 +127,7 @@ public static class WaylandShell
         if (Path.GetFileNameWithoutExtension(self) == "dotnet") psi.ArgumentList.Add(typeof(WaylandShell).Assembly.Location);
         foreach (var a in args) psi.ArgumentList.Add(a);
         psi.Environment["REDSTAR_NATIVE_WAYLAND"] = "0";
-        psi.Environment["REDSTAR_WAYLAND_SHELL_FAILED"] = "Red Star OS couldn't start natively on Wayland (" + why.Message + "), so it uses Xwayland.";
+        psi.Environment["REDSTAR_WAYLAND_SHELL_FAILED"] = "Crimson Banner OS couldn't start natively on Wayland (" + why.Message + "), so it uses Xwayland.";
         try
         {
             using var p = Process.Start(psi)!;

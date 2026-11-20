@@ -21,7 +21,7 @@ if [ "$OFFLINE" = auto ]; then
 fi
 NORESTORE=()
 if [ "$OFFLINE" = 1 ]; then
-  echo "==> Packages from Red Star's own feed ($FEED)"
+  echo "==> Packages from Crimson Banner's own feed ($FEED)"
   tools/packages.sh restore >/dev/null
   NORESTORE=(--no-restore)
   ok "packages (offline, versions and hashes from packages.lock.json)"
@@ -73,10 +73,10 @@ else
   echo "(compositor tests skipped: they need wlroots 0.20, meson and Xwayland — Arch/CachyOS: pacman -S wlroots0.20 meson xorg-xwayland)"
 fi
 if pkg-config --exists webkitgtk-6.0 gtk4 json-glib-1.0 libsoup-3.0 2>/dev/null && command -v meson >/dev/null 2>&1; then
-  echo "==> Red Star Online (GTK 4 + WebKitGTK)"
+  echo "==> Crimson Online (GTK 4 + WebKitGTK)"
   if ! build_out="$(browser/build.sh 2>&1)"; then
     printf '%s\n' "$build_out" | grep -E "error|Error|FAILED" | head -n 30
-    echo "Red Star Online didn't build"
+    echo "Crimson Online didn't build"
     exit 1
   fi
   if ! out="$(meson test -C browser/build --print-errorlogs 2>&1)"; then
@@ -95,6 +95,6 @@ if pkg-config --exists webkitgtk-6.0 gtk4 json-glib-1.0 libsoup-3.0 2>/dev/null 
   fi
   ok "Red Star Online"
 else
-  echo "(Red Star Online skipped: it needs WebKitGTK 6.0, GTK 4, json-glib, libsoup 3 and meson — Arch/CachyOS: pacman -S webkitgtk-6.0 gtk4 json-glib libsoup3 meson)"
+  echo "(Crimson Online skipped: it needs WebKitGTK 6.0, GTK 4, json-glib, libsoup 3 and meson — Arch/CachyOS: pacman -S webkitgtk-6.0 gtk4 json-glib libsoup3 meson)"
 fi
 echo "All checks passed."

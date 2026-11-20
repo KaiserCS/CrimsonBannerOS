@@ -26,7 +26,7 @@ mkdir -p "$APPDIR/usr/bin"
 SOURCE=()
 FEED="$(tools/packages.sh where)"
 if [ -n "$(ls -A "$FEED" 2>/dev/null)" ] && [ -f RedStarOS/packages.lock.json ] && [ "${REDSTAR_ONLINE_PACKAGES:-0}" != 1 ]; then
-  echo "==> Packages from Red Star's own feed ($FEED)"
+  echo "==> Packages from Crimson Banner's own feed ($FEED)"
   SOURCE=(--source "$FEED" -p:NuGetAudit=false -p:REDSTAR_LOCKED=1)
 fi
 
@@ -46,9 +46,9 @@ chmod +x "$APPDIR/AppRun" "$APPDIR/usr/bin/RedStarOS"
 # Red Star Online (browser/, GTK 4 + WebKitGTK) is built and copied in by the publish step above when its libraries
 # are installed. WebKitGTK, GTK and GStreamer come from the system, not the AppImage.
 if [ -x "$APPDIR/usr/bin/redstar-online" ]; then
-  echo "==> Red Star Online included"
+  echo "==> Crimson Online included"
 else
-  echo "==> Red Star Online not included (install webkitgtk-6.0 gtk4 json-glib libsoup3 meson to build it)"
+  echo "==> Crimson Online not included (install webkitgtk-6.0 gtk4 json-glib libsoup3 meson to build it)"
 fi
 
 TOOL="${APPIMAGETOOL:-}"

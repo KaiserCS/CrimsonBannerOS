@@ -67,7 +67,7 @@ public static class InputIsolation
         else if (Which("Xephyr") is { } xe && x11)
         {
             exe = xe; mode = "xephyr";
-            serverArgs.AddRange(new[] { ":" + n, "-fullscreen", "-resizeable", "-title", "Red Star OS", "-noreset", "-nolisten", "tcp" });
+            serverArgs.AddRange(new[] { ":" + n, "-fullscreen", "-resizeable", "-title", "Crimson Banner OS", "-noreset", "-nolisten", "tcp" });
             if (sw > 0 && sh > 0) serverArgs.AddRange(new[] { "-screen", $"{sw}x{sh}" });    // one monitor, at its full size
         }
         if (exe == null)
@@ -160,7 +160,7 @@ public static class InputIsolation
 
     /// <summary>
     /// Use redstar-comp? REDSTAR_WAYLAND=1 / 0 decides; otherwise Settings → Desktop &amp; Taskbar → "Wayland compositor"
-    /// (only on top of another desktop: the Red Star session picks it at the login screen, "Red Star OS (Wayland)").
+    /// (only on top of another desktop: the Red Star session picks it at the login screen, "Crimson Banner OS (Wayland)").
     /// </summary>
     public static bool WaylandWanted(bool session)
     {
@@ -415,7 +415,7 @@ public static class InputIsolation
                 var cfgDir = Path.Combine(cfgHome, "redstaros");
                 Directory.CreateDirectory(cfgDir);
                 conf = Path.Combine(cfgDir, "picom.conf");
-                File.WriteAllText(conf, "# written by Red Star OS (used when you have no picom.conf of your own)\n"
+                File.WriteAllText(conf, "# written by Crimson Banner OS (used when you have no picom.conf of your own)\n"
                     + "fading = true;\nfade-in-step = 0.06;\nfade-out-step = 0.06;\nfade-delta = 8;\n"
                     + "shadow = " + (shadows ? "true" : "false") + ";\nshadow-radius = 18;\nshadow-opacity = 0.32;\nshadow-offset-x = -18;\nshadow-offset-y = -12;\n"
                     + "detect-client-opacity = true;\nunredir-if-possible = false;\n"
@@ -578,6 +578,6 @@ public static class InputIsolation
             File.AppendAllText(Path.Combine(cfg, "redstaros", "session.log"), $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {msg}\n");
         }
         catch { }
-        Console.Error.WriteLine("[Red Star OS] " + msg);
+        Console.Error.WriteLine("[Crimson Banner OS] " + msg);
     }
 }

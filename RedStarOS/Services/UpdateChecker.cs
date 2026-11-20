@@ -72,7 +72,7 @@ public static class UpdateChecker
             s.LastUpdateCheck = DateTime.Now;
             SettingsStore.Save();
             if (!r.Newer || r.Latest == s.SkippedVersion) return;
-            Notifier.Show("Update available", $"Red Star OS {r.Latest} is ready to install (you have {Current.ToString(3)}).", "settings",
+            Notifier.Show("Update available", $"Crimson Banner OS {r.Latest} is ready to install (you have {Current.ToString(3)}).", "settings",
                 new NotificationAction("Update…", () => Views.SettingsWindow.OpenPage("Software Updates")),
                 new NotificationAction("Skip this version", () => { SettingsStore.Current.SkippedVersion = r.Latest; SettingsStore.Save(); }));
         };

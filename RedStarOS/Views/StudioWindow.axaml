@@ -1,12 +1,12 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="RedStarOS.Views.StudioWindow"
-        Title="Red Star Studio"
+        Title="Studio"
         Width="780" Height="520" CanResize="False"
         WindowStartupLocation="CenterOwner">
   <Grid RowDefinitions="Auto,*,Auto" Margin="20">
     <Grid ColumnDefinitions="*,Auto">
       <StackPanel VerticalAlignment="Top" Spacing="4">
-        <TextBlock Text="Red Star Studio" FontSize="40" FontWeight="Light" />
+        <TextBlock Text="Studio" FontSize="40" FontWeight="Light" />
         <TextBlock Text="Office Software" FontSize="22" Classes="brand" FontWeight="Light" />
         <TextBlock Text="Version  1.1" Classes="caption" Margin="0,12,0,0" />
       </StackPanel>

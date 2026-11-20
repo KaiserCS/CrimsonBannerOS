@@ -37,7 +37,7 @@ public class SessionControlsTests
         Assert.Equal(new[] { "lock", "logoff", "restart", "shutdown", "taskmgr" }, session.Select(c => c.Action));
         Assert.Equal(new[] { "Lock", "Log off", "Restart", "Shut down", "Task Manager" }, session.Select(c => c.Label));
         // as an app on another desktop, Shut down only closes Red Star OS: the menu says so
-        Assert.Contains(PowerMenu.Choices(session: false), c => c.Label == "Close Red Star OS" && c.Action == "shutdown");
+        Assert.Contains(PowerMenu.Choices(session: false), c => c.Label == "Close Crimson Banner OS" && c.Action == "shutdown");
     }
 
     [Fact]

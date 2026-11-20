@@ -131,8 +131,8 @@ public static class SearchIndex
         var url = BrowserData.Normalize(q, BrowserData.SearchTemplate);
         bool looksLikeSite = !q.Contains(' ') && q.Contains('.') && !url.Contains("?q=") && !url.Contains("search");
         hits.Add(looksLikeSite
-            ? new Hit("web", "Open " + q, "Red Star Online", "globe", () => BrowserLauncher.Launch(url))
-            : new Hit("web", "Search the web for “" + q + "”", BrowserData.Settings.SearchEngine + " · Red Star Online", "search", () => BrowserLauncher.Launch(url)));
+            ? new Hit("web", "Open " + q, "Crimson Online", "globe", () => BrowserLauncher.Launch(url))
+            : new Hit("web", "Search the web for “" + q + "”", BrowserData.Settings.SearchEngine + " · Crimson Online", "search", () => BrowserLauncher.Launch(url)));
         return hits;
     }
 }

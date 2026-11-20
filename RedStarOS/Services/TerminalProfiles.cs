@@ -18,7 +18,7 @@ public sealed class TerminalProfile
     public string Name { get; set; } = "Default";
     public string FontFamily { get; set; } = "";              // empty = built-in monospace list
     public double FontSize { get; set; } = 14;
-    public string Scheme { get; set; } = "Red Star";
+    public string Scheme { get; set; } = "Crimson Banner";
     public string CursorShape { get; set; } = "Block";         // Block | Underline | Bar
     public bool CursorBlink { get; set; } = true;
     public string Command { get; set; } = "";                  // empty = the user's shell
@@ -66,9 +66,9 @@ public static class TerminalProfiles
 
     public static readonly TermScheme[] Schemes =
     {
-        new("Red Star", null, 0, 0),
-        new("Red Star Dark", RsDark, 0xE6E6E6, 0x1C1C1C),
-        new("Red Star Light", RsLight, 0x1A1A1A, 0xFFFFFF),
+        new("Crimson Banner", null, 0, 0),
+        new("Crimson Dark", RsDark, 0xE6E6E6, 0x1C1C1C),
+        new("Crimson Light", RsLight, 0x1A1A1A, 0xFFFFFF),
         new("Solarized Dark", Solarized, 0x839496, 0x002B36, 0x93A1A1),
         new("Solarized Light", Solarized, 0x657B83, 0xFDF6E3, 0x586E75),
         new("Tango", new uint[] { 0x2E3436, 0xCC0000, 0x4E9A06, 0xC4A000, 0x3465A4, 0x75507B, 0x06989A, 0xD3D7CF, 0x555753, 0xEF2929, 0x8AE234, 0xFCE94F, 0x729FCF, 0xAD7FA8, 0x34E2E2, 0xEEEEEC }, 0xD3D7CF, 0x2E3436),
@@ -109,7 +109,12 @@ public static class TerminalProfiles
     public static TerminalProfile? Find(string? name) => _s?.Profiles.FirstOrDefault(p => p.Name == name);
     public static TerminalProfile Get(string? name) => Settings.Profiles.FirstOrDefault(p => p.Name == name) ?? DefaultProfile;
     public static TerminalProfile DefaultProfile => Settings.Profiles.FirstOrDefault(p => p.Name == Settings.Default) ?? Settings.Profiles[0];
-    public static TermScheme Scheme(string name) => Schemes.FirstOrDefault(s => s.Name == name) ?? Schemes[0];
+    public static TermScheme Scheme(string name)
+    {
+        // the schemes' names before the rename to Crimson Banner OS (20 Nov 2026), as profiles saved them
+        name = name switch { "Red Star" => "Crimson Banner", "Red Star Dark" => "Crimson Dark", "Red Star Light" => "Crimson Light", _ => name };
+        return Schemes.FirstOrDefault(s => s.Name == name) ?? Schemes[0];
+    }
 
     public static string UniqueName(string baseName)
     {

@@ -1,4 +1,8 @@
-# Red Star OS (Project ANDROMEDA RSO 1.2) – Linux / AppImage port, v1.3
+# Crimson Banner OS (formerly Red Star OS, Project ANDROMEDA RSO 1.2) – Linux / AppImage port, v1.3
+
+> **Renamed 20 Nov 2026.** Everything you see says Crimson Banner OS, and the apps lost their "Red Star" prefix
+> (the browser is Crimson Online). Program names, folders and settings keep their old names (`redstar-comp`,
+> `redstar-online`, `~/.config/redstaros`, the `RedStarOS` project), so existing installs carry on unchanged.
 
 Avalonia 12 (12.1.6) / .NET 8 port of the original WinForms project, with a much more functional desktop.
 
@@ -11,8 +15,8 @@ Avalonia 12 (12.1.6) / .NET 8 port of the original WinForms project, with a much
 ## Desktop essentials
 - **Search everything** (Super, or the Start button): apps, settings pages, recent documents, files in your home
   folder (indexed in the background; hidden and build folders skipped), quick sums ("12*7" → copy the result),
-  and "Open site" / "Search the web" in Red Star Online.
-- **Red Star Online (GTK 4 + WebKitGTK, `browser/`):** a native browser in its own window, so typing,
+  and "Open site" / "Search the web" in Crimson Online.
+- **Crimson Online (GTK 4 + WebKitGTK, `browser/`):** a native browser in its own window, so typing,
   scrolling and the clipboard go straight to the page. Tabs, an address bar that opens addresses or searches,
   bookmarks bar, history, downloads (Ctrl+J), find in page (Ctrl+F), zoom per site, print, developer tools (F12),
   permissions asked once per site, private windows (Ctrl+Shift+N), and the ad and tracker blocker: EasyList,
@@ -20,26 +24,26 @@ Avalonia 12 (12.1.6) / .NET 8 port of the original WinForms project, with a much
   WebKit's tracking prevention and no third-party cookies. It shares bookmarks, history and settings with the shell
   (`~/.config/redstaros/browser-data.json`). Build it with `browser/build.sh` (Arch/CachyOS:
   `pacman -S webkitgtk-6.0 gtk4 json-glib libsoup3`, and for sound and video in pages
-  `gst-plugins-good gst-plugins-bad gst-libav`) and `install-session.sh` installs it; Red Star then uses it
-  for every link. Reader view (F9), Save as PDF (Ctrl+S), and in System Settings → Red Star Online: search engine,
+  `gst-plugins-good gst-plugins-bad gst-libav`) and `install-session.sh` installs it; Crimson Banner then uses it
+  for every link. Reader view (F9), Save as PDF (Ctrl+S), and in System Settings → Crimson Online: search engine,
   blocked sites, clearing browsing data, site permissions and imports from Firefox and the Chromium family. Not
   carried over from the old Electron browser: picture-in-picture (WebKitGTK has none), "Open page in Writer" and the
-  tray icon. Electron and npm are gone from Red Star entirely.
+  tray icon. Electron and npm are gone from Crimson Banner entirely.
 - **Other programs' tray icons:** Discord, Steam, Qt programs, update notifiers… show their icons in the taskbar's
   tray (freedesktop StatusNotifierItem): left click opens the program (or its menu, for Steam-style icons), right
   click its menu (DBusMenu, with submenus and ticks), middle click its second action, the wheel scrolls. In its own
-  session Red Star is the tray "watcher" programs register with; on KDE it joins KDE's. Red Star talks D-Bus with
+  session Crimson Banner is the tray "watcher" programs register with; on KDE it joins KDE's. Crimson Banner talks D-Bus with
   its own small client, no library. Old XEmbed-only tray icons (some Wine programs) aren't shown yet.
 - **Global shortcuts (X11):** Super = Start/search, Alt+Tab / Alt+Shift+Tab = window switcher (every window,
-  also non-Red Star programs), Super+←/→ snap, Super+↑ maximise, Super+↓ minimise, Super+D show desktop,
+  also non-Crimson Banner programs), Super+←/→ snap, Super+↑ maximise, Super+↓ minimise, Super+D show desktop,
   Super+E files, Super+T or Ctrl+Alt+T terminal, Super+V clipboard history, Super+L lock, Ctrl+Alt+Delete the
   Lock / Log off / Restart / Shut down / Task Manager menu, and the keyboard's volume keys (scrolling over the tray's
   volume icon does the same; the level shows above the tray). As the login session, Log off goes back to the login
   screen and Shut down / Restart turn off or restart the computer (systemd-logind); as an app on another desktop they
-  lock, close or restart Red Star OS.
-  Red Star has a single workspace (workspace switching was removed).
+  lock, close or restart Crimson Banner OS.
+  Crimson Banner has a single workspace (workspace switching was removed).
 - **Other programs on the taskbar**: every window of another program (Firefox, GIMP, LibreOffice, a Flatpak…)
-  gets a taskbar button that works like a Red Star app's — click to switch to it, click again to minimise, the
+  gets a taskbar button that works like a Crimson Banner app's — click to switch to it, click again to minimise, the
   running/active indicator, and right-click for New window, Restore, Minimize, Snap Left/Right, Fill Screen,
   Pin to taskbar and Close. It shows the program's own icon (from its window, or its icon theme when pinned) and is
   matched to its installed app (StartupWMClass, .desktop file name or program name), so installed programs can be
@@ -59,25 +63,25 @@ Avalonia 12 (12.1.6) / .NET 8 port of the original WinForms project, with a much
   reverts after 15 seconds unless you keep it.
 - **Printers** (CUPS): default printer, test page, print queue with cancel, add a printer (system-config-printer or the
   CUPS web page).
-- **Default apps**: Red Star app, the system default or any installed program for links, documents, spreadsheets,
+- **Default apps**: Crimson Banner app, the system default or any installed program for links, documents, spreadsheets,
   PDFs, pictures and media; optionally applied system-wide with xdg-mime.
 Every page says which tool to install when one is missing.
-## Keyboard and mouse stay in Red Star OS
+## Keyboard and mouse stay in Crimson Banner OS
 
-When Red Star OS is started on top of another desktop (GNOME, KDE, Xfce…), it now runs in **its own display**,
+When Crimson Banner OS is started on top of another desktop (GNOME, KDE, Xfce…), it now runs in **its own display**,
 full screen, like a virtual machine — so Super, Alt+Tab, hot corners, panels and every other key and click go to
-Red Star and not to the desktop underneath.
+Crimson Banner and not to the desktop underneath.
 
 | Host | How | Needs |
 |---|---|---|
 | Wayland | rootful Xwayland with `-host-grab` (the compositor's shortcuts are inhibited, the pointer is confined) | Xwayland 23.1+ (GNOME asks once to allow it) |
 | X11 | Xephyr; its keyboard/pointer grab is switched on automatically | Xephyr (`xserver-xephyr` / `xorg-x11-server-Xephyr` / `xorg-server-xephyr`) |
 
-* Windows get **Red Star title bars** from Red Star's own window manager, `redstar-wm` (C, Xlib — `wm/`): minimise,
+* Windows get **Crimson Banner title bars** from Crimson Banner's own window manager, `redstar-wm` (C, Xlib — `wm/`): minimise,
   maximise, close, double-click to maximise, drag to move (a maximised window restores under the pointer), edges and
   corners to resize, Alt+drag to move, Alt+right-drag to resize, Alt+F4 to close; full screen, snapping,
   dialogs centred on their window, the desktop always at the bottom and the taskbar's height kept free.
-  It's also used in the Red Star session, so no other window manager is needed (set `REDSTAR_WM=openbox` to use
+  It's also used in the Crimson Banner session, so no other window manager is needed (set `REDSTAR_WM=openbox` to use
   openbox instead). The build compiles it when gcc and the X11 headers are present; a prebuilt x86_64 binary is
   included. Its behaviour tests run on Xvfb: `wm/test/run-tests.sh` — 47 window-management checks plus 10
   click-delivery checks made the way Avalonia receives input (XInput 2): every click and wheel step arrives exactly
@@ -89,11 +93,11 @@ Red Star and not to the desktop underneath.
   screen, maximise and dragging through the app's own title bar). New windows that would land exactly on another
   are cascaded, and windows shown "without activation" (like the Alt+Tab panel) don't steal focus.
 * **GPU acceleration** (Settings → Diagnostics → Graphics acceleration: Automatic / Always GPU / Software only).
-  A display offers the GPU when its X server has DRI3 and the kernel a render node: Xwayland and the Red Star
+  A display offers the GPU when its X server has DRI3 and the kernel a render node: Xwayland and the Crimson Banner
   session do, Xephyr doesn't.
-  - **Red Star Online** renders pages and decodes video on the GPU (VA-API — Intel, AMD, NVIDIA with
+  - **Crimson Online** renders pages and decodes video on the GPU (VA-API — Intel, AMD, NVIDIA with
     nvidia-vaapi-driver) whenever the display allows it; after three GPU-process crashes in a day it uses the CPU.
-  - **Red Star's windows** use the GPU when a compositor runs too; otherwise (Xephyr, or no picom) they use the
+  - **Crimson Banner's windows** use the GPU when a compositor runs too; otherwise (Xephyr, or no picom) they use the
     software renderer, because GPU-drawn popups flicker without a compositor. `REDSTAR_RENDER=gpu|software` overrides.
   - The **compositor** (picom, else xcompmgr) runs on the GPU (`--backend glx`) when it can, otherwise `xrender`.
     Without any compositor, popups, menus, tooltips and the Alt+Tab panel are drawn square and opaque.
@@ -105,37 +109,37 @@ Red Star and not to the desktop underneath.
     tooltips, menus, popups, the desktop, the taskbar and see-through undecorated windows never get a shadow box.
     With another window manager the shadows go by window type instead. xcompmgr draws no shadows (it can't leave out
     tooltips). Accessibility → Reduce motion turns fades off. With a compositor running, popups, menus and the Alt+Tab panel are rounded and translucent again.
-  - Diagnostics shows what is in use: GPU access, compositor, renderer of Red Star's windows, and whether Red Star
+  - Diagnostics shows what is in use: GPU access, compositor, renderer of Crimson Banner's windows, and whether Crimson Banner
     Online has turned hardware video decoding or GPU drawing off after a page crash.
 * **Ctrl+Shift** releases the keyboard and mouse (to reach the other desktop), and captures them again.
-* **Shut down** Red Star OS to return to the desktop underneath.
+* **Shut down** Crimson Banner OS to return to the desktop underneath.
 * Turn it off in **Settings → Desktop & Taskbar** (it shows whether isolation is active), or start with
   `--no-isolate` / `REDSTAR_NO_ISOLATE=1`. As a full login session (`redstaros-session`) nothing is nested —
-  Red Star already owns the keyboard there.
-* If neither server is installed, Red Star starts as before and a notification says what to install.
+  Crimson Banner already owns the keyboard there.
+* If neither server is installed, Crimson Banner starts as before and a notification says what to install.
   Details are logged to `~/.config/redstaros/session.log`.
-* The clipboard of the desktop underneath is separate from Red Star's while isolated.
+* The clipboard of the desktop underneath is separate from Crimson Banner's while isolated.
 
 ## Wayland compositor: redstar-comp (experimental, phase 2)
 
-`compositor/redstar-comp.c` is Red Star's own Wayland compositor, built on wlroots 0.20. It takes the place of
+`compositor/redstar-comp.c` is Crimson Banner's own Wayland compositor, built on wlroots 0.20. It takes the place of
 redstar-wm **and** picom: the same title bars (red star, title, minimise / maximise / close, double-click to
 maximise), 3 px borders, resizing from the edges, soft shadows, Alt+drag / Alt+right-drag, drag to the top edge to
-maximise and to the sides to snap, Alt+F4. Red Star itself is unchanged: it still talks X11, through the Xwayland
+maximise and to the sides to snap, Alt+F4. Crimson Banner itself is unchanged: it still talks X11, through the Xwayland
 redstar-comp runs, and redstar-comp keeps what the shell reads — `_NET_WORKAREA` minus the taskbar,
 `_NET_FRAME_EXTENTS`, `_NET_MOVERESIZE_WINDOW` (Super+arrow snapping), `_NET_CLOSE_WINDOW`, the client list and the
-compositing-manager selection. Native Wayland apps also work: they get a Red Star title bar unless they draw
+compositing-manager selection. Native Wayland apps also work: they get a Crimson Banner title bar unless they draw
 their own (Chrome's tab strip, apps that ask for client-side decorations), so there's never a second set of buttons.
 `REDSTAR_FORCE_FRAMES=1` frames every app anyway.
 
 * **Build:** `sudo pacman -S --needed wlroots0.20 meson ninja xorg-xwayland xcb-util-wm` then `compositor/build.sh`.
   `dotnet build` also builds it when wlroots 0.20 and meson are there, and copies `redstar-comp` next to RedStarOS.
-* **Use it:** Settings → Desktop & Taskbar → *Run Red Star OS in its own Wayland compositor*, or start with
+* **Use it:** Settings → Desktop & Taskbar → *Run Crimson Banner OS in its own Wayland compositor*, or start with
   `REDSTAR_WAYLAND=1`. On another desktop it opens full screen, like keyboard isolation: on Wayland it asks the
   desktop to pass Super, Alt+Tab and its other shortcuts through (keyboard-shortcuts-inhibit; KDE and GNOME may ask
   once), on X11 it asks the window manager for full screen. `REDSTAR_COMP_WINDOWED=1` (or `redstar-comp -w`) gives an
   ordinary window instead. For the full session, build redstar-comp (`compositor/build.sh`) and run
-  `sudo ./install-session.sh`: it adds **Red Star OS (Wayland)** to the login screen (on KDE, SDDM's session menu at
+  `sudo ./install-session.sh`: it adds **Crimson Banner OS (Wayland)** to the login screen (on KDE, SDDM's session menu at
   the bottom left) next to the X11 session. Without redstar-comp built it leaves the Wayland entry out.
 * Ctrl+Alt+Backspace quits it; Ctrl+Alt+F1…F12 switch consoles on the real hardware. Messages go to
   `~/.config/redstaros/session.log`.
@@ -152,25 +156,25 @@ their own (Chrome's tab strip, apps that ask for client-side decorations), so th
   work too: wlr-randr and kanshi (output management), grim (screencopy), wl-clipboard (data control).
   **Print** saves a screenshot of every screen and **Shift+Print** of the active window to `~/Pictures/Screenshots`
   (grim inside redstar-comp; scrot, maim or ImageMagick on X11). Other apps' screenshots and screen sharing (browsers,
-  OBS, video calls) go through xdg-desktop-portal-wlr: Red Star writes `~/.config/xdg-desktop-portal/redstar-portals.conf`
-  for it, and in the Red Star (Wayland) session points the session's services at the compositor. Install them with
+  OBS, video calls) go through xdg-desktop-portal-wlr: Crimson Banner writes `~/.config/xdg-desktop-portal/redstar-portals.conf`
+  for it, and in the Crimson Banner (Wayland) session points the session's services at the compositor. Install them with
   `sudo pacman -S --needed grim xdg-desktop-portal-wlr` (Debian/Ubuntu: `grim xdg-desktop-portal-wlr`).
   Programs inside redstar-comp run natively on Wayland (System Settings → "Run other programs natively on Wayland",
-  on by default), since OBS's "Screen Capture (PipeWire)" and Discord's screen share only work that way. Red Star
+  on by default), since OBS's "Screen Capture (PipeWire)" and Discord's screen share only work that way. Crimson Banner
   also writes `~/.config/xdg-desktop-portal-wlr/config` (when you have none) with `chooser_type=none`, because the
   usual screen pickers (slurp, wofi) need layer-shell, which redstar-comp doesn't have yet.
-  Apps can now also hand GPU buffers to the compositor (linux-dmabuf), so Xwayland draws Red Star's windows on the GPU.
-* **Red Star natively on Wayland (phase 4, second part, experimental):** Settings → Desktop & Taskbar → *Draw Red
+  Apps can now also hand GPU buffers to the compositor (linux-dmabuf), so Xwayland draws Crimson Banner's windows on the GPU.
+* **Crimson Banner natively on Wayland (phase 4, second part, experimental):** Settings → Desktop & Taskbar → *Draw Red
   Star's own windows natively on Wayland* (or `REDSTAR_NATIVE_WAYLAND=1`; `0` forces Xwayland). Inside redstar-comp
   the shell then uses Avalonia's Wayland backend (Avalonia.Wayland) instead of Xwayland. Plain Wayland has no window
   positions or desktop/dock window types, so the shell tells redstar-comp over its connection which window is the
   desktop and how tall the taskbar is (`role` lines); redstar-comp keeps the desktop at the bottom and full screen,
   reserves the taskbar's space, and draws the desktop's menus (Start menu, tray panels) above other windows. Apps
-  are brought to the front through xdg-activation. Each of Red Star's windows is named to redstar-comp once with a token (an
+  are brought to the front through xdg-activation. Each of Crimson Banner's windows is named to redstar-comp once with a token (an
   invisible marker title for a moment, never shown), so the taskbar, Alt+Tab and Super+arrows tell its windows apart
-  even when titles repeat. Avalonia doesn't fall back to X11 by itself, so Red Star does: a
+  even when titles repeat. Avalonia doesn't fall back to X11 by itself, so Crimson Banner does: a
   start that fails is redone through Xwayland at once, and a crash before the desktop has been up for 8 seconds makes
-  the next start use Xwayland; a notification says which. Known differences from Xwayland: Red Star's own windows open
+  the next start use Xwayland; a notification says which. Known differences from Xwayland: Crimson Banner's own windows open
   centred instead of where they were last (Wayland apps can't place themselves), and other programs are unaffected
   (X11 apps still go through Xwayland).
 * **Tests:** `compositor/test/run-tests.sh` runs it on wlroots' virtual screen (no monitor or GPU) with two test
@@ -190,7 +194,7 @@ their own (Chrome's tab strip, apps that ask for client-side decorations), so th
 * **Welcome** (first sign-in; Settings → Appearance → “Show the welcome again”): theme and accent with live previews,
   wallpaper, text size / high contrast / reduced motion / system sounds, importing from other browsers, and a page of
   the shortcuts worth knowing.
-* **Import from other browsers** (welcome, or Red Star Online → Settings): bookmarks and history from Firefox
+* **Import from other browsers** (welcome, or Crimson Online → Settings): bookmarks and history from Firefox
   (incl. Snap/Flatpak, LibreWolf) and Chrome, Chromium, Brave, Edge, Vivaldi, Opera. Bookmarks work everywhere
   (Firefox's `.jsonlz4` backups are decoded natively); history needs the `sqlite3` program. Databases are copied
   first, so the other browser can stay open. Nothing is duplicated.
@@ -219,7 +223,7 @@ their own (Chrome's tab strip, apps that ask for client-side decorations), so th
   Paste into folder, Duplicate, Rename, Pin to sidebar, Copy path, Move to Trash, Properties; on empty space: New
   folder, New text document, Paste, Select all.
 * **Tabs** (Ctrl+T new, Ctrl+W close, Ctrl+Tab / Ctrl+PageUp/PageDown switch; middle-click a folder, Ctrl+Enter or
-  right-click → Open in new tab): the same tab strip as Red Star Online and Terminal, shown from two tabs on; every tab
+  right-click → Open in new tab): the same tab strip as Crimson Online and Terminal, shown from two tabs on; every tab
   keeps its own back/forward history.
 * **Copying and moving** run in the background with a progress panel (name, bytes, item n of m) and **Cancel** — a
   cancelled copy leaves no half-copied files. Moves on the same drive are instant renames. When names already exist
@@ -241,10 +245,10 @@ their own (Chrome's tab strip, apps that ask for client-side decorations), so th
   named after the archive), **Extract to…**, **Compress → name.zip / name.tar.gz**. All of it shows progress, can be
   cancelled and undone. zip is built in; tar archives use `tar`; 7z needs p7zip or bsdtar; rar needs unrar, 7-Zip or
   bsdtar (a message says what to install).
-* **Open with** (right-click a file): its Red Star app, the installed programs that say they open that kind of file
+* **Open with** (right-click a file): its Crimson Banner app, the installed programs that say they open that kind of file
   (from their `.desktop` MimeType and the system's shared MIME database), and **Other application…** — a searchable
   list of every program with **Always use this app for …** (the same choice as Settings → Default apps).
-* **Drag and drop**: drag items to another folder, tab, breadcrumb, sidebar place, Red Star window (Writer, Image
+* **Drag and drop**: drag items to another folder, tab, breadcrumb, sidebar place, Crimson Banner window (Writer, Image
   Viewer, Video…), the Trash, or **Starred**; dropping on a folder in the list puts them inside it. Like other file
   managers it moves on the same drive and copies to another one (Ctrl: copy, Shift: move); files dropped from other
   programs are accepted. **Rubber-band selection**: drag on empty space (Ctrl adds to the selection; the list scrolls
@@ -255,13 +259,13 @@ their own (Chrome's tab strip, apps that ask for client-side decorations), so th
   **Network** with a disconnect button. **Cloud** lists your **rclone** remotes (set up once with `rclone config`):
   click to mount one in `~/Cloud/<name>` (`--vfs-cache-mode writes`). Removable drives under Devices have an **eject**
   button (unmounts and powers off a USB stick).
-* **Recent** (files opened in Red Star and in other apps, from `recently-used.xbel`) and **Starred** (right-click →
+* **Recent** (files opened in Crimson Banner and in other apps, from `recently-used.xbel`) and **Starred** (right-click →
   Star, or drop on Starred in the sidebar; stars follow renames and moves; starred items show a ★).
 * **Details panel** (F9 or the panel button): a larger preview, kind, size (folders counted), picture dimensions,
   location, dates, MIME type, which program opens it, a Star toggle; for several items the total size and kinds; with
   nothing selected, the folder itself.
 * **Open / Save dialogs in every app** (Writer, Sheets, Slides, Paint, Image Viewer, Video, Studio, the browser,
-  wallpaper and account pictures) are Red Star's own, built like Files: the same sidebar (Home, Recent, Starred,
+  wallpaper and account pictures) are Crimson Banner's own, built like Files: the same sidebar (Home, Recent, Starred,
   the standard folders, your pinned folders, drives, connected servers and cloud drives), path bar (click it or
   Ctrl+L to type a location, `~` works), icons, sorting, search, hidden-file setting (Ctrl+H) and New folder. They
   open in the folder that was last open in Files or in another dialog, so Files and the apps always agree on where
@@ -273,7 +277,7 @@ their own (Chrome's tab strip, apps that ask for client-side decorations), so th
 
 ## Accessibility and identity
 
-* **Settings → Accessibility**: size of text and controls (100–200 %, used from the next sign-in, Red Star
+* **Settings → Accessibility**: size of text and controls (100–200 %, used from the next sign-in, Crimson Banner
   Online included), high contrast (black-on-white / white-on-black text and borders, thick yellow or blue focus outline;
   follows Light/Dark), large mouse pointer, reduce motion (no splash fade, no blinking terminal cursor, web pages get
   `prefers-reduced-motion`), system sounds with previews, keyboard notes and a link to all shortcuts.
@@ -287,7 +291,7 @@ their own (Chrome's tab strip, apps that ask for client-side decorations), so th
   original at full size to `~/Pictures/Wallpapers` (Openverse credits go to `credits.txt` there), so it works
   offline and appears under **My wallpapers**, which also browses any folder and runs the slideshow.
   Desktop right-click → “Find Wallpapers Online…”.
-* **Red Star collection** (My wallpapers → “Red Star collection (4K)”): five wallpapers — Dawn, Night, Rays, Snow,
+* **Crimson Banner collection** (My wallpapers → “Crimson Banner collection (4K)”): five wallpapers — Dawn, Night, Rays, Snow,
   Ribbon — at 3840 × 2160, rendered with supersampled edges and no grain. Large wallpapers are scaled down once, in
   high quality, to the screen's size, so they're sharp on 1080p and 1440p screens too.
 * **Start-up splash** over the desktop while it loads, and **system sounds** (start-up, sign-in, notification,
@@ -296,7 +300,7 @@ their own (Chrome's tab strip, apps that ask for client-side decorations), so th
 ## Checking a build
 `./check.sh` builds the shell and runs the automated checks: every window is opened and closed headlessly
 (catches XAML that compiles but crashes at runtime), the terminal emulator and a real pty, browser data,
-and, when their libraries are installed, redstar-wm, redstar-comp and Red Star Online (its unit tests and a
+and, when their libraries are installed, redstar-wm, redstar-comp and Crimson Online (its unit tests and a
 self-test of the real browser inside redstar-comp). `./check.sh --screenshots`
 also draws every window (Skia) into `screenshots/` — open `screenshots/index.html` to see them all side by side.
 
@@ -308,7 +312,7 @@ also draws every window (Skia) into `screenshots/` — open `screenshots/index.h
   click tests run on Xvfb, then a real GTK program under it (**session-screenshots** artifact).
 * **Wayland compositor** — in an Arch Linux container (for wlroots 0.20): redstar-comp must compile with
   warnings as errors, then its behaviour tests run headless through Xwayland.
-* **Red Star Online** — in an Arch Linux container: the browser's unit tests, then its self-test (the real browser
+* **Crimson Online** — in an Arch Linux container: the browser's unit tests, then its self-test (the real browser
   headless inside redstar-comp: pages, tabs, the blocker, downloads, reader view, Save as PDF).
 
 A red mark means a change broke the build, a test or a window; the failing step's log says which.
@@ -316,13 +320,13 @@ A red mark means a change broke the build, a test or a window; the failing step'
 ## Build
 
 ```bash
-sudo pacman -S dotnet-sdk-8.0 webkitgtk-6.0 gtk4 json-glib libsoup3 meson   # the shell and Red Star Online
+sudo pacman -S dotnet-sdk-8.0 webkitgtk-6.0 gtk4 json-glib libsoup3 meson   # the shell and Crimson Online
 ./build-appimage.sh                  # -> dist/RedStarOS-x86_64.AppImage
 ./build-appimage.sh arm64            # on an arm64 host
 dotnet run --project RedStarOS       # development run, no AppImage
 ```
 
-**Offline builds, from Red Star's own package feed.** Package versions and their hashes are fixed in
+**Offline builds, from Crimson Banner's own package feed.** Package versions and their hashes are fixed in
 `packages.lock.json`. `tools/packages.sh fill` downloads them once (about 1.7 GB with .NET's runtime for x64 and
 arm64) into `~/.local/share/redstaros/packages`; after that `./check.sh` and `./build-appimage.sh` restore from it
 alone and need no network. `tools/packages.sh export feed.tar` / `import feed.tar` carry it to another machine.
@@ -333,11 +337,11 @@ Optional self-update support: `GH_REPO=user/repo ./build-appimage.sh` embeds upd
 in CI and attaches both files to a GitHub release when you push a `v*` tag.
 
 Login-screen sessions: `sudo ./install-session.sh` (it finds what you built: the newest AppImage in `dist/`, else the
-`dotnet build` output; or give it an AppImage, the RedStarOS program or its folder). It adds **Red Star OS** (X11,
-with redstar-wm) and, when redstar-comp is built, **Red Star OS (Wayland)**. `sudo ./uninstall-session.sh` takes them
+`dotnet build` output; or give it an AppImage, the RedStarOS program or its folder). It adds **Crimson Banner OS** (X11,
+with redstar-wm) and, when redstar-comp is built, **Crimson Banner OS (Wayland)**. `sudo ./uninstall-session.sh` takes them
 off the login screen again (`--dry-run` lists what it would remove; your settings and the program itself stay).
 
-## Red Star Online – the browser (`browser/`)
+## Crimson Online – the browser (`browser/`)
 C, GTK 4 and WebKitGTK: its own native window on X11 and Wayland. See the feature list at the top. Its messages go to
 `~/.config/redstaros/online.log`; after a page crash it turns hardware video decoding off, then GPU drawing
 (`~/.cache/redstaros/online/`; `REDSTAR_ONLINE_HWDECODE` / `REDSTAR_ONLINE_GPU` override). Tests: `meson test -C
@@ -345,13 +349,13 @@ browser/build` and `browser/test/run-selftest.sh` (the real browser, headless in
 Electron browser and its hidden "web engine" were removed on 20 Nov 2026.
 
 ## Fit and finish round (apps and polish)
-- **New apps:** *Task Manager* (CPU / memory / uptime, filter, sort, End task), *Clock* (stopwatch with laps, countdown timer that notifies when done; keep its window open), *Red Star Paint* (pen, eraser, colours, size, undo, save PNG).
+- **New apps:** *Task Manager* (CPU / memory / uptime, filter, sort, End task), *Clock* (stopwatch with laps, countdown timer that notifies when done; keep its window open), *Paint* (pen, eraser, colours, size, undo, save PNG).
 - **Settings** is one resizable window with a sidebar. Appearance, Desktop & Taskbar (labels, 12/24 h clock, Do Not Disturb, pinned apps) and Games are pages; Network, Account, Wallpapers and Updates open their existing windows.
 - **Login** has a frosted card, big clock, shake on a wrong password, Enter to sign in (also when no password is set), Restart / Shut down.
 - **Notes**: search, pinning, previews and dates, "Saving... / Saved", word count, Ctrl+N, delete with Undo.
 - **Camera**: self-timer (3 / 10 s), recording timer badge, red recording icon in the app tray (stop from there), strip of recent photos that open in Image Viewer.
 - **Ping Pong**: resizable playfield, Solo and Versus-computer (first to 7) modes, keyboard + mouse, pause (P/Space, auto-pause on focus loss), saved scores.
-- **Red Star Terminal** (native, `Views/TerminalWindow`, `Views/TerminalView`, `Services/TermEmulator`, `Services/Pty`): the shell runs on a real pseudo-terminal opened through libc and started with `setsid -c` (python3 as a fallback), so job control, Ctrl+C/Z and resizing work; no Electron, xterm.js or native module. The emulator is xterm-compatible: 16/256/true colour, bold/italic/underline/strike, alternate screen (vim, htop, less, mc), mouse reporting (incl. SGR), bracketed paste, focus events, cursor shapes, OSC titles, OSC 7 folders, OSC 8 links, OSC 52 copy, wide characters and emoji, 10 000 lines of scrollback that re-wrap when the window is resized. Tabs (Ctrl+Shift+T / W, Ctrl+PgUp/PgDn, Alt+1-9), copy / paste (Ctrl+Shift+C / V, Ctrl/Shift+Insert, middle-click), word / line selection, find (Ctrl+Shift+F), Ctrl+click opens links in Red Star Online, clear scrollback (Ctrl+Shift+K), zoom (Ctrl+= / - / 0, remembered), full screen (F11), follows the theme and accent. New tabs open in the current tab's folder; tab titles show the folder or the running program; closing a tab or the window asks first when a program is still running. "Open Terminal" on a folder and apps with `Terminal=true` open in a new tab. Split panes: Ctrl+Shift+E (right) / Ctrl+Shift+O (down), drag the divider to resize, Alt+Shift+arrows to move between panes, Ctrl+Shift+Z maximises / restores a pane, Ctrl+Shift+W closes a pane (and the tab with its last pane). Profiles (menu → Profiles and colours…, or ▾ next to ＋ to open a tab with one): font and size, colour scheme (Red Star — follows the desktop theme — plus Red Star Dark / Light, Solarized Dark / Light, Tango, Dracula, Gruvbox, Nord, Green on Black), cursor shape and blinking, a command instead of the shell, start folder, scrollback length, visual bell, bold-as-bright; edits apply to open terminals at once (saved in `terminal.json`). Input methods (fcitx / IBus) show the text being composed at the cursor and place their candidate window there.
+- **Terminal** (native, `Views/TerminalWindow`, `Views/TerminalView`, `Services/TermEmulator`, `Services/Pty`): the shell runs on a real pseudo-terminal opened through libc and started with `setsid -c` (python3 as a fallback), so job control, Ctrl+C/Z and resizing work; no Electron, xterm.js or native module. The emulator is xterm-compatible: 16/256/true colour, bold/italic/underline/strike, alternate screen (vim, htop, less, mc), mouse reporting (incl. SGR), bracketed paste, focus events, cursor shapes, OSC titles, OSC 7 folders, OSC 8 links, OSC 52 copy, wide characters and emoji, 10 000 lines of scrollback that re-wrap when the window is resized. Tabs (Ctrl+Shift+T / W, Ctrl+PgUp/PgDn, Alt+1-9), copy / paste (Ctrl+Shift+C / V, Ctrl/Shift+Insert, middle-click), word / line selection, find (Ctrl+Shift+F), Ctrl+click opens links in Crimson Online, clear scrollback (Ctrl+Shift+K), zoom (Ctrl+= / - / 0, remembered), full screen (F11), follows the theme and accent. New tabs open in the current tab's folder; tab titles show the folder or the running program; closing a tab or the window asks first when a program is still running. "Open Terminal" on a folder and apps with `Terminal=true` open in a new tab. Split panes: Ctrl+Shift+E (right) / Ctrl+Shift+O (down), drag the divider to resize, Alt+Shift+arrows to move between panes, Ctrl+Shift+Z maximises / restores a pane, Ctrl+Shift+W closes a pane (and the tab with its last pane). Profiles (menu → Profiles and colours…, or ▾ next to ＋ to open a tab with one): font and size, colour scheme (Crimson Banner — follows the desktop theme — plus Crimson Dark / Light, Solarized Dark / Light, Tango, Dracula, Gruvbox, Nord, Green on Black), cursor shape and blinking, a command instead of the shell, start folder, scrollback length, visual bell, bold-as-bright; edits apply to open terminals at once (saved in `terminal.json`). Input methods (fcitx / IBus) show the text being composed at the cursor and place their candidate window there.
 
 ## Shell redesign: one design system, one taskbar, two trays
 
@@ -361,11 +365,11 @@ Electron browser and its hidden "web engine" were removed on 20 Nov 2026.
 - With more than 5 windows the buttons collapse to icons (titles move to tooltips).
 - The old fixed Folder / Power / Wallpaper / Calendar buttons are gone: Folder is a pinned app, Power is in Start and Quick Settings, wallpaper commands are in the desktop right-click menu and Quick Settings, Calendar opens from the clock.
 
-**App tray** (new, left of the divider) – the notification area for background things. It always holds the **notification centre** bell (unread dot, history, Do Not Disturb, Clear all). Apps add their own icons: Red Star Video shows a ▶/⏸ icon with Play/Pause, Previous, Next, Show and Close while media is loaded. More than 4 icons spill into a ⌃ overflow flyout.
+**App tray** (new, left of the divider) – the notification area for background things. It always holds the **notification centre** bell (unread dot, history, Do Not Disturb, Clear all). Apps add their own icons: Video shows a ▶/⏸ icon with Play/Pause, Previous, Next, Show and Close while media is loaded. More than 4 icons spill into a ⌃ overflow flyout.
 
 **System tray** – network / volume / battery in one button that opens **Quick Settings**: profile, network tile, dark-mode tile, Do Not Disturb tile, next wallpaper, volume slider with mute, battery, Log off / Restart / Shut down. The **clock** (HH:mm + date) opens a calendar panel with today's agenda.
 
-**Design system** (`Styles/Shell.axaml`) – shared tokens and classes used by every window: `h1 / h2 / caption / eyebrow / brand` text, `card`, `primary / flat / tile / hubtile` buttons, theme-aware borders/hover colours, accent brushes driven by Settings → Appearance. `Services/AppIcons.cs` gives each app one glyph + colour used by the taskbar, Start menu, notifications, toasts and Settings. Hard-coded colours/sizes in the app windows were replaced, window titles now match the app names (e.g. "RSMessanger" → "Red Star Messenger").
+**Design system** (`Styles/Shell.axaml`) – shared tokens and classes used by every window: `h1 / h2 / caption / eyebrow / brand` text, `card`, `primary / flat / tile / hubtile` buttons, theme-aware borders/hover colours, accent brushes driven by Settings → Appearance. `Services/AppIcons.cs` gives each app one glyph + colour used by the taskbar, Start menu, notifications, toasts and Settings. Hard-coded colours/sizes in the app windows were replaced, window titles now match the app names (e.g. "RSMessanger" → "Messenger").
 
 ## Start menu (redesigned)
 Opens with the Start button, **Win** or **Ctrl+Esc**. Search box on top, category rail on the left (All apps, Recent, Office, Media, Games, Online, Utilities, System, then your installed Linux apps grouped by type), app list with coloured icon tiles on the right, and a footer with your avatar, Settings and a Power menu (Log Off / Shutdown / Restart).
@@ -373,8 +377,8 @@ Opens with the Start button, **Win** or **Ctrl+Esc**. Search box on top, categor
 - *Recent* remembers your last 8 launches.
 - Fixes: the old menu was wider than the flyout's built-in 456 px limit (clipped), showed double scrollbars, and had cramped, unaligned rows.
 
-## Red Star Video (native, LibVLC)
-A native Avalonia player built on **LibVLCSharp** (Start menu → **RSMedia → Red Star Video**; also opens for video/audio files). It plays everything VLC does (MKV/AVI/WMV/FLV/HEVC included), so the old "can't decode" gaps are gone.
+## Video (native, LibVLC)
+A native Avalonia player built on **LibVLCSharp** (Start menu → **RSMedia → Video**; also opens for video/audio files). It plays everything VLC does (MKV/AVI/WMV/FLV/HEVC included), so the old "can't decode" gaps are gone.
 
 - **Needs libvlc on the machine**: `sudo apt install vlc libvlc-dev` (Debian/Ubuntu) or your distro's equivalent. If it is missing, opening a video says what to install.
 - Playlist (add/remove/clear, click to play, no duplicates, drag and drop), repeat off/all/one, auto-advance, seek bar, volume + mute, speed 0.25x–3x, subtitles (`.srt .vtt .ass .ssa .sub` auto-loaded beside the file; **S** loads another, **V** toggles), resume position per file, error message with *Open with system player*.
@@ -384,9 +388,9 @@ A native Avalonia player built on **LibVLCSharp** (Start menu → **RSMedia → 
 - Video frames are decoded by libvlc into memory and drawn by Avalonia itself (no native child window), so the picture is inline on both X11 and Wayland. Large videos are scaled down to at most 1920 px wide for display.
 
 ## Changes in this revision
-- **Start menu has two sections**, switched with two icon tabs above the category rail — the red star for Red Star
+- **Start menu has two sections**, switched with two icon tabs above the category rail — the red star for Crimson Banner
   apps, your distribution's own logo (os-release `LOGO=`, else a terminal glyph) for Linux apps (the last one
-  used is remembered): *Red Star* — All Red Star apps, Recent, Office, Media, Games, Online, Utilities, System;
+  used is remembered): *Crimson Banner* — All Crimson Banner apps, Recent, Office, Media, Games, Online, Utilities, System;
   *Linux* — All Linux apps, Recent, and the installed programs grouped as Internet / Multimedia / Graphics / Office /
   Development / Games / … (Other last), shown with their own icons. Each section keeps its own Recent list. Search
   covers both and groups the results under RED STAR APPS, LINUX APPS (the open section first) and FILES, SETTINGS AND
@@ -414,7 +418,7 @@ A native Avalonia player built on **LibVLCSharp** (Start menu → **RSMedia → 
 - **Messenger** – history saved locally.
 
 **Shell**
-- Start menu with search across Red Star apps **and every installed Linux app** (`.desktop` files).
+- Start menu with search across Crimson Banner apps **and every installed Linux app** (`.desktop` files).
 - Desktop icons from `~/Desktop`, right-click menu (wallpaper, new folder, terminal, settings).
 - Tray: see *Shell redesign* above (app tray + system tray + quick settings); in-app toast notifications with history.
 
@@ -424,9 +428,9 @@ A native Avalonia player built on **LibVLCSharp** (Start menu → **RSMedia → 
 - **Drag-to-edge snapping:** snapping is by taskbar menu and Alt+arrows. A window's own maximise button covers the taskbar (use *Fill Screen* instead).
 - **MVVM refactor:** the shared state lives in small static services instead; a full MVVM rewrite would add risk without changing behaviour.
 - **Wayland note:** run under XWayland; window position restore and snapping depend on the compositor honouring client positions (GNOME/Wayland may ignore them).
-- Power menu: Log Off shows the lock screen; Shutdown/Restart affect only Red Star OS, not the computer.
+- Power menu: Log Off shows the lock screen; Shutdown/Restart affect only Crimson Banner OS, not the computer.
 
-## Red Star Paint (rebuilt)
+## Paint (rebuilt)
 
 Paint is now a real raster editor (SkiaSharp, already bundled with Avalonia) instead of a stroke list:
 
@@ -438,15 +442,15 @@ Paint is now a real raster editor (SkiaSharp, already bundled with Avalonia) ins
 
 Building requires `AllowUnsafeBlocks` (already set in `RedStarOS.csproj`).
 
-## Image Viewer (rebuilt) and Red Star Slides (new)
+## Image Viewer (rebuilt) and Slides (new)
 
 **Image Viewer:** browses the whole folder (←/→, Home/End, thumbnail strip), fit / 100% / wheel zoom anchored on the cursor, drag to pan, double-click to toggle fit and 100%, rotate and flip (R, Shift+R, H, V — EXIF orientation is honoured), slideshow (S), full screen (F11), rename (F2), move to Trash (Del), set as wallpaper, copy path, *Edit in Paint*, and "Save rotated/flipped image". Drag a picture onto the window to open it.
 
-**Red Star Slides** (the missing third Studio app): slide list with thumbnails, five layouts, seven themes, text boxes, 18 shapes, pictures (embedded), move / resize / rotate with smart guides, in-place text editing, fonts, size, bold / italic / underline, bullets, alignment, fill / outline colours, z-order, speaker notes, per-slide transitions (None, Fade, Push), undo / redo, and a full-screen slide show (F5, Shift+F5). Files are saved as `.rsslides` (JSON with embedded pictures); export to PDF or PNG images from the File menu.
+**Slides** (the missing third Studio app): slide list with thumbnails, five layouts, seven themes, text boxes, 18 shapes, pictures (embedded), move / resize / rotate with smart guides, in-place text editing, fonts, size, bold / italic / underline, bullets, alignment, fill / outline colours, z-order, speaker notes, per-slide transitions (None, Fade, Push), undo / redo, and a full-screen slide show (F5, Shift+F5). Files are saved as `.rsslides` (JSON with embedded pictures); export to PDF or PNG images from the File menu.
 
 ## Writer, Sheets and Studio (round 3)
 
-**Red Star Writer** is now a fully native Avalonia word processor (no Electron). Its own rich-text engine lives in `Views/DocView.cs` (document model in `Services/RichDoc.cs`).
+**Writer** is now a fully native Avalonia word processor (no Electron). Its own rich-text engine lives in `Views/DocView.cs` (document model in `Services/RichDoc.cs`).
 
 - Formatting: paragraph styles (Normal, Heading 1–3, Quote, Code), font, size, bold/italic/underline/strike, super/subscript, text colour, highlight, clear formatting, alignment (left/centre/right/justify), bullets, numbering, indent/outdent, line spacing, links (Ctrl+click opens), pictures (insert, drop, paste), tables (Tab moves between cells, Tab in the last cell adds a row, row/column menu), horizontal line, page break.
 - Documents: tabs with an unsaved dot, caret and scroll restored per tab, autosave crash recovery every 4 s, undo/redo, find/replace (highlighted matches, match case, replace all), word/character count, zoom 50–250 % (Ctrl+wheel), page view (A4/Letter with page guides and page numbers) or web view.
@@ -455,7 +459,7 @@ Building requires `AllowUnsafeBlocks` (already set in `RedStarOS.csproj`).
 - Not there: spell-check underlines (Avalonia has no spell-checker; install nothing, it is simply not there), table cells hold one paragraph each, pictures are their own block (not inline with text), and column widths in tables are equal.
 - Not included: per-tab undo history (undo restarts when you switch tabs), headers / footers other than page numbers, comments and tracked changes.
 
-**Red Star Sheets** was rebuilt around a custom-drawn grid, so only the visible cells are ever created.
+**Sheets** was rebuilt around a custom-drawn grid, so only the visible cells are ever created.
 - 100,000 rows × 702 columns (A–ZZ), resizable columns and rows (double-click a column border to fit), freeze panes, Ctrl+arrow jumps, Shift-selection, header selection, fill handle (copies, number series, "Item 1, Item 2" text series, formulas shift their references), Ctrl+D / Ctrl+R.
 - Formatting: bold / italic / underline, text and fill colours, borders, alignment, number formats (number, thousands, currency, percent, date, text) with decimal buttons. Typing `12%`, `$5` or `2025-01-31` sets the format for you.
 - Clipboard as tab-separated text (works with other programs), internal copy keeps formatting and moves relative references; cut moves cells. Undo / redo (200 steps).
@@ -467,9 +471,9 @@ Building requires `AllowUnsafeBlocks` (already set in `RedStarOS.csproj`).
 **Studio** now shows recent documents from Writer, Sheets and Slides, plus **Open file…** and three "New" buttons. The File Manager and any "open" action route `.docx .txt .md .html` to Writer, `.xlsx .csv .tsv` to Sheets and `.rsslides` to Slides.
 
 ## Licence
-Copyright (C) 2026 The Red Star OS contributors.
+Copyright (C) 2026 The Crimson Banner OS contributors.
 
-Red Star OS is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+Crimson Banner OS is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
 version (SPDX: `GPL-3.0-or-later`). It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 see [LICENSE](LICENSE) for the full text.

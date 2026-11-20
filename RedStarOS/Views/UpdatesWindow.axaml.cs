@@ -88,7 +88,7 @@ public partial class UpdatesWindow : Window
         if (appImage != null && tool != null)
         {
             ProcessUtil.StartDetached(tool, new[] { appImage });
-            ResultLabel.Text = "AppImageUpdate was started. Restart Red Star OS when it finishes.";
+            ResultLabel.Text = "AppImageUpdate was started. Restart Crimson Banner OS when it finishes.";
         }
         else
         {

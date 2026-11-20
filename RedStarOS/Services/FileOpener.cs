@@ -19,12 +19,12 @@ public static class FileOpener
     public static string? RedStarAppFor(string path)
     {
         var ext = Path.GetExtension(path).ToLowerInvariant();
-        if (ext == ".pdf") return "Red Star Online";
+        if (ext == ".pdf") return "Crimson Online";
         if (FileOps.ImageExtensions.Contains(ext)) return "Image Viewer";
-        if (ext == ".docx" || (FileOps.TextExtensions.Contains(ext) && ext != ".csv")) return "Red Star Writer";
-        if (FileOps.VideoExtensions.Contains(ext) || FileOps.AudioExtensions.Contains(ext)) return "Red Star Video";
-        if (ext is ".csv" or ".tsv" or ".xlsx") return "Red Star Sheets";
-        if (ext == ".rsslides") return "Red Star Slides";
+        if (ext == ".docx" || (FileOps.TextExtensions.Contains(ext) && ext != ".csv")) return "Writer";
+        if (FileOps.VideoExtensions.Contains(ext) || FileOps.AudioExtensions.Contains(ext)) return "Video";
+        if (ext is ".csv" or ".tsv" or ".xlsx") return "Sheets";
+        if (ext == ".rsslides") return "Slides";
         return null;
     }
 

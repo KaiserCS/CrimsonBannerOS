@@ -1290,7 +1290,7 @@ int main(int argc, char **argv)
     /* EWMH: who we are and what we support */
     check_win = XCreateSimpleWindow(dpy, root, -10, -10, 1, 1, 0, 0, 0);
     XChangeProperty(dpy, check_win, A[NET_SUPPORTING_WM_CHECK], XA_WINDOW, 32, PropModeReplace, (unsigned char *)&check_win, 1);
-    XChangeProperty(dpy, check_win, A[NET_WM_NAME], A[UTF8_STRING], 8, PropModeReplace, (unsigned char *)"Red Star", 8);
+    XChangeProperty(dpy, check_win, A[NET_WM_NAME], A[UTF8_STRING], 8, PropModeReplace, (unsigned char *)"Crimson Banner", 14);
     XChangeProperty(dpy, root, A[NET_SUPPORTING_WM_CHECK], XA_WINDOW, 32, PropModeReplace, (unsigned char *)&check_win, 1);
     long pid = getpid();
     set_cardinals(check_win, A[NET_WM_PID], XA_CARDINAL, &pid, 1);

@@ -16,12 +16,12 @@ public static class DefaultApps
 
     public static readonly Kind[] Kinds =
     {
-        new("web", "Web browser", "Red Star Online", Array.Empty<string>(), new[] { "x-scheme-handler/http", "x-scheme-handler/https", "text/html" }),
-        new("documents", "Documents", "Red Star Writer", new[] { ".docx", ".txt", ".md", ".html", ".htm", ".rtf", ".odt" }, new[] { "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain", "text/markdown" }),
-        new("sheets", "Spreadsheets", "Red Star Sheets", new[] { ".xlsx", ".csv", ".tsv", ".ods" }, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv" }),
-        new("pdf", "PDF documents", "Red Star Online", new[] { ".pdf" }, new[] { "application/pdf" }),
+        new("web", "Web browser", "Crimson Online", Array.Empty<string>(), new[] { "x-scheme-handler/http", "x-scheme-handler/https", "text/html" }),
+        new("documents", "Documents", "Writer", new[] { ".docx", ".txt", ".md", ".html", ".htm", ".rtf", ".odt" }, new[] { "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain", "text/markdown" }),
+        new("sheets", "Spreadsheets", "Sheets", new[] { ".xlsx", ".csv", ".tsv", ".ods" }, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv" }),
+        new("pdf", "PDF documents", "Crimson Online", new[] { ".pdf" }, new[] { "application/pdf" }),
         new("images", "Pictures", "Image Viewer", new[] { ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg", ".tif", ".tiff" }, new[] { "image/png", "image/jpeg", "image/gif", "image/webp" }),
-        new("media", "Video and music", "Red Star Video", new[] { ".mp4", ".mkv", ".webm", ".avi", ".mov", ".mp3", ".ogg", ".flac", ".wav", ".m4a" }, new[] { "video/mp4", "video/x-matroska", "video/webm", "audio/mpeg", "audio/ogg", "audio/flac" }),
+        new("media", "Video and music", "Video", new[] { ".mp4", ".mkv", ".webm", ".avi", ".mov", ".mp3", ".ogg", ".flac", ".wav", ".m4a" }, new[] { "video/mp4", "video/x-matroska", "video/webm", "audio/mpeg", "audio/ogg", "audio/flac" }),
     };
 
     private static Dictionary<string, string>? _map;

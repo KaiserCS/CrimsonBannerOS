@@ -216,7 +216,7 @@ public partial class PaintWindow : Window
     private void UpdateTitle()
     {
         var name = _path == null ? "Untitled" : Path.GetFileName(_path);
-        Title = $"{(_modified ? "*" : "")}{name} - Red Star Paint";
+        Title = $"{(_modified ? "*" : "")}{name} - Paint";
     }
 
     private void UpdateStatus()
@@ -384,7 +384,7 @@ public partial class PaintWindow : Window
     {
         if (!_modified) return true;
         var name = _path == null ? "Untitled" : Path.GetFileName(_path);
-        int r = await Dialogs.Ask(this, "Red Star Paint", $"Save changes to {name}?", "Save", "Don't save", "Cancel");
+        int r = await Dialogs.Ask(this, "Paint", $"Save changes to {name}?", "Save", "Don't save", "Cancel");
         if (r == 0) return await SaveImage(false);
         return r == 1;
     }

@@ -196,7 +196,7 @@ public sealed class TerminalProfilesWindow : Window
                 new TextBlock { Text = p.Name == TerminalProfiles.Settings.Default ? "Default profile — used for new tabs" : "Profile", FontSize = 13, Opacity = 0.7, Margin = new Thickness(0, 0, 0, 10) },
                 Row("Name", name),
                 Row("Font", new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { font, size } }),
-                Row("Colours", new StackPanel { Spacing = 8, Children = { scheme, preview } }, "“Red Star” follows the light / dark theme and accent colour of the desktop."),
+                Row("Colours", new StackPanel { Spacing = 8, Children = { scheme, preview } }, "“Crimson Banner” follows the light / dark theme and accent colour of the desktop."),
                 Row("Cursor", new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { cursor, blink } }, "Programs can still change the cursor shape while they run."),
                 Row("Command", command, "Leave empty for your shell, or enter a program, e.g. “ssh server” or “htop”."),
                 Row("Start in", new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { start, dir } }),

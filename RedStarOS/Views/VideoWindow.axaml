@@ -1,6 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="RedStarOS.Views.VideoWindow"
-        Title="Red Star Video"
+        Title="Video"
         Width="1040" Height="660" MinWidth="560" MinHeight="380"
         WindowStartupLocation="CenterScreen">
   <DockPanel>

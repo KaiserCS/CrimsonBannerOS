@@ -43,7 +43,7 @@ public static class SystemTray
             });
             _host = host;
             await host.StartAsync();
-            Console.Error.WriteLine(host.IsWatcher ? "tray: showing other programs' icons (Red Star is the watcher)"
+            Console.Error.WriteLine(host.IsWatcher ? "tray: showing other programs' icons (Crimson Banner is the watcher)"
                                                    : "tray: showing other programs' icons (joined the running watcher)");
         }
         catch (Exception ex)

@@ -45,7 +45,7 @@ public sealed class WelcomeWindow : Window
 
     public WelcomeWindow()
     {
-        Title = "Welcome to Red Star OS";
+        Title = "Welcome to Crimson Banner OS";
         Width = 760; Height = 540; MinWidth = 600; MinHeight = 460;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         _steps = new()
@@ -87,7 +87,7 @@ public sealed class WelcomeWindow : Window
         _step = Math.Clamp(i, 0, _steps.Count - 1);
         _page.Content = _steps[_step].Build();
         _back.IsVisible = _step > 0;
-        _next.Content = _step == _steps.Count - 1 ? "Start using Red Star OS" : "Next";
+        _next.Content = _step == _steps.Count - 1 ? "Start using Crimson Banner OS" : "Next";
         _dots.Children.Clear();
         for (int d = 0; d < _steps.Count; d++)
         {
@@ -125,14 +125,14 @@ public sealed class WelcomeWindow : Window
     {
         var p = new StackPanel { Spacing = 16, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 20, 0, 0) };
         p.Children.Add(new IconView { Kind = "star", Size = 84, Brush = Red, HorizontalAlignment = HorizontalAlignment.Center });
-        p.Children.Add(new TextBlock { Text = "Welcome to Red Star OS", FontSize = 30, FontWeight = FontWeight.SemiBold, HorizontalAlignment = HorizontalAlignment.Center });
+        p.Children.Add(new TextBlock { Text = "Welcome to Crimson Banner OS", FontSize = 30, FontWeight = FontWeight.SemiBold, HorizontalAlignment = HorizontalAlignment.Center });
         p.Children.Add(new TextBlock
         {
             Text = "A few quick choices and you're ready. Everything here can be changed later in Settings.",
             Opacity = 0.75, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, MaxWidth = 460, FontSize = 14
         });
         var facts = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 10, 0, 0) };
-        foreach (var (icon, text) in new[] { ("globe", "Red Star Online"), ("document", "Writer, Sheets, Slides"), ("terminal", "Terminal"), ("film", "Video") })
+        foreach (var (icon, text) in new[] { ("globe", "Crimson Online"), ("document", "Writer, Sheets, Slides"), ("terminal", "Terminal"), ("film", "Video") })
             facts.Children.Add(new StackPanel
             {
                 Orientation = Orientation.Horizontal, Spacing = 6, Margin = new Thickness(10, 4),
@@ -245,11 +245,11 @@ public sealed class WelcomeWindow : Window
 
     private Control Import()
     {
-        var p = Page("Bring your bookmarks", "Red Star Online can copy bookmarks and history from browsers already on this computer. Nothing is removed from the other browser.");
+        var p = Page("Bring your bookmarks", "Crimson Online can copy bookmarks and history from browsers already on this computer. Nothing is removed from the other browser.");
         var sources = BrowserImport.Detect();
         if (sources.Count == 0)
         {
-            p.Children.Add(new TextBlock { Text = "No other browsers were found. You can import later from Red Star Online → Settings.", Opacity = 0.75, TextWrapping = TextWrapping.Wrap });
+            p.Children.Add(new TextBlock { Text = "No other browsers were found. You can import later from Crimson Online → Settings.", Opacity = 0.75, TextWrapping = TextWrapping.Wrap });
             return p;
         }
         p.Children.Add(Label("FOUND ON THIS COMPUTER"));

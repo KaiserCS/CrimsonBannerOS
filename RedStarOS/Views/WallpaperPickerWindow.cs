@@ -392,7 +392,7 @@ public sealed class WallpaperPickerWindow : Window
             return b;
         }
         var bar = new WrapPanel();
-        bar.Children.Add(B("Red Star collection (4K)", () => LoadFolder(WallpaperService.CollectionFolder, remember: true)));
+        bar.Children.Add(B("Crimson Banner collection (4K)", () => LoadFolder(WallpaperService.CollectionFolder, remember: true)));
         bar.Children.Add(B("Saved wallpapers", () => LoadFolder(WallpaperSearch.SaveFolder, remember: true)));
         bar.Children.Add(B("Pictures", () => LoadFolder(AppPaths.UserFolder("Pictures"), remember: true)));
         bar.Children.Add(B("Choose folder…", ChooseFolder));

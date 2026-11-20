@@ -14,7 +14,7 @@ namespace RedStarOS.Services;
 public static class PortalSetup
 {
     public const string Config =
-        "# written by Red Star OS: screenshots and screen sharing through xdg-desktop-portal-wlr (redstar-comp)\n" +
+        "# written by Crimson Banner OS: screenshots and screen sharing through xdg-desktop-portal-wlr (redstar-comp)\n" +
         "[preferred]\n" +
         "default=gtk\n" +
         "org.freedesktop.impl.portal.Screenshot=wlr\n" +
@@ -32,7 +32,7 @@ public static class PortalSetup
     /// so asking one makes screen sharing fail. Without a picker it shares the screen (the first one on several).
     /// </summary>
     public const string WlrConfig =
-        "# written by Red Star OS: share the screen without a picker (slurp/wofi need layer-shell, which redstar-comp lacks)\n" +
+        "# written by Crimson Banner OS: share the screen without a picker (slurp/wofi need layer-shell, which redstar-comp lacks)\n" +
         "[screencast]\n" +
         "chooser_type=none\n" +
         "max_fps=60\n";

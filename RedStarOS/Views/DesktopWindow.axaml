@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:RedStarOS.Views"
         x:Class="RedStarOS.Views.DesktopWindow"
-        Title="Red Star OS"
+        Title="Crimson Banner OS"
         WindowState="FullScreen"
         WindowDecorations="None"
         Background="Black">

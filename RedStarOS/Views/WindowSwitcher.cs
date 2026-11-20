@@ -26,7 +26,7 @@ public sealed class WindowSwitcher : Window
     {
         _wins = wins;
         WindowDecorations = WindowDecorations.None;
-        WaylandShell.Frameless(this, "Red Star window switcher");
+        WaylandShell.Frameless(this, "Crimson Banner window switcher");
         Topmost = true;
         ShowInTaskbar = false;
         ShowActivated = false;

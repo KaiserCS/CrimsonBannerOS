@@ -66,7 +66,7 @@ public static class Diagnostics
         string Tool(string t) => ProcessUtil.Which(t) != null ? "yes" : "no";
         return new()
         {
-            ("Red Star OS", UpdateChecker.Current.ToString(3) + (Environment.GetEnvironmentVariable("APPIMAGE") != null ? " (AppImage)" : " (from source)")),
+            ("Crimson Banner OS", UpdateChecker.Current.ToString(3) + (Environment.GetEnvironmentVariable("APPIMAGE") != null ? " (AppImage)" : " (from source)")),
             ("System", os),
             ("Kernel", Read("/proc/sys/kernel/osrelease").Trim()),
             ("Architecture", RuntimeInformation.OSArchitecture.ToString()),
@@ -77,9 +77,9 @@ public static class Diagnostics
             ("Compositor", InputIsolation.InRedStarComp ? "redstar-comp" + (CompIpc.Connected ? ", connected" : ", not connected") : X11Props.CompositorRunning() ? "an X11 compositor" : "none"),
             ("Screenshots", InputIsolation.InRedStarComp ? $"grim {Tool("grim")}, screen sharing portal (xdg-desktop-portal-wlr) {(PortalSetup.WlrInstalled ? "yes" : "no")}"
                 : $"scrot {Tool("scrot")}, maim {Tool("maim")}, import {Tool("import")}"),
-            ("Web browser", RedStarOnline.ProgramPath() is { } online ? "Red Star Online (WebKitGTK), " + online : "Red Star Online not installed"),
+            ("Web browser", RedStarOnline.ProgramPath() is { } online ? "Crimson Online (WebKitGTK), " + online : "Crimson Online not installed"),
             ("Graphics", GraphicsFact()),
-            ("Red Star windows", Graphics.ShellRenderer + (Graphics.ShellReason.Length > 0 ? " — " + Graphics.ShellReason : "")),
+            ("Crimson Banner windows", Graphics.ShellRenderer + (Graphics.ShellReason.Length > 0 ? " — " + Graphics.ShellReason : "")),
             ("Browser fallbacks", OnlineFallbacks()),
             ("Video (libvlc)", File.Exists("/usr/lib/x86_64-linux-gnu/libvlc.so.5") || File.Exists("/usr/lib/libvlc.so.5") || File.Exists("/usr/lib64/libvlc.so.5") ? "yes" : "not found"),
             ("Tools", $"nmcli {Tool("nmcli")}, pactl {Tool("pactl")}, bluetoothctl {Tool("bluetoothctl")}, xrandr {Tool("xrandr")}, cups {Tool("lpstat")}, setsid {Tool("setsid")}, python3 {Tool("python3")}, xdg-open {Tool("xdg-open")}"),
@@ -105,9 +105,9 @@ public static class Diagnostics
                   : Graphics.DisplayHasGpu() ? "GPU access (DRI3)" : "no GPU access";
         string where = InputIsolation.InRedStarComp ? "redstar-comp (Xwayland)" : InputIsolation.Mode switch
         {
-            "xwayland" => "Red Star's own display (Xwayland)",
-            "xephyr" or "xephyr-on-wayland" => "Red Star's own display (Xephyr)",
-            _ => Environment.GetEnvironmentVariable("REDSTAR_SESSION") == "1" ? "Red Star session" : "your desktop"
+            "xwayland" => "Crimson Banner's own display (Xwayland)",
+            "xephyr" or "xephyr-on-wayland" => "Crimson Banner's own display (Xephyr)",
+            _ => Environment.GetEnvironmentVariable("REDSTAR_SESSION") == "1" ? "Crimson Banner session" : "your desktop"
         };
         bool comp = X11Props.CompositorRunning(fresh: true);
         return $"{where}: {gpu}, {node}, compositor {(comp ? "running" : "not running")} · setting: {Graphics.Mode}";

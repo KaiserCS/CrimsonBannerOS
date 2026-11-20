@@ -1,6 +1,6 @@
 [Desktop Entry]
-Name=Red Star OS (Wayland)
-Comment=Red Star OS inside its own Wayland compositor (experimental)
+Name=Crimson Banner OS (Wayland)
+Comment=Crimson Banner OS inside its own Wayland compositor (experimental)
 Exec=/usr/local/bin/redstaros-session --wayland
 TryExec=/usr/local/bin/redstaros-session
 Type=Application

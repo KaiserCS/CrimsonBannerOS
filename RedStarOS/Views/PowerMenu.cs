@@ -19,8 +19,8 @@ public static class PowerMenu
     {
         ("Lock", "lock"),
         (session ? "Log off" : "Log off (lock screen)", "logoff"),
-        (session ? "Restart" : "Restart Red Star OS", "restart"),
-        (session ? "Shut down" : "Close Red Star OS", "shutdown"),
+        (session ? "Restart" : "Restart Crimson Banner OS", "restart"),
+        (session ? "Shut down" : "Close Crimson Banner OS", "shutdown"),
         ("Task Manager", "taskmgr"),
     };
 
@@ -30,7 +30,7 @@ public static class PowerMenu
         var list = new StackPanel { Spacing = 6, Width = 260 };
         var win = new Window
         {
-            Title = "Red Star OS",
+            Title = "Crimson Banner OS",
             SizeToContent = SizeToContent.WidthAndHeight,
             CanResize = false,
             Topmost = true,

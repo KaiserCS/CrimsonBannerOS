@@ -117,7 +117,7 @@ public partial class TaskManagerWindow : Window
         if (List.SelectedItem is not ProcRow row) return;
         if (row.Id == Environment.ProcessId)
         {
-            await Dialogs.ShowMessage(this, "Task Manager", "That is Red Star OS itself. Use Shut down to close it.");
+            await Dialogs.ShowMessage(this, "Task Manager", "That is Crimson Banner OS itself. Use Shut down to close it.");
             return;
         }
         var r = await Dialogs.Ask(this, "End task", $"End \"{row.Name}\" (PID {row.Id})? Unsaved work in it will be lost.", "End task", "Cancel");

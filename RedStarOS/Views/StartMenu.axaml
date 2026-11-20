@@ -50,7 +50,7 @@
                 Background="{DynamicResource ShellCardBrush}">
           <Grid ColumnDefinitions="*,*">
             <ToggleButton x:Name="RsTab" Classes="section" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                          Padding="4,6" CornerRadius="6" ToolTip.Tip="Red Star apps" AutomationProperties.Name="Red Star apps">
+                          Padding="4,6" CornerRadius="6" ToolTip.Tip="Crimson Banner apps" AutomationProperties.Name="Crimson Banner apps">
               <ContentControl x:Name="RsTabIcon" HorizontalAlignment="Center" VerticalAlignment="Center" />
             </ToggleButton>
             <ToggleButton x:Name="LinuxTab" Grid.Column="1" Classes="section" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"

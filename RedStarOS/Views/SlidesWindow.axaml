@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:v="clr-namespace:RedStarOS.Views"
         x:Class="RedStarOS.Views.SlidesWindow"
-        Title="Untitled - Red Star Slides"
+        Title="Untitled - Slides"
         Width="1320" Height="820" MinWidth="860" MinHeight="560"
         WindowStartupLocation="CenterOwner">
   <DockPanel>

@@ -114,7 +114,7 @@ static gchar *start_page_html(gboolean private)
 {
 	GString *h = g_string_new("<!doctype html><html><head><meta charset=utf-8><title>New tab</title>");
 	g_string_append(h, page_css);
-	g_string_append(h, "</head><body><h1><span class=star>★</span> Red Star Online</h1>");
+	g_string_append(h, "</head><body><h1><span class=star>★</span> Crimson Online</h1>");
 	if (private) g_string_append(h, "<p class=muted>Private window: nothing you do here is remembered when it closes.</p>");
 	gchar *tpl = g_strescape(search_template(), NULL);
 	g_string_append_printf(h, "<form id=f><input id=q placeholder=\"Search the web or type an address\" autofocus></form>"
@@ -212,7 +212,7 @@ static void set_address(Browser *b, Tab *t)
 static void update_title(Browser *b, Tab *t)
 {
 	const char *title = t ? webkit_web_view_get_title(t->view) : NULL;
-	gchar *s = g_strdup_printf("%s%s%sRed Star Online", title && *title ? title : "", title && *title ? " — " : "",
+	gchar *s = g_strdup_printf("%s%s%sCrimson Online", title && *title ? title : "", title && *title ? " — " : "",
 		b->private ? "Private — " : "");
 	gtk_window_set_title(b->win, s);
 	g_free(s);
@@ -309,7 +309,7 @@ static gboolean tab_tls_failed(WebKitWebView *v, char *uri, GTlsCertificate *cer
 	(void)v; (void)cert; (void)flags;
 	show_error(t, uri, "This connection isn't private",
 		"The site's certificate couldn't be verified, so someone could be reading or changing what you send and receive. "
-		"Red Star Online didn't open it.");
+		"Crimson Online didn't open it.");
 	return TRUE;
 }
 
@@ -443,7 +443,7 @@ static gboolean tab_decide(WebKitWebView *v, WebKitPolicyDecision *d, WebKitPoli
 		const char *uri = webkit_uri_request_get_uri(webkit_navigation_action_get_request(a));
 		if (online_site_blocked(online_store_settings(app.store)->blocked_sites, uri)) {
 			webkit_policy_decision_ignore(d);
-			show_error(t, uri, "This site is blocked", "It's on the list of blocked sites in Red Star Online's settings.");
+			show_error(t, uri, "This site is blocked", "It's on the list of blocked sites in Crimson Online's settings.");
 			return TRUE;
 		}
 		/* middle click or Ctrl+click on a link: a new tab in the background */
@@ -505,7 +505,7 @@ static gboolean tab_permission(WebKitWebView *v, WebKitPermissionRequest *req, T
 	a->host = host;
 	a->kind = g_strdup(kind);
 	GtkAlertDialog *dlg = gtk_alert_dialog_new("Let %s %s?", *host ? host : "this page", what);
-	gtk_alert_dialog_set_detail(dlg, "Red Star Online remembers your answer for this site.");
+	gtk_alert_dialog_set_detail(dlg, "Crimson Online remembers your answer for this site.");
 	const char *buttons[] = { "Block", "Allow", NULL };
 	gtk_alert_dialog_set_buttons(dlg, buttons);
 	gtk_alert_dialog_set_cancel_button(dlg, 0);
@@ -2039,7 +2039,7 @@ int main(int argc, char **argv)
 	}
 	for (int i = 1; i < argc; i++) if (!strcmp(argv[i], "--self-test")) app.self_test = TRUE;
 	app.gtk = gtk_application_new(APP_ID, G_APPLICATION_HANDLES_COMMAND_LINE | (app.self_test ? G_APPLICATION_NON_UNIQUE : 0));
-	g_set_application_name("Red Star Online");
+	g_set_application_name("Crimson Online");
 	g_signal_connect(app.gtk, "startup", G_CALLBACK(startup), NULL);
 	g_signal_connect(app.gtk, "command-line", G_CALLBACK(command_line), NULL);
 	int status = g_application_run(G_APPLICATION(app.gtk), argc, argv);

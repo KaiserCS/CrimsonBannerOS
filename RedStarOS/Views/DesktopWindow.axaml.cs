@@ -41,7 +41,7 @@ public partial class DesktopWindow : Window
         {
             // natively on Wayland there are no X11 window types: redstar-comp is told which window is the desktop
             CompIpc.Start();
-            CompIpc.Role("desktop", Title ?? "Red Star OS");
+            CompIpc.Role("desktop", Title ?? "Crimson Banner OS");
             Bar.SizeChanged += (_, _) => ReserveTaskbar();
             Opened += (_, _) => ReserveTaskbar();
         }
@@ -83,12 +83,12 @@ public partial class DesktopWindow : Window
             SystemTray.Start();                        // other programs' tray icons (Discord, Steam…) on the taskbar
             UpdateChecker.StartBackground();
             if (InputIsolation.IsNested)
-                Notifier.Show("Keyboard and mouse are in Red Star OS",
+                Notifier.Show("Keyboard and mouse are in Crimson Banner OS",
                     InputIsolation.Mode == "xephyr-on-wayland"
                         ? "Some shortcuts of your other desktop may still work — Xwayland 23.1+ blocks them all. Ctrl+Shift releases the keyboard and mouse."
-                        : "Press Ctrl+Shift to release them (and again to come back). Shut down Red Star OS to return to your desktop.", "settings");
+                        : "Press Ctrl+Shift to release them (and again to come back). Shut down Crimson Banner OS to return to your desktop.", "settings");
             else if (InputIsolation.Missing != null)
-                Notifier.Show("Keyboard and mouse can't be kept in Red Star OS",
+                Notifier.Show("Keyboard and mouse can't be kept in Crimson Banner OS",
                     "Your other desktop may react to Super and Alt+Tab. Install Xephyr (or Xwayland 23.1+ on Wayland) — see Settings → Desktop & Taskbar.", "settings",
                     new NotificationAction("Details", () => SettingsWindow.OpenPage("Desktop & Taskbar")));
             LookAndFeel.ApplyPointer();
@@ -220,7 +220,7 @@ public partial class DesktopWindow : Window
             int lh = (int)Math.Ceiling(Bar.Bounds.Height * RenderScaling / Math.Max(1, screenScale));
             if (lh <= 0 || lh == _strut) return;
             _strut = lh;
-            CompIpc.Role("desktop", Title ?? "Red Star OS", bottom: lh);
+            CompIpc.Role("desktop", Title ?? "Crimson Banner OS", bottom: lh);
             return;
         }
         if (TryGetPlatformHandle()?.Handle is not { } xid || xid == IntPtr.Zero) return;
@@ -253,7 +253,7 @@ public partial class DesktopWindow : Window
                 Children =
                 {
                     star,
-                    new TextBlock { Text = "Red Star OS", Foreground = Brushes.White, FontSize = 34, FontWeight = FontWeight.Light, HorizontalAlignment = HorizontalAlignment.Center },
+                    new TextBlock { Text = "Crimson Banner OS", Foreground = Brushes.White, FontSize = 34, FontWeight = FontWeight.Light, HorizontalAlignment = HorizontalAlignment.Center },
                     new TextBlock { Text = "Version " + UpdateChecker.Current.ToString(3), Foreground = Brushes.White, Opacity = 0.55, FontSize = 13, HorizontalAlignment = HorizontalAlignment.Center },
                 }
             }

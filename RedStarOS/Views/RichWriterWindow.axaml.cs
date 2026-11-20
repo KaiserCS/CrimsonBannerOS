@@ -144,7 +144,7 @@ public partial class RichWriterWindow : Window
         if (t.Dirty)
         {
             if (!ReferenceEquals(t, _cur)) SwitchTo(t);
-            var a = await Dialogs.Ask(this, "Red Star Writer", $"Save changes to “{t.Title}”?", "Save", "Don't save", "Cancel");
+            var a = await Dialogs.Ask(this, "Writer", $"Save changes to “{t.Title}”?", "Save", "Don't save", "Cancel");
             if (a == 0) { if (!await Save(t, false)) return false; }
             else if (a != 1) return false;
         }
@@ -157,7 +157,7 @@ public partial class RichWriterWindow : Window
         return true;
     }
 
-    private void UpdateTitle() => Title = $"{(_cur.Dirty ? "● " : "")}{_cur.Title} — Red Star Writer";
+    private void UpdateTitle() => Title = $"{(_cur.Dirty ? "● " : "")}{_cur.Title} — Writer";
 
     private void OnDocChanged()
     {
@@ -360,7 +360,7 @@ public partial class RichWriterWindow : Window
             var ext = Path.GetExtension(full).ToLowerInvariant();
             if (!File.Exists(full))
             {
-                _ = Dialogs.ShowMessage(this, "Red Star Writer", "That file no longer exists:\n" + full);
+                _ = Dialogs.ShowMessage(this, "Writer", "That file no longer exists:\n" + full);
                 return;
             }
             switch (ext)
@@ -387,7 +387,7 @@ public partial class RichWriterWindow : Window
         }
         catch (Exception ex)
         {
-            _ = Dialogs.ShowMessage(this, "Red Star Writer", "Couldn't open the file:\n" + ex.Message);
+            _ = Dialogs.ShowMessage(this, "Writer", "Couldn't open the file:\n" + ex.Message);
         }
     }
 
@@ -409,7 +409,7 @@ public partial class RichWriterWindow : Window
         }
         catch (Exception ex)
         {
-            _ = Dialogs.ShowMessage(this, "Red Star Writer", "Couldn't import the page:\n" + ex.Message);
+            _ = Dialogs.ShowMessage(this, "Writer", "Couldn't import the page:\n" + ex.Message);
         }
     }
 
@@ -476,7 +476,7 @@ public partial class RichWriterWindow : Window
         }
         catch (Exception ex)
         {
-            await Dialogs.ShowMessage(this, "Red Star Writer", "Couldn't save the file:\n" + ex.Message);
+            await Dialogs.ShowMessage(this, "Writer", "Couldn't save the file:\n" + ex.Message);
             return false;
         }
         t.Path = path; t.Dirty = false; _lastDirty = false;
@@ -505,15 +505,15 @@ public partial class RichWriterWindow : Window
     {
         var p = await PickPdf();
         if (p == null) return;
-        try { DocPdf.Save(_cur.Doc, p, _letter, Doc.PageNumbers, Path.GetFileNameWithoutExtension(_cur.Title)); Notifier.Show("Red Star Writer", "Saved " + Path.GetFileName(p), "writer"); }
-        catch (Exception ex) { await Dialogs.ShowMessage(this, "Red Star Writer", "Couldn't create the PDF:\n" + ex.Message); }
+        try { DocPdf.Save(_cur.Doc, p, _letter, Doc.PageNumbers, Path.GetFileNameWithoutExtension(_cur.Title)); Notifier.Show("Writer", "Saved " + Path.GetFileName(p), "writer"); }
+        catch (Exception ex) { await Dialogs.ShowMessage(this, "Writer", "Couldn't create the PDF:\n" + ex.Message); }
     }
 
     private async Task Print()
     {
         var tmp = Path.Combine(Path.GetTempPath(), "redstar-print-" + Guid.NewGuid().ToString("N")[..8] + ".pdf");
         try { DocPdf.Save(_cur.Doc, tmp, _letter, Doc.PageNumbers, _cur.Title); }
-        catch (Exception ex) { await Dialogs.ShowMessage(this, "Red Star Writer", "Couldn't prepare the document:\n" + ex.Message); return; }
+        catch (Exception ex) { await Dialogs.ShowMessage(this, "Writer", "Couldn't prepare the document:\n" + ex.Message); return; }
         var a = await Dialogs.Ask(this, "Print", "Send to the default printer, or open the PDF in your viewer (where you can pick a printer and options)?", "Default printer", "Open PDF", "Cancel");
         try
         {
@@ -583,7 +583,7 @@ public partial class RichWriterWindow : Window
             }
             Doc.InsertImage(bytes);
         }
-        catch (Exception ex) { _ = Dialogs.ShowMessage(this, "Red Star Writer", "Couldn't insert the picture:\n" + ex.Message); }
+        catch (Exception ex) { _ = Dialogs.ShowMessage(this, "Writer", "Couldn't insert the picture:\n" + ex.Message); }
     }
 
     private async Task InsertTable()
@@ -699,7 +699,7 @@ public partial class RichWriterWindow : Window
             if (!Directory.Exists(RecoveryDir)) return;
             var files = Directory.GetFiles(RecoveryDir, "*.json");
             if (files.Length == 0) return;
-            var a = await Dialogs.Ask(this, "Red Star Writer", $"Red Star Writer closed unexpectedly. Restore {files.Length} unsaved document{(files.Length == 1 ? "" : "s")}?", "Restore", "Discard");
+            var a = await Dialogs.Ask(this, "Writer", $"Writer closed unexpectedly. Restore {files.Length} unsaved document{(files.Length == 1 ? "" : "s")}?", "Restore", "Discard");
             foreach (var f in files)
             {
                 try
@@ -735,7 +735,7 @@ public partial class RichWriterWindow : Window
         {
             if (!t.Dirty) continue;
             if (!ReferenceEquals(t, _cur)) SwitchTo(t);
-            var a = await Dialogs.Ask(this, "Red Star Writer", $"Save changes to “{t.Title}”?", "Save", "Don't save", "Cancel");
+            var a = await Dialogs.Ask(this, "Writer", $"Save changes to “{t.Title}”?", "Save", "Don't save", "Cancel");
             if (a == 0) { if (!await Save(t, false)) return; }
             else if (a != 1) return;
         }

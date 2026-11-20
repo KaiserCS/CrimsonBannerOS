@@ -46,7 +46,7 @@ public sealed class Deck
 {
     public int Width { get; set; } = 1280;
     public int Height { get; set; } = 720;
-    public string Theme { get; set; } = "Red Star";
+    public string Theme { get; set; } = "Crimson Banner";
     public List<Slide> Slides { get; set; } = new();
     /// <summary>Embedded pictures by id (base64 PNG/JPEG). Never rolled back by undo.</summary>
     public Dictionary<string, string> Images { get; set; } = new();
@@ -58,7 +58,7 @@ public static class SlideThemes
 {
     public static readonly SlideTheme[] All =
     {
-        new("Red Star", "#FFFFFF", "#1A1A1A", "#C8102E"),
+        new("Crimson Banner", "#FFFFFF", "#1A1A1A", "#C8102E"),
         new("Dark", "#1E1E1E", "#F2F2F2", "#4FA3FF"),
         new("Ocean", "#E8F1FA", "#0B2545", "#1E6FD9"),
         new("Forest", "#F2F7F0", "#1B3A2A", "#2F855A"),
@@ -73,7 +73,7 @@ public static class SlideThemes
 /// <summary>Snapshot used for undo/redo (pictures are not part of it).</summary>
 public sealed class DeckState
 {
-    public string Theme { get; set; } = "Red Star";
+    public string Theme { get; set; } = "Crimson Banner";
     public List<Slide> Slides { get; set; } = new();
 }
 

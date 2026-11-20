@@ -25,7 +25,7 @@ FILES=(
 
 # signed in to a Red Star session right now? removing it is fine, but say so
 if [ "${XDG_CURRENT_DESKTOP:-}" = "RedStar" ] || [ "${REDSTAR_SESSION:-}" = "1" ]; then
-  echo "Note: you're in a Red Star OS session now. It keeps running; it just won't be offered at the next login."
+  echo "Note: you're in a Crimson Banner OS session now. It keeps running; it just won't be offered at the next login."
 fi
 
 removed=0
@@ -38,9 +38,9 @@ for f in "${FILES[@]}"; do
 done
 
 if [ "$removed" = 0 ]; then
-  echo "Nothing to remove: Red Star OS isn't on the login screen."
+  echo "Nothing to remove: Crimson Banner OS isn't on the login screen."
 elif [ "$DRY" = 1 ]; then
   echo "(dry run: nothing was removed)"
 else
-  echo "Red Star OS is off the login screen. Your settings in ~/.config/redstaros are kept."
+  echo "Crimson Banner OS is off the login screen. Your settings in ~/.config/redstaros are kept."
 fi

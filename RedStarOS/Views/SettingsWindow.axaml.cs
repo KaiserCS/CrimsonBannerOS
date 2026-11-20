@@ -80,7 +80,7 @@ public partial class SettingsWindow : Window
             new("Displays", "monitor", AppIcons.Brush("#4A5568"), SettingsPages.Displays),
             new("Printers", "printer", AppIcons.Brush("#2F855A"), SettingsPages.Printers),
             new("Default apps", "apps", AppIcons.Brush("#DD6B20"), SettingsPages.DefaultAppsPage),
-            new("Red Star Online", "globe", AppIcons.Brush("#C8102E"), SettingsPages.OnlinePage),
+            new("Crimson Online", "globe", AppIcons.Brush("#C8102E"), SettingsPages.OnlinePage),
             new("Accessibility", "accessibility", AppIcons.Brush("#2B6CB0"), SettingsPages.Accessibility),
             new("Account", "👤", AppIcons.Brush("#DD6B20"), () => PageLauncher("Account", "Password, profile photo and account type.", "Open Account", () => WindowManager.Open(new AccountWindow()))),
             new("Software Updates", "refresh", AppIcons.Brush("#2B6CB0"), SettingsPages.Updates),
@@ -226,7 +226,7 @@ public partial class SettingsWindow : Window
             LookAndFeel.ApplyOtherPrograms();
         };
         p.Children.Add(Labelled("Text size", size));
-        p.Children.Add(Caption("Red Star's windows change at once. The terminal's font is in Terminal → Profiles, Writer's in Writer."));
+        p.Children.Add(Caption("Crimson Banner's windows change at once. The terminal's font is in Terminal → Profiles, Writer's in Writer."));
 
         p.Children.Add(Eyebrow("MOUSE POINTER"));
         var cursors = LookAndFeel.CursorThemes();
@@ -248,7 +248,7 @@ public partial class SettingsWindow : Window
             + (s.LargeCursor ? " Accessibility → Large mouse pointer keeps it at 48 or more." : "")));
 
         p.Children.Add(Eyebrow("OTHER PROGRAMS (GTK AND QT)"));
-        var other = new CheckBox { Content = "Style other programs to match Red Star", IsChecked = LookAndFeel.StylesOtherPrograms };
+        var other = new CheckBox { Content = "Style other programs to match Crimson Banner", IsChecked = LookAndFeel.StylesOtherPrograms };
         var otherBox = new StackPanel { Spacing = 10, IsEnabled = LookAndFeel.StylesOtherPrograms };
         other.IsCheckedChanged += (_, _) =>
         {
@@ -260,7 +260,7 @@ public partial class SettingsWindow : Window
         };
         p.Children.Add(other);
         p.Children.Add(Caption("Writes GTK's settings (~/.config/gtk-3.0 and gtk-4.0, and GNOME's interface settings) and tells Qt programs "
-            + "how to look. On by default in a Red Star session; off when Red Star runs on top of another desktop, since those are "
+            + "how to look. On by default in a Crimson Banner session; off when Crimson Banner runs on top of another desktop, since those are "
             + "that desktop's settings too. Light or dark follows the Theme above."));
         otherBox.Children.Add(Labelled("GTK theme", Choice(LookAndFeel.GtkThemes().Where(t => t != "Adwaita").ToList(), s.GtkTheme,
             v => { SettingsStore.Current.GtkTheme = v; LookAndFeel.ApplyOtherPrograms(); })));
@@ -281,17 +281,17 @@ public partial class SettingsWindow : Window
         };
         otherBox.Children.Add(Labelled("Qt programs", qt));
         otherBox.Children.Add(Caption("Programs that are already open pick up the theme, icons and font the next time they start; "
-            + "GTK 4 programs often at once. Red Star's own apps keep their own icons."));
+            + "GTK 4 programs often at once. Crimson Banner's own apps keep their own icons."));
         p.Children.Add(otherBox);
     }
 
     private static string InputIsolationStatus() => InputIsolation.Mode switch
     {
-        "xwayland" => "Now: isolated (Xwayland, the Wayland desktop's shortcuts are switched off while Red Star has the keyboard).",
+        "xwayland" => "Now: isolated (Xwayland, the Wayland desktop's shortcuts are switched off while Crimson Banner has the keyboard).",
         "xephyr" => "Now: isolated (Xephyr on X11).",
         "redstar-comp" => "Now: isolated by redstar-comp — full screen, and the other desktop passes its shortcuts through (if it allows that).",
         "xephyr-on-wayland" =>"Now: partly isolated — Xephyr on Wayland can't switch off the desktop's own shortcuts. Xwayland 23.1 or newer fixes that.",
-        _ when Environment.GetEnvironmentVariable("REDSTAR_SESSION") == "1" => "Now: Red Star OS is the whole session, so nothing else can take the keyboard.",
+        _ when Environment.GetEnvironmentVariable("REDSTAR_SESSION") == "1" => "Now: Crimson Banner OS is the whole session, so nothing else can take the keyboard.",
         _ when InputIsolation.Missing != null => "Now: not isolated — install Xephyr (Debian/Ubuntu: xserver-xephyr · Fedora: xorg-x11-server-Xephyr · Arch: xorg-server-xephyr), or Xwayland 23.1+ on Wayland.",
         _ => "Now: running directly on the other desktop."
     };
@@ -302,13 +302,13 @@ public partial class SettingsWindow : Window
         var p = PageOf("Desktop & Taskbar", "Choose what the taskbar shows and which apps stay pinned to it.");
 
         p.Children.Add(Eyebrow("KEYBOARD AND MOUSE"));
-        p.Children.Add(Check("Keep the keyboard and mouse inside Red Star OS when it runs on another desktop", s.IsolateInput, v => SettingsStore.Current.IsolateInput = v));
+        p.Children.Add(Check("Keep the keyboard and mouse inside Crimson Banner OS when it runs on another desktop", s.IsolateInput, v => SettingsStore.Current.IsolateInput = v));
         p.Children.Add(new TextBlock
         {
             Classes = { "caption" }, TextWrapping = TextWrapping.Wrap,
-            Text = "Red Star OS opens in its own display (like a virtual machine), so Super, Alt+Tab, hot corners and panels of the "
+            Text = "Crimson Banner OS opens in its own display (like a virtual machine), so Super, Alt+Tab, hot corners and panels of the "
                  + "other desktop can't take over. Press Ctrl+Shift to release the keyboard and mouse, and again to capture them. "
-                 + "Takes effect the next time Red Star OS starts.\n" + InputIsolationStatus()
+                 + "Takes effect the next time Crimson Banner OS starts.\n" + InputIsolationStatus()
         });
 
         p.Children.Add(Eyebrow("WINDOWS"));
@@ -317,12 +317,12 @@ public partial class SettingsWindow : Window
         {
             Classes = { "caption" }, TextWrapping = TextWrapping.Wrap,
             Text = (InputIsolation.InRedStarComp ? "Drawn by redstar-comp. " : "Drawn by the picom compositor (install picom if it's missing). ")
-                 + "Windows that are maximised or full screen, menus and tooltips have none. Takes effect the next time Red Star OS starts."
+                 + "Windows that are maximised or full screen, menus and tooltips have none. Takes effect the next time Crimson Banner OS starts."
                  + (X11Props.CompositorRunning() ? "" : "\nNow: no compositor is running, so there are no shadows.")
         });
 
         p.Children.Add(Eyebrow("WAYLAND (EXPERIMENTAL)"));
-        p.Children.Add(Check("Run Red Star OS in its own Wayland compositor", s.WaylandCompositor, v => SettingsStore.Current.WaylandCompositor = v));
+        p.Children.Add(Check("Run Crimson Banner OS in its own Wayland compositor", s.WaylandCompositor, v => SettingsStore.Current.WaylandCompositor = v));
         bool haveComp = InputIsolation.RedStarCompPath() != null;
         p.Children.Add(new TextBlock
         {
@@ -331,7 +331,7 @@ public partial class SettingsWindow : Window
                  + "and native Wayland apps work too. On another desktop it opens "
                  + "full screen and asks that desktop to pass Super, Alt+Tab and its other shortcuts through (KDE and GNOME may ask "
                  + "once); set REDSTAR_COMP_WINDOWED=1 for an ordinary window. Ctrl+Alt+Backspace leaves. "
-                 + "For a full session pick \"Red Star OS (Wayland)\" at the login screen. Takes effect the next time Red Star OS starts."
+                 + "For a full session pick \"Crimson Banner OS (Wayland)\" at the login screen. Takes effect the next time Crimson Banner OS starts."
                  + (InputIsolation.InRedStarComp ? "\nNow: running inside redstar-comp."
                     : haveComp ? "" : "\nNot installed: build it with compositor/build.sh (needs wlroots 0.20).")
         });
@@ -341,17 +341,17 @@ public partial class SettingsWindow : Window
             Classes = { "caption" }, TextWrapping = TextWrapping.Wrap,
             Text = "Inside redstar-comp, GTK, Qt and Electron programs pick Wayland for themselves. Screen sharing in OBS and "
                  + "Discord needs this: only as Wayland programs do they offer the PipeWire screen capture. Turn it off if a "
-                 + "program misbehaves, and everything talks X11 through Xwayland as before. Takes effect the next time Red Star "
+                 + "program misbehaves, and everything talks X11 through Xwayland as before. Takes effect the next time Crimson Banner "
                  + "OS starts."
         });
-        p.Children.Add(Check("Draw Red Star's own windows natively on Wayland (experimental)", s.NativeWaylandShell, v => SettingsStore.Current.NativeWaylandShell = v));
+        p.Children.Add(Check("Draw Crimson Banner's own windows natively on Wayland (experimental)", s.NativeWaylandShell, v => SettingsStore.Current.NativeWaylandShell = v));
         p.Children.Add(new TextBlock
         {
             Classes = { "caption" }, TextWrapping = TextWrapping.Wrap,
-            Text = "Inside redstar-comp, Red Star's desktop, taskbar and apps use Avalonia's Wayland backend instead of Xwayland: "
-                 + "sharper on scaled screens and no X11 in between. Avalonia marks it experimental. If it fails to start, Red Star "
+            Text = "Inside redstar-comp, Crimson Banner's desktop, taskbar and apps use Avalonia's Wayland backend instead of Xwayland: "
+                 + "sharper on scaled screens and no X11 in between. Avalonia marks it experimental. If it fails to start, Crimson Banner "
                  + "starts again through Xwayland on its own and tells you. Other programs are not affected. Takes effect the next time "
-                 + "Red Star OS starts."
+                 + "Crimson Banner OS starts."
                  + (WaylandShell.Active ? "\nNow: drawing natively on Wayland."
                     : WaylandShell.FellBackReason is { } why ? "\nNow: " + why : "")
         });

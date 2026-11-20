@@ -1,6 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="RedStarOS.Views.LoginWindow"
-        Title="Red Star OS - Login"
+        Title="Crimson Banner OS - Login"
         WindowState="FullScreen"
         WindowDecorations="None"
         Topmost="True">

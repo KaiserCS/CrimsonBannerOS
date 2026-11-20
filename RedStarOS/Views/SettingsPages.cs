@@ -383,7 +383,7 @@ public static class SettingsPages
         var host = new StackPanel { Spacing = 10 };
         p.Children.Add(host);
         p.Children.Add(Eyebrow("TEXT AND APP SIZE"));
-        p.Children.Add(Note("Change the size of everything in Red Star OS in Settings → Accessibility."));
+        p.Children.Add(Note("Change the size of everything in Crimson Banner OS in Settings → Accessibility."));
 
         async Task Load()
         {
@@ -493,7 +493,7 @@ public static class SettingsPages
         var host = new StackPanel { Spacing = 10 };
         p.Children.Add(host);
         p.Children.Add(Eyebrow("TEXT AND APP SIZE"));
-        p.Children.Add(Note("Scale makes everything bigger on that screen. To change only Red Star OS, use Settings → Accessibility."));
+        p.Children.Add(Note("Scale makes everything bigger on that screen. To change only Crimson Banner OS, use Settings → Accessibility."));
 
         async Task Load()
         {
@@ -503,8 +503,8 @@ public static class SettingsPages
             if (outs.Count == 0) { host.Children.Add(Note("No screens were reported.")); return; }
             if (outs.All(o => o.Nested))
             {
-                host.Children.Add(Note("Red Star OS is running as a window on another desktop, so that desktop decides the size. " +
-                    "Use its display settings, or start the \"Red Star OS (Wayland)\" session from the login screen."));
+                host.Children.Add(Note("Crimson Banner OS is running as a window on another desktop, so that desktop decides the size. " +
+                    "Use its display settings, or start the \"Crimson Banner OS (Wayland)\" session from the login screen."));
                 return;
             }
             var main = outs.FirstOrDefault(o => o.Enabled && o.X == 0 && o.Y == 0) ?? outs.FirstOrDefault(o => o.Enabled) ?? outs[0];
@@ -640,7 +640,7 @@ public static class SettingsPages
     // ═════════════════════════════════ Default apps ═════════════════════════════════
     public static Control DefaultAppsPage()
     {
-        var p = Page("Default apps", "Which program opens links and each kind of file. Red Star apps are used unless you pick another.");
+        var p = Page("Default apps", "Which program opens links and each kind of file. Crimson Banner apps are used unless you pick another.");
         var linux = DesktopEntries.All().OrderBy(a => a.Name).ToList();
         var systemWide = new CheckBox { Content = "Also make it the default for other programs (xdg-mime)", IsChecked = false };
         foreach (var kind in DefaultApps.Kinds)
@@ -660,10 +660,10 @@ public static class SettingsPages
             p.Children.Add(Row(new TextBlock { Text = k.Label, Width = 160, VerticalAlignment = VerticalAlignment.Center }, combo));
         }
         p.Children.Add(systemWide);
-        p.Children.Add(Note("Terminal programs (Terminal=true) open in Red Star Terminal."));
+        p.Children.Add(Note("Terminal programs (Terminal=true) open in Terminal."));
         p.Children.Add(Note(RedStarOnline.ProgramPath() is { } online
-            ? "Red Star Online: " + online + ". Its own settings are under Red Star Online in this window."
-            : "Red Star Online (GTK + WebKitGTK) isn't installed: build it with browser/build.sh and run install-session.sh."));
+            ? "Crimson Online: " + online + ". Its own settings are under Crimson Online in this window."
+            : "Crimson Online (GTK + WebKitGTK) isn't installed: build it with browser/build.sh and run install-session.sh."));
         return p;
     }
 
@@ -671,7 +671,7 @@ public static class SettingsPages
     public static Control Updates()
     {
         var st = SettingsStore.Current;
-        var p = Page("Software Updates", $"You have Red Star OS {UpdateChecker.Current.ToString(3)}.");
+        var p = Page("Software Updates", $"You have Crimson Banner OS {UpdateChecker.Current.ToString(3)}.");
         var auto = new CheckBox { Content = "Check for updates automatically (once a day)", IsChecked = st.AutoUpdateCheck };
         auto.IsCheckedChanged += (_, _) => { st.AutoUpdateCheck = auto.IsChecked == true; SettingsStore.Save(); };
         p.Children.Add(auto);
@@ -692,7 +692,7 @@ public static class SettingsPages
             if (r.Error != null) { result.Text = "Couldn't check: " + r.Error; return; }
             st.LastUpdateCheck = DateTime.Now; SettingsStore.Save();
             last.Text = $"Last checked {DateTime.Now:d MMM yyyy, HH:mm}.";
-            result.Text = r.Newer ? $"Red Star OS {r.Latest} is available. Use “Open Updates…” to install it." : "You're up to date.";
+            result.Text = r.Newer ? $"Crimson Banner OS {r.Latest} is available. Use “Open Updates…” to install it." : "You're up to date.";
         }, true);
         p.Children.Add(Row(check, open));
         p.Children.Add(result);
@@ -725,13 +725,13 @@ public static class SettingsPages
         gfx.SelectedIndex = Math.Max(0, Array.FindIndex(modes, m => m.Item1 == (SettingsStore.Current.Graphics ?? "auto")));
         Avalonia.Automation.AutomationProperties.SetName(gfx, "Graphics acceleration");
         var gfxNote = Note("Automatic: the browser renders pages and decodes video on the GPU whenever the display allows it; "
-                           + "Red Star's own windows use the GPU when a compositor (picom) runs as well. Changes apply after Red Star OS restarts.");
+                           + "Crimson Banner's own windows use the GPU when a compositor (picom) runs as well. Changes apply after Crimson Banner OS restarts.");
         gfx.SelectionChanged += (_, _) =>
         {
             if (gfx.SelectedIndex < 0) return;
             SettingsStore.Current.Graphics = modes[gfx.SelectedIndex].Item1;
             SettingsStore.Save();
-            gfxNote.Text = "Saved — restart Red Star OS (Shut down, then start it again) to apply.";
+            gfxNote.Text = "Saved — restart Crimson Banner OS (Shut down, then start it again) to apply.";
         };
         p.Children.Add(gfx);
         p.Children.Add(gfxNote);
@@ -783,7 +783,7 @@ public static class SettingsPages
     public static Control Accessibility()
     {
         var st = SettingsStore.Current;
-        var p = Page("Accessibility", "Make Red Star OS easier to see, hear and use with the keyboard.");
+        var p = Page("Accessibility", "Make Crimson Banner OS easier to see, hear and use with the keyboard.");
         void Changed() { SettingsStore.Save(); WindowManager.RaiseChanged(); }
 
         p.Children.Add(Eyebrow("SIZE"));
@@ -799,7 +799,7 @@ public static class SettingsPages
         {
             if (size.SelectedIndex < 0) return;
             st.UiScale = sizes[size.SelectedIndex]; Changed();
-            sizeNote.Text = "The new size is used the next time you sign in (Red Star Online, Writer and the other apps follow it).";
+            sizeNote.Text = "The new size is used the next time you sign in (Crimson Online, Writer and the other apps follow it).";
         };
         p.Children.Add(Row(new TextBlock { Text = "Text and controls", Width = 160, VerticalAlignment = VerticalAlignment.Center }, size));
         p.Children.Add(sizeNote);
@@ -827,7 +827,7 @@ public static class SettingsPages
         p.Children.Add(Btn("Show all shortcuts", WelcomeWindow.OpenShortcuts));
 
         p.Children.Add(Eyebrow("SCREEN READER"));
-        p.Children.Add(Card(Note("Buttons and fields carry names for assistive technology (icon buttons use their tooltip). On Linux, Orca reading Red Star apps depends on the accessibility support of the Avalonia toolkit, which is still limited; web pages in Red Star Online are read through Chromium's own support.")));
+        p.Children.Add(Card(Note("Buttons and fields carry names for assistive technology (icon buttons use their tooltip). On Linux, Orca reading Crimson Banner apps depends on the accessibility support of the Avalonia toolkit, which is still limited; web pages in Crimson Online are read through Chromium's own support.")));
         return p;
     }
 
@@ -838,9 +838,9 @@ public static class SettingsPages
     public static Control OnlinePage()
     {
         static BrowserSettings S() => BrowserData.Settings;
-        var p = Page("Red Star Online", "Search, privacy, blocked sites and imports for the web browser.");
+        var p = Page("Crimson Online", "Search, privacy, blocked sites and imports for the web browser.");
         if (RedStarOnline.ProgramPath() == null)
-            p.Children.Add(Card(Note("Red Star Online isn't installed: build it with browser/build.sh and run install-session.sh. These settings are kept for when it is.")));
+            p.Children.Add(Card(Note("Crimson Online isn't installed: build it with browser/build.sh and run install-session.sh. These settings are kept for when it is.")));
         CheckBox Toggle(string text, bool value, Action<bool> set)
         {
             var c = new CheckBox { Content = text, IsChecked = value };
@@ -855,7 +855,7 @@ public static class SettingsPages
 
         p.Children.Add(Eyebrow("GENERAL"));
         p.Children.Add(Toggle("Show the bookmarks bar", S().ShowBookmarksBar, v => S().ShowBookmarksBar = v));
-        p.Children.Add(Toggle("Reopen the previous tabs when Red Star Online starts", S().RestoreSession, v => S().RestoreSession = v));
+        p.Children.Add(Toggle("Reopen the previous tabs when Crimson Online starts", S().RestoreSession, v => S().RestoreSession = v));
         p.Children.Add(Toggle("Remember browsing history", S().SaveHistory, v => S().SaveHistory = v));
 
         p.Children.Add(Eyebrow("PRIVACY AND SAFETY"));
@@ -911,7 +911,7 @@ public static class SettingsPages
             if (what.Count > 0)
             {
                 if (RedStarOnline.ClearData(what.ToArray())) done.AddRange(what.Select(w => w == "cookies" ? "cookies and site data" : "the cache"));
-                else done.Add("(cookies and the cache need Red Star Online installed)");
+                else done.Add("(cookies and the cache need Crimson Online installed)");
             }
             clearNote.Text = done.Count > 0 ? "Cleared: " + string.Join(", ", done) + "." : "Nothing was cleared.";
         }, true));

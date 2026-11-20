@@ -157,7 +157,7 @@ public partial class StartMenu : UserControl
     private void BuildCategories()
     {
         var rsItems = _items.Where(i => !i.IsLinux).ToList();
-        var rs = new List<CategoryRow> { Row(KeyAll, "All Red Star apps", rsItems.Count) };
+        var rs = new List<CategoryRow> { Row(KeyAll, "All Crimson Banner apps", rsItems.Count) };
         var rsRecent = RecentItems(false);
         if (rsRecent.Count > 0) rs.Add(Row(KeyRecent, "Recent", rsRecent.Count));
         foreach (var key in RedStarCategoryOrder)
@@ -323,7 +323,7 @@ public partial class StartMenu : UserControl
             var section = _items.Where(i => i.IsLinux == _linuxSection);
             var src = _categoryKey == KeyAll ? section : section.Where(i => i.Category == _categoryKey);
             list = src.OrderBy(i => i.Title, StringComparer.OrdinalIgnoreCase).ToList();
-            heading = (_categoryKey == KeyAll ? (_linuxSection ? "All Linux apps" : "All Red Star apps") : CategoryLabel(_categoryKey)).ToUpperInvariant();
+            heading = (_categoryKey == KeyAll ? (_linuxSection ? "All Linux apps" : "All Crimson Banner apps") : CategoryLabel(_categoryKey)).ToUpperInvariant();
             HighlightCategory();
         }
 

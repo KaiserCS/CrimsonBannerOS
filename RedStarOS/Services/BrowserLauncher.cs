@@ -13,7 +13,7 @@ public static class BrowserLauncher
     static BrowserLauncher()
     {
         RedStarOnline.CrashedAtStart += (_, why) => Dispatcher.UIThread.Post(() =>
-            Notifier.Show("Red Star Online closed", $"It stopped right after opening ({why}). Details are in ~/.config/redstaros/online.log.", "online"));
+            Notifier.Show("Crimson Online closed", $"It stopped right after opening ({why}). Details are in ~/.config/redstaros/online.log.", "online"));
     }
 
     public static void Launch(string? url = null)
@@ -34,13 +34,13 @@ public static class BrowserLauncher
     private static void Missing(string? url)
     {
         var why = RedStarOnline.ProgramPath() == null
-            ? "Red Star Online isn't installed. Install webkitgtk-6.0, gtk4, json-glib and libsoup3, then rebuild Red Star (or run browser/build.sh and install-session.sh)."
-            : "Red Star Online didn't start; see ~/.config/redstaros/online.log.";
+            ? "Crimson Online isn't installed. Install webkitgtk-6.0, gtk4, json-glib and libsoup3, then rebuild Crimson Banner (or run browser/build.sh and install-session.sh)."
+            : "Crimson Online didn't start; see ~/.config/redstaros/online.log.";
         if (!string.IsNullOrEmpty(url) && ProcessUtil.Which("xdg-open") is { } open)
         {
             try { System.Diagnostics.Process.Start(open, new[] { url })?.Dispose(); why += " The page was opened in the system's default browser."; }
             catch { }
         }
-        Dispatcher.UIThread.Post(() => Notifier.Show("Red Star Online", why, "online"));
+        Dispatcher.UIThread.Post(() => Notifier.Show("Crimson Online", why, "online"));
     }
 }

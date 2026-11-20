@@ -201,7 +201,7 @@ public partial class VideoWindow : Window
     private void UpdateTitle()
     {
         var c = Current;
-        Title = c == null ? "Red Star Video" : $"{c.Title} — Red Star Video";
+        Title = c == null ? "Video" : $"{c.Title} — Video";
     }
 
     // ───────────────────────── state ─────────────────────────
@@ -607,7 +607,7 @@ public partial class VideoWindow : Window
                 new() { Id = "prev", Label = "Previous" },
                 new() { Id = "next", Label = "Next" },
                 new() { Separator = true },
-                new() { Id = "show", Label = "Show Red Star Video" },
+                new() { Id = "show", Label = "Show Video" },
                 new() { Id = "close", Label = "Close" }
             },
             Click = () => Dispatcher.UIThread.Post(Raise),

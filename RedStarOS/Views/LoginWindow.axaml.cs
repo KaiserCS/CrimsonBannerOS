@@ -18,7 +18,7 @@ public partial class LoginWindow : Window
     public LoginWindow()
     {
         InitializeComponent();
-        WaylandShell.Frameless(this, "Red Star OS - Login");
+        WaylandShell.Frameless(this, "Crimson Banner OS - Login");
         Card.RenderTransform = _shake;
 
         _clock.Tick += (_, _) => UpdateClock();

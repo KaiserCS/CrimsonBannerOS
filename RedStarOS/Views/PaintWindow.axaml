@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:v="clr-namespace:RedStarOS.Views"
         x:Class="RedStarOS.Views.PaintWindow"
-        Title="Untitled - Red Star Paint"
+        Title="Untitled - Paint"
         Width="1120" Height="760" MinWidth="720" MinHeight="480"
         WindowStartupLocation="CenterOwner">
   <DockPanel>

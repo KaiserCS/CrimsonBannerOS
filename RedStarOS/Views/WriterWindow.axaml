@@ -1,11 +1,11 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="RedStarOS.Views.WriterWindow"
-        Title="Red Star Writer"
+        Title="Writer"
         Width="1083" Height="660"
         WindowStartupLocation="CenterOwner">
   <DockPanel>
     <DockPanel DockPanel.Dock="Top">
-      <TextBlock DockPanel.Dock="Right" Text="Red Star Writer" Classes="brand"
+      <TextBlock DockPanel.Dock="Right" Text="Writer" Classes="brand"
                  FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0" />
       <Menu>
         <MenuItem Header="_File">

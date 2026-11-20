@@ -1,6 +1,6 @@
 # Principles: self-reliance
 
-Red Star OS takes its line from Marxist-Leninist thought, specifically the principle of **self-reliance**. A
+Crimson Banner OS (formerly Red Star OS) takes its line from Marxist-Leninist thought, specifically the principle of **self-reliance**. A
 desktop is a means of production: the people who use it do their work through it, so who owns it and who controls
 the layers beneath it are not side questions. Whoever controls the base layers can set the terms for everything built
 on them. The project therefore aims to hold its own base, to keep what it produces as collective property, and to know
@@ -38,11 +38,11 @@ same change that adds it, or it doesn't go in.
 | D-Bus (the session bus) | system tray, portals | community (freedesktop.org) | GPL-2.0/AFL | accepted; we talk to it with our own client (`Services/DBus.cs`), no D-Bus library |
 | .NET runtime and SDK | the shell | .NET Foundation, steered by Microsoft | MIT | **dependent.** Kept by decision (18 Nov 2026): a rewrite would cost more than it frees. Rules: no Windows-only APIs, telemetry off, nothing that ties us to Microsoft services. Way out: the shell's logic stays portable; the X11 and Wayland parts are already plain C. |
 | Avalonia (incl. Avalonia.Wayland) | the shell's UI | AvaloniaUI OÜ (company) | MIT | **dependent.** Pinned versions; the native Wayland path reduces reliance on X11. Way out: none cheap. Watch the licence and governance at every upgrade. |
-| WebKitGTK | Red Star Online's web engine (since 20 Nov 2026; it replaced Chromium via Electron, removed the same day with npm) | WebKit project (upstream led largely by Apple); the GTK port and its releases by Igalia (a worker-owned cooperative) and the GNOME community | LGPL-2.1, BSD | **commons.** Free software under licences on GNU's free-licence list; LGPL keeps it open. If upstream ever turns against the port, the port's maintainers and its users are the way out. |
-| GTK 4, json-glib, libsoup | Red Star Online's window, data file, filter-list downloads | GNOME Foundation (non-profit) | LGPL-2.1 | accepted (commons) |
-| GStreamer, FFmpeg (gst-libav) | sound and video in Red Star Online's pages | community (freedesktop.org; FFmpeg project) | LGPL-2.1 | accepted (commons); system packages, not bundled |
+| WebKitGTK | Crimson Online's web engine (since 20 Nov 2026; it replaced Chromium via Electron, removed the same day with npm) | WebKit project (upstream led largely by Apple); the GTK port and its releases by Igalia (a worker-owned cooperative) and the GNOME community | LGPL-2.1, BSD | **commons.** Free software under licences on GNU's free-licence list; LGPL keeps it open. If upstream ever turns against the port, the port's maintainers and its users are the way out. |
+| GTK 4, json-glib, libsoup | Crimson Online's window, data file, filter-list downloads | GNOME Foundation (non-profit) | LGPL-2.1 | accepted (commons) |
+| GStreamer, FFmpeg (gst-libav) | sound and video in Crimson Online's pages | community (freedesktop.org; FFmpeg project) | LGPL-2.1 | accepted (commons); system packages, not bundled |
 | libVLC | video | VideoLAN (non-profit) | LGPL-2.1 | accepted |
-| grim, wf-recorder, wl-clipboard; scrot, maim, ImageMagick, xclip | Screenshot, Screen Recorder, copying pictures (optional programs, run when installed) | community projects (independent maintainers; ImageMagick Studio LLC for ImageMagick) | MIT, Apache-2.0 (ImageMagick), GPL-2.0+ (xclip) | accepted (commons); Red Star says what to install when they're missing. FFmpeg (above) records on X11, GStreamer (above) records Voice Memos. |
+| grim, wf-recorder, wl-clipboard; scrot, maim, ImageMagick, xclip | Screenshot, Screen Recorder, copying pictures (optional programs, run when installed) | community projects (independent maintainers; ImageMagick Studio LLC for ImageMagick) | MIT, Apache-2.0 (ImageMagick), GPL-2.0+ (xclip) | accepted (commons); Crimson Banner says what to install when they're missing. FFmpeg (above) records on X11, GStreamer (above) records Voice Memos. |
 | xUnit | tests | .NET Foundation community | Apache-2.0 | tests only; the window manager's session test uses GTK 3 and PyGObject (GNOME) since 20 Nov 2026, replacing Playwright's Chromium (Microsoft) |
 | GitHub and GitHub Actions | hosting, CI | Microsoft | proprietary service | **dependent, kept by decision (19 Nov 2026).** Codeberg's terms (July 2026) bar projects mostly written by generative AI and limit private repositories, and self-hosting Forgejo costs upkeep; independence is cheaper to win in other layers. GitHub still only repeats `./check.sh` (see 4). Way out if that changes: self-hosted Forgejo (GPL-3.0-or-later) with its own runner, GitHub as a push mirror. |
 | NuGet registry (nuget.org) | filling our package feed, once | Microsoft | proprietary service | **reduced to a one-time download** (20 Nov 2026). Exact versions and content hashes are in the repository (`packages.lock.json`); `tools/packages.sh` fills our own feed once, and from then on `./check.sh` and `./build-appimage.sh` restore from it alone, offline (CI proves it with nuget.org cut off). A filled feed can be passed on as a tar file, so a member never has to reach nuget.org. npm is gone with Electron. |
@@ -63,10 +63,10 @@ whenever a layer changes.
 | Kernel, graphics drivers | Linux, Mesa | commons |
 | Compositor (Wayland) | redstar-comp, on wlroots | ours |
 | Window manager (X11) | redstar-wm | ours |
-| Shell: desktop, taskbar, apps | Red Star OS | ours |
+| Shell: desktop, taskbar, apps | Crimson Banner OS | ours |
 | UI toolkit | Avalonia | dependent |
 | Runtime | .NET | dependent |
-| Web engine | Red Star Online on WebKitGTK | commons |
+| Web engine | Crimson Online on WebKitGTK | commons |
 | Media | libVLC | commons |
 | Tests | xUnit, our own harnesses | commons |
 | Build and release | check.sh, build-appimage.sh | ours |
@@ -74,7 +74,7 @@ whenever a layer changes.
 | Package sources | our own feed (`tools/packages.sh`), locked versions and hashes | ours |
 
 **Now: 9 of 12 (75%): the target is reached, and from here it is the floor.** The web engine moved to WebKitGTK
-(Red Star Online's rewrite, 20 Nov 2026), Electron and npm were removed, and builds restore from our own package feed
+(Crimson Online's rewrite, 20 Nov 2026), Electron and npm were removed, and builds restore from our own package feed
 (20 Nov 2026). Source hosting stays on GitHub by decision (19 Nov 2026, see the dependency table).
 
 1. ~~Move the web engine to WebKitGTK~~: done, 8/12 (67%).
@@ -97,7 +97,7 @@ doesn't make it.
 - [GNU licence list](https://www.gnu.org/licenses/license-list.html): which licences are free and which can be
   combined with GPL-3.0-or-later.
 - [Free System Distribution Guidelines](https://www.gnu.org/distros/free-system-distribution-guidelines) (FSDG):
-  the bar for when Red Star becomes a distribution. Among other things: only free software and free firmware in what
+  the bar for when Crimson Banner becomes a distribution. Among other things: only free software and free firmware in what
   it ships, a kernel without non-free blobs (Linux-libre), and no steering users towards non-free programs.
 - [Ethical repository criteria](https://www.gnu.org/software/repo-criteria.html): how GNU grades code hosts.
 
@@ -108,11 +108,11 @@ doesn't make it.
 Known differences with that advice, recorded openly:
 - **GitHub** grades poorly on GNU's repository criteria. It's kept by decision (19 Nov 2026, see the dependency
   table).
-- **Proprietary programs** like Discord and Steam work with Red Star through open standards, such as the system
-  tray. Red Star doesn't ship them or advertise them. To meet the FSDG as a distribution, the defaults, store and
+- **Proprietary programs** like Discord and Steam work with Crimson Banner through open standards, such as the system
+  tray. Crimson Banner doesn't ship them or advertise them. To meet the FSDG as a distribution, the defaults, store and
   recommendations stay free software only.
 - **Chromium (Electron)** is free software, but the FSF prefers browsers without Google's services built in. It's gone:
-  Red Star Online runs on WebKitGTK, Red Star Video on libVLC, and Electron was removed (20 Nov 2026).
+  Crimson Online runs on WebKitGTK, Video on libVLC, and Electron was removed (20 Nov 2026).
 
 ## 4. Build and verify without the platforms
 
@@ -128,7 +128,7 @@ Known differences with that advice, recorded openly:
 
 - No telemetry, analytics or crash reporting that leaves the machine. Tools that collect it by default are switched
   off in our scripts (`DOTNET_CLI_TELEMETRY_OPTOUT`).
-- No accounts and no cloud services required to use Red Star OS. User data stays local unless the user sends it
+- No accounts and no cloud services required to use Crimson Banner OS. User data stays local unless the user sends it
   somewhere.
 - Unlike the original Red Star OS, the system doesn't watermark files, watch what users do or report on them.
 

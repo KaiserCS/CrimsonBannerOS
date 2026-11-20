@@ -11,7 +11,7 @@ public static class ThemeService
 
     public static readonly (string Name, string Hex)[] Accents =
     {
-        ("Blue", "#0078D4"), ("Red Star", "#C8102E"), ("Green", "#107C10"), ("Orange", "#D83B01"),
+        ("Blue", "#0078D4"), ("Crimson", "#C8102E"), ("Green", "#107C10"), ("Orange", "#D83B01"),
         ("Purple", "#744DA9"), ("Teal", "#00828A"), ("Gray", "#5D5A58")
     };
 

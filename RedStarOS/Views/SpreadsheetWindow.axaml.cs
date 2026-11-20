@@ -91,7 +91,7 @@ public partial class SpreadsheetWindow : Window
     private void UpdateTitle()
     {
         var name = _path == null ? "Untitled" : Path.GetFileName(_path);
-        Title = (_modified ? "• " : "") + name + " - Red Star Sheets";
+        Title = (_modified ? "• " : "") + name + " - Sheets";
     }
 
     private void OnScrollBar(object? sender, AvaloniaPropertyChangedEventArgs e)
@@ -452,7 +452,7 @@ public partial class SpreadsheetWindow : Window
     {
         EndEditIfAny();
         if (!_modified) return true;
-        int r = await Dialogs.Ask(this, "Red Star Sheets", "Save changes to this spreadsheet before continuing?", "Save", "Don't save", "Cancel");
+        int r = await Dialogs.Ask(this, "Sheets", "Save changes to this spreadsheet before continuing?", "Save", "Don't save", "Cancel");
         if (r == 0) return await Save(false);
         return r == 1;
     }
@@ -670,7 +670,7 @@ public partial class SpreadsheetWindow : Window
         }
         catch (Exception ex)
         {
-            await Dialogs.ShowMessage(this, "Red Star Sheets", ex.Message);
+            await Dialogs.ShowMessage(this, "Sheets", ex.Message);
         }
     }
 

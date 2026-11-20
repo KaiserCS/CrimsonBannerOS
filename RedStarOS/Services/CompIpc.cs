@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace RedStarOS.Services;
 
 /// <summary>
-/// The connection to redstar-comp (compositor/redstar-comp.c, "the Red Star shell's connection"): native Wayland
+/// The connection to redstar-comp (compositor/redstar-comp.c, "the Crimson Banner shell's connection"): native Wayland
 /// windows for the taskbar and Alt+Tab, the active window and stacking order, and global shortcuts that work
 /// whichever window has the keyboard. One line per message, fields separated by tabs. Only used inside redstar-comp
 /// (REDSTAR_COMP_SOCKET); <see cref="X11Desktop"/> merges what arrives here with the X11 windows it reads itself.

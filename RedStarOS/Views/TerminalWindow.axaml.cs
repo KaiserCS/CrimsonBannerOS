@@ -405,7 +405,7 @@ public partial class TerminalWindow : Window
         if (changed) { RebuildTabs(); UpdateWindowTitle(); }
     }
 
-    private void UpdateWindowTitle() => Title = (_cur?.Title ?? "Terminal") + " — Red Star Terminal";
+    private void UpdateWindowTitle() => Title = (_cur?.Title ?? "Terminal") + " — Terminal";
 
     private void CycleTab(int d)
     {

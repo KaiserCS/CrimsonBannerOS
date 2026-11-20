@@ -107,7 +107,7 @@ public partial class WriterWindow : Window
     private void UpdateWindowTitle()
     {
         var cur = Current();
-        Title = "Red Star Studio Writer" + (cur == null ? "" : " - " + cur.Name + (cur.Dirty ? "*" : ""));
+        Title = "Studio Writer" + (cur == null ? "" : " - " + cur.Name + (cur.Dirty ? "*" : ""));
     }
 
     private void UpdateStatus()

@@ -35,7 +35,7 @@ find_app() {
 APP=""
 if [ -n "${1:-}" ]; then
   APP="$(find_app "$1")"
-  [ -n "$APP" ] || { echo "No Red Star OS program in $1 (give an AppImage, the RedStarOS program or its folder)."; exit 1; }
+  [ -n "$APP" ] || { echo "No Crimson Banner OS program in $1 (give an AppImage, the RedStarOS program or its folder)."; exit 1; }
 else
   APP="$(ls -t "$HERE"/dist/*.AppImage 2>/dev/null | head -n 1 || true)"
   for c in "$HERE/RedStarOS/bin/Release/net8.0/RedStarOS" "$HERE/RedStarOS/bin/Debug/net8.0/RedStarOS"; do
@@ -45,12 +45,12 @@ else
 fi
 APP="$(readlink -f "$APP")"
 chmod +x "$APP"
-echo "Red Star OS: $APP"
+echo "Crimson Banner OS: $APP"
 
 sed "s#@APPIMAGE@#$APP#" "$HERE/packaging/redstaros-session" > "$BIN/redstaros-session"
 chmod 755 "$BIN/redstaros-session"
 install -Dm644 "$HERE/packaging/redstaros-xsession.desktop" "$XS"
-echo "  added \"Red Star OS\" ($XS)"
+echo "  added \"Crimson Banner OS\" ($XS)"
 
 # ── the Wayland session needs redstar-comp ──
 COMP=""
@@ -60,10 +60,10 @@ done
 if [ -n "$COMP" ]; then
   install -Dm755 "$COMP" "$BIN/redstar-comp"
   install -Dm644 "$HERE/packaging/redstaros-wayland.desktop" "$WS"
-  echo "  added \"Red Star OS (Wayland)\" ($WS), compositor $BIN/redstar-comp"
+  echo "  added \"Crimson Banner OS (Wayland)\" ($WS), compositor $BIN/redstar-comp"
 else
   rm -f "$WS"
-  echo "  not added: \"Red Star OS (Wayland)\" — build redstar-comp first (compositor/build.sh), then run this again"
+  echo "  not added: \"Crimson Banner OS (Wayland)\" — build redstar-comp first (compositor/build.sh), then run this again"
 fi
 
 # ── Red Star Online, the GTK + WebKitGTK browser (the previous one is used without it) ──
@@ -74,12 +74,12 @@ done
 if [ -n "$ONLINE" ]; then
   install -Dm755 "$ONLINE" "$BIN/redstar-online"
   install -Dm644 "$HERE/browser/data/org.redstaros.Online.desktop" /usr/local/share/applications/org.redstaros.Online.desktop
-  echo "  installed Red Star Online (GTK + WebKitGTK): $BIN/redstar-online"
+  echo "  installed Crimson Online (GTK + WebKitGTK): $BIN/redstar-online"
   if ! command -v gst-inspect-1.0 >/dev/null 2>&1 || ! gst-inspect-1.0 autoaudiosink >/dev/null 2>&1; then
     echo "    note: pages will be silent without GStreamer's plugins — sudo pacman -S gst-plugins-good gst-plugins-bad gst-libav"
   fi
 else
-  echo "  not installed: the new Red Star Online — build it first (browser/build.sh); until then the previous browser is used"
+  echo "  not installed: the new Crimson Online — build it first (browser/build.sh); until then the previous browser is used"
 fi
 
 echo

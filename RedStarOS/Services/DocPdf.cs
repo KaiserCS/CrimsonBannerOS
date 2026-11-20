@@ -124,7 +124,7 @@ public static class DocPdf
 
         var tmp = path + ".tmp";
         using (var fs = File.Create(tmp))
-        using (var pdf = SKDocument.CreatePdf(fs, new SKDocumentPdfMetadata { Title = title, Creator = "Red Star Writer" }))
+        using (var pdf = SKDocument.CreatePdf(fs, new SKDocumentPdfMetadata { Title = title, Creator = "Writer" }))
         {
             int page = 0;
             SKCanvas? canvas = null;

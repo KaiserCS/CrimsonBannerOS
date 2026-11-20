@@ -1012,7 +1012,7 @@ public partial class FileManagerWindow : Window
         {
             if (InVirtual)
             {
-                if (_current == Places.Recent) items.Add(Item("Clear Red Star's recent list", "close", () => { SettingsStore.Current.RecentFiles.Clear(); SettingsStore.Save(); Reload(false); }));
+                if (_current == Places.Recent) items.Add(Item("Clear Crimson Banner's recent list", "close", () => { SettingsStore.Current.RecentFiles.Clear(); SettingsStore.Save(); Reload(false); }));
                 items.Add(Item("Select all", null, () => FileList.SelectAll(), "Ctrl+A"));
             }
             else if (InArchive)
