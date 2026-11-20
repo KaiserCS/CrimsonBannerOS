@@ -247,7 +247,8 @@ public static class X11Desktop
                 case "e": Raise("files"); return;
                 case "l": Raise("lock"); return;
                 case "t": Raise("terminal"); return;
-                case "s": case "space": Raise("search"); return;
+                case "s": Raise(alt ? "screen-reader" : "search"); return;
+                case "space": Raise("search"); return;
                 default: return;
             }
         }

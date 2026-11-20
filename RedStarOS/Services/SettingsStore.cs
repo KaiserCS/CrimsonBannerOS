@@ -53,6 +53,7 @@ public sealed class Settings
     public string KeyboardCompose { get; set; } = "";          // e.g. "compose:ralt"
     public string KeyboardCapsLock { get; set; } = "";         // e.g. "caps:escape", "ctrl:nocaps"
     public DateTime? LastSystemUpdateCheck { get; set; }      // Software Updates: the system's packages (PackageKit)
+    public bool ScreenReaderOn { get; set; }                  // Accessibility: Orca, started at sign-in when on
     public int ScreenOffMinutes { get; set; } = 10;            // Power: screen off after so long without input (0: never)
     public bool LockOnScreenOff { get; set; } = true;          // Power: lock when the screen goes off, and before sleep
     public int SleepMinutes { get; set; }                      // Power: sleep after so long without input (0: never)

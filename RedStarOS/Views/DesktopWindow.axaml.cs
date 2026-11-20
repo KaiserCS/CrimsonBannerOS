@@ -99,6 +99,8 @@ public partial class DesktopWindow : Window
             _ = RemovableDrives.StartAsync();
             // keyboard layouts (redstar-comp got them at start; X11 needs setxkbmap)
             if (SettingsStore.Current.KeyboardLayouts.Count > 0 && !InputIsolation.InRedStarComp) RegionSettings.ApplyKeyboard();
+            // the screen reader, if it was on at sign-out
+            if (SettingsStore.Current.ScreenReaderOn) ScreenReader.Start();
             // screen off, lock and sleep when nobody uses the computer (System Settings → Power)
             if (Autostart.IsSession) IdleManager.Start();
             // the system's package updates, once a day (PackageKit)
@@ -169,6 +171,7 @@ public partial class DesktopWindow : Window
             case "files": WindowManager.Open(new FileManagerWindow(AppPaths.Home), "files"); break;
             case "terminal": TerminalLauncher.Launch(); break;
             case "lock": ShellActions.Lock(); break;
+            case "screen-reader": ScreenReader.Toggle(); break;
             case "power-menu": PowerMenu.Show(); break;
             case "volume-up": Bar.StepVolume(Taskbar.VolumeStep); break;
             case "volume-down": Bar.StepVolume(-Taskbar.VolumeStep); break;

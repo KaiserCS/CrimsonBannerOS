@@ -891,7 +891,20 @@ public static class SettingsPages
         p.Children.Add(Btn("Show all shortcuts", WelcomeWindow.OpenShortcuts));
 
         p.Children.Add(Eyebrow("SCREEN READER"));
-        p.Children.Add(Card(Note("Buttons and fields carry names for assistive technology (icon buttons use their tooltip). On Linux, Orca reading Crimson Banner apps depends on the accessibility support of the Avalonia toolkit, which is still limited; web pages in Crimson Online are read through Chromium's own support.")));
+        var reader = new CheckBox { Content = "Read the screen aloud (Orca) · Super+Alt+S", IsChecked = SettingsStore.Current.ScreenReaderOn, IsEnabled = ScreenReader.Installed };
+        reader.IsCheckedChanged += async (_, _) =>
+        {
+            SettingsStore.Current.ScreenReaderOn = reader.IsChecked == true;
+            SettingsStore.Save();
+            if (reader.IsChecked == true) ScreenReader.Start(); else await ScreenReader.StopAsync();
+        };
+        p.Children.Add(reader);
+        p.Children.Add(Card(Note(ScreenReader.Installed
+            ? "Orca reads Crimson Banner's windows (through Avalonia's AT-SPI support), Crimson Online and other GTK and Qt programs. Its own settings open with Orca+Space."
+              + (InputIsolation.InRedStarComp ? " Inside redstar-comp some of Orca's own keyboard commands may not work yet; under X11 they all do." : "")
+            : "Install Orca to have the screen read aloud (Arch/CachyOS: pacman -S orca).")));
+        p.Children.Add(Eyebrow("ON-SCREEN KEYBOARD"));
+        p.Children.Add(OnScreenKeyboard.Program != null ? Btn("Show the on-screen keyboard", OnScreenKeyboard.Toggle) : Note(OnScreenKeyboard.WhyNot));
         return p;
     }
 
@@ -1314,7 +1327,8 @@ public static class SettingsPages
         var note = Note("Loading…");
         p.Children.Add(note);
         p.Children.Add(list);
-        var add = Btn("Add a user…", async () =>
+        Button add = null!;
+        add = Btn("Add a user…", async () =>
         {
             var d = new AddUserDialog();
             if (TopLevel.GetTopLevel(p) is Window owner) await d.ShowDialog(owner); else d.Show();

@@ -2335,7 +2335,8 @@ static bool shell_shortcut(struct server *s, xkb_keysym_t sym, bool pressed, uin
 		case XKB_KEY_e: name = "files"; break;
 		case XKB_KEY_l: name = "lock"; break;
 		case XKB_KEY_t: name = "terminal"; break;
-		case XKB_KEY_s: case XKB_KEY_space: name = "search"; break;
+		case XKB_KEY_s: name = alt ? "screen-reader" : "search"; break;        /* Super+Alt+S: Orca, as on GNOME */
+		case XKB_KEY_space: name = "search"; break;
 		default: break;
 		}
 		if (name) shell_key(s, name);
