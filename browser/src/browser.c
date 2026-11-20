@@ -1410,7 +1410,7 @@ static int command_line(GApplication *gapp, GApplicationCommandLine *cl, gpointe
 // Runs the real browser through its paces on local pages: the blocker (network and element hiding), the address
 // bar, back, bookmarks, history, find, target=_blank tabs, closing and reopening tabs, downloads.
 
-static struct { int step, failed; char *dir; Browser *b; guint timeout; char *pending_check; } st;
+static struct { int step, failed, retries; char *dir; Browser *b; guint timeout; char *pending_check; } st;
 
 static void check(gboolean ok, const char *what)
 {
@@ -1527,6 +1527,12 @@ static void selftest_next(void)
 		st.pending_check = "loaded";
 		break;
 	case 6:
+		/* a new tab can report an empty first document before the page itself: wait for the page */
+		if ((!t || g_strcmp0(webkit_web_view_get_title(t->view), "Page B")) && st.retries++ < 10) {
+			st.step--;
+			st.pending_check = "loaded";
+			break;
+		}
 		check(gtk_notebook_get_n_pages(b->tabs) == 2, "a target=_blank link opens a new tab");
 		check(t && !g_strcmp0(webkit_web_view_get_title(t->view), "Page B"), "the new tab loads the link and comes to the front");
 		g_action_group_activate_action(G_ACTION_GROUP(b->win), "close-tab", NULL);
