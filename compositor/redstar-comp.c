@@ -3688,6 +3688,8 @@ int main(int argc, char **argv)
 	wl_list_remove(&s->cursor_frame.link);
 	wl_list_remove(&s->request_cursor.link);
 	wl_list_remove(&s->request_shape.link);
+	wl_list_remove(&s->new_inhibitor.link);
+	if (s->idle_timer) wl_event_source_remove(s->idle_timer);
 	wl_list_remove(&s->request_selection.link);
 	wl_list_remove(&s->request_primary.link);
 	wl_list_remove(&s->request_drag.link);
