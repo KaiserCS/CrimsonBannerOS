@@ -137,6 +137,9 @@ jobs:
             git diff --exit-code -- '*packages.lock.json'
           else
             echo "::warning::packages.lock.json isn't in the repository yet: commit the files from the lock-files artifact"
+            for f in RedStarOS/packages.lock.json tests/RedStarOS.Tests/packages.lock.json; do
+              echo "LOCKFILE $f $(gzip -9c "$f" | base64 -w0)"
+            done
           fi
 
       - uses: actions/upload-artifact@v5
