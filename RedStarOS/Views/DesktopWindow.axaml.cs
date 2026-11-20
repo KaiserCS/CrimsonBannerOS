@@ -81,6 +81,7 @@ public partial class DesktopWindow : Window
             WindowManager.TrackForeignWindows();      // other programs' windows get taskbar buttons too
             PortalSetup.Run();                         // inside redstar-comp: screenshots and screen sharing for other apps
             SystemTray.Start();                        // other programs' tray icons (Discord, Steam…) on the taskbar
+            OtherAppsNotifications.Start();            // other programs' notifications (org.freedesktop.Notifications)
             UpdateChecker.StartBackground();
             if (InputIsolation.IsNested)
                 Notifier.Show("Keyboard and mouse are in Crimson Banner OS",

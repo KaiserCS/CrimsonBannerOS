@@ -306,7 +306,7 @@ public class SystemTrayTests
     }
 
     /// <summary>A private session bus (dbus-daemon) for one test.</summary>
-    private sealed class TestBus : IDisposable
+    internal sealed class TestBus : IDisposable
     {
         private readonly Process _p;
         private readonly string _dir;
