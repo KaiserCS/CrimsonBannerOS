@@ -49,7 +49,8 @@ static int get_cardinals(Window w, Atom prop, long *out, int max)
 /* waits (up to ~3 s) until the property has at least n values */
 static int wait_cardinals(Window w, Atom prop, long *out, int n)
 {
-	for (int i = 0; i < 150; i++) {
+	/* up to 10 s: a busy machine can take a while to give Xwayland's first window its frame */
+	for (int i = 0; i < 500; i++) {
 		if (get_cardinals(w, prop, out, n) >= n) return 1;
 		pump(20);
 	}
