@@ -9,7 +9,7 @@
 # way only the exact versions and content hashes in packages.lock.json are accepted.
 
 pkgbase=crimson-banner
-pkgname=(crimson-banner crimson-banner-shell redstar-comp redstar-wm crimson-online)
+pkgname=(crimson-banner crimson-banner-shell crimson-banner-greeter redstar-comp redstar-wm crimson-online)
 pkgver=26.11.0
 pkgrel=1
 pkgdesc='Crimson Banner OS desktop'
@@ -70,7 +70,7 @@ check() {
 
 package_crimson-banner() {
   pkgdesc='Crimson Banner OS desktop: the shell, its compositor, window manager and browser'
-  depends=(crimson-banner-shell redstar-comp redstar-wm crimson-online)
+  depends=(crimson-banner-shell crimson-banner-greeter redstar-comp redstar-wm crimson-online)
   optdepends=('udisks2: drives and Disks'
               'accountsservice: Settings → Users'
               'packagekit: system updates in Settings'
@@ -112,6 +112,18 @@ package_crimson-banner-shell() {
   install -Dm644 packaging/redstaros.desktop "$pkgdir/usr/share/applications/redstaros.desktop"
   install -Dm644 packaging/redstaros.png "$pkgdir/usr/share/icons/hicolor/256x256/apps/redstaros.png"
   install -Dm644 packaging/crimson-banner.pam "$pkgdir/etc/pam.d/crimson-banner"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+package_crimson-banner-greeter() {
+  pkgdesc="Crimson Banner OS's login screen, run by greetd (sudo crimson-greeter-setup enable switches to it)"
+  depends=(greetd crimson-banner-shell redstar-comp xorg-xwayland xorg-xinit sh bash)
+  provides=(greetd-greeter)
+  cd "$pkgbase-$pkgver"
+  install -Dm755 packaging/greeter/crimson-greeter "$pkgdir/usr/bin/crimson-greeter"
+  install -Dm755 packaging/greeter/crimson-greeter-setup "$pkgdir/usr/bin/crimson-greeter-setup"
+  install -Dm644 packaging/greeter/greetd-config.toml "$pkgdir/usr/share/crimson-banner/greetd-config.toml"
+  install -Dm644 packaging/greeter/crimson-greeter.tmpfiles "$pkgdir/usr/lib/tmpfiles.d/crimson-greeter.conf"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

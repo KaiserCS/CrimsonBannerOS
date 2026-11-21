@@ -341,6 +341,28 @@ Optional self-update support: `GH_REPO=user/repo ./build-appimage.sh` embeds upd
 (also install `zsync` so the `.zsync` file is produced). `.github/workflows/appimage.yml` does this
 in CI and attaches both files to a GitHub release when you push a `v*` tag.
 
+### The login screen
+
+Crimson Banner OS has its own login screen. It shares the lock screen's look: the clock, then a card with the
+person, their password and the desktop to start. When there are several people, their pictures sit above the card
+to pick from. Sleep, restart and shut down are at the bottom. It remembers who signed in last and which desktop each
+person uses.
+
+Under the hood, greetd (a small GPL login service) runs it on the console inside redstar-comp. It signs people in
+through PAM and starts the chosen desktop, Wayland directly or X11 through `startx`.
+
+```bash
+crimson-greeter-setup preview        # look at it in a window first (any password works, nothing is started)
+sudo crimson-greeter-setup enable    # use it from the next start, instead of SDDM, GDM, LightDM…
+sudo crimson-greeter-setup disable   # back to the one used before
+crimson-greeter-setup status
+```
+
+`./install-arch.sh` asks once whether to switch; `./install-arch.sh --login-screen` switches without asking.
+
+If the login screen fails to come up twice in a row, greetd's text login takes over until the next restart, so a
+broken login screen can't lock you out. The reason is in `/var/cache/crimson-greeter/greeter.log`.
+
 ### Software
 
 Software (in the Start menu under System) installs more programs, free software only. Its tabs are:

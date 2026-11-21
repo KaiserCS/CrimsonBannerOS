@@ -35,6 +35,11 @@ tools/test-version.sh >/dev/null || { tools/test-version.sh; exit 1; }
   || { echo "packaging/arch/PKGBUILD's pkgver isn't VERSION ($(tools/version.sh --base)): tools/release.sh sets both" >&2; exit 1; }
 ok "tools/version.sh, tools/release.sh and the PKGBUILD agree"
 
+echo "==> Login screen scripts (packaging/greeter)"
+sh -n packaging/greeter/crimson-greeter && bash -n packaging/greeter/crimson-greeter-setup
+tools/test-greeter.sh >/dev/null || { tools/test-greeter.sh; exit 1; }
+ok "crimson-greeter and crimson-greeter-setup"
+
 echo "==> Building"
 dotnet build RedStarOS/RedStarOS.csproj -c Release -nologo -v quiet "${NORESTORE[@]}"
 ok "build"

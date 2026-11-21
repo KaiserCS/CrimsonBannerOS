@@ -1,0 +1,4 @@
+# Crimson Banner OS's login screen: its own folder (what it remembers, its log) and its failure count, which
+# lasts until the next restart (crimson-greeter)
+d /var/cache/crimson-greeter 0750 greeter greeter -
+d /run/crimson-greeter 0750 greeter greeter -

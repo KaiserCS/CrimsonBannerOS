@@ -13,9 +13,26 @@ namespace RedStarOS;
 
 internal static class Program
 {
+    /// <summary>The login screen (--greeter, started by greetd) or its preview (--greeter-demo): no desktop at all.</summary>
+    public static bool Greeter { get; private set; }
+    public static bool GreeterDemo { get; private set; }
+
     [STAThread]
     public static void Main(string[] args)
     {
+        if (args.Contains("--greeter") || args.Contains("--greeter-demo"))
+        {
+            Greeter = true;
+            GreeterDemo = args.Contains("--greeter-demo");
+            if (!GreeterDemo && RedStarOS.Services.Greeter.GreetdClient.SocketPath == null)
+            {
+                Console.Error.WriteLine("--greeter is started by greetd (GREETD_SOCK isn't set). To look at it: RedStarOS --greeter-demo");
+                Environment.ExitCode = 2;
+                return;
+            }
+            BuildAvaloniaApp(false).StartWithClassicDesktopLifetime(args);
+            return;
+        }
         // On top of another desktop, Red Star runs inside its own display so every key and click stays in it.
         if (RedStarOS.Services.InputIsolation.TryRunIsolated(args) is { } exitCode)
         {

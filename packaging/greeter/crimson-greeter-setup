@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Switches this computer's login screen to Crimson Banner OS's own (greetd with crimson-greeter), and back.
+#
+#   sudo crimson-greeter-setup enable    use it from the next start; the current one (SDDM, GDM, LightDM…) is
+#                                        turned off and remembered, and greetd's old config.toml kept beside it
+#   sudo crimson-greeter-setup disable   go back to the login screen used before
+#   crimson-greeter-setup status         which login screen starts
+#   crimson-greeter-setup preview        look at it in a window on this desktop (nothing is signed in)
+set -euo pipefail
+ROOT="${CRIMSON_ROOT:-}"                 # tests point this at a scratch folder
+SYSTEMCTL="${CRIMSON_SYSTEMCTL:-systemctl}"
+TEMPLATE="${CRIMSON_GREETER_TEMPLATE:-/usr/share/crimson-banner/greetd-config.toml}"
+CONF="$ROOT/etc/greetd/config.toml"
+BACKUP="$CONF.crimson-banner.bak"
+PREVIOUS="$ROOT/etc/greetd/crimson-banner.previous-dm"
+ALIAS="$ROOT/etc/systemd/system/display-manager.service"
+
+current() {
+  if [ -L "$ALIAS" ]; then basename "$(readlink "$ALIAS")"; fi
+}
+ours() { [ -f "$CONF" ] && grep -q 'crimson-greeter' "$CONF"; }
+need_root() { [ -n "$ROOT" ] || [ "$(id -u)" = 0 ] || { echo "Run it with sudo." >&2; exit 1; }; }
+
+case "${1:-status}" in
+  enable)
+    need_root
+    [ -n "$ROOT" ] || command -v greetd >/dev/null || { echo "greetd isn't installed (pacman -S greetd)." >&2; exit 1; }
+    mkdir -p "$(dirname "$CONF")"
+    if ! ours; then
+      [ -f "$CONF" ] && [ ! -f "$BACKUP" ] && cp -p "$CONF" "$BACKUP"
+      cp "$TEMPLATE" "$CONF"
+    fi
+    dm="$(current)"
+    if [ -n "$dm" ] && [ "$dm" != greetd.service ]; then
+      echo "$dm" > "$PREVIOUS"
+      "$SYSTEMCTL" disable "$dm"
+    fi
+    "$SYSTEMCTL" enable greetd.service
+    echo
+    echo "Crimson Banner OS's login screen starts from the next restart${dm:+ (instead of ${dm%.service})}."
+    echo "To go back: sudo crimson-greeter-setup disable"
+    ;;
+  disable)
+    need_root
+    if [ -f "$BACKUP" ]; then mv -f "$BACKUP" "$CONF"; elif ours; then rm -f "$CONF"; fi
+    if [ "$(current)" = greetd.service ]; then "$SYSTEMCTL" disable greetd.service; fi
+    if [ -f "$PREVIOUS" ]; then
+      prev="$(cat "$PREVIOUS")"
+      "$SYSTEMCTL" enable "$prev"
+      rm -f "$PREVIOUS"
+      echo "${prev%.service} is the login screen again from the next restart."
+    else
+      echo "Crimson Banner's login screen is off. No earlier login screen was recorded: enable one (e.g. sudo systemctl enable sddm)."
+    fi
+    ;;
+  status)
+    dm="$(current)"
+    if [ "$dm" = greetd.service ] && ours; then echo "Crimson Banner OS's login screen (greetd)"
+    elif [ -n "$dm" ]; then echo "${dm%.service}"
+    else echo "No login screen is enabled (display-manager.service isn't set)."
+    fi
+    ;;
+  preview)
+    exec /usr/lib/crimson-banner/RedStarOS --greeter-demo
+    ;;
+  *) sed -n '3,10p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

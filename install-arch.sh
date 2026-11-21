@@ -9,6 +9,8 @@
 #                                   screenshots, recording (the list is in packaging/arch/PKGBUILD)
 #   ./install-arch.sh --yes         don't ask before installing (pacman --noconfirm)
 #   ./install-arch.sh --rebuild     build even when this exact version is already in the repository
+#   ./install-arch.sh --login-screen  also make Crimson Banner's login screen the one that starts (instead of SDDM,
+#                                   GDM…; sudo crimson-greeter-setup disable goes back). Without it, you're asked once
 #   ./install-arch.sh --uninstall   remove the packages and the repository's entry in /etc/pacman.conf
 #
 # Run it as yourself, not with sudo: it asks for your password when it needs it. The first run makes the project's
@@ -21,8 +23,8 @@ HERE="$PWD"
 
 NAME=crimson-banner
 REPO_DIR="${REDSTAR_REPO:-/srv/crimson-banner}"
-PACKAGES=(crimson-banner crimson-banner-shell redstar-comp redstar-wm crimson-online)
-PULL=0; EXTRAS=0; YES=0; UNINSTALL=0; REBUILD=0
+PACKAGES=(crimson-banner crimson-banner-shell crimson-banner-greeter redstar-comp redstar-wm crimson-online)
+PULL=0; EXTRAS=0; YES=0; UNINSTALL=0; REBUILD=0; LOGIN=ask
 for a in "$@"; do
   case "$a" in
     --pull) PULL=1 ;;
@@ -30,6 +32,7 @@ for a in "$@"; do
     --yes|-y) YES=1 ;;
     --uninstall) UNINSTALL=1 ;;
     --rebuild) REBUILD=1 ;;
+    --login-screen) LOGIN=yes ;;
     -h|--help) sed -n '3,/^set -e/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "Unknown option: $a (see ./install-arch.sh --help)" >&2; exit 2 ;;
   esac
@@ -46,6 +49,10 @@ command -v sudo >/dev/null 2>&1 || die "sudo is needed (pacman -S sudo, as root)
 # ── removing ──
 if [ "$UNINSTALL" = 1 ]; then
   step "Removing Crimson Banner OS's packages"
+  # first the login screen, so the computer still starts one after the packages are gone
+  if [ "$(crimson-greeter-setup status 2>/dev/null)" = "Crimson Banner OS's login screen (greetd)" ]; then
+    sudo crimson-greeter-setup disable
+  fi
   installed=()
   for p in "${PACKAGES[@]}"; do pacman -Qq "$p" >/dev/null 2>&1 && installed+=("$p"); done
   if [ "${#installed[@]}" -gt 0 ]; then sudo pacman -Rns "${CONFIRM[@]}" "${installed[@]}"; else echo "None are installed."; fi
@@ -150,6 +157,20 @@ if [ "$EXTRAS" = 1 ]; then
   for p in "${extras[@]}"; do if pacman -Si "$p" >/dev/null 2>&1; then have+=("$p"); else missing+=("$p"); fi; done
   if [ "${#have[@]}" -gt 0 ]; then sudo pacman -S --needed "${CONFIRM[@]}" "${have[@]}"; fi
   [ "${#missing[@]}" -eq 0 ] || echo "Not in your repositories, so skipped: ${missing[*]} (the AUR may have them)."
+fi
+
+# ── 7. the login screen ──
+if [ "$(crimson-greeter-setup status 2>/dev/null)" != "Crimson Banner OS's login screen (greetd)" ]; then
+  if [ "$LOGIN" = ask ] && [ "$YES" = 0 ] && [ -t 0 ]; then
+    now="$(crimson-greeter-setup status 2>/dev/null || true)"
+    printf '\nUse Crimson Banner OS'"'"'s own login screen from the next start, instead of %s? [y/N] ' "${now:-the current one}"
+    read -r answer || answer=""
+    case "$answer" in [yY]*) LOGIN=yes ;; esac
+  fi
+  if [ "$LOGIN" = yes ]; then
+    step "Login screen"
+    sudo crimson-greeter-setup enable
+  fi
 fi
 
 echo

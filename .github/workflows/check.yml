@@ -250,6 +250,23 @@ jobs:
       - name: ./install-arch.sh (key, build, sign, pacman.conf, install, optional programs)
         run: sudo -u builder -H --preserve-env=REDSTAR_REPO ./install-arch.sh --yes --extras
 
+      - name: The login screen's package and its switch
+        run: |
+          for f in /usr/bin/crimson-greeter /usr/bin/crimson-greeter-setup /usr/share/crimson-banner/greetd-config.toml \
+                   /usr/lib/tmpfiles.d/crimson-greeter.conf; do test -e "$f" || { echo "missing: $f"; exit 1; }; done
+          pacman -Q greetd greetd-agreety xorg-xinit
+          getent passwd greeter
+          # outside greetd, --greeter says how to look at it instead
+          set +e; /usr/lib/crimson-banner/RedStarOS --greeter 2>/tmp/greeter.err; code=$?; set -e
+          cat /tmp/greeter.err; [ "$code" = 2 ] && grep -q -- "--greeter-demo" /tmp/greeter.err
+          # switching to it and back, for real (systemctl enable/disable work without a running systemd)
+          crimson-greeter-setup enable
+          [ "$(crimson-greeter-setup status)" = "Crimson Banner OS's login screen (greetd)" ]
+          grep -q crimson-greeter /etc/greetd/config.toml
+          crimson-greeter-setup disable
+          ! grep -q crimson-greeter /etc/greetd/config.toml
+          [ "$(crimson-greeter-setup status)" != "Crimson Banner OS's login screen (greetd)" ]
+
       - name: Every signature in the repository
         run: sudo -u builder -H --preserve-env=REDSTAR_REPO tools/repo.sh check
 
