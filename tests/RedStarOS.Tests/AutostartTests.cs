@@ -186,3 +186,25 @@ public class UserAccountsTests
         Assert.DoesNotContain("secret", a);
     }
 }
+
+public class PolkitHelperTests
+{
+    [Fact]
+    public async Task The_password_answers_the_helpers_question_and_success_is_read()
+    {
+        var reader = new System.IO.StringReader("PAM_TEXT_INFO hello\nPAM_PROMPT_ECHO_OFF Password: \nSUCCESS\n");
+        var writer = new System.IO.StringWriter { NewLine = "\n" };
+        var (ok, _) = await PolkitAgent.Converse(reader, writer, "pw", default);
+        Assert.True(ok);
+        Assert.Equal("pw\n", writer.ToString());
+    }
+
+    [Fact]
+    public async Task A_refused_password_says_what_pam_said()
+    {
+        var reader = new System.IO.StringReader("PAM_PROMPT_ECHO_OFF Password: \nPAM_ERROR_MSG Authentication failure\nFAILURE\n");
+        var (ok, why) = await PolkitAgent.Converse(reader, new System.IO.StringWriter(), "bad", default);
+        Assert.False(ok);
+        Assert.Equal("Authentication failure", why);
+    }
+}

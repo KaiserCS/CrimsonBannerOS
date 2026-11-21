@@ -158,43 +158,91 @@ public sealed class PolkitAgent
         new[] { "/usr/lib/polkit-1/polkit-agent-helper-1", "/usr/libexec/polkit-agent-helper-1", "/usr/lib/policykit-1/polkit-agent-helper-1",
                 "/usr/libexec/polkit-1/polkit-agent-helper-1" }.FirstOrDefault(File.Exists);
 
+    /// <summary>Where systemd starts polkit's helper on demand (polkit 126 and later, whose helper is no longer setuid).</summary>
+    public const string HelperSocket = "/run/polkit/agent-helper.socket";
+
     /// <summary>
-    /// Runs polkit-agent-helper-1 for one try: it reads the cookie, asks through PAM ("PAM_PROMPT_ECHO_OFF …" lines),
-    /// and ends with SUCCESS or FAILURE, having told polkit itself.
+    /// One try at the password through polkit's helper, which checks it with PAM and tells polkit itself. Newer polkit:
+    /// connect to its socket and send the user name and the cookie, a line each. Older polkit: run the setuid
+    /// polkit-agent-helper-1 with the user name and send the cookie. Either way the helper then asks
+    /// ("PAM_PROMPT_ECHO_OFF …"), gets the password, and ends with SUCCESS or FAILURE.
     /// </summary>
     public static async Task<(bool Ok, string? Error)> RunHelper(string user, string cookie, string password, CancellationToken ct)
     {
+        if (File.Exists(HelperSocket))
+        {
+            System.Net.Sockets.Socket? sock = null;
+            try
+            {
+                sock = new System.Net.Sockets.Socket(System.Net.Sockets.AddressFamily.Unix, System.Net.Sockets.SocketType.Stream, System.Net.Sockets.ProtocolType.Unspecified);
+                await sock.ConnectAsync(new System.Net.Sockets.UnixDomainSocketEndPoint(HelperSocket), ct);
+            }
+            catch (Exception ex) when (ex is System.Net.Sockets.SocketException or IOException)
+            {
+                sock?.Dispose();
+                sock = null;                                          // not running here: the setuid helper, below
+            }
+            if (sock != null)
+            {
+                using var stream = new System.Net.Sockets.NetworkStream(sock, ownsSocket: true);
+                using var reg = ct.Register(() => { try { sock.Shutdown(System.Net.Sockets.SocketShutdown.Both); } catch { } });
+                var writer = new StreamWriter(stream, new System.Text.UTF8Encoding(false)) { NewLine = "\n", AutoFlush = true };
+                var reader = new StreamReader(stream, System.Text.Encoding.UTF8);
+                try
+                {
+                    await writer.WriteLineAsync(user);
+                    await writer.WriteLineAsync(cookie);
+                    return await Converse(reader, writer, password, ct);
+                }
+                catch (OperationCanceledException) { return (false, "cancelled"); }
+                catch (IOException) { return (false, ct.IsCancellationRequested ? "cancelled" : "polkit's helper closed the connection"); }
+            }
+        }
+
         var helper = HelperPath();
         if (helper == null) return (false, "polkit's helper (polkit-agent-helper-1) wasn't found");
         var psi = new ProcessStartInfo(helper) { RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false };
         psi.ArgumentList.Add(user);
         using var p = Process.Start(psi);
         if (p == null) return (false, "polkit's helper didn't start");
-        using var reg = ct.Register(() => { try { p.Kill(); } catch { } });
-        string? info = null;
+        using var kill = ct.Register(() => { try { p.Kill(); } catch { } });
         try
         {
+            p.StandardInput.NewLine = "\n";
             await p.StandardInput.WriteLineAsync(cookie);
             await p.StandardInput.FlushAsync();
-            bool answered = false;
-            while (await p.StandardOutput.ReadLineAsync(ct) is { } line)
+            var result = await Converse(p.StandardOutput, p.StandardInput, password, ct);
+            try { await p.WaitForExitAsync(ct); } catch { }
+            if (!result.Ok && result.Error == null)
             {
-                if (line.StartsWith("PAM_PROMPT_ECHO_OFF") || line.StartsWith("PAM_PROMPT_ECHO_ON"))
-                {
-                    // one password per try: a second question means PAM wants more than we have (it'll fail)
-                    await p.StandardInput.WriteLineAsync(answered ? "" : password);
-                    await p.StandardInput.FlushAsync();
-                    answered = true;
-                }
-                else if (line.StartsWith("PAM_ERROR_MSG") || line.StartsWith("PAM_TEXT_INFO")) info = line[(line.IndexOf(' ') + 1)..].Trim();
-                else if (line.StartsWith("SUCCESS")) { await p.WaitForExitAsync(ct); return (true, null); }
-                else if (line.StartsWith("FAILURE")) break;
+                var err = (await p.StandardError.ReadToEndAsync()).Trim();
+                if (err.Length > 0) return (false, err);
             }
+            return result;
         }
         catch (OperationCanceledException) { return (false, "cancelled"); }
-        catch (IOException) { }
-        try { await p.WaitForExitAsync(ct); } catch { }
-        return (false, info ?? "That password didn't work.");
+        catch (IOException) { return (false, "polkit's helper stopped"); }
+    }
+
+    /// <summary>The helper's side of the conversation, the same over its socket or its pipes (public for the tests).</summary>
+    public static async Task<(bool Ok, string? Error)> Converse(TextReader reader, TextWriter writer, string password, CancellationToken ct)
+    {
+        string? info = null;
+        bool answered = false;
+        while (await reader.ReadLineAsync(ct) is { } line)
+        {
+            if (line.StartsWith("PAM_PROMPT_ECHO_OFF") || line.StartsWith("PAM_PROMPT_ECHO_ON"))
+            {
+                // one password per try: a second question means PAM wants more than we have (it'll fail)
+                await writer.WriteLineAsync(answered ? "" : password);
+                await writer.FlushAsync(ct);
+                answered = true;
+            }
+            else if (line.StartsWith("PAM_ERROR_MSG") || line.StartsWith("PAM_TEXT_INFO")) info = line[(line.IndexOf(' ') + 1)..].Trim();
+            else if (line.StartsWith("SUCCESS")) return (true, null);
+            else if (line.StartsWith("FAILURE")) return (false, info ?? "That password didn't work.");
+        }
+        return (false, info);
     }
 
     private const string Introspection =
