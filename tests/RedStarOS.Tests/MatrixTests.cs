@@ -34,7 +34,7 @@ public class MatrixTests
     public async Task The_server_is_found_through_well_known_and_sign_in_keeps_the_token()
     {
         var fake = new FakeMatrix();
-        fake.Answer = (req, body) => req.RequestUri!.AbsolutePath switch
+        fake.Answer = (req, body) => Uri.UnescapeDataString(req.RequestUri!.AbsolutePath) switch
         {
             "/.well-known/matrix/client" when req.RequestUri.Host == "example.org" => (HttpStatusCode.OK, "{\"m.homeserver\":{\"base_url\":\"https://matrix.example.org/\"}}"),
             "/_matrix/client/v3/login" when req.RequestUri.Host == "matrix.example.org" && body.Contains("\"m.login.password\"") && body.Contains("secret")

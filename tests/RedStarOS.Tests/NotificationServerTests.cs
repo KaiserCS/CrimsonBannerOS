@@ -58,7 +58,7 @@ public class NotificationServerTests
         Assert.Contains(("play", "Play"), n.Actions);
 
         server.Invoke(id, "play");
-        for (int i = 0; i < 50; i++) { lock (signals) if (signals.Count >= 2) break; await Task.Delay(50); }
+        for (int i = 0; i < 50; i++) { lock (signals) if (signals.Any(s => s.StartsWith("NotificationClosed"))) break; await Task.Delay(50); }
         lock (signals)
         {
             Assert.Contains($"ActionInvoked {id} play", signals);
