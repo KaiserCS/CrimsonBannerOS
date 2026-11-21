@@ -32,7 +32,7 @@ public sealed class SoftwareWindow : Window
 
     private Tab _tab = Tab.CrimsonBanner;
     private readonly Dictionary<Tab, ToggleButton> _tabs = new();
-    private readonly TextBox _search = new() { Watermark = "Search", Width = 260, VerticalAlignment = VerticalAlignment.Center };
+    private readonly TextBox _search = new() { PlaceholderText = "Search", Width = 260, VerticalAlignment = VerticalAlignment.Center };
     private readonly ListBox _list = new() { Width = 380 };
     private readonly StackPanel _detail = new() { Spacing = 12, Margin = new Thickness(24, 20) };
     private readonly StackPanel _banner = new() { Spacing = 8, Margin = new Thickness(12, 8, 12, 0) };
