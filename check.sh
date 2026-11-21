@@ -106,7 +106,7 @@ else
   echo "(Crimson Online skipped: it needs WebKitGTK 6.0, GTK 4, json-glib, libsoup 3 and meson — Arch/CachyOS: pacman -S webkitgtk-6.0 gtk4 json-glib libsoup3 meson)"
 fi
 echo "==> Arch packaging"
-bash -n packaging/arch/PKGBUILD && bash -n tools/repo.sh
+bash -n packaging/arch/PKGBUILD && bash -n tools/repo.sh && bash -n install-arch.sh
 if [ "$PACKAGES" = 1 ]; then
   if command -v makepkg >/dev/null 2>&1; then
     if [ -f "$(tools/repo.sh where)/signing-key" ] || [ -n "${REDSTAR_REPO_KEY:-}" ]; then

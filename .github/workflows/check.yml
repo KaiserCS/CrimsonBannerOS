@@ -11,8 +11,8 @@ name: Check
 #                    and published with nuget.org cut off
 #   • browser        Red Star Online (GTK 4 + WebKitGTK, in an Arch Linux container): unit tests and the real
 #                    browser's self-test, headless inside redstar-comp
-#   • arch-packages  the Arch packages (packaging/arch) built from our own feed with nuget.org cut off, signed into
-#                    our own pacman repository (tools/repo.sh), then installed from it with pacman
+#   • arch-packages  ./install-arch.sh with nuget.org cut off: the Arch packages (packaging/arch) built from our own
+#                    feed, signed into our own pacman repository (tools/repo.sh) and installed from it with pacman
 # The same checks run locally with ./check.sh.
 on:
   push:
@@ -247,20 +247,14 @@ jobs:
           echo "0.0.0.0 api.nuget.org www.nuget.org nuget.org globalcdn.nuget.org" >> /etc/hosts
           if curl -fsS -m 10 https://api.nuget.org/v3/index.json >/dev/null 2>&1; then echo "nuget.org still reachable"; exit 1; fi
 
-      - name: Signing key, packages and the signed repository
-        run: |
-          sudo -u builder -H --preserve-env=REDSTAR_REPO tools/repo.sh key
-          sudo -u builder -H --preserve-env=REDSTAR_REPO tools/repo.sh build
-          sudo -u builder -H --preserve-env=REDSTAR_REPO tools/repo.sh check
+      - name: ./install-arch.sh (key, build, sign, pacman.conf, install, optional programs)
+        run: sudo -u builder -H --preserve-env=REDSTAR_REPO ./install-arch.sh --yes --extras
 
-      - name: Install from the repository with pacman (signatures required)
-        run: |
-          REPO="$REDSTAR_REPO"
-          pacman-key --init
-          pacman-key --add "$REPO/crimson-banner.asc"
-          pacman-key --lsign-key "$(cat "$REPO/signing-key")"
-          printf '\n[crimson-banner]\nSigLevel = Required DatabaseRequired\nServer = file://%s/$arch\n' "$REPO" >> /etc/pacman.conf
-          pacman -Sy --noconfirm crimson-banner
+      - name: Every signature in the repository
+        run: sudo -u builder -H --preserve-env=REDSTAR_REPO tools/repo.sh check
+
+      - name: Running it again updates in place
+        run: sudo -u builder -H --preserve-env=REDSTAR_REPO ./install-arch.sh --yes
 
       - name: What was installed is complete
         run: |
@@ -285,3 +279,11 @@ jobs:
           redstar-wm --version | grep -qx "redstar-wm $want"
           redstar-online --version | grep -qx "redstar-online $want"
           echo "All report $want"
+
+      - name: ./install-arch.sh --uninstall
+        run: |
+          sudo -u builder -H --preserve-env=REDSTAR_REPO ./install-arch.sh --uninstall --yes
+          ! pacman -Q crimson-banner 2>/dev/null
+          ! grep -q '^\[crimson-banner\]' /etc/pacman.conf
+          ! grep -q 'install-arch.sh' /etc/pacman.conf
+          pacman -Sy >/dev/null   # pacman.conf is still valid

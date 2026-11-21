@@ -12,13 +12,18 @@
 #   tools/repo.sh source               only make the source tarball (packaging/arch/crimson-banner-VERSION.tar.gz)
 #   tools/repo.sh where                print the repository's folder
 #
-# The repository is $REDSTAR_REPO, else ~/.local/share/redstaros/repo, with one folder per architecture.
+# The repository is $REDSTAR_REPO, else /srv/crimson-banner when it exists (./install-arch.sh makes it), else
+# ~/.local/share/redstaros/repo, with one folder per architecture. ./install-arch.sh does all of this in one go.
 # The key is $REDSTAR_REPO_KEY (a GnuPG fingerprint), else the one 'key' made. build --unsigned skips signing.
 # Needs an Arch-based system: makepkg, repo-add (pacman) and gpg.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$PWD"
-REPO="${REDSTAR_REPO:-${XDG_DATA_HOME:-$HOME/.local/share}/redstaros/repo}"
+# /srv/crimson-banner once ./install-arch.sh has made it (pacman's download user can read it there, not in your home)
+if [ -n "${REDSTAR_REPO:-}" ]; then REPO="$REDSTAR_REPO"
+elif [ -d /srv/crimson-banner ]; then REPO=/srv/crimson-banner
+else REPO="${XDG_DATA_HOME:-$HOME/.local/share}/redstaros/repo"
+fi
 NAME=crimson-banner
 CARCH="${CARCH:-$(uname -m)}"
 DIR="$REPO/$CARCH"

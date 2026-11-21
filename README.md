@@ -366,29 +366,41 @@ numbering was 1.3.0; 26.11.0 is newer by every rule that compares them.
 
 ### Arch packages and Crimson Banner's own pacman repository
 
-Crimson Banner OS is based on Arch Linux (PRINCIPLES.md, "Distribution base"). `packaging/arch/PKGBUILD` builds five
-packages: `crimson-banner` (pulls in the rest and suggests the optional services), `crimson-banner-shell`,
-`redstar-comp`, `redstar-wm` and `crimson-online`. `tools/repo.sh` puts them into our own signed repository, a plain
-folder that `file://`, a USB stick or any web server can serve:
+On Arch, CachyOS or another pacman-based system, one command builds and installs everything:
 
 ```bash
-tools/repo.sh key            # once: the project's signing key (GnuPG, ed25519); the public key goes out with the repo
-tools/repo.sh build          # build every package from this tree, sign it, add it to the repository
-tools/repo.sh check          # verify every signature
-tools/repo.sh pacman-conf    # what a machine adds to /etc/pacman.conf, and how it trusts the key
-sudo pacman -Sy crimson-banner
+./install-arch.sh             # build, sign and install; run it again to update
+./install-arch.sh --pull      # git pull first
+./install-arch.sh --extras    # also the optional programs (drives, users, updates, video, screen reader, capture…)
+./install-arch.sh --uninstall # remove the packages and the repository's entry in pacman.conf
 ```
 
-pacman fetches as its own unprivileged user, which can't read inside your home folder, so on the machine that
-installs from its own build keep the repository outside it: `sudo install -d -o "$USER" /srv/crimson-banner` and
-`export REDSTAR_REPO=/srv/crimson-banner` (`tools/repo.sh pacman-conf` reminds you).
+Run it as yourself; it asks for your password when it needs it. The first time, it:
+
+1. installs the build tools;
+2. makes the project's signing key and the repository in `/srv/crimson-banner`;
+3. builds and signs the packages;
+4. has pacman trust the key;
+5. adds `[crimson-banner]` to `/etc/pacman.conf`, keeping the old file as `pacman.conf.crimson-banner.bak`;
+6. replaces an earlier `install-session.sh` install;
+7. installs with pacman.
+
+Afterwards, sign out and choose "Crimson Banner OS" on the login screen. CI runs this same script on every push.
+
+What it uses, for doing the steps by hand or serving the repository to other machines:
+
+* `packaging/arch/PKGBUILD` builds five packages: `crimson-banner` (pulls in the rest and suggests the optional
+  programs), `crimson-banner-shell`, `redstar-comp`, `redstar-wm` and `crimson-online`.
+* `tools/repo.sh` keeps our own signed repository: `key`, `build`, `check`, `pacman-conf` (what another machine adds
+  to `/etc/pacman.conf`) and `export`. It's a plain folder that `file://`, a USB stick or any web server can serve.
+  pacman fetches as its own unprivileged user, which can't read inside your home folder, so the repository lives in
+  `/srv/crimson-banner`.
 
 The packages are built with Arch's current `dotnet-sdk` (its `dotnet-sdk-8.0` is too old for Avalonia 12's XAML
-generator) and run on Arch's `dotnet-runtime-8.0`. Fill the feed with the same SDK you build the packages with.
-The shell's NuGet packages come from our own feed when it's filled, so with `tools/packages.sh fill` done once,
-building the packages needs no package registry. `./check.sh --packages` runs the build as part of the checks. The
-packages install to `/usr` (`/usr/lib/crimson-banner`, `/usr/bin`); if you used `install-session.sh` before, run
-`sudo ./uninstall-session.sh` first so the two don't overlap.
+generator) and run on Arch's `dotnet-runtime-8.0`. The shell's NuGet packages come from our own feed when it's
+filled (`tools/packages.sh fill`, with the same SDK), and from nuget.org otherwise; either way only the locked
+versions and hashes are accepted. `./check.sh --packages` runs the build as part of the checks. The packages install
+to `/usr` (`/usr/lib/crimson-banner`, `/usr/bin`).
 
 Login-screen sessions without the packages: `sudo ./install-session.sh` (it finds what you built: the newest AppImage in `dist/`, else the
 `dotnet build` output; or give it an AppImage, the RedStarOS program or its folder). It adds **Crimson Banner OS** (X11,

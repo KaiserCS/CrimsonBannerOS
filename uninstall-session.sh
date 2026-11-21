@@ -32,6 +32,8 @@ fi
 removed=0
 for f in "${FILES[@]}"; do
   [ -e "$f" ] || continue
+  # installed by the Arch packages (./install-arch.sh): pacman looks after those
+  if command -v pacman >/dev/null 2>&1 && pacman -Qqo "$f" >/dev/null 2>&1; then continue; fi
   if [ "$DRY" = 1 ]; then echo "would remove $f"
   else rm -f "$f" && echo "removed $f"
   fi
