@@ -99,6 +99,8 @@ public partial class DesktopWindow : Window
             _ = RemovableDrives.StartAsync();
             // keyboard layouts (redstar-comp got them at start; X11 needs setxkbmap)
             if (SettingsStore.Current.KeyboardLayouts.Count > 0 && !InputIsolation.InRedStarComp) RegionSettings.ApplyKeyboard();
+            // Messenger's Matrix connection, so new messages notify even before it's opened
+            RedStarOS.Services.Matrix.MatrixService.Resume();
             // the screen reader, if it was on at sign-out
             if (SettingsStore.Current.ScreenReaderOn) ScreenReader.Start();
             // screen off, lock and sleep when nobody uses the computer (System Settings → Power)
