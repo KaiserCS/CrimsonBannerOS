@@ -473,7 +473,15 @@ public partial class Taskbar : UserControl
 
     private Control MakeOverflowButton(List<TrayEntry> hidden)
     {
-        var btn = new Button { Content = new TextBlock { Text = "⌃", FontSize = 15, FontWeight = FontWeight.Bold }, Width = 30, Height = 36, Padding = new Thickness(0) };
+        // a drawn chevron, not the "⌃" character: a font puts that high in its line, so it never looked centred
+        var arrow = Icons.Create("chevron-up", 16);
+        arrow.HorizontalAlignment = HorizontalAlignment.Center;
+        arrow.VerticalAlignment = VerticalAlignment.Center;
+        var btn = new Button
+        {
+            Content = arrow, Width = 30, Height = 36, Padding = new Thickness(0),
+            HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center,
+        };
         btn.Classes.Add("task");
         ToolTip.SetTip(btn, "Show hidden icons");
         btn.Click += (_, _) =>
