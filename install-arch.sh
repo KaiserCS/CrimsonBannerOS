@@ -30,7 +30,7 @@ for a in "$@"; do
     --yes|-y) YES=1 ;;
     --uninstall) UNINSTALL=1 ;;
     --rebuild) REBUILD=1 ;;
-    -h|--help) sed -n '3,18p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '3,/^set -e/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "Unknown option: $a (see ./install-arch.sh --help)" >&2; exit 2 ;;
   esac
 done
