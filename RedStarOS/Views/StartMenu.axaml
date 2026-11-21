@@ -67,7 +67,7 @@
               <ListBox.ItemTemplate>
                 <DataTemplate>
                   <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="{Binding Label}" FontSize="14" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Label}" ToolTip.Tip="{Binding Label}" FontSize="14" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                     <TextBlock Grid.Column="1" Text="{Binding Count}" FontSize="11" Opacity="0.5"
                                Margin="8,0,0,0" VerticalAlignment="Center" />
                   </Grid>
@@ -80,7 +80,7 @@
               <ListBox.ItemTemplate>
                 <DataTemplate>
                   <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="{Binding Label}" FontSize="14" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Label}" ToolTip.Tip="{Binding Label}" FontSize="14" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                     <TextBlock Grid.Column="1" Text="{Binding Count}" FontSize="11" Opacity="0.5"
                                Margin="8,0,0,0" VerticalAlignment="Center" />
                   </Grid>
