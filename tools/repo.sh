@@ -129,6 +129,18 @@ case "${1:-}" in
 
   pacman-conf)
     KEY="$(key_id || true)"
+    case "$REPO/" in
+      "$HOME"/*)
+        cat <<NOTE
+# Note: pacman fetches as its own unprivileged user (alpm), which can't read inside your home folder. For this
+# machine, keep the repository outside it once:
+#   sudo install -d -o "\$USER" /srv/crimson-banner && cp -a "$REPO/." /srv/crimson-banner/
+#   export REDSTAR_REPO=/srv/crimson-banner     (in ~/.profile, so tools/repo.sh builds there from now on)
+# then run tools/repo.sh pacman-conf again.
+
+NOTE
+        ;;
+    esac
     cat <<EOF
 # 1. Trust the project's key (the file $REPO/$NAME.asc, shipped with the repository):
 sudo pacman-key --add $REPO/$NAME.asc

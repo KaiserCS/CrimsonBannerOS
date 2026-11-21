@@ -354,6 +354,10 @@ tools/repo.sh pacman-conf    # what a machine adds to /etc/pacman.conf, and how 
 sudo pacman -Sy crimson-banner
 ```
 
+pacman fetches as its own unprivileged user, which can't read inside your home folder, so on the machine that
+installs from its own build keep the repository outside it: `sudo install -d -o "$USER" /srv/crimson-banner` and
+`export REDSTAR_REPO=/srv/crimson-banner` (`tools/repo.sh pacman-conf` reminds you).
+
 The packages are built with Arch's current `dotnet-sdk` (its `dotnet-sdk-8.0` is too old for Avalonia 12's XAML
 generator) and run on Arch's `dotnet-runtime-8.0`. Fill the feed with the same SDK you build the packages with.
 The shell's NuGet packages come from our own feed when it's filled, so with `tools/packages.sh fill` done once,
