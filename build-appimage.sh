@@ -10,6 +10,8 @@ set -euo pipefail
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
 
 cd "$(dirname "$0")"
+# Crimson Banner OS's version for this build (tools/version.sh), written into the AppImage
+APP_VERSION="$(./tools/version.sh)"
 ARCH_ARG="${1:-x64}"
 case "$ARCH_ARG" in
   x64|x86_64|amd64)  RID=linux-x64;   AI_ARCH=x86_64 ;;
@@ -76,8 +78,8 @@ fi
 # --appimage-extract-and-run lets appimagetool work on machines/CI without FUSE.
 (
   cd "$OUT"
-  ARCH="$AI_ARCH" "$TOOL" --appimage-extract-and-run "${UPDATE_ARGS[@]}" RedStarOS.AppDir "RedStarOS-$AI_ARCH.AppImage" \
-    || ARCH="$AI_ARCH" "$TOOL" "${UPDATE_ARGS[@]}" RedStarOS.AppDir "RedStarOS-$AI_ARCH.AppImage"
+  VERSION="$APP_VERSION" ARCH="$AI_ARCH" "$TOOL" --appimage-extract-and-run "${UPDATE_ARGS[@]}" RedStarOS.AppDir "RedStarOS-$AI_ARCH.AppImage" \
+    || VERSION="$APP_VERSION" ARCH="$AI_ARCH" "$TOOL" "${UPDATE_ARGS[@]}" RedStarOS.AppDir "RedStarOS-$AI_ARCH.AppImage"
 )
 
 echo

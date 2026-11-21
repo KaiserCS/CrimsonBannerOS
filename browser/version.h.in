@@ -1,0 +1,3 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* Made by meson from this file: Crimson Banner OS's version for this build (tools/version.sh). */
+#define REDSTAR_VERSION "@VCS_TAG@"

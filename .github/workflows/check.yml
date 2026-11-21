@@ -185,6 +185,7 @@ jobs:
         run: |
           meson setup build -Dwerror=true
           meson compile -C build
+          ./build/redstar-comp --version | grep -qx "redstar-comp $(../tools/version.sh)"
 
       - name: Behaviour tests (headless, through Xwayland)
         run: compositor/test/run-tests.sh
@@ -233,6 +234,8 @@ jobs:
           echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
 
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # the whole history and its tags: tools/version.sh counts from the last release
 
       - name: Fill our package feed (the only step that reaches nuget.org)
         run: |
@@ -275,3 +278,10 @@ jobs:
                        /usr/bin/redstar-wm /usr/bin/redstar-online; do ldd "$b" | sed "s#^#${b##*/}: #"; done | grep 'not found' || true)"
           if [ -n "$missing" ]; then echo "$missing"; exit 1; fi
           pacman -Qkk crimson-banner-shell redstar-comp redstar-wm crimson-online
+          # every program reports the version the packages were built as (tools/version.sh)
+          want="$(sudo -u builder -H tools/version.sh)"
+          [ "$(pacman -Q crimson-banner | cut -d' ' -f2)" = "$(sudo -u builder -H tools/version.sh --pkgver)-1" ]
+          redstar-comp --version | grep -qx "redstar-comp $want"
+          redstar-wm --version | grep -qx "redstar-wm $want"
+          redstar-online --version | grep -qx "redstar-online $want"
+          echo "All report $want"

@@ -3,9 +3,15 @@
 # Needs: wlroots 0.20 (Arch/CachyOS: pacman -S wlroots0.20), wayland, wayland-protocols, libxkbcommon, libxcb,
 # xcb-util-wm, cairo, libdrm, pixman, and Xwayland at run time.
 project('redstar-comp', 'c',
-  version: '0.1',
+  version: files('../VERSION'),
   license: 'GPL-3.0-or-later',
-  default_options: ['c_std=c11', 'warning_level=2', 'buildtype=release'])
+  default_options: ['c_std=c11', 'warning_level=2', 'buildtype=release'],
+  meson_version: '>= 0.57')
+
+# Crimson Banner OS's version: the release in ../VERSION, and this build's full version from tools/version.sh
+version_h = vcs_tag(input: 'version.h.in', output: 'version.h',
+  command: ['sh', meson.current_source_dir() / '..' / 'tools' / 'version.sh'],
+  fallback: meson.project_version())
 
 add_project_arguments('-DWLR_USE_UNSTABLE', '-Wno-unused-parameter', language: 'c')
 
@@ -66,6 +72,6 @@ foreach name, spec : client_protocols
 endforeach
 
 executable('redstar-comp',
-  ['redstar-comp.c', 'nested.c'] + protocol_src,
+  ['redstar-comp.c', 'nested.c', version_h] + protocol_src,
   dependencies: [wlroots, wayland_server, wayland_client, xkbcommon, xcb, xcb_icccm, cairo, libdrm, pixman, math],
   install: true)

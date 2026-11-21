@@ -29,6 +29,12 @@ if [ "$OFFLINE" = 1 ]; then
   ok "packages (offline, versions and hashes from packages.lock.json)"
 fi
 
+echo "==> Version ($(tools/version.sh))"
+tools/test-version.sh >/dev/null || { tools/test-version.sh; exit 1; }
+[ "$(sed -n 's/^pkgver=//p' packaging/arch/PKGBUILD)" = "$(tools/version.sh --base)" ] \
+  || { echo "packaging/arch/PKGBUILD's pkgver isn't VERSION ($(tools/version.sh --base)): tools/release.sh sets both" >&2; exit 1; }
+ok "tools/version.sh, tools/release.sh and the PKGBUILD agree"
+
 echo "==> Building"
 dotnet build RedStarOS/RedStarOS.csproj -c Release -nologo -v quiet "${NORESTORE[@]}"
 ok "build"

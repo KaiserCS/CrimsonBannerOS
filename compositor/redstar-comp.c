@@ -26,6 +26,7 @@
 #include <assert.h>
 #include <drm_fourcc.h>
 #include <getopt.h>
+#include "version.h"
 #include <math.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -3482,11 +3483,12 @@ static void spawn(struct server *s, char **argv)
 static void usage(const char *me)
 {
 	fprintf(stderr,
-		"Usage: %s [-d] [-- command args…]\n"
+		"Usage: %s [-d] [-w] [-v] [-- command args…]\n"
 		"  Crimson Banner OS's Wayland compositor. Runs the command with DISPLAY (Xwayland) and WAYLAND_DISPLAY set,\n"
 		"  and quits when it exits.\n"
 		"  -d   debug messages\n"
 		"  -w   on another desktop, open as an ordinary window instead of full screen (or REDSTAR_COMP_WINDOWED=1)\n"
+		"  -v   print the version (also --version)\n"
 		"  Keys: Alt+F4 close, Alt+drag move, Alt+right-drag resize, Ctrl+Alt+Backspace quit.\n", me);
 }
 
@@ -3494,8 +3496,10 @@ int main(int argc, char **argv)
 {
 	int c;
 	enum wlr_log_importance level = WLR_INFO;
-	while ((c = getopt(argc, argv, "dwh")) != -1) {
+	if (argc > 1 && !strcmp(argv[1], "--version")) { printf("redstar-comp %s\n", REDSTAR_VERSION); return 0; }
+	while ((c = getopt(argc, argv, "dwhv")) != -1) {
 		if (c == 'd') level = WLR_DEBUG;
+		else if (c == 'v') { printf("redstar-comp %s\n", REDSTAR_VERSION); return 0; }
 		else if (c == 'w') want_fullscreen = false;
 		else { usage(argv[0]); return c == 'h' ? 0 : 1; }
 	}

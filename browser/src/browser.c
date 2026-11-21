@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Red Star Online: Red Star OS's web browser. GTK 4 and WebKitGTK, its own native window (so typing, scrolling and
 // the clipboard go straight to the page), sharing bookmarks, history and settings with the Red Star shell.
-//   redstar-online [--private] [--new-window] [URL…]    redstar-online --self-test
+//   redstar-online [--private] [--new-window] [URL…]    redstar-online --self-test    redstar-online --version
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
 #include <gst/gst.h>
@@ -16,6 +16,7 @@
 #include "store.h"
 #include "filters.h"
 #include "util.h"
+#include "version.h"
 
 #define APP_ID "org.redstaros.Online"
 #define START_URL "redstar:start"
@@ -2025,6 +2026,8 @@ static void selftest_start(void)
 
 int main(int argc, char **argv)
 {
+	for (int i = 1; i < argc; i++)
+		if (!strcmp(argv[i], "--version")) { printf("redstar-online %s\n", REDSTAR_VERSION); return 0; }
 	signal(SIGPIPE, SIG_IGN);
 	/* Started by the Red Star shell: our messages, and WebKit's page processes' (they inherit these), go to its log
 	 * file. A file, never a pipe: a pipe whose reader has gone kills the next writer with SIGPIPE. */

@@ -1,8 +1,13 @@
 # Red Star Online: GTK 4 + WebKitGTK web browser (GPL-3.0-or-later)
 # Arch / CachyOS: sudo pacman -S --needed webkitgtk-6.0 gtk4 json-glib libsoup3 meson ninja
 # For sound and video in pages (WebKit plays media through GStreamer): gst-plugins-good gst-plugins-bad gst-libav
-project('redstar-online', 'c', version: '1.0', license: 'GPL-3.0-or-later',
-  default_options: ['c_std=gnu11', 'warning_level=2', 'buildtype=debugoptimized'])
+project('redstar-online', 'c', version: files('../VERSION'), license: 'GPL-3.0-or-later',
+  default_options: ['c_std=gnu11', 'warning_level=2', 'buildtype=debugoptimized'], meson_version: '>= 0.57')
+
+# Crimson Banner OS's version: the release in ../VERSION, and this build's full version from tools/version.sh
+version_h = vcs_tag(input: 'version.h.in', output: 'version.h',
+  command: ['sh', meson.current_source_dir() / '..' / 'tools' / 'version.sh'],
+  fallback: meson.project_version())
 
 glib = dependency('glib-2.0', version: '>= 2.74')
 gio = dependency('gio-2.0')
@@ -18,7 +23,7 @@ resources = gnome.compile_resources('online-resources', 'data/online.gresource.x
   source_dir: 'data', c_name: 'online')
 
 executable('redstar-online',
-  'src/browser.c', 'src/store.c', 'src/filters.c', 'src/adblock.c', 'src/util.c', resources,
+  'src/browser.c', 'src/store.c', 'src/filters.c', 'src/adblock.c', 'src/util.c', resources, version_h,
   dependencies: [glib, gio, gtk, webkit, json, soup, gst],
   install: true)
 

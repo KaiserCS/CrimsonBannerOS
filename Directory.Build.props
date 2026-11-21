@@ -9,4 +9,13 @@
          files must match. After changing a package version, run tools/packages.sh fill and commit the lock files. -->
     <RestoreLockedMode Condition="'$(CI)' == 'true' Or '$(REDSTAR_LOCKED)' == '1'">true</RestoreLockedMode>
   </PropertyGroup>
+
+  <!-- The version (README, "Versions"): the release in VERSION, for every project. The full version of this build
+       (26.11.0+5.g1a2b3c4 for a development build) is worked out by tools/version.sh in Directory.Build.targets and
+       becomes the InformationalVersion, which the shell shows and the updater compares. -->
+  <PropertyGroup>
+    <Version>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)VERSION').Trim())</Version>
+    <!-- our own build suffix instead of the SDK's "+<full commit hash>" -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
 </Project>

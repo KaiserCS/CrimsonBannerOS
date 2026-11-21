@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Net.Http;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -11,15 +10,18 @@ using Avalonia.Threading;
 namespace RedStarOS.Services;
 
 /// <summary>
-/// Looks for a new Red Star OS release once a day (Settings → Software Updates can turn it off) and shows a
+/// Looks for a new Crimson Banner OS release once a day (Settings → Software Updates can turn it off) and shows a
 /// notification with "Update" / "Later" buttons. The releases feed comes from Settings, or from the update
-/// information the AppImage was built with (GH_REPO=user/repo ./build-appimage.sh).
+/// information the AppImage was built with (GH_REPO=user/repo ./build-appimage.sh). Releases and development builds
+/// are compared by <see cref="AppVersion"/>. A copy installed from our pacman repository isn't checked here: it
+/// updates with the system's packages.
 /// </summary>
 public static class UpdateChecker
 {
     public sealed record Result(bool Newer, string Latest, string? PageUrl, string? Error);
 
-    public static Version Current => Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(1, 0, 0);
+    /// <summary>Whether this copy updates itself from a releases feed (not when pacman looks after it).</summary>
+    public static bool SelfUpdating => AppVersion.Kind != AppVersion.InstallKind.Package;
 
     /// <summary>The releases API URL: the one set in Settings, else the AppImage's embedded GitHub repository.</summary>
     public static string? FeedUrl()
@@ -48,14 +50,19 @@ public static class UpdateChecker
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
             http.DefaultRequestHeaders.UserAgent.ParseAdd("RedStarOS-Updater");
             using var doc = JsonDocument.Parse(await http.GetStringAsync(url));
-            var tag = (doc.RootElement.GetProperty("tag_name").GetString() ?? "").TrimStart('v', 'V');
+            var tag = doc.RootElement.GetProperty("tag_name").GetString() ?? "";
             var page = doc.RootElement.TryGetProperty("html_url", out var h) ? h.GetString() : null;
-            if (!Version.TryParse(tag, out var latest)) return new Result(false, tag, page, null);
-            var cur = Current;
-            bool newer = new Version(latest.Major, latest.Minor, Math.Max(0, latest.Build)) > new Version(cur.Major, cur.Minor, Math.Max(0, cur.Build));
-            return new Result(newer, tag, page, null);
+            return Compare(tag, page, AppVersion.Current);
         }
         catch (Exception ex) { return new Result(false, "", null, ex.Message); }
+    }
+
+    /// <summary>A release's tag against the installed version.</summary>
+    public static Result Compare(string tag, string? page, AppVersion.Info installed)
+    {
+        var latest = AppVersion.Parse(tag);
+        if (latest == null) return new Result(false, tag, page, $"The latest release, '{tag}', isn't a version this can compare.");
+        return new Result(AppVersion.IsNewer(latest, installed), latest.Short, page, null);
     }
 
     /// <summary>Started with the desktop: first check after two minutes, then every six hours (at most daily).</summary>
@@ -66,13 +73,13 @@ public static class UpdateChecker
         {
             timer.Interval = TimeSpan.FromHours(6);
             var s = SettingsStore.Current;
-            if (!s.AutoUpdateCheck || (s.LastUpdateCheck is { } last && (DateTime.Now - last).TotalHours < 24)) return;
+            if (!SelfUpdating || !s.AutoUpdateCheck || (s.LastUpdateCheck is { } last && (DateTime.Now - last).TotalHours < 24)) return;
             var r = await CheckAsync();
             if (r.Error != null) return;
             s.LastUpdateCheck = DateTime.Now;
             SettingsStore.Save();
             if (!r.Newer || r.Latest == s.SkippedVersion) return;
-            Notifier.Show("Update available", $"Crimson Banner OS {r.Latest} is ready to install (you have {Current.ToString(3)}).", "settings",
+            Notifier.Show("Update available", $"Crimson Banner OS {r.Latest} is ready to install (you have {AppVersion.Current.Short}).", "settings",
                 new NotificationAction("Update…", () => Views.SettingsWindow.OpenPage("Software Updates")),
                 new NotificationAction("Skip this version", () => { SettingsStore.Current.SkippedVersion = r.Latest; SettingsStore.Save(); }));
         };

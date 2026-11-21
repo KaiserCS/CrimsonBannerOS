@@ -45,7 +45,7 @@ public static class WallpaperSearch
     private static HttpClient CreateClient()
     {
         var h = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-        h.DefaultRequestHeaders.UserAgent.ParseAdd($"RedStarOS/{UpdateChecker.Current.ToString(3)} (wallpaper search)");
+        h.DefaultRequestHeaders.UserAgent.ParseAdd($"RedStarOS/{AppVersion.Current.Short} (wallpaper search)");
         return h;
     }
 

@@ -671,7 +671,16 @@ public static class SettingsPages
     public static Control Updates()
     {
         var st = SettingsStore.Current;
-        var p = Page("Software Updates", $"You have Crimson Banner OS {UpdateChecker.Current.ToString(3)}.");
+        var cur = AppVersion.Current;
+        var p = Page("Software Updates", $"You have Crimson Banner OS {cur.Display}, {AppVersion.Kind switch { AppVersion.InstallKind.Package => "from its pacman package", AppVersion.InstallKind.AppImage => "as an AppImage", _ => "built from source" }}.");
+        if (!UpdateChecker.SelfUpdating)
+        {
+            // installed from our pacman repository: pacman updates it, with everything else (below)
+            p.Children.Add(Card(Note("Crimson Banner OS comes from its own pacman repository, so it updates together with "
+                                     + "the system packages below.")));
+            SystemPackagesSection(p);
+            return p;
+        }
         var auto = new CheckBox { Content = "Check for updates automatically (once a day)", IsChecked = st.AutoUpdateCheck };
         auto.IsCheckedChanged += (_, _) => { st.AutoUpdateCheck = auto.IsChecked == true; SettingsStore.Save(); };
         p.Children.Add(auto);
@@ -699,6 +708,13 @@ public static class SettingsPages
         if (!string.IsNullOrEmpty(st.SkippedVersion))
             p.Children.Add(Row(Note($"Skipped version: {st.SkippedVersion}"), Btn("Don't skip", () => { st.SkippedVersion = null; SettingsStore.Save(); })));
 
+        SystemPackagesSection(p);
+        return p;
+    }
+
+    /// <summary>The system's packages, through PackageKit (pacman on Arch).</summary>
+    private static void SystemPackagesSection(StackPanel p)
+    {
         // everything else on the system: its packages, through PackageKit
         p.Children.Add(Eyebrow("SYSTEM PACKAGES"));
         var sysNote = Note("Looking for PackageKit…");
@@ -762,7 +778,6 @@ public static class SettingsPages
                     sysButtons.Children.Add(Btn("Update in Terminal", () => ProcessUtil.RunInTerminal(cmd.Exe, cmd.Args)));
             });
         });
-        return p;
     }
 
     // ═════════════════════════════════ Diagnostics ═════════════════════════════════

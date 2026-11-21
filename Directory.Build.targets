@@ -1,0 +1,14 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<Project>
+  <!-- This build's full version from tools/version.sh (or -p:RedStarVersionFull=... from a build script), as the
+       InformationalVersion. Without sh or git it stays the plain release from VERSION. -->
+  <Target Name="RedStarVersion" BeforeTargets="GetAssemblyVersion;GenerateAssemblyInfo;BeforeBuild">
+    <Exec Command="sh &quot;$(MSBuildThisFileDirectory)tools/version.sh&quot;" ConsoleToMSBuild="true" StandardOutputImportance="low"
+          ContinueOnError="true" Condition="'$(RedStarVersionFull)' == '' And '$(OS)' != 'Windows_NT'">
+      <Output TaskParameter="ConsoleOutput" PropertyName="RedStarVersionFull" />
+    </Exec>
+    <PropertyGroup>
+      <InformationalVersion Condition="'$(RedStarVersionFull)' != ''">$(RedStarVersionFull)</InformationalVersion>
+    </PropertyGroup>
+  </Target>
+</Project>

@@ -1246,8 +1246,15 @@ static void read_scale(void)
 
 static void on_sigterm(int sig) { (void)sig; if (dpy) { XCloseDisplay(dpy); dpy = NULL; } _exit(0); }
 
+/* -DREDSTAR_VERSION="..." from the build (tools/version.sh) */
+#ifndef REDSTAR_VERSION
+#define REDSTAR_VERSION "unknown"
+#endif
+
 int main(int argc, char **argv)
 {
+    for (int i = 1; i < argc; i++)
+        if (!strcmp(argv[i], "--version")) { printf("redstar-wm %s\n", REDSTAR_VERSION); return 0; }
     for (int i = 1; i < argc; i++)
         if (!strcmp(argv[i], "--check")) {          /* "is a window manager running?" — exit 0 = none */
             dpy = XOpenDisplay(NULL);

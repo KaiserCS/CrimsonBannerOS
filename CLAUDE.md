@@ -20,6 +20,9 @@
 
 - Builds and tests on CachyOS (wlroots 0.20, gcc 16, .NET 8): `./check.sh`. The sandbox here usually lacks wlroots,
   Wayland headers and dotnet, so say plainly what couldn't be compiled or run.
+- Versions are YY.MM.N from `VERSION` (README, "Versions"); `tools/version.sh` gives every part its version, and
+  development builds are `26.11.0+5.g1a2b3c4`. Releases only with `tools/release.sh` when the owner asks (it tags;
+  pushing a `v*` tag publishes a release). Don't hand-edit versions elsewhere.
 - After a change: commit to `main` on KaiserCS/RedStarOS-Linux, and send a zip of the tree as `RedStarOS-Linux.zip`
   (without `.git`, `bin`, `obj`, `node_modules`, `__pycache__`, screenshots, `compositor/build`).
 - Layout: `RedStarOS/` the Avalonia shell (C#), `compositor/` redstar-comp (C, wlroots), `wm/` redstar-wm (X11),

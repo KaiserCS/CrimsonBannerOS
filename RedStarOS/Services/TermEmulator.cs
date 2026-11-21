@@ -629,7 +629,7 @@ public sealed class TermEmulator
         if (_private == '>')
         {
             if (f == 'c') Reply?.Invoke("\x1b[>0;276;0c");                   // secondary DA: "xterm 276"
-            else if (f == 'q') Reply?.Invoke("\x1bP>|RedStarTerminal 1.0\x1b\\");   // XTVERSION
+            else if (f == 'q') Reply?.Invoke("\x1bP>|RedStarTerminal " + AppVersion.Current.Short + "\x1b\\");   // XTVERSION
             return;
         }
         if (_private != '\0') return;

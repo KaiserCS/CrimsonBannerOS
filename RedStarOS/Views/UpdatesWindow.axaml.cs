@@ -1,7 +1,4 @@
 using System;
-using System.Net.Http;
-using System.Reflection;
-using System.Text.Json;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using RedStarOS.Services;
@@ -13,13 +10,10 @@ public partial class UpdatesWindow : Window
 {
     private string? _pageUrl;
 
-    private static Version CurrentVersion =>
-        Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(1, 0, 0);
-
     public UpdatesWindow()
     {
         InitializeComponent();
-        VersionLabel.Text = $"Installed version: {CurrentVersion.ToString(3)}";
+        VersionLabel.Text = $"Installed version: {AppVersion.Current.Display} ({AppVersion.KindName(AppVersion.Kind)})";
         UrlBox.Text = SettingsStore.Current.UpdateUrl ?? UpdateChecker.FeedUrl();
     }
 
@@ -40,40 +34,30 @@ public partial class UpdatesWindow : Window
         Progress.IsVisible = true;
         CheckButton.IsEnabled = false;
         ResultLabel.Text = "Checking...";
-        try
+        var r = await UpdateChecker.CheckAsync(uri.ToString());
+        Progress.IsVisible = false;
+        CheckButton.IsEnabled = true;
+        _pageUrl = r.PageUrl;
+        if (r.Error != null && r.Latest.Length == 0) { ResultLabel.Text = "Could not check for updates: " + r.Error; return; }
+        if (r.Error != null) { ResultLabel.Text = r.Error; PageButton.IsVisible = _pageUrl != null; return; }
+        SettingsStore.Current.LastUpdateCheck = DateTime.Now;
+        SettingsStore.Save();
+        if (r.Newer)
         {
-            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-            http.DefaultRequestHeaders.UserAgent.ParseAdd("RedStarOS-Updater");
-            var json = await http.GetStringAsync(uri);
-            using var doc = JsonDocument.Parse(json);
-            var tag = doc.RootElement.GetProperty("tag_name").GetString() ?? "";
-            _pageUrl = doc.RootElement.TryGetProperty("html_url", out var h) ? h.GetString() : null;
+            ResultLabel.Text = $"Version {r.Latest} is available.";
+            PageButton.IsVisible = _pageUrl != null;
+            UpdateButton.IsVisible = Environment.GetEnvironmentVariable("APPIMAGE") != null;
+        }
+        else ResultLabel.Text = UpToDateText(r.Latest);
+    }
 
-            var clean = tag.TrimStart('v', 'V');
-            if (Version.TryParse(clean, out var latest))
-            {
-                var cur = CurrentVersion;
-                var current3 = new Version(cur.Major, cur.Minor, Math.Max(0, cur.Build));
-                var latest3 = new Version(latest.Major, latest.Minor, Math.Max(0, latest.Build));
-                if (latest3 > current3)
-                {
-                    ResultLabel.Text = $"Version {clean} is available.";
-                    PageButton.IsVisible = _pageUrl != null;
-                    UpdateButton.IsVisible = Environment.GetEnvironmentVariable("APPIMAGE") != null;
-                }
-                else ResultLabel.Text = "You are up to date.";
-            }
-            else ResultLabel.Text = $"Latest release is '{tag}' (could not compare it with {CurrentVersion.ToString(3)}).";
-        }
-        catch (Exception ex)
-        {
-            ResultLabel.Text = "Could not check for updates: " + ex.Message;
-        }
-        finally
-        {
-            Progress.IsVisible = false;
-            CheckButton.IsEnabled = true;
-        }
+    /// <summary>"You are up to date.", or for a development build of the latest release, that it's already past it.</summary>
+    public static string UpToDateText(string latest)
+    {
+        var cur = AppVersion.Current;
+        return !cur.IsRelease && AppVersion.Parse(latest)?.Release == cur.Release
+            ? $"You are up to date: this development build already has everything in {latest}."
+            : "You are up to date.";
     }
 
     private void OnOpenPage(object? s, RoutedEventArgs e)

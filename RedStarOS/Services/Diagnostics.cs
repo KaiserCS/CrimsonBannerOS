@@ -44,7 +44,7 @@ public static class Diagnostics
         {
             var f = CrashLog;
             if (File.Exists(f) && new FileInfo(f).Length > 1024 * 1024) File.Move(f, f + ".old", true);
-            File.AppendAllText(f, $"===== {DateTime.Now:yyyy-MM-dd HH:mm:ss} [{where}] {UpdateChecker.Current.ToString(3)}\n{ex}\n\n");
+            File.AppendAllText(f, $"===== {DateTime.Now:yyyy-MM-dd HH:mm:ss} [{where}] {AppVersion.Current.Full}\n{ex}\n\n");
         }
         catch { }
     }
@@ -66,7 +66,7 @@ public static class Diagnostics
         string Tool(string t) => ProcessUtil.Which(t) != null ? "yes" : "no";
         return new()
         {
-            ("Crimson Banner OS", UpdateChecker.Current.ToString(3) + (Environment.GetEnvironmentVariable("APPIMAGE") != null ? " (AppImage)" : " (from source)")),
+            ("Crimson Banner OS", AppVersion.Current.Display + ", " + AppVersion.KindName(AppVersion.Kind)),
             ("System", os),
             ("Kernel", Read("/proc/sys/kernel/osrelease").Trim()),
             ("Architecture", RuntimeInformation.OSArchitecture.ToString()),
@@ -83,6 +83,7 @@ public static class Diagnostics
             ("Browser fallbacks", OnlineFallbacks()),
             ("Video (libvlc)", File.Exists("/usr/lib/x86_64-linux-gnu/libvlc.so.5") || File.Exists("/usr/lib/libvlc.so.5") || File.Exists("/usr/lib64/libvlc.so.5") ? "yes" : "not found"),
             ("Tools", $"nmcli {Tool("nmcli")}, pactl {Tool("pactl")}, bluetoothctl {Tool("bluetoothctl")}, xrandr {Tool("xrandr")}, cups {Tool("lpstat")}, setsid {Tool("setsid")}, python3 {Tool("python3")}, xdg-open {Tool("xdg-open")}"),
+            ("Programs", string.Join("; ", AppVersion.Components().Skip(1).Select(c => c.Name + " " + c.Version))),
             ("Memory", Read("/proc/meminfo").Split('\n').FirstOrDefault(l => l.StartsWith("MemTotal"))?.Replace("MemTotal:", "").Trim() ?? "?"),
         };
     }

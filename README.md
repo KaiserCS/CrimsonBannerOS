@@ -1,4 +1,6 @@
-# Crimson Banner OS (formerly Red Star OS, Project ANDROMEDA RSO 1.2) – Linux / AppImage port, v1.3
+# Crimson Banner OS (formerly Red Star OS, Project ANDROMEDA RSO 1.2)
+
+Version **26.11.0** (see [Versions](#versions) and [CHANGELOG.md](CHANGELOG.md)).
 
 > **Renamed 20 Nov 2026.** Everything you see says Crimson Banner OS, and the apps lost their "Red Star" prefix
 > (the browser is Crimson Online). Program names, folders and settings keep their old names (`redstar-comp`,
@@ -339,6 +341,29 @@ Optional self-update support: `GH_REPO=user/repo ./build-appimage.sh` embeds upd
 (also install `zsync` so the `.zsync` file is produced). `.github/workflows/appimage.yml` does this
 in CI and attaches both files to a GitHub release when you push a `v*` tag.
 
+### Versions
+
+Releases are numbered by when they come out: **YY.MM.N**, the year and month, then a fix number from 0. 26.11.0
+is the first of November 2026, 26.11.1 a fix to it, and 26.12.0 the next month's. The last version in the old
+numbering was 1.3.0; 26.11.0 is newer by every rule that compares them.
+
+* **One version for everything.** `VERSION` holds the latest release. The shell (MSBuild, `Directory.Build.props`),
+  redstar-comp and Crimson Online (meson), redstar-wm (gcc), the Arch packages and the AppImage all take it from
+  there through `tools/version.sh`. Each program says its version with `--version`, and Settings → Diagnostics lists
+  them all.
+* **Development builds** are a release plus the commits after it: `26.11.0+5.g1a2b3c4` is 5 commits after 26.11.0,
+  at commit 1a2b3c4, and `.local` is added when it was built with changes not committed. pacman's form of the same is
+  `26.11.0.r5.g1a2b3c4`. Both sort after 26.11.0 and before the next release, for pacman and for the updater.
+* **Updates** depend on how it was installed (Settings → Software Updates says which). From the pacman repository,
+  it updates with the system's packages. An AppImage checks the releases feed once a day, and a development build
+  is only offered a release newer than the one it's built from.
+* **Making a release:** `tools/release.sh` checks the tree and runs `./check.sh`, sets `VERSION` and the PKGBUILD's
+  `pkgver`, adds the release's section to `CHANGELOG.md` (the commits since the last release, or a section you wrote
+  beforehand as `## 26.12.0 (not released yet)`), commits "Crimson Banner OS 26.12.0" and makes the tag `v26.12.0`,
+  signed with the repository's key when there is one. It pushes nothing: `git push origin main v26.12.0` publishes
+  the AppImage as a GitHub release, and `tools/repo.sh build` puts the packages in our repository.
+  `tools/release.sh 26.12.3` picks the version yourself; without one it's this month's next.
+
 ### Arch packages and Crimson Banner's own pacman repository
 
 Crimson Banner OS is based on Arch Linux (PRINCIPLES.md, "Distribution base"). `packaging/arch/PKGBUILD` builds five
@@ -428,7 +453,7 @@ A native Avalonia player built on **LibVLCSharp** (Start menu → **RSMedia → 
 - **Full-screen desktop by default** (Settings → Appearance can switch it back to a maximised window).
 - **Ping Pong has a normal title bar** and a *Restart the Level* menu entry (also F1); Esc still exits.
 
-## What's new in 1.3
+## What's new in 1.3 (before the change to YY.MM versions)
 
 **Foundation**
 - Taskbar lists every open window: click to focus/minimise, right-click for Snap Left/Right, Fill Screen, Close.

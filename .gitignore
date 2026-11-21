@@ -27,3 +27,5 @@ packaging/arch/*.tar.gz
 packaging/arch/src/
 packaging/arch/pkg/
 packaging/arch/*.pkg.tar.*
+# the version stamp inside source tarballs (tools/repo.sh)
+.build-version

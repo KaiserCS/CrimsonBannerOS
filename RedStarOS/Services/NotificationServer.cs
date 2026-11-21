@@ -111,7 +111,7 @@ public sealed class NotificationServer
                 _bus.Reply(m, "as", new List<object> { "actions", "body", "persistence" });
                 return true;
             case "GetServerInformation" when m.Interface is Iface or null:
-                _bus.Reply(m, "ssss", "Crimson Banner", "Crimson Banner OS", UpdateChecker.Current.ToString(3), "1.2");
+                _bus.Reply(m, "ssss", "Crimson Banner", "Crimson Banner OS", AppVersion.Current.Short, "1.2");
                 return true;
             case "Introspect" when m.Interface is "org.freedesktop.DBus.Introspectable" or null:
                 _bus.Reply(m, "s", Introspection);

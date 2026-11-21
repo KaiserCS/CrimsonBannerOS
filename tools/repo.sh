@@ -32,19 +32,8 @@ key_id() {
   [ -f "$KEYFILE" ] && cat "$KEYFILE"
 }
 
-# the version: the shell's <Version>, plus how many commits and which one when this is a git checkout
-version() {
-  local base
-  base="$(sed -n 's#.*<Version>\(.*\)</Version>.*#\1#p' RedStarOS/RedStarOS.csproj | head -n 1)"
-  if git rev-parse --git-dir >/dev/null 2>&1; then
-    local n h dirty=""
-    n="$(git rev-list --count HEAD)"; h="$(git rev-parse --short=7 HEAD)"
-    git diff --quiet HEAD -- 2>/dev/null || dirty=".local"
-    echo "$base.r$n.g$h$dirty"
-  else
-    echo "$base"
-  fi
-}
+# the version, in pacman's form (tools/version.sh: 26.11.0, or 26.11.0.r5.g1a2b3c4 for a development build)
+version() { tools/version.sh --pkgver; }
 
 # the tree as it is now (committed or not), without build output
 make_source() {
@@ -59,8 +48,13 @@ make_source() {
     find . \( -path ./.git -o -name bin -o -name obj -o -name build -o -name node_modules \) -prune -o -type f \
       ! -path ./wm/redstar-wm -print0 | sed -z 's#^\./##' > "$list"
   fi
-  tar --sort=name --owner=0 --group=0 --transform "s#^#$NAME-$ver/#" -czf "$out" --null -T "$list"
-  rm -f "$list"
+  # the full version goes into the tarball, which has no git history to work it out from (tools/version.sh)
+  local stamp; stamp="$(mktemp -d)"
+  tools/version.sh > "$stamp/.build-version"
+  tar --sort=name --owner=0 --group=0 --transform "s#^#$NAME-$ver/#" -cf "${out%.gz}" --null -T "$list"
+  tar --owner=0 --group=0 --transform "s#^#$NAME-$ver/#" -rf "${out%.gz}" -C "$stamp" .build-version
+  gzip -nf "${out%.gz}"
+  rm -rf "$list" "$stamp"
 }
 
 case "${1:-}" in

@@ -293,7 +293,7 @@ public partial class DesktopWindow : Window
                 {
                     star,
                     new TextBlock { Text = "Crimson Banner OS", Foreground = Brushes.White, FontSize = 34, FontWeight = FontWeight.Light, HorizontalAlignment = HorizontalAlignment.Center },
-                    new TextBlock { Text = "Version " + UpdateChecker.Current.ToString(3), Foreground = Brushes.White, Opacity = 0.55, FontSize = 13, HorizontalAlignment = HorizontalAlignment.Center },
+                    new TextBlock { Text = "Version " + AppVersion.Current.Short, Foreground = Brushes.White, Opacity = 0.55, FontSize = 13, HorizontalAlignment = HorizontalAlignment.Center },
                 }
             }
         };
