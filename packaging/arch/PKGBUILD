@@ -60,7 +60,7 @@ build() {
   meson compile -C "$srcdir/online" redstar-online
 
   # shellcheck disable=SC2086 # makepkg's flags are word lists
-  gcc $CPPFLAGS $CFLAGS -Wall -o "$srcdir/redstar-wm" wm/redstar-wm.c $LDFLAGS -lX11 -ldl -lm
+  gcc $CPPFLAGS $CFLAGS -Wall -DREDSTAR_VERSION="\"$(tools/version.sh)\"" -o "$srcdir/redstar-wm" wm/redstar-wm.c $LDFLAGS -lX11 -ldl -lm
 }
 
 check() {

@@ -3,7 +3,7 @@
 # Needs: gcc, libX11 headers, libXtst, Xvfb.   Optional: SHOT=file.png (needs ImageMagick) for a screenshot.
 set -e
 cd "$(dirname "$0")/.."
-gcc -O2 -Wall -o redstar-wm redstar-wm.c -lX11 -ldl -lm
+gcc -O2 -Wall -DREDSTAR_VERSION="\"$(../tools/version.sh)\"" -o redstar-wm redstar-wm.c -lX11 -ldl -lm
 gcc -O0 -Wall -o test/wmtest test/wmtest.c -lX11 -l:libXtst.so.6
 gcc -O0 -Wall -o test/clicktest test/clicktest.c -lX11 -l:libXi.so.6 -l:libXtst.so.6
 DISP=:${WMTEST_DISPLAY:-63}
