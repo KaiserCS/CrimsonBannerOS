@@ -16,7 +16,8 @@ pkgdesc='Crimson Banner OS desktop'
 arch=(x86_64 aarch64)
 url='https://github.com/KaiserCS/RedStarOS-Linux'
 license=(GPL-3.0-or-later)
-makedepends=(dotnet-sdk dotnet-targeting-pack-8.0 meson ninja pkgconf
+# dotnet-runtime>=10: the SDK's own runtime (dotnet-runtime-8.0 would otherwise count as it)
+makedepends=(dotnet-sdk 'dotnet-runtime>=10' dotnet-targeting-pack-8.0 meson ninja pkgconf
              wlroots0.20 wayland wayland-protocols libxkbcommon libxcb xcb-util-wm cairo libdrm pixman
              webkitgtk-6.0 gtk4 json-glib libsoup3 gstreamer glib2
              libx11)
