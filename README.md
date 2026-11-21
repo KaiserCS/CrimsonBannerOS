@@ -341,6 +341,42 @@ Optional self-update support: `GH_REPO=user/repo ./build-appimage.sh` embeds upd
 (also install `zsync` so the `.zsync` file is produced). `.github/workflows/appimage.yml` does this
 in CI and attaches both files to a GitHub release when you push a `v*` tag.
 
+### Software
+
+Software (in the Start menu under System) installs more programs, free software only. Its tabs are:
+
+* **Crimson Banner**: our own programs, such as large or specialised tools that don't belong in every install.
+* **Flatpak**: Flathub's catalogue, read from the AppStream data Flatpak keeps on disk. New programs go into your own
+  account, so no administrator password is needed.
+* **AppImage**: AppImageHub's list. Each program is downloaded from its project's own latest release into
+  `~/Applications`, checked against its checksum and given a Start menu entry. **Add an AppImage file…** does the
+  same for one you already have.
+* **Installed**: what's on this computer from all three, with their updates.
+
+Software leaves out programs that aren't free software (`FreeLicences`, after the FSF's list of free licences).
+
+#### Our own software
+
+The Crimson Banner tab reads `software/catalog.json`. Each release publishes it on GitHub Releases, so the shell
+always fetches the latest release's copy, and it keeps the one it was built with for when it's offline. To publish
+a program, add an entry and make a release:
+
+```json
+{ "id": "planner", "name": "Planner", "summary": "Economic computation for central planning",
+  "description": "…", "license": "GPL-3.0-or-later", "developer": "Crimson Banner OS", "version": "1.0.0",
+  "homepage": "https://…", "icon": "https://…/planner.png", "categories": ["Science", "Office"],
+  "install": [
+    { "kind": "pacman",   "package": "crimson-planner" },
+    { "kind": "flatpak",  "ref": "org.crimsonbanner.Planner", "remote": "flathub" },
+    { "kind": "appimage", "url": "https://github.com/KaiserCS/RedStarOS-Linux/releases/download/v26.12.0/Planner-x86_64.AppImage",
+                          "sha256": "…64 hex digits…" }
+  ] }
+```
+
+Software offers the first way to install that the computer can use: our pacman repository on Arch, then Flatpak,
+then the AppImage. An entry that isn't free software, has no way to install, or offers an AppImage without its
+`sha256` (or not over https) is ignored.
+
 ### Versions
 
 Releases are numbered by when they come out: **YY.MM.N**, the year and month, then a fix number from 0. 26.11.0

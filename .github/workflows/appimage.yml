@@ -60,3 +60,4 @@ jobs:
           files: |
             dist/RedStarOS-x86_64.AppImage
             dist/RedStarOS-x86_64.AppImage.zsync
+            software/catalog.json

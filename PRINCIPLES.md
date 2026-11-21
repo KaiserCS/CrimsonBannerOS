@@ -35,6 +35,10 @@ same change that adds it, or it doesn't go in.
 | Linux, Mesa, libdrm | the base system | community (Linux Foundation, freedesktop.org) | GPL-2.0, MIT | foundation; accepted |
 | Arch Linux (its packages, pacman, makepkg, repo-add; archiso next) | the distribution base: the system Crimson Banner installs on, its package manager and the tools that build and publish our packages | the Arch Linux team, a volunteer community with its own governance; an associated project of Software in the Public Interest (non-profit) since 2011 | GPL-2.0-or-later (pacman, archiso); each package under its own licence | **commons, chosen 20 Nov 2026** over Debian (too far behind for wlroots 0.20 and .NET 8), Guix System (needs Linux-libre; .NET isn't packaged) and the company-run bases (Fedora, Ubuntu, openSUSE). Our packages are plain PKGBUILDs (`packaging/arch`) in our own signed repository (`tools/repo.sh`), so they aren't held by Arch's servers. Way out: Parabola (FSF-endorsed) and every other pacman-based system read the same PKGBUILDs. |
 | GnuPG | signing our packages and repository | GNU project | GPL-3.0-or-later | accepted (commons) |
+| Flatpak | Software's Flatpak tab: installing, updating and running Flatpaks (its own `flatpak` command) | freedesktop.org community | LGPL-2.1-or-later | **commons, optional** (21 Nov 2026): nothing needs it to build, test or run; Software offers to install it. Way out: the AppImage tab and our own catalogue don't use it |
+| Flathub | where most Flatpaks come from; Software reads its AppStream catalogue from disk, not a web API | the Flathub team, a GNOME Foundation program (non-profit) with KDE e.V. | the catalogue is CC0; each program has its own licence | **accepted, optional, filtered** (21 Nov 2026): Software lists only free software (`FreeLicences`), because Flathub also carries non-free programs. Hosted, but nothing needs it to build, test or run. Way out: any other Flatpak remote, or our own |
+| AppImageHub and AppImage | Software's AppImage tab: the community's list of AppImages (appimage.github.io), and each project's own GitHub release for the download | the AppImage community (AppImageHub is served from GitHub Pages) | MIT (AppImage's tools); each program has its own licence | **accepted, optional, filtered** (21 Nov 2026): not-free programs aren't listed; a download must match its release's checksum and be a real AppImage. Way out: adding an AppImage file you have, and our own catalogue |
+| Our own software catalogue | Software's Crimson Banner tab (`software/catalog.json`), published with each release on GitHub Releases | us | GPL-3.0-or-later; programs must be free software | **ours** (21 Nov 2026). The shell ships with the catalogue it was built with and keeps the last one it fetched, so it works offline. Way out: Settings' SoftwareCatalogUrl points it at any copy, e.g. on our own server |
 | wlroots, Wayland, wayland-protocols, xkbcommon, pixman | redstar-comp | community (freedesktop.org) | MIT | accepted; the compositor is our own |
 | Xwayland, xcb, cairo | X11 apps, title bars | community (freedesktop.org) | MIT, LGPL/MPL | accepted; Xwayland only while X11 apps exist |
 | D-Bus (the session bus) | system tray, portals | community (freedesktop.org) | GPL-2.0/AFL | accepted; we talk to it with our own client (`Services/DBus.cs`), no D-Bus library |
@@ -80,8 +84,10 @@ whenever a layer changes.
 | Package sources | our own feed (`tools/packages.sh`), locked versions and hashes | ours |
 | Distribution base | Arch Linux (pacman) | commons |
 | Packages and their repository | `packaging/arch`, `tools/repo.sh`: our PKGBUILDs, signed with our own key, in our own pacman repository | ours |
+| Installing more software | Software: our own catalogue, Flatpak and AppImage in one app of our own, free software only | ours |
 
-**Now: 11 of 14 (79%).** The two distribution layers were added on 20 Nov 2026, when Arch Linux was chosen as the
+**Now: 12 of 15 (80%).** Software, our own way to install more programs, was added on 21 Nov 2026. Before that,
+11 of 14 (79%): the two distribution layers were added on 20 Nov 2026, when Arch Linux was chosen as the
 base and our own signed pacman repository was set up. Before that: **9 of 12 (75%): the target was reached, and from
 there it is the floor.** The web engine moved to WebKitGTK
 (Crimson Online's rewrite, 20 Nov 2026), Electron and npm were removed, and builds restore from our own package feed
@@ -122,7 +128,16 @@ doesn't make it.
   desktop, it keeps the shortest route to Parabola, which reads the same PKGBUILDs. Our own repository carries only
   free software, as the FSDG asks of what a distribution ships.
 
+- **Software (21 Nov 2026).** The FSDG asks a distribution not to steer people to non-free software, and the FSF
+  doesn't endorse Flathub or AppImageHub, since both carry non-free programs as well. Software lists only programs
+  whose licence is free (the FSF's list of free licences, by SPDX id; `FreeLicences`), and our own catalogue accepts
+  only free software.
+
 Known differences with that advice, recorded openly:
+- **AppImages that don't state a licence.** Many of AppImageHub's entries name no licence. Software hides them unless
+  you tick "Include AppImages that don't state a licence", and then marks each one as not stated. That box can show a
+  program that turns out not to be free, which the FSDG wouldn't allow. What would change it: dropping the box, if
+  enough of the list states its licence.
 - **The kernel: mainline Linux, not Linux-libre (decided 20 Nov 2026).** The FSDG asks a distribution for a kernel
   without non-free firmware blobs, and the FSF's endorsed distributions (Parabola, Trisquel, Guix System and others)
   ship Linux-libre. Crimson Banner keeps the mainline kernel so that hardware works (Wi-Fi cards, GPUs and other

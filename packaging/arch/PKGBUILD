@@ -87,7 +87,8 @@ package_crimson-banner() {
               'maim: screenshots (X11)'
               'xclip: copying pictures (X11)'
               'ffmpeg: Screen Recorder (X11)'
-              'picom: shadows and transparency in the X11 session')
+              'picom: shadows and transparency in the X11 session'
+              'flatpak: the Flatpak tab in Software')
 }
 
 package_crimson-banner-shell() {

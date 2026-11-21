@@ -35,6 +35,8 @@
           ContinueOnError="true" />
   </Target>
   <ItemGroup>
+    <!-- Software's own catalogue as it was at build time, for when the latest can't be fetched -->
+    <None Include="../software/catalog.json" Link="software/catalog.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="../wm/redstar-wm" Link="redstar-wm" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('../wm/redstar-wm') And '$(RedStarNative)' == 'true'" />
   </ItemGroup>
 

@@ -30,6 +30,7 @@ public sealed class Settings
     public string Theme { get; set; } = "Light";      // Light | Dark | System
     public string Accent { get; set; } = "#0078D4";
 
+    public string? SoftwareCatalogUrl { get; set; }   // Software's Crimson Banner tab; null = the latest release's catalog.json
     public string? UpdateUrl { get; set; }            // e.g. https://api.github.com/repos/USER/REPO/releases/latest
 
     public string? WriterFontFamily { get; set; }

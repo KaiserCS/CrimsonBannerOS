@@ -115,6 +115,48 @@ public static class SystemUpdates
         return error;
     }
 
+    private const ulong FilterInstalled = 1UL << 2, FilterNotInstalled = 1UL << 3;
+
+    /// <summary>Which of these package names are installed (PackageKit's Resolve).</summary>
+    public static async Task<HashSet<string>> InstalledAsync(IReadOnlyList<string> names, CancellationToken ct = default)
+    {
+        var set = new HashSet<string>();
+        if (names.Count == 0) return set;
+        using var bus = await DBusConnection.ConnectAsync("unix:path=/run/dbus/system_bus_socket");
+        var (list, _) = await Transaction(bus, tx => bus.CallAsync(Name, tx, TxIface, "Resolve", "tas",
+            new object[] { FilterInstalled, names.Select(n => (object)n).ToList() }), null, ct);
+        foreach (var p in list) set.Add(p.Name);
+        return set;
+    }
+
+    /// <summary>Installs packages by name, from whichever repository has them ([crimson-banner] included); polkit asks
+    /// for the password. Null when it worked, else why not.</summary>
+    public static async Task<string?> InstallByNameAsync(IReadOnlyList<string> names, Action<int>? progress, CancellationToken ct = default)
+    {
+        using var bus = await DBusConnection.ConnectAsync("unix:path=/run/dbus/system_bus_socket");
+        var (found, err) = await Transaction(bus, tx => bus.CallAsync(Name, tx, TxIface, "Resolve", "tas",
+            new object[] { FilterNotInstalled, names.Select(n => (object)n).ToList() }), null, ct);
+        if (err != null) return err;
+        var ids = found.Where(p => names.Contains(p.Name)).GroupBy(p => p.Name).Select(g => (object)g.First().Id).ToList();
+        if (ids.Count == 0) return "No repository has " + string.Join(", ", names) + " (or it's installed already).";
+        var (_, error) = await Transaction(bus, tx => bus.CallAsync(Name, tx, TxIface, "InstallPackages", "tas", new object[] { OnlyTrusted, ids }, 600000), progress, ct);
+        return error;
+    }
+
+    /// <summary>Removes installed packages by name, with what only they needed.</summary>
+    public static async Task<string?> RemoveByNameAsync(IReadOnlyList<string> names, Action<int>? progress, CancellationToken ct = default)
+    {
+        using var bus = await DBusConnection.ConnectAsync("unix:path=/run/dbus/system_bus_socket");
+        var (found, err) = await Transaction(bus, tx => bus.CallAsync(Name, tx, TxIface, "Resolve", "tas",
+            new object[] { FilterInstalled, names.Select(n => (object)n).ToList() }), null, ct);
+        if (err != null) return err;
+        var ids = found.Where(p => names.Contains(p.Name)).Select(p => (object)p.Id).Distinct().ToList();
+        if (ids.Count == 0) return null;
+        var (_, error) = await Transaction(bus, tx => bus.CallAsync(Name, tx, TxIface, "RemovePackages", "tasbb",
+            new object[] { OnlyTrusted, ids, true, true }, 600000), progress, ct);
+        return error;
+    }
+
     /// <summary>Once a day in a Crimson Banner session: looks for system updates and says so when there are some.</summary>
     public static async void CheckInBackground()
     {
