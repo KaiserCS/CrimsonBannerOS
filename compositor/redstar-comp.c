@@ -277,6 +277,7 @@ static int deco_side(struct view *v) { return v->decorated && !v->fullscreen && 
 static void view_update_decorations(struct view *v);
 static struct view *view_from_xdg_toplevel(struct wlr_xdg_toplevel *t);
 static void view_apply_geometry(struct view *v);
+static void popups_follow(struct view *v);
 static void focus_view(struct view *v);
 static void update_workarea(struct server *srv);
 static void x11_set_frame_extents(struct view *v);
@@ -573,6 +574,7 @@ static void view_apply_geometry(struct view *v)
 	if (!v->tree) return;
 	int side = deco_side(v), top = deco_top(v);
 	wlr_scene_node_set_position(&v->tree->node, v->x - side, v->y - top);
+	popups_follow(v);
 	if (v->x11) {
 		if (v->xs) wlr_xwayland_surface_configure(v->xs, v->x, v->y, v->w > 0 ? v->w : 1, v->h > 0 ? v->h : 1);
 		x11_set_frame_extents(v);
@@ -954,7 +956,9 @@ static struct view *view_at(struct server *s, double lx, double ly, struct wlr_s
 		double fx = lx - (v->x - deco_side(v)), fy = ly - (v->y - deco_top(v));
 		uint32_t e;
 		int p = frame_part(v, fx, fy, &e);
-		if (p == P_EDGE && fy >= deco_top(v) && (fx < deco_side(v) || fx >= v->w + deco_side(v) || fy >= v->h + deco_top(v))) {
+		int fw = v->w + 2 * deco_side(v), fh = v->h + deco_top(v) + deco_side(v);
+		if (p == P_EDGE && fy >= deco_top(v) && fx >= 0 && fx < fw && fy < fh &&
+			(fx < deco_side(v) || fx >= v->w + deco_side(v) || fy >= v->h + deco_top(v))) {
 			*part = P_EDGE; *edges = e; *surface = NULL;
 			return v;
 		}
@@ -1022,6 +1026,7 @@ static void grab_motion(struct server *s)
 		v->y = s->grab_box.y + (int)dy;
 		if (v->y - deco_top(v) < s->workarea.y) v->y = s->workarea.y + deco_top(v);
 		wlr_scene_node_set_position(&v->tree->node, v->x - deco_side(v), v->y - deco_top(v));
+		popups_follow(v);
 		if (v->x11 && v->xs) wlr_xwayland_surface_configure(v->xs, v->x, v->y, v->w, v->h);
 	} else if (s->grab == G_RESIZE) {
 		struct wlr_box b = s->grab_box;
@@ -1070,6 +1075,7 @@ static void xdg_commit(struct wl_listener *l, void *data)
 		v->w = g.width;
 		v->h = g.height;
 		wlr_scene_node_set_position(&v->tree->node, v->x - deco_side(v), v->y - deco_top(v));
+		popups_follow(v);
 	}
 	view_update_decorations(v);
 }
@@ -1268,6 +1274,16 @@ static void popup_place_wrapper(struct popup *p)
 	if (!p->wrapper || !v || !v->mapped || !v->xdg) return;
 	struct wlr_box g = v->xdg->base->geometry;
 	wlr_scene_node_set_position(&p->wrapper->node, v->x - g.x, v->y - g.y);
+	/* a minimised window, or one on another workspace, takes its menus with it */
+	wlr_scene_node_set_enabled(&p->wrapper->node, !v->tree || v->tree->node.enabled);
+}
+
+/* a window that moves (dragged, resized from the left or top, placed) takes its open menus along */
+static void popups_follow(struct view *v)
+{
+	struct popup *p;
+	wl_list_for_each(p, &v->server->popups, link)
+		if (p->root == v) popup_place_wrapper(p);
 }
 
 static void popup_commit(struct wl_listener *l, void *data)
@@ -1308,11 +1324,13 @@ static void new_popup(struct wl_listener *l, void *data)
 	if (!p) return;
 	p->popup = xp;
 	wl_list_insert(&s->popups, &p->link);
-	/* The desktop is the bottom window, so its menus (the shell's Start menu, tray panels when it runs natively)
-	 * would open under every other window: they go in the top layer instead, at the desktop's position. */
+	/* A window's menus go in the top layer, at the window's position, not inside its frame: there the frame's
+	 * borders were drawn over a menu that reaches past the window, and the bottom resize grip took its clicks.
+	 * (The desktop is the bottom window, so its menus would open under every other window otherwise, too.)
+	 * Nested menus (submenus) go inside their parent menu's tree, so they're in the top layer as well. */
 	if (parent->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
 		struct view *root = view_from_xdg_toplevel(parent->toplevel);
-		if (root && (root->kind == K_DESKTOP || root->kind == K_DOCK)) {
+		if (root) {
 			p->root = root;
 			p->wrapper = wlr_scene_tree_create(s->l_unmanaged);
 			parent_tree = p->wrapper;

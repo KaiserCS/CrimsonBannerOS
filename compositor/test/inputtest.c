@@ -74,6 +74,19 @@ static uint32_t stamp(void) { return now_ms_u32 = (uint32_t)now_ms(); }
 
 /* ── xdg ── */
 static bool configured, maximized, closed, popup_done;
+
+/* which surface the pointer is over, and which one got the last button press (a real client's view of a click) */
+static struct wl_surface *pointer_over, *pressed_on;
+static void ptr_enter(void *d, struct wl_pointer *p, uint32_t serial, struct wl_surface *s, wl_fixed_t x, wl_fixed_t y) { (void)d; (void)p; (void)serial; (void)x; (void)y; pointer_over = s; }
+static void ptr_leave(void *d, struct wl_pointer *p, uint32_t serial, struct wl_surface *s) { (void)d; (void)p; (void)serial; if (pointer_over == s) pointer_over = NULL; }
+static void ptr_motion(void *d, struct wl_pointer *p, uint32_t t, wl_fixed_t x, wl_fixed_t y) { (void)d; (void)p; (void)t; (void)x; (void)y; }
+static void ptr_button(void *d, struct wl_pointer *p, uint32_t serial, uint32_t t, uint32_t b, uint32_t state)
+{
+	(void)d; (void)p; (void)serial; (void)t; (void)b;
+	if (state == WL_POINTER_BUTTON_STATE_PRESSED) pressed_on = pointer_over;
+}
+static void ptr_axis(void *d, struct wl_pointer *p, uint32_t t, uint32_t a, wl_fixed_t v) { (void)d; (void)p; (void)t; (void)a; (void)v; }
+static const struct wl_pointer_listener ptr_listener = { .enter = ptr_enter, .leave = ptr_leave, .motion = ptr_motion, .button = ptr_button, .axis = ptr_axis };
 static void ping(void *d, struct xdg_wm_base *b, uint32_t serial) { (void)d; xdg_wm_base_pong(b, serial); }
 static const struct xdg_wm_base_listener wm_listener = { .ping = ping };
 static void surf_configure(void *d, struct xdg_surface *s, uint32_t serial) { (void)d; xdg_surface_ack_configure(s, serial); configured = true; }
@@ -344,6 +357,45 @@ int main(void)
 	check(wait_for(&popup_done, true, 1000), "a click outside a menu closes it (popup_done)");
 	xdg_popup_destroy(pp); xdg_surface_destroy(px); wl_surface_destroy(ps); xdg_positioner_destroy(pos);
 	settle(200);
+
+	/* ── a menu that reaches past the bottom of its window (a context menu near the bottom edge): the part outside
+	 *    the window still takes clicks, instead of the frame's bottom resize grip ── */
+	if (seat) {
+		struct wl_pointer *ptr = wl_seat_get_pointer(seat);
+		wl_pointer_add_listener(ptr, &ptr_listener, NULL);
+		wl_display_roundtrip(dpy);
+		popup_done = false;
+		ps = wl_compositor_create_surface(compositor);
+		px = xdg_wm_base_get_xdg_surface(wm, ps);
+		xdg_surface_add_listener(px, &surf_listener, NULL);
+		pos = xdg_wm_base_create_positioner(wm);
+		xdg_positioner_set_size(pos, 150, 120);
+		xdg_positioner_set_anchor_rect(pos, 20, 280, 1, 1);    /* 20 px above the window's bottom edge */
+		xdg_positioner_set_anchor(pos, XDG_POSITIONER_ANCHOR_TOP_LEFT);
+		xdg_positioner_set_gravity(pos, XDG_POSITIONER_GRAVITY_BOTTOM_RIGHT);
+		pp = xdg_surface_get_popup(px, wx, pos);
+		xdg_popup_add_listener(pp, &popup_listener, NULL);
+		configured = false;
+		wl_surface_commit(ps);
+		for (int i = 0; i < 20 && !configured; i++) wl_display_roundtrip(dpy);
+		pb = make_buffer(150, 120, 0xff444444);
+		wl_surface_attach(ps, pb, 0, 0);
+		wl_surface_commit(ps);
+		settle(200);
+		pressed_on = NULL;
+		click_at(440 + 20 + 75, 226 + 280 + 30);                /* on the menu, inside the window */
+		check(pressed_on == ps, "a menu takes clicks inside its window");
+		pressed_on = NULL;
+		click_at(440 + 20 + 75, 226 + 280 + 90);                /* on the menu, 70 px below the window */
+		check(pressed_on == ps, "…and below the window's bottom edge (not the frame's resize grip)");
+		check(!popup_done, "…which leaves it open");
+		pressed_on = NULL;
+		click_at(440 + 20 + 75, 226 + 300 + 2);                 /* on the window's bottom border, which runs under it */
+		check(pressed_on == ps, "…and on the window's bottom border, which is under the menu");
+		xdg_popup_destroy(pp); xdg_surface_destroy(px); wl_surface_destroy(ps); xdg_positioner_destroy(pos);
+		wl_pointer_destroy(ptr);
+		settle(200);
+	}
 
 	/* ── title bar ── */
 	if (deco_mgr) {

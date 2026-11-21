@@ -3,7 +3,7 @@
 #   comptest    an X11 client (through Xwayland, like the Red Star shell): frames, placement, work area, snapping…
 #   nativetest  a native Wayland window, checked through the shell's connection (taskbar list, commands, positions)
 #   inputtest   a virtual keyboard and mouse: Alt+Tab and the other shortcuts, menus closing on outside clicks,
-#               title-bar double-click and buttons
+#               title-bar double-click and buttons, menus that reach past their window
 #   compositor/test/run-tests.sh [path/to/redstar-comp]
 set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"
