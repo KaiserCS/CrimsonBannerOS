@@ -90,13 +90,13 @@ VERSION="$(tools/version.sh)"
 # ── 4. pacman trusts the key and knows the repository ──
 step "Letting pacman trust the project's key"
 FPR="$(cat "$REPO_DIR/signing-key")"
-sudo test -s /etc/pacman.d/gnupg/pubring.gpg || sudo test -s /etc/pacman.d/gnupg/pubring.kbx || sudo pacman-key --init
-if sudo pacman-key --list-keys "$FPR" >/dev/null 2>&1; then
-  echo "Already trusted ($FPR)."
-else
-  sudo pacman-key --add "$REPO_DIR/$NAME.asc"
-  sudo pacman-key --lsign-key "$FPR"
+# pacman's keyring needs its own local key to vouch for ours (a fresh system or container may not have one yet)
+if ! sudo gpg --homedir /etc/pacman.d/gnupg --batch --list-secret-keys 2>/dev/null | grep -q '^sec'; then
+  sudo pacman-key --init
 fi
+sudo pacman-key --list-keys "$FPR" >/dev/null 2>&1 || sudo pacman-key --add "$REPO_DIR/$NAME.asc"
+# every time, so a run that stopped halfway can't leave the key added but not trusted
+sudo pacman-key --lsign-key "$FPR"
 
 SERVER="file://$REPO_DIR/\$arch"
 if grep -q "^\[$NAME\]" /etc/pacman.conf; then
