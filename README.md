@@ -354,6 +354,8 @@ tools/repo.sh pacman-conf    # what a machine adds to /etc/pacman.conf, and how 
 sudo pacman -Sy crimson-banner
 ```
 
+The packages are built with Arch's current `dotnet-sdk` (its `dotnet-sdk-8.0` is too old for Avalonia 12's XAML
+generator) and run on Arch's `dotnet-runtime-8.0`. Fill the feed with the same SDK you build the packages with.
 The shell's NuGet packages come from our own feed when it's filled, so with `tools/packages.sh fill` done once,
 building the packages needs no package registry. `./check.sh --packages` runs the build as part of the checks. The
 packages install to `/usr` (`/usr/lib/crimson-banner`, `/usr/bin`); if you used `install-session.sh` before, run

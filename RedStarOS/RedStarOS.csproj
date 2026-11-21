@@ -5,7 +5,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <LangVersion>latest</LangVersion>
+    <!-- C# 12, the language of .NET 8's SDK, whichever SDK builds it (the Arch packages use a newer one) -->
+    <LangVersion>12</LangVersion>
     <AssemblyName>RedStarOS</AssemblyName>
     <RootNamespace>RedStarOS</RootNamespace>
     <ApplicationIcon />

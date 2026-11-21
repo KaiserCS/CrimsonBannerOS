@@ -224,7 +224,7 @@ jobs:
     steps:
       - name: Build tools
         run: |
-          pacman -Syu --noconfirm --needed base-devel git sudo dotnet-sdk-8.0 gnupg
+          pacman -Syu --noconfirm --needed base-devel git sudo dotnet-sdk dotnet-targeting-pack-8.0 dotnet-runtime-8.0 gnupg
           useradd -m builder
           echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
 

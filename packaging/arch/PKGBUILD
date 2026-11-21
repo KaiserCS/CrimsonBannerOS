@@ -16,11 +16,11 @@ pkgdesc='Crimson Banner OS desktop'
 arch=(x86_64 aarch64)
 url='https://github.com/KaiserCS/RedStarOS-Linux'
 license=(GPL-3.0-or-later)
-makedepends=(dotnet-sdk-8.0 meson ninja pkgconf
+makedepends=(dotnet-sdk dotnet-targeting-pack-8.0 meson ninja pkgconf
              wlroots0.20 wayland wayland-protocols libxkbcommon libxcb xcb-util-wm cairo libdrm pixman
              webkitgtk-6.0 gtk4 json-glib libsoup3 gstreamer glib2
              libx11)
-# .NET's self-contained files and its native libraries are shipped as they are
+# .NET's files and its native libraries are shipped as they are
 options=(!strip !debug !lto)
 source=("$pkgbase-$pkgver.tar.gz")
 # tools/repo.sh makes the tarball from this tree, so there is no upstream checksum to pin
@@ -45,8 +45,11 @@ build() {
     echo "Packages from Crimson Banner's own feed ($feed)"
     source=(--source "$feed" -p:NuGetAudit=false)
   fi
-  # the shell, self-contained, without the C programs (they get their own packages below)
-  dotnet publish RedStarOS/RedStarOS.csproj "${source[@]}" -c Release -r "$(_rid)" --self-contained true \
+  # the shell, without the C programs (they get their own packages below). Built with Arch's current SDK: its
+  # dotnet-sdk-8.0 is the 8.0.1xx source build, whose compiler (Roslyn 4.8) is too old for Avalonia 12's XAML
+  # generator. It runs on Arch's .NET 8 runtime (dotnet-runtime-8.0), so the runtime gets Arch's security updates;
+  # the RedStarOS launcher stays, because the shell starts itself again through it.
+  dotnet publish RedStarOS/RedStarOS.csproj "${source[@]}" -c Release -p:RuntimeIdentifier="$(_rid)" --self-contained false \
     -p:REDSTAR_LOCKED=1 -p:RedStarNative=false -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false \
     -o "$srcdir/shell"
 
@@ -88,7 +91,7 @@ package_crimson-banner() {
 
 package_crimson-banner-shell() {
   pkgdesc='Crimson Banner OS: the desktop shell, its apps and the login-screen sessions'
-  depends=(fontconfig freetype2 libx11 libxi libxrandr libxcursor libice libsm libxss libxkbcommon wayland
+  depends=(dotnet-runtime-8.0 fontconfig freetype2 libx11 libxi libxrandr libxcursor libice libsm libxss libxkbcommon wayland
            dbus polkit pam libxcrypt systemd zlib gcc-libs glibc)
   backup=(etc/pam.d/crimson-banner)
   cd "$pkgbase-$pkgver"
