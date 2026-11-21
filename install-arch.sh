@@ -8,6 +8,7 @@
 #   ./install-arch.sh --extras      also install the optional programs: drives, users, updates, video, screen reader,
 #                                   screenshots, recording (the list is in packaging/arch/PKGBUILD)
 #   ./install-arch.sh --yes         don't ask before installing (pacman --noconfirm)
+#   ./install-arch.sh --rebuild     build even when this exact version is already in the repository
 #   ./install-arch.sh --uninstall   remove the packages and the repository's entry in /etc/pacman.conf
 #
 # Run it as yourself, not with sudo: it asks for your password when it needs it. The first run makes the project's
@@ -21,14 +22,15 @@ HERE="$PWD"
 NAME=crimson-banner
 REPO_DIR="${REDSTAR_REPO:-/srv/crimson-banner}"
 PACKAGES=(crimson-banner crimson-banner-shell redstar-comp redstar-wm crimson-online)
-PULL=0; EXTRAS=0; YES=0; UNINSTALL=0
+PULL=0; EXTRAS=0; YES=0; UNINSTALL=0; REBUILD=0
 for a in "$@"; do
   case "$a" in
     --pull) PULL=1 ;;
     --extras) EXTRAS=1 ;;
     --yes|-y) YES=1 ;;
     --uninstall) UNINSTALL=1 ;;
-    -h|--help) sed -n '3,17p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --rebuild) REBUILD=1 ;;
+    -h|--help) sed -n '3,18p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "Unknown option: $a (see ./install-arch.sh --help)" >&2; exit 2 ;;
   esac
 done
@@ -83,9 +85,21 @@ export REDSTAR_REPO="$REPO_DIR"
 tools/repo.sh key
 
 # ── 3. build and sign ──
-step "Building the packages (the first build takes a while)"
-tools/repo.sh build
 VERSION="$(tools/version.sh)"
+PKGVER="$(tools/version.sh --pkgver)"
+CARCH="$(uname -m)"
+# a committed version that's already in the repository needs no second build; one with changes not committed
+# (".local") always does, since the same version can stand for different contents
+if [ "$REBUILD" = 0 ] && [[ "$PKGVER" != *.local ]] && \
+   ls "$REPO_DIR/$CARCH/crimson-banner-shell-$PKGVER-"*.pkg.tar.zst >/dev/null 2>&1; then
+  step "Crimson Banner OS $VERSION is already built (./install-arch.sh --rebuild builds it again)"
+else
+  step "Building the packages (the first build takes a while)"
+  tools/repo.sh build
+  # pacman keeps downloaded packages by name: an earlier build of this same version in its cache would no longer
+  # match the repository, so it goes
+  for p in "${PACKAGES[@]}"; do sudo rm -f /var/cache/pacman/pkg/"$p-$PKGVER"-*.pkg.tar.zst{,.sig}; done
+fi
 
 # ── 4. pacman trusts the key and knows the repository ──
 step "Letting pacman trust the project's key"

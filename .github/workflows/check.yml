@@ -253,8 +253,11 @@ jobs:
       - name: Every signature in the repository
         run: sudo -u builder -H --preserve-env=REDSTAR_REPO tools/repo.sh check
 
-      - name: Running it again updates in place
-        run: sudo -u builder -H --preserve-env=REDSTAR_REPO ./install-arch.sh --yes
+      - name: Running it again (nothing to build) and with --rebuild (same version, built again)
+        run: |
+          sudo -u builder -H --preserve-env=REDSTAR_REPO ./install-arch.sh --yes | tee /tmp/again.log
+          grep -q "is already built" /tmp/again.log
+          sudo -u builder -H --preserve-env=REDSTAR_REPO ./install-arch.sh --yes --rebuild
 
       - name: What was installed is complete
         run: |
