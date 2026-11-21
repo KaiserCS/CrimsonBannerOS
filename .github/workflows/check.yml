@@ -221,11 +221,15 @@ jobs:
     runs-on: ubuntu-latest
     container: archlinux:latest
     timeout-minutes: 45
+    env:
+      # outside the build user's home (mode 700), so pacman, as root, can read it
+      REDSTAR_REPO: /srv/crimson-banner
     steps:
       - name: Build tools
         run: |
           pacman -Syu --noconfirm --needed base-devel git sudo dotnet-sdk dotnet-runtime dotnet-targeting-pack-8.0 dotnet-runtime-8.0 gnupg
           useradd -m builder
+          install -d -o builder /srv/crimson-banner
           echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
 
       - uses: actions/checkout@v5
@@ -242,13 +246,13 @@ jobs:
 
       - name: Signing key, packages and the signed repository
         run: |
-          sudo -u builder -H tools/repo.sh key
-          sudo -u builder -H tools/repo.sh build
-          sudo -u builder -H tools/repo.sh check
+          sudo -u builder -H --preserve-env=REDSTAR_REPO tools/repo.sh key
+          sudo -u builder -H --preserve-env=REDSTAR_REPO tools/repo.sh build
+          sudo -u builder -H --preserve-env=REDSTAR_REPO tools/repo.sh check
 
       - name: Install from the repository with pacman (signatures required)
         run: |
-          REPO="$(sudo -u builder -H tools/repo.sh where)"
+          REPO="$REDSTAR_REPO"
           pacman-key --init
           pacman-key --add "$REPO/crimson-banner.asc"
           pacman-key --lsign-key "$(cat "$REPO/signing-key")"
