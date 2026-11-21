@@ -2,7 +2,7 @@
 
 Versions are YY.MM.N (README, "Versions"). `tools/release.sh` adds each release's section here.
 
-## 26.11.0 (not released yet)
+## 26.11.0 (2026-11-21)
 
 The first version in the new numbering (it follows 1.3.0), and the first since the change of name.
 
