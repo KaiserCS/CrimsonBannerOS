@@ -22,36 +22,42 @@
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
 
+  <!-- -p:RedStarNative=false leaves out the three C programs below: the Arch packages (packaging/arch) build them on
+       their own and install them to /usr/bin, where the shell also looks. -->
+  <PropertyGroup>
+    <RedStarNative Condition="'$(RedStarNative)' == ''">true</RedStarNative>
+  </PropertyGroup>
+
   <!-- Red Star's window manager (C, Xlib): rebuilt from wm/redstar-wm.c when gcc and the X11 headers are there,
        otherwise the prebuilt x86_64 binary in wm/ is used. Copied next to RedStarOS. -->
-  <Target Name="BuildRedStarWm" BeforeTargets="BeforeBuild" Condition="'$(OS)' != 'Windows_NT'">
+  <Target Name="BuildRedStarWm" BeforeTargets="BeforeBuild" Condition="'$(OS)' != 'Windows_NT' And '$(RedStarNative)' == 'true'">
     <Exec Command="command -v gcc &gt;/dev/null 2&gt;&amp;1 &amp;&amp; [ -f /usr/include/X11/Xlib.h ] &amp;&amp; gcc -O2 -Wall -o &quot;$(MSBuildProjectDirectory)/../wm/redstar-wm&quot; &quot;$(MSBuildProjectDirectory)/../wm/redstar-wm.c&quot; -lX11 -ldl -lm || echo &quot;redstar-wm: using the prebuilt binary&quot;"
           ContinueOnError="true" />
   </Target>
   <ItemGroup>
-    <None Include="../wm/redstar-wm" Link="redstar-wm" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('../wm/redstar-wm')" />
+    <None Include="../wm/redstar-wm" Link="redstar-wm" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('../wm/redstar-wm') And '$(RedStarNative)' == 'true'" />
   </ItemGroup>
 
   <!-- Red Star's Wayland compositor (C, wlroots 0.20; experimental): built from compositor/ when wlroots 0.20 and
        meson are installed, then copied next to RedStarOS. Without them the build carries on without it. -->
-  <Target Name="BuildRedStarComp" AfterTargets="Build" Condition="'$(OS)' != 'Windows_NT'">
+  <Target Name="BuildRedStarComp" AfterTargets="Build" Condition="'$(OS)' != 'Windows_NT' And '$(RedStarNative)' == 'true'">
     <Exec Command="cd &quot;$(MSBuildProjectDirectory)/../compositor&quot; &amp;&amp; if pkg-config --exists wlroots-0.20 &amp;&amp; command -v meson &gt;/dev/null 2&gt;&amp;1; then ( [ -d build ] || meson setup build &gt;/dev/null ) &amp;&amp; meson compile -C build; else echo &quot;redstar-comp: skipped (needs wlroots0.20 and meson)&quot;; fi"
           ContinueOnError="true" />
     <Copy SourceFiles="../compositor/build/redstar-comp" DestinationFolder="$(OutDir)" Condition="Exists('../compositor/build/redstar-comp')" ContinueOnError="true" />
   </Target>
-  <Target Name="PublishRedStarComp" AfterTargets="Publish" Condition="Exists('../compositor/build/redstar-comp')">
+  <Target Name="PublishRedStarComp" AfterTargets="Publish" Condition="Exists('../compositor/build/redstar-comp') And '$(RedStarNative)' == 'true'">
     <Copy SourceFiles="../compositor/build/redstar-comp" DestinationFolder="$(PublishDir)" ContinueOnError="true" />
   </Target>
 
   <!-- Red Star Online, the GTK 4 + WebKitGTK browser (C): built from browser/ when WebKitGTK 6.0, GTK 4, json-glib,
        libsoup 3 and meson are installed, then copied next to RedStarOS (and into the AppImage), where the shell finds
        it. Without them the build carries on without a browser, and opening a page says how to get it. -->
-  <Target Name="BuildRedStarOnline" AfterTargets="Build" Condition="'$(OS)' != 'Windows_NT'">
+  <Target Name="BuildRedStarOnline" AfterTargets="Build" Condition="'$(OS)' != 'Windows_NT' And '$(RedStarNative)' == 'true'">
     <Exec Command="cd &quot;$(MSBuildProjectDirectory)/../browser&quot; &amp;&amp; if pkg-config --exists webkitgtk-6.0 gtk4 json-glib-1.0 libsoup-3.0 &amp;&amp; command -v meson &gt;/dev/null 2&gt;&amp;1; then ( [ -d build ] || meson setup build &gt;/dev/null ) &amp;&amp; meson compile -C build redstar-online; else echo &quot;redstar-online: skipped (needs webkitgtk-6.0, gtk4, json-glib, libsoup3 and meson)&quot;; fi"
           ContinueOnError="true" />
     <Copy SourceFiles="../browser/build/redstar-online" DestinationFolder="$(OutDir)" Condition="Exists('../browser/build/redstar-online')" ContinueOnError="true" />
   </Target>
-  <Target Name="PublishRedStarOnline" AfterTargets="Publish" Condition="Exists('../browser/build/redstar-online')">
+  <Target Name="PublishRedStarOnline" AfterTargets="Publish" Condition="Exists('../browser/build/redstar-online') And '$(RedStarNative)' == 'true'">
     <Copy SourceFiles="../browser/build/redstar-online" DestinationFolder="$(PublishDir)" ContinueOnError="true" />
   </Target>
 

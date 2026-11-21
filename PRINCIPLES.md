@@ -33,6 +33,8 @@ same change that adds it, or it doesn't go in.
 | Dependency | Used for | Controlled by | Licence | Status and way out |
 |---|---|---|---|---|
 | Linux, Mesa, libdrm | the base system | community (Linux Foundation, freedesktop.org) | GPL-2.0, MIT | foundation; accepted |
+| Arch Linux (its packages, pacman, makepkg, repo-add; archiso next) | the distribution base: the system Crimson Banner installs on, its package manager and the tools that build and publish our packages | the Arch Linux team, a volunteer community with its own governance; an associated project of Software in the Public Interest (non-profit) since 2011 | GPL-2.0-or-later (pacman, archiso); each package under its own licence | **commons, chosen 20 Nov 2026** over Debian (too far behind for wlroots 0.20 and .NET 8), Guix System (needs Linux-libre; .NET isn't packaged) and the company-run bases (Fedora, Ubuntu, openSUSE). Our packages are plain PKGBUILDs (`packaging/arch`) in our own signed repository (`tools/repo.sh`), so they aren't held by Arch's servers. Way out: Parabola (FSF-endorsed) and every other pacman-based system read the same PKGBUILDs. |
+| GnuPG | signing our packages and repository | GNU project | GPL-3.0-or-later | accepted (commons) |
 | wlroots, Wayland, wayland-protocols, xkbcommon, pixman | redstar-comp | community (freedesktop.org) | MIT | accepted; the compositor is our own |
 | Xwayland, xcb, cairo | X11 apps, title bars | community (freedesktop.org) | MIT, LGPL/MPL | accepted; Xwayland only while X11 apps exist |
 | D-Bus (the session bus) | system tray, portals | community (freedesktop.org) | GPL-2.0/AFL | accepted; we talk to it with our own client (`Services/DBus.cs`), no D-Bus library |
@@ -76,8 +78,12 @@ whenever a layer changes.
 | Build and release | check.sh, build-appimage.sh | ours |
 | Source hosting and CI | GitHub | dependent |
 | Package sources | our own feed (`tools/packages.sh`), locked versions and hashes | ours |
+| Distribution base | Arch Linux (pacman) | commons |
+| Packages and their repository | `packaging/arch`, `tools/repo.sh`: our PKGBUILDs, signed with our own key, in our own pacman repository | ours |
 
-**Now: 9 of 12 (75%): the target is reached, and from here it is the floor.** The web engine moved to WebKitGTK
+**Now: 11 of 14 (79%).** The two distribution layers were added on 20 Nov 2026, when Arch Linux was chosen as the
+base and our own signed pacman repository was set up. Before that: **9 of 12 (75%): the target was reached, and from
+there it is the floor.** The web engine moved to WebKitGTK
 (Crimson Online's rewrite, 20 Nov 2026), Electron and npm were removed, and builds restore from our own package feed
 (20 Nov 2026). Source hosting stays on GitHub by decision (19 Nov 2026, see the dependency table).
 
@@ -109,6 +115,13 @@ doesn't make it.
   Apache-2.0, BSD). nuget.org is a proprietary service, but it is only a download point: our feed takes it out of
   every build, which is what GNU's advice on depending on services points towards.
 
+- **Distribution base (20 Nov 2026).** The FSF endorses only distributions that meet the FSDG: Guix System,
+  Parabola (from Arch), Trisquel (from Ubuntu), PureOS (from Debian), Hyperbola, Dragora and Dyne:bolic. Arch
+  itself isn't endorsed, because its kernel and repositories include non-free firmware and programs. Its tools
+  (pacman, makepkg) are free software under the GPL. Crimson Banner is based on Arch; of the bases that can carry the
+  desktop, it keeps the shortest route to Parabola, which reads the same PKGBUILDs. Our own repository carries only
+  free software, as the FSDG asks of what a distribution ships.
+
 Known differences with that advice, recorded openly:
 - **The kernel: mainline Linux, not Linux-libre (decided 20 Nov 2026).** The FSDG asks a distribution for a kernel
   without non-free firmware blobs, and the FSF's endorsed distributions (Parabola, Trisquel, Guix System and others)
@@ -116,6 +129,9 @@ Known differences with that advice, recorded openly:
   devices whose firmware isn't free). This means that, as a distribution, it wouldn't meet the FSDG. Mainline Linux is
   still community-governed free software, so the kernel layer stays *commons*. What would change this: free firmware
   for the hardware people use, or a Linux-libre edition next to the main one.
+- **Arch Linux as the base** isn't an FSF-endorsed distribution (see above). Together with the mainline kernel, this
+  is the main reason Crimson Banner wouldn't meet the FSDG. What would change it: a Parabola-based edition, with
+  Linux-libre and Parabola's repositories underneath our own.
 - **GitHub** grades poorly on GNU's repository criteria. It's kept by decision (19 Nov 2026, see the dependency
   table).
 - **Proprietary programs** like Discord and Steam work with Crimson Banner through open standards, such as the system

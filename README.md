@@ -314,6 +314,9 @@ also draws every window (Skia) into `screenshots/` — open `screenshots/index.h
   warnings as errors, then its behaviour tests run headless through Xwayland.
 * **Crimson Online** — in an Arch Linux container: the browser's unit tests, then its self-test (the real browser
   headless inside redstar-comp: pages, tabs, the blocker, downloads, reader view, Save as PDF).
+* **Arch packages** — in an Arch Linux container: our feed filled, nuget.org cut off, then every package built,
+  signed into our own pacman repository, installed from it with signatures required, and checked for missing files
+  and libraries.
 
 A red mark means a change broke the build, a test or a window; the failing step's log says which.
 
@@ -336,7 +339,27 @@ Optional self-update support: `GH_REPO=user/repo ./build-appimage.sh` embeds upd
 (also install `zsync` so the `.zsync` file is produced). `.github/workflows/appimage.yml` does this
 in CI and attaches both files to a GitHub release when you push a `v*` tag.
 
-Login-screen sessions: `sudo ./install-session.sh` (it finds what you built: the newest AppImage in `dist/`, else the
+### Arch packages and Crimson Banner's own pacman repository
+
+Crimson Banner OS is based on Arch Linux (PRINCIPLES.md, "Distribution base"). `packaging/arch/PKGBUILD` builds five
+packages: `crimson-banner` (pulls in the rest and suggests the optional services), `crimson-banner-shell`,
+`redstar-comp`, `redstar-wm` and `crimson-online`. `tools/repo.sh` puts them into our own signed repository, a plain
+folder that `file://`, a USB stick or any web server can serve:
+
+```bash
+tools/repo.sh key            # once: the project's signing key (GnuPG, ed25519); the public key goes out with the repo
+tools/repo.sh build          # build every package from this tree, sign it, add it to the repository
+tools/repo.sh check          # verify every signature
+tools/repo.sh pacman-conf    # what a machine adds to /etc/pacman.conf, and how it trusts the key
+sudo pacman -Sy crimson-banner
+```
+
+The shell's NuGet packages come from our own feed when it's filled, so with `tools/packages.sh fill` done once,
+building the packages needs no package registry. `./check.sh --packages` runs the build as part of the checks. The
+packages install to `/usr` (`/usr/lib/crimson-banner`, `/usr/bin`); if you used `install-session.sh` before, run
+`sudo ./uninstall-session.sh` first so the two don't overlap.
+
+Login-screen sessions without the packages: `sudo ./install-session.sh` (it finds what you built: the newest AppImage in `dist/`, else the
 `dotnet build` output; or give it an AppImage, the RedStarOS program or its folder). It adds **Crimson Banner OS** (X11,
 with redstar-wm) and, when redstar-comp is built, **Crimson Banner OS (Wayland)**. `sudo ./uninstall-session.sh` takes them
 off the login screen again (`--dry-run` lists what it would remove; your settings and the program itself stay).

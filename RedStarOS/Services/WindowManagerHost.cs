@@ -32,7 +32,8 @@ public static class WindowManagerHost
             catch { }
             return p;
         }
-        return null;
+        // installed from the Arch package (/usr/bin/redstar-wm)
+        return ProcessUtil.Which("redstar-wm");
     }
 
     private static ProcessStartInfo Psi(string exe, IDictionary<string, string?>? env, params string[] args)

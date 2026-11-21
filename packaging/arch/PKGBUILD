@@ -1,0 +1,138 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Crimson Banner OS for Arch Linux (and Arch-based systems such as CachyOS). PRINCIPLES.md, "Distribution base".
+#
+# Build with tools/repo.sh, which makes the source tarball from this tree, runs makepkg, signs the packages and
+# adds them to Crimson Banner's own pacman repository. By hand: put crimson-banner-$pkgver.tar.gz next to this file
+# (tools/repo.sh source) and run makepkg.
+#
+# The shell's NuGet packages come from our own feed (tools/packages.sh) when it's filled, else from nuget.org; either
+# way only the exact versions and content hashes in packages.lock.json are accepted.
+
+pkgbase=crimson-banner
+pkgname=(crimson-banner crimson-banner-shell redstar-comp redstar-wm crimson-online)
+pkgver=1.3.0
+pkgrel=1
+pkgdesc='Crimson Banner OS desktop'
+arch=(x86_64 aarch64)
+url='https://github.com/KaiserCS/RedStarOS-Linux'
+license=(GPL-3.0-or-later)
+makedepends=(dotnet-sdk-8.0 meson ninja pkgconf
+             wlroots0.20 wayland wayland-protocols libxkbcommon libxcb xcb-util-wm cairo libdrm pixman
+             webkitgtk-6.0 gtk4 json-glib libsoup3 gstreamer glib2
+             libx11)
+# .NET's self-contained files and its native libraries are shipped as they are
+options=(!strip !debug !lto)
+source=("$pkgbase-$pkgver.tar.gz")
+# tools/repo.sh makes the tarball from this tree, so there is no upstream checksum to pin
+sha256sums=(SKIP)
+
+_rid() {
+  case "$CARCH" in
+    x86_64) echo linux-x64 ;;
+    aarch64) echo linux-arm64 ;;
+  esac
+}
+
+build() {
+  cd "$pkgbase-$pkgver"
+  # no telemetry from the .NET tools (PRINCIPLES.md, 5)
+  export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+  export NUGET_PACKAGES="$srcdir/nuget"
+
+  local feed="${REDSTAR_PACKAGES:-${XDG_DATA_HOME:-$HOME/.local/share}/redstaros/packages}"
+  local source=()
+  if [ -n "$(ls -A "$feed" 2>/dev/null)" ]; then
+    echo "Packages from Crimson Banner's own feed ($feed)"
+    source=(--source "$feed" -p:NuGetAudit=false)
+  fi
+  # the shell, self-contained, without the C programs (they get their own packages below)
+  dotnet publish RedStarOS/RedStarOS.csproj "${source[@]}" -c Release -r "$(_rid)" --self-contained true \
+    -p:REDSTAR_LOCKED=1 -p:RedStarNative=false -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false \
+    -o "$srcdir/shell"
+
+  arch-meson compositor "$srcdir/comp"
+  meson compile -C "$srcdir/comp"
+  arch-meson browser "$srcdir/online"
+  meson compile -C "$srcdir/online" redstar-online
+
+  # shellcheck disable=SC2086 # makepkg's flags are word lists
+  gcc $CPPFLAGS $CFLAGS -Wall -o "$srcdir/redstar-wm" wm/redstar-wm.c $LDFLAGS -lX11 -ldl -lm
+}
+
+check() {
+  cd "$pkgbase-$pkgver"
+  meson test -C "$srcdir/online" --print-errorlogs
+}
+
+package_crimson-banner() {
+  pkgdesc='Crimson Banner OS desktop: the shell, its compositor, window manager and browser'
+  depends=(crimson-banner-shell redstar-comp redstar-wm crimson-online)
+  optdepends=('udisks2: drives and Disks'
+              'accountsservice: Settings → Users'
+              'packagekit: system updates in Settings'
+              'power-profiles-daemon: power mode'
+              'vlc: Video'
+              'gst-plugins-good: sound and video in web pages and Voice Memos'
+              'gst-plugins-bad: sound and video in web pages'
+              'gst-libav: sound and video in web pages'
+              'orca: screen reader'
+              'onboard: on-screen keyboard (X11)'
+              'grim: screenshots (Wayland)'
+              'wf-recorder: Screen Recorder (Wayland)'
+              'wl-clipboard: copying pictures (Wayland)'
+              'maim: screenshots (X11)'
+              'xclip: copying pictures (X11)'
+              'ffmpeg: Screen Recorder (X11)'
+              'picom: shadows and transparency in the X11 session')
+}
+
+package_crimson-banner-shell() {
+  pkgdesc='Crimson Banner OS: the desktop shell, its apps and the login-screen sessions'
+  depends=(fontconfig freetype2 libx11 libxi libxrandr libxcursor libice libsm libxss libxkbcommon wayland
+           dbus polkit pam libxcrypt systemd zlib gcc-libs glibc)
+  backup=(etc/pam.d/crimson-banner)
+  cd "$pkgbase-$pkgver"
+
+  install -d "$pkgdir/usr/lib/crimson-banner"
+  cp -a "$srcdir/shell/." "$pkgdir/usr/lib/crimson-banner/"
+  install -d "$pkgdir/usr/bin"
+  ln -s /usr/lib/crimson-banner/RedStarOS "$pkgdir/usr/bin/RedStarOS"
+
+  sed 's#@APPIMAGE@#/usr/lib/crimson-banner/RedStarOS#' packaging/redstaros-session > "$srcdir/redstaros-session"
+  install -Dm755 "$srcdir/redstaros-session" "$pkgdir/usr/bin/redstaros-session"
+  sed 's#/usr/local/bin/#/usr/bin/#g' packaging/redstaros-xsession.desktop > "$srcdir/x.desktop"
+  sed 's#/usr/local/bin/#/usr/bin/#g' packaging/redstaros-wayland.desktop > "$srcdir/wl.desktop"
+  install -Dm644 "$srcdir/x.desktop" "$pkgdir/usr/share/xsessions/redstaros.desktop"
+  install -Dm644 "$srcdir/wl.desktop" "$pkgdir/usr/share/wayland-sessions/redstaros-wayland.desktop"
+  install -Dm644 packaging/redstaros.desktop "$pkgdir/usr/share/applications/redstaros.desktop"
+  install -Dm644 packaging/redstaros.png "$pkgdir/usr/share/icons/hicolor/256x256/apps/redstaros.png"
+  install -Dm644 packaging/crimson-banner.pam "$pkgdir/etc/pam.d/crimson-banner"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+package_redstar-comp() {
+  pkgdesc="Crimson Banner OS's own Wayland compositor (wlroots 0.20)"
+  depends=(wlroots0.20 wayland libxkbcommon libxcb xcb-util-wm cairo pixman xorg-xwayland glibc)
+  cd "$pkgbase-$pkgver"
+  meson install -C "$srcdir/comp" --destdir "$pkgdir" --no-rebuild
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+package_redstar-wm() {
+  pkgdesc="Crimson Banner OS's own X11 window manager"
+  depends=(libx11 glibc)
+  cd "$pkgbase-$pkgver"
+  install -Dm755 "$srcdir/redstar-wm" "$pkgdir/usr/bin/redstar-wm"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+package_crimson-online() {
+  pkgdesc="Crimson Online, Crimson Banner OS's web browser (GTK 4 + WebKitGTK)"
+  depends=(webkitgtk-6.0 gtk4 json-glib libsoup3 glib2 gstreamer glibc)
+  optdepends=('gst-plugins-good: sound and video in pages'
+              'gst-plugins-bad: sound and video in pages'
+              'gst-libav: sound and video in pages')
+  cd "$pkgbase-$pkgver"
+  meson install -C "$srcdir/online" --destdir "$pkgdir" --no-rebuild
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

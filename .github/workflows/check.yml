@@ -11,6 +11,8 @@ name: Check
 #                    and published with nuget.org cut off
 #   • browser        Red Star Online (GTK 4 + WebKitGTK, in an Arch Linux container): unit tests and the real
 #                    browser's self-test, headless inside redstar-comp
+#   • arch-packages  the Arch packages (packaging/arch) built from our own feed with nuget.org cut off, signed into
+#                    our own pacman repository (tools/repo.sh), then installed from it with pacman
 # The same checks run locally with ./check.sh.
 on:
   push:
@@ -213,3 +215,59 @@ jobs:
         env:
           REDSTAR_SELFTEST_GDB: 1
         run: browser/test/run-selftest.sh
+
+  arch-packages:
+    name: Arch packages and our pacman repository
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    timeout-minutes: 45
+    steps:
+      - name: Build tools
+        run: |
+          pacman -Syu --noconfirm --needed base-devel git sudo dotnet-sdk-8.0 gnupg
+          useradd -m builder
+          echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
+
+      - uses: actions/checkout@v5
+
+      - name: Fill our package feed (the only step that reaches nuget.org)
+        run: |
+          chown -R builder "$GITHUB_WORKSPACE"
+          sudo -u builder -H env DOTNET_CLI_TELEMETRY_OPTOUT=1 tools/packages.sh fill
+
+      - name: Cut off nuget.org
+        run: |
+          echo "0.0.0.0 api.nuget.org www.nuget.org nuget.org globalcdn.nuget.org" >> /etc/hosts
+          if curl -fsS -m 10 https://api.nuget.org/v3/index.json >/dev/null 2>&1; then echo "nuget.org still reachable"; exit 1; fi
+
+      - name: Signing key, packages and the signed repository
+        run: |
+          sudo -u builder -H tools/repo.sh key
+          sudo -u builder -H tools/repo.sh build
+          sudo -u builder -H tools/repo.sh check
+
+      - name: Install from the repository with pacman (signatures required)
+        run: |
+          REPO="$(sudo -u builder -H tools/repo.sh where)"
+          pacman-key --init
+          pacman-key --add "$REPO/crimson-banner.asc"
+          pacman-key --lsign-key "$(cat "$REPO/signing-key")"
+          printf '\n[crimson-banner]\nSigLevel = Required DatabaseRequired\nServer = file://%s/$arch\n' "$REPO" >> /etc/pacman.conf
+          pacman -Sy --noconfirm crimson-banner
+
+      - name: What was installed is complete
+        run: |
+          pacman -Qi crimson-banner crimson-banner-shell redstar-comp redstar-wm crimson-online | grep -E '^(Name|Version)'
+          for f in /usr/lib/crimson-banner/RedStarOS /usr/bin/RedStarOS /usr/bin/redstaros-session /usr/bin/redstar-comp \
+                   /usr/bin/redstar-wm /usr/bin/redstar-online /usr/share/xsessions/redstaros.desktop \
+                   /usr/share/wayland-sessions/redstaros-wayland.desktop /etc/pam.d/crimson-banner \
+                   /usr/share/applications/org.redstaros.Online.desktop; do
+            test -e "$f" || { echo "missing: $f"; exit 1; }
+          done
+          grep -q '^Exec=/usr/bin/redstaros-session' /usr/share/xsessions/redstaros.desktop
+          grep -q '/usr/lib/crimson-banner/RedStarOS' /usr/bin/redstaros-session
+          # every program finds all of its libraries among the installed dependencies
+          missing="$(for b in /usr/lib/crimson-banner/RedStarOS /usr/lib/crimson-banner/*.so /usr/bin/redstar-comp \
+                       /usr/bin/redstar-wm /usr/bin/redstar-online; do ldd "$b" | sed "s#^#${b##*/}: #"; done | grep 'not found' || true)"
+          if [ -n "$missing" ]; then echo "$missing"; exit 1; fi
+          pacman -Qkk crimson-banner-shell redstar-comp redstar-wm crimson-online

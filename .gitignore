@@ -21,3 +21,9 @@ wm/test/wmtest
 wm/test/clicktest
 compositor/test/nativetest
 compositor/test/inputtest
+
+# Arch packaging (tools/repo.sh)
+packaging/arch/*.tar.gz
+packaging/arch/src/
+packaging/arch/pkg/
+packaging/arch/*.pkg.tar.*

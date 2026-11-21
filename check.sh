@@ -3,14 +3,16 @@
 #   ./check.sh          build + C# tests (every window opens, terminal emulator, pty, browser data), and the window
 #                       manager, compositor and Red Star Online tests when their libraries are installed
 #   ./check.sh --screenshots   also saves a picture of every window in ./screenshots (open screenshots/index.html)
+#   ./check.sh --packages      also builds the Arch packages into Crimson Banner's pacman repository (tools/repo.sh;
+#                              signed once tools/repo.sh key has made the key, else unsigned)
 #   ./check.sh --offline       packages only from Red Star's own feed (tools/packages.sh); that's also the default
 #                              once the feed is filled. --online uses nuget.org instead.
 # The same checks run on GitHub for every push (.github/workflows/check.yml).
 set -euo pipefail
 # no telemetry from the .NET tools (PRINCIPLES.md, 5)
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
-SHOTS=0; OFFLINE=auto
-for a in "$@"; do case "$a" in --screenshots) SHOTS=1 ;; --offline) OFFLINE=1 ;; --online) OFFLINE=0 ;; esac; done
+SHOTS=0; OFFLINE=auto; PACKAGES=0
+for a in "$@"; do case "$a" in --screenshots) SHOTS=1 ;; --offline) OFFLINE=1 ;; --online) OFFLINE=0 ;; --packages) PACKAGES=1 ;; esac; done
 cd "$(dirname "$0")"
 ok() { printf '\033[32m✔ %s\033[0m\n' "$1"; }
 
@@ -96,5 +98,21 @@ if pkg-config --exists webkitgtk-6.0 gtk4 json-glib-1.0 libsoup-3.0 2>/dev/null 
   ok "Red Star Online"
 else
   echo "(Crimson Online skipped: it needs WebKitGTK 6.0, GTK 4, json-glib, libsoup 3 and meson — Arch/CachyOS: pacman -S webkitgtk-6.0 gtk4 json-glib libsoup3 meson)"
+fi
+echo "==> Arch packaging"
+bash -n packaging/arch/PKGBUILD && bash -n tools/repo.sh
+if [ "$PACKAGES" = 1 ]; then
+  if command -v makepkg >/dev/null 2>&1; then
+    if [ -f "$(tools/repo.sh where)/signing-key" ] || [ -n "${REDSTAR_REPO_KEY:-}" ]; then
+      tools/repo.sh build && tools/repo.sh check
+    else
+      tools/repo.sh build --unsigned
+    fi
+    ok "Arch packages ($(tools/repo.sh where))"
+  else
+    echo "(--packages skipped: building the Arch packages needs makepkg, on an Arch-based system)"
+  fi
+else
+  ok "PKGBUILD and tools/repo.sh (./check.sh --packages builds the packages)"
 fi
 echo "All checks passed."
