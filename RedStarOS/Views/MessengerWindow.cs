@@ -17,6 +17,7 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using RedStarOS.Services;
 using RedStarOS.Services.Matrix;
+using Run = Avalonia.Controls.Documents.Run;
 
 namespace RedStarOS.Views;
 
