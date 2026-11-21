@@ -157,8 +157,7 @@ public partial class StartMenu : UserControl
     private void BuildCategories()
     {
         var rsItems = _items.Where(i => !i.IsLinux).ToList();
-        // "All apps" in the narrow rail: the tab above it and the heading beside it say which section it is
-        var rs = new List<CategoryRow> { Row(KeyAll, "All apps", rsItems.Count) };
+        var rs = new List<CategoryRow> { Row(KeyAll, "All Crimson Banner apps", rsItems.Count) };
         var rsRecent = RecentItems(false);
         if (rsRecent.Count > 0) rs.Add(Row(KeyRecent, "Recent", rsRecent.Count));
         foreach (var key in RedStarCategoryOrder)
@@ -171,7 +170,7 @@ public partial class StartMenu : UserControl
         var linux = new List<CategoryRow>();
         if (lxItems.Count > 0)
         {
-            linux.Add(Row(KeyAll, "All apps", lxItems.Count));
+            linux.Add(Row(KeyAll, "All Linux apps", lxItems.Count));
             var lxRecent = RecentItems(true);
             if (lxRecent.Count > 0) linux.Add(Row(KeyRecent, "Recent", lxRecent.Count));
             linux.AddRange(lxItems
