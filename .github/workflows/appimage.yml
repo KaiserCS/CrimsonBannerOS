@@ -41,10 +41,22 @@ jobs:
             dist/RedStarOS-x86_64.AppImage
             dist/RedStarOS-x86_64.AppImage.zsync
 
+      - name: Release notes from CHANGELOG.md (tags only)
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          # the tag's section: from its heading to the next release's
+          awk -v v="$v" '$0 ~ "^## "v" " {on=1; next} on && /^## / {exit} on' CHANGELOG.md > dist/notes.md
+          printf '\n---\nAppImage: download it, make it executable and run it. On Arch, CachyOS or EndeavourOS: `./install-arch.sh` from the source.\n' >> dist/notes.md
+          cat dist/notes.md
+          echo "RELEASE_NAME=Crimson Banner OS $v" >> "$GITHUB_ENV"
+
       - name: Publish release (tags only)
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          name: ${{ env.RELEASE_NAME }}
+          body_path: dist/notes.md
           files: |
             dist/RedStarOS-x86_64.AppImage
             dist/RedStarOS-x86_64.AppImage.zsync
