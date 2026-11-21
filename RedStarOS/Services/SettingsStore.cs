@@ -58,8 +58,10 @@ public sealed class Settings
     public bool LockOnScreenOff { get; set; } = true;          // Power: lock when the screen goes off, and before sleep
     public int SleepMinutes { get; set; }                      // Power: sleep after so long without input (0: never)
     public bool RunAutostart { get; set; } = true;             // start ~/.config/autostart and /etc/xdg/autostart programs at sign-in
+    public int PongLevel { get; set; } = 1;                    // Ping Pong: Easy 0, Normal 1, Hard 2, Expert 3
     public int BlocksBest { get; set; }                        // Blocks: best score
     public int GemsBest { get; set; }                          // Gems: best score
+    public string MahjonggTheme { get; set; } = "Smooth";      // Mahjongg: tile set (GNOME Mahjongg's, or "Classic")
     public int MahjonggWins { get; set; }                      // Mahjongg: boards cleared
     public bool Clock24h { get; set; } = true;
     public bool TaskbarLabels { get; set; } = true;

@@ -99,3 +99,28 @@ public class GamesTests
         Assert.All(Enumerable.Range(0, GemsGame.Size), x => Assert.All(Enumerable.Range(0, GemsGame.Size), y => Assert.InRange(g.Board[x, y], 0, GemsGame.Kinds - 1)));
     }
 }
+
+public class GameThemeTests
+{
+    [Fact]
+    public void Every_mahjongg_face_has_its_own_picture_on_gnomes_sheet()
+    {
+        var spots = Enumerable.Range(0, RedStarOS.Views.MahjonggGame.Faces).Select(RedStarOS.Views.MahjonggView.SheetIndex).ToList();
+        Assert.Equal(spots.Count, spots.Distinct().Count());
+        Assert.All(spots, i => Assert.InRange(i, 0, 41));
+        Assert.Equal(12, RedStarOS.Views.MahjonggView.SheetIndex(27));     // East wind
+        Assert.Equal(37, RedStarOS.Views.MahjonggView.SheetIndex(33));     // white dragon
+    }
+
+    [Fact]
+    public void Pong_levels_get_harder_step_by_step()
+    {
+        var l = RedStarOS.Views.PongWindow.Levels;
+        for (int i = 1; i < l.Length; i++)
+        {
+            Assert.True(l[i].Ball > l[i - 1].Ball);
+            Assert.True(l[i].AiSpeed > l[i - 1].AiSpeed);
+            Assert.True(l[i].AiError < l[i - 1].AiError);
+        }
+    }
+}

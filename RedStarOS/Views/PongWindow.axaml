@@ -15,6 +15,12 @@
         <MenuItem x:Name="ModeSolo" Header="_Solo - keep the rally going" Click="OnModeSolo" />
         <MenuItem x:Name="ModeAi" Header="_Versus the computer - first to 7" Click="OnModeAi" />
       </MenuItem>
+      <MenuItem Header="_Difficulty">
+        <MenuItem x:Name="LevelEasy" Header="_Easy" Click="OnLevel" Tag="0" />
+        <MenuItem x:Name="LevelNormal" Header="_Normal" Click="OnLevel" Tag="1" />
+        <MenuItem x:Name="LevelHard" Header="_Hard" Click="OnLevel" Tag="2" />
+        <MenuItem x:Name="LevelExpert" Header="E_xpert" Click="OnLevel" Tag="3" />
+      </MenuItem>
     </Menu>
 
     <Canvas x:Name="Playground" ClipToBounds="True" Background="{DynamicResource ShellCardBrush}">

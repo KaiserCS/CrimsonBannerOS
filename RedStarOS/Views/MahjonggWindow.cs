@@ -8,6 +8,8 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform;
+using Avalonia.Media.Imaging;
 using RedStarOS.Services;
 
 namespace RedStarOS.Views;
@@ -162,7 +164,7 @@ public sealed class MahjonggWindow : Window
         {
             Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(12, 10),
             Children = { B("New board (F2)", NewGame), B("Hint (H)", () => _view.ShowHint()), B("Undo (Ctrl+Z)", () => { _game.Undo(); Changed(); }),
-                         B("Shuffle", () => { _game.Shuffle(); Changed(); }), _status }
+                         B("Shuffle", () => { _game.Shuffle(); Changed(); }), ThemePicker(), _status }
         };
         var root = new DockPanel();
         DockPanel.SetDock(bar, Dock.Top);
@@ -180,6 +182,21 @@ public sealed class MahjonggWindow : Window
         Opened += (_, _) => Changed();
     }
 
+    private ComboBox ThemePicker()
+    {
+        var names = MahjonggView.Themes.Select(t => t.Name).ToList();
+        var box = new ComboBox { ItemsSource = names, SelectedIndex = Math.Max(0, names.IndexOf(SettingsStore.Current.MahjonggTheme)), MinWidth = 130 };
+        ToolTip.SetTip(box, "Tiles");
+        box.SelectionChanged += (_, _) =>
+        {
+            if (box.SelectedItem is not string n) return;
+            SettingsStore.Current.MahjonggTheme = n;
+            SettingsStore.Save();
+            _view.InvalidateVisual();
+        };
+        return box;
+    }
+
     private void NewGame() { _game = new MahjonggGame(); _counted = false; _view.Reset(); Changed(); }
 
     private void Changed()
@@ -194,7 +211,7 @@ public sealed class MahjonggWindow : Window
     }
 }
 
-internal sealed class MahjonggView : Control
+public sealed class MahjonggView : Control
 {
     private readonly Func<MahjonggGame> _game;
     private readonly Action _changed;
@@ -232,10 +249,79 @@ internal sealed class MahjonggView : Control
         };
     }
 
+    /// <summary>A tile set: GNOME Mahjongg's (a sheet of 43 pictures, each the tile plus its depth on the left and at the
+    /// bottom, and below them the same tiles highlighted), or Crimson Banner's own drawn tiles.</summary>
+    public sealed record TileTheme(string Name, string? Asset);
+
+    public static readonly TileTheme[] Themes =
+    {
+        new("Smooth", "smooth.png"), new("Postmodern", "postmodern.png"), new("Educational", "educational.png"), new("Classic", null),
+    };
+
+    private static readonly Dictionary<string, Bitmap?> Sheets = new();
+
+    private static Bitmap? Sheet(TileTheme t)
+    {
+        if (t.Asset == null) return null;
+        lock (Sheets)
+        {
+            if (Sheets.TryGetValue(t.Asset, out var b)) return b;
+            try { b = new Bitmap(AssetLoader.Open(new Uri("avares://RedStarOS/Assets/Mahjongg/" + t.Asset))); }
+            catch (Exception ex) { Console.Error.WriteLine("mahjongg: " + t.Asset + ": " + ex.Message); b = null; }
+            return Sheets[t.Asset] = b;
+        }
+    }
+
+    /// <summary>Where a face is on GNOME Mahjongg's sheet: dots 0–8, then the winds North, West, South, East (9–12),
+    /// red and green dragons (13, 14), characters (15–23), bamboo (24–32), flowers (33–36), the white dragon (37),
+    /// seasons (38–41) and a blank tile (42).</summary>
+    public static int SheetIndex(int face) => face switch
+    {
+        < 9 => face,                      // dots
+        < 18 => 24 + face - 9,            // bamboo
+        < 27 => 15 + face - 18,           // characters
+        27 => 12, 28 => 11, 29 => 10, 30 => 9,   // East, South, West, North
+        31 => 13, 32 => 14, 33 => 37,     // red, green, white dragons
+        _ => 42,
+    };
+
     public override void Render(DrawingContext ctx)
     {
         var g = _game();
         _hit.Clear();
+        var theme = Themes.FirstOrDefault(t => t.Name == SettingsStore.Current.MahjonggTheme) ?? Themes[0];
+        var sheet = Sheet(theme);
+        if (sheet == null) { RenderClassic(ctx, g); return; }
+
+        // GNOME Mahjongg's geometry: a picture is the tile and 1/7 of its width, 1/10 of its height for the depth;
+        // each layer up moves the tiles right by that 1/7 and up by that 1/10
+        double cellW = sheet.PixelSize.Width / 43.0, cellH = sheet.PixelSize.Height / 2.0;
+        double aspect = cellH / cellW;                                     // of the picture
+        // the board: 24 × 14 half-tile units, three layers of lift
+        // width: 12 tiles and 3 layers' shift; height: 7 tiles and 3 layers' shift, a tile being 8/7·10/11·aspect as tall as wide
+        double tallness = 8 / 7.0 * aspect * 10 / 11.0;
+        double tileW = Math.Max(16, Math.Min((Bounds.Width - 40) / (12 + 3 / 7.0), (Bounds.Height - 40) / (7.3 * tallness)));
+        double patW = tileW * 8 / 7.0;
+        double patH = patW * aspect;
+        double tileH = patH * 10 / 11.0;
+        double offX = tileW / 7, offY = tileH / 10;
+        double boardW = 12 * tileW + offX * 3, boardH = 7 * tileH + offY * 3;
+        double ox = (Bounds.Width - boardW) / 2, oy = (Bounds.Height - boardH) / 2 + offY * 2;
+
+        // left to right would let a tile's depth cover its neighbour's face: right to left, top to bottom, layer by layer
+        foreach (var t in g.Tiles.Where(t => !t.Removed).OrderBy(t => t.Layer).ThenByDescending(t => t.X).ThenBy(t => t.Y))
+        {
+            double x = ox + t.X * tileW / 2 + t.Layer * offX, y = oy + t.Y * tileH / 2 - t.Layer * offY;
+            bool lit = t == _selected || _hint is { } h && (h.Item1 == t || h.Item2 == t);
+            var src = new Rect(SheetIndex(t.Face) * cellW, lit ? cellH : 0, cellW, cellH);
+            ctx.DrawImage(sheet, src, new Rect(x, y, patW, patH));
+            // the face, without the depth, is what a click hits
+            _hit.Add((t, new Rect(x + offX, y, tileW, tileH)));
+        }
+    }
+
+    private void RenderClassic(DrawingContext ctx, MahjonggGame g)
+    {
         // board size in half-tile units: 24 × 14, plus room for the layers' lift
         double unitW = (Bounds.Width - 40) / 25.0, unitH = (Bounds.Height - 40) / (14.0 * 1.0 + 1);
         double u = Math.Max(8, Math.Min(unitW, unitH / 1.3));

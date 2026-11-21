@@ -20,6 +20,20 @@ public partial class PongWindow : Window
 
     private const int WinScore = 7;
 
+    /// <summary>How hard it is (Difficulty menu, remembered): the ball's speed and how fast it gets faster, and how
+    /// well the computer plays: how often it looks again, how far off its aim is and how fast its racket moves.</summary>
+    public sealed record Level(string Name, double Ball, double Speedup, double MaxBall, double AiLook, double AiError, double AiSpeed);
+
+    public static readonly Level[] Levels =
+    {
+        new("Easy",   0.80, 1.03, 1.7, 0.34, 1.10, 0.38),
+        new("Normal", 1.00, 1.06, 2.2, 0.22, 0.70, 0.55),
+        new("Hard",   1.15, 1.08, 2.6, 0.14, 0.40, 0.75),
+        new("Expert", 1.30, 1.10, 3.0, 0.08, 0.15, 1.00),
+    };
+
+    private static Level Current => Levels[Math.Clamp(SettingsStore.Current.PongLevel, 0, Levels.Length - 1)];
+
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(16) };
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private readonly Random _rng = new();
@@ -55,7 +69,7 @@ public partial class PongWindow : Window
         };
         Deactivated += (_, _) => { if (_state is State.Playing or State.Serving) TogglePause(); };
 
-        Opened += (_, _) => { Focus(); NewGame(); };
+        Opened += (_, _) => { Focus(); UpdateLevelMenu(); NewGame(); };
     }
 
     // ------------------------------------------------------------ geometry
@@ -121,7 +135,7 @@ public partial class PongWindow : Window
         RelayOut();
         SetRacketCentre(FieldW / 2);
         Canvas.SetLeft(AiRacket, (FieldW - RacketW) / 2);
-        _speed = BaseSpeed;
+        _speed = BaseSpeed * Current.Ball;
         ResetBall();
         _state = State.Ready;
         _timer.Stop();
@@ -143,7 +157,7 @@ public partial class PongWindow : Window
     private void Serve()
     {
         ResetBall();
-        _speed = BaseSpeed;
+        _speed = BaseSpeed * Current.Ball;
         var angle = (_rng.NextDouble() - 0.5) * 0.9;
         var down = !_vsAi || _rng.Next(2) == 0;
         _vx = _speed * Math.Sin(angle);
@@ -186,7 +200,7 @@ public partial class PongWindow : Window
     private void UpdateLabels()
     {
         ScoreLabel.Text = _vsAi ? $"{_score}  :  {_aiScore}" : _score.ToString();
-        BestLabel.Text = _vsAi ? $"Wins vs computer: {SettingsStore.Current.PongAiWins}" : $"Best rally: {SettingsStore.Current.PongBest}";
+        BestLabel.Text = (_vsAi ? $"Wins vs computer: {SettingsStore.Current.PongAiWins}" : $"Best rally: {SettingsStore.Current.PongBest}") + $" · {Current.Name}";
     }
 
     // ------------------------------------------------------------ simulation
@@ -244,7 +258,7 @@ public partial class PongWindow : Window
     private void Bounce(double racketCentre, int direction)
     {
         var offset = Math.Clamp((_bx - racketCentre) / (RacketW / 2), -1, 1);
-        _speed = Math.Min(_speed * 1.06, BaseSpeed * 2.2);
+        _speed = Math.Min(_speed * Current.Speedup, BaseSpeed * Current.MaxBall);
         _vx = _speed * Math.Sin(offset);
         _vy = direction * _speed * Math.Cos(offset);
     }
@@ -269,10 +283,10 @@ public partial class PongWindow : Window
     {
         if (now >= _aiRetarget)
         {
-            _aiRetarget = now + 0.22;
-            _aiTarget = _vy <= 0 ? _bx + (_rng.NextDouble() - 0.5) * RacketW * 0.7 : FieldW / 2;
+            _aiRetarget = now + Current.AiLook;
+            _aiTarget = _vy <= 0 ? _bx + (_rng.NextDouble() - 0.5) * RacketW * Current.AiError : FieldW / 2;
         }
-        var maxStep = FieldW * 0.55 * dt;
+        var maxStep = FieldW * Current.AiSpeed * dt;
         var cx = AiCentre + Math.Clamp(_aiTarget - AiCentre, -maxStep, maxStep);
         Canvas.SetLeft(AiRacket, Math.Clamp(cx - RacketW / 2, 0, Math.Max(0, FieldW - RacketW)));
     }
@@ -285,6 +299,23 @@ public partial class PongWindow : Window
     {
         ModeSolo.Header = (_vsAi ? "    " : "✓  ") + "_Solo - keep the rally going";
         ModeAi.Header = (_vsAi ? "✓  " : "    ") + "_Versus the computer - first to 7";
+    }
+
+    private void UpdateLevelMenu()
+    {
+        var items = new[] { LevelEasy, LevelNormal, LevelHard, LevelExpert };
+        for (int i = 0; i < items.Length; i++)
+            items[i].Header = (i == SettingsStore.Current.PongLevel ? "✓  " : "    ") + "_" + Levels[i].Name;
+    }
+
+    private void OnLevel(object? s, RoutedEventArgs e)
+    {
+        if (s is not MenuItem { Tag: string t } || !int.TryParse(t, out var level)) return;
+        SettingsStore.Current.PongLevel = level;
+        SettingsStore.Save();
+        UpdateLevelMenu();
+        NewGame();
+        Focus();
     }
 
     private void OnModeSolo(object? s, RoutedEventArgs e) => SetMode(false);
