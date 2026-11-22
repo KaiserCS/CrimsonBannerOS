@@ -117,6 +117,14 @@ public static class SystemUpdates
 
     private const ulong FilterInstalled = 1UL << 2, FilterNotInstalled = 1UL << 3;
 
+    /// <summary>Fetches the repositories' package lists again (after a repository is added). Null when it worked.</summary>
+    public static async Task<string?> RefreshAsync(CancellationToken ct = default)
+    {
+        using var bus = await DBusConnection.ConnectAsync("unix:path=/run/dbus/system_bus_socket");
+        var (_, err) = await Transaction(bus, tx => bus.CallAsync(Name, tx, TxIface, "RefreshCache", "b", new object[] { true }, 300000), null, ct);
+        return err;
+    }
+
     /// <summary>Which of these package names are installed (PackageKit's Resolve).</summary>
     public static async Task<HashSet<string>> InstalledAsync(IReadOnlyList<string> names, CancellationToken ct = default)
     {

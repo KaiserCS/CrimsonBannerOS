@@ -105,6 +105,7 @@ package_crimson-banner-shell() {
 
   sed 's#@APPIMAGE@#/usr/lib/crimson-banner/RedStarOS#' packaging/redstaros-session > "$srcdir/redstaros-session"
   install -Dm755 "$srcdir/redstaros-session" "$pkgdir/usr/bin/redstaros-session"
+  install -Dm755 packaging/crimson-apps-repo "$pkgdir/usr/bin/crimson-apps-repo"
   sed 's#/usr/local/bin/#/usr/bin/#g' packaging/redstaros-xsession.desktop > "$srcdir/x.desktop"
   sed 's#/usr/local/bin/#/usr/bin/#g' packaging/redstaros-wayland.desktop > "$srcdir/wl.desktop"
   install -Dm644 "$srcdir/x.desktop" "$pkgdir/usr/share/xsessions/redstaros.desktop"

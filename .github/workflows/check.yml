@@ -228,7 +228,7 @@ jobs:
     steps:
       - name: Build tools
         run: |
-          pacman -Syu --noconfirm --needed base-devel git sudo dotnet-sdk dotnet-runtime dotnet-targeting-pack-8.0 dotnet-runtime-8.0 gnupg
+          pacman -Syu --noconfirm --needed base-devel git sudo dotnet-sdk dotnet-runtime dotnet-targeting-pack-8.0 dotnet-runtime-8.0 gnupg python
           useradd -m builder
           install -d -o builder /srv/crimson-banner
           echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
@@ -266,6 +266,33 @@ jobs:
           crimson-greeter-setup disable
           ! grep -q crimson-greeter /etc/greetd/config.toml
           [ "$(crimson-greeter-setup status)" != "Crimson Banner OS's login screen (greetd)" ]
+
+      - name: Publishing an app (tools/publish-app.sh --local) and installing it from [crimson-banner-apps]
+        run: |
+          mkdir -p apps/ci-hello
+          cat > apps/ci-hello/app.json <<'J'
+          { "id": "ci-hello", "name": "CI Hello", "summary": "A test app", "license": "GPL-3.0-or-later", "categories": ["Utility"] }
+          J
+          cat > apps/ci-hello/PKGBUILD <<'P'
+          pkgname=ci-hello
+          pkgver=1.2.3
+          pkgrel=1
+          pkgdesc='A test app for Software'
+          arch=(any)
+          license=(GPL-3.0-or-later)
+          package() { install -d "$pkgdir/usr/bin"; printf '#!/bin/sh\necho hello from ci-hello\n' > "$pkgdir/usr/bin/ci-hello"; chmod 755 "$pkgdir/usr/bin/ci-hello"; }
+          P
+          chown -R builder apps software
+          sudo -u builder -H tools/publish-app.sh --local apps/ci-hello
+          python3 -c "import json; d=json.load(open('/srv/crimson-banner-apps/catalog/catalog.json')); a=d['software'][0]; assert a['id']=='ci-hello' and a['version']=='1.2.3' and a['install']==[{'kind':'pacman','package':'ci-hello'}], a"
+          mkdir -p /tmp/gpgv && gpgv --homedir /tmp/gpgv --keyring "$PWD/software/crimson-banner.gpg" /srv/crimson-banner-apps/catalog/catalog.json.sig /srv/crimson-banner-apps/catalog/catalog.json
+          # what Software does for the first of our apps: crimson-apps-repo enable, refresh, install
+          CRIMSON_APPS_SERVER="file:///srv/crimson-banner-apps/\$arch" CRIMSON_APPS_KEYRING="$PWD/software/crimson-banner.gpg" crimson-apps-repo enable
+          [ "$(crimson-apps-repo status)" = enabled ]
+          pacman -Sy --noconfirm ci-hello
+          [ "$(ci-hello)" = "hello from ci-hello" ]
+          pacman -Rns --noconfirm ci-hello
+          crimson-apps-repo disable
 
       - name: Every signature in the repository
         run: sudo -u builder -H --preserve-env=REDSTAR_REPO tools/repo.sh check

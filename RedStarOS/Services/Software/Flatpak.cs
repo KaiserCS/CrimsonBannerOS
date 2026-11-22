@@ -108,9 +108,27 @@ public static class Flatpak
                 Version = c.Element("releases")?.Elements("release").FirstOrDefault()?.Attribute("version")?.Value,
                 IconPath = icon,
                 Categories = c.Element("categories")?.Elements("category").Select(x => x.Value.Trim()).ToList() ?? new(),
+                Screenshots = Screenshots(c),
                 Methods = { new InstallMethod(InstallMethod.Flatpak) { Remote = remote, Ref = appId } },
             };
         }
+    }
+
+    /// <summary>AppStream's screenshots: the default one first, each as its largest image (or the source).</summary>
+    public static List<string> Screenshots(XElement component)
+    {
+        var shots = component.Element("screenshots")?.Elements("screenshot")
+            .OrderByDescending(s => (string?)s.Attribute("type") == "default").ToList() ?? new();
+        var list = new List<string>();
+        foreach (var s in shots)
+        {
+            var img = s.Elements("image").FirstOrDefault(i => (string?)i.Attribute("type") == "source")
+                      ?? s.Elements("image").OrderByDescending(i => (int?)i.Attribute("width") ?? 0).FirstOrDefault();
+            var url = img?.Value.Trim();
+            if (url != null && url.StartsWith("https://", StringComparison.Ordinal)) list.Add(url);
+            if (list.Count == 6) break;
+        }
+        return list;
     }
 
     /// <summary>AppStream's description markup (p, ul/ol li) as plain text.</summary>

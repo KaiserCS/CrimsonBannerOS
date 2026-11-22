@@ -379,9 +379,19 @@ Software leaves out programs that aren't free software (`FreeLicences`, after th
 
 #### Our own software
 
-The Crimson Banner tab reads `software/catalog.json`. Each release publishes it on GitHub Releases, so the shell
-always fetches the latest release's copy, and it keeps the one it was built with for when it's offline. To publish
-a program, add an entry and make a release:
+Our own programs are published without an OS release: each is a folder in `apps/` (see `apps/README.md`), and
+`tools/publish-app.sh` builds it, signs it and uploads it. The pacman package goes into the
+`[crimson-banner-apps]` repository; the signed catalogue goes to two GitHub releases kept up to date in place.
+Software checks the catalogue's signature against the project's key before showing anything. The first time someone
+installs one of these apps, Software adds the repository (the password is asked once), so the apps update with the
+system afterwards.
+
+```bash
+tools/publish-app.sh apps/planner     # build, sign, upload one app
+tools/publish-app.sh --local          # into /srv/crimson-banner-apps only, for your own server or a test
+```
+
+A catalogue entry, as `tools/publish-app.sh` writes it from `app.json`:
 
 ```json
 { "id": "planner", "name": "Planner", "summary": "Economic computation for central planning",

@@ -139,6 +139,9 @@ public static class AppImages
                 IconUrl = icon == null ? null : icon.StartsWith("http", StringComparison.Ordinal) ? icon : IconBase + icon,
                 Categories = e.TryGetProperty("categories", out var cats) && cats.ValueKind == JsonValueKind.Array
                     ? cats.EnumerateArray().Where(c => c.ValueKind == JsonValueKind.String).Select(c => c.GetString()!).ToList() : new(),
+                Screenshots = e.TryGetProperty("screenshots", out var shots) && shots.ValueKind == JsonValueKind.Array
+                    ? shots.EnumerateArray().Where(c => c.ValueKind == JsonValueKind.String).Select(c => c.GetString()!)
+                        .Select(c => c.StartsWith("https://", StringComparison.Ordinal) ? c : IconBase + c).Take(6).ToList() : new(),
                 Methods = { new InstallMethod(InstallMethod.AppImage) { GitHub = github } },
             });
         }

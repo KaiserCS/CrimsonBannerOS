@@ -40,6 +40,11 @@ sh -n packaging/greeter/crimson-greeter && bash -n packaging/greeter/crimson-gre
 tools/test-greeter.sh >/dev/null || { tools/test-greeter.sh; exit 1; }
 ok "crimson-greeter and crimson-greeter-setup"
 
+echo "==> Publishing apps (tools/publish-app.sh, packaging/crimson-apps-repo)"
+bash -n tools/publish-app.sh && bash -n packaging/crimson-apps-repo
+tools/test-publish-app.sh >/dev/null 2>&1 || { tools/test-publish-app.sh; exit 1; }
+ok "the catalogue, its signature and the apps repository"
+
 echo "==> Building"
 dotnet build RedStarOS/RedStarOS.csproj -c Release -nologo -v quiet "${NORESTORE[@]}"
 ok "build"

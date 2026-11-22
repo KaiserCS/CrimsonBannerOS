@@ -55,6 +55,10 @@ public class FlatpakTests
             <icon type="cached" width="128" height="128">org.gnome.Mahjongg.png</icon>
             <categories><category>Game</category><category>BoardGame</category></categories>
             <releases><release version="48.1" timestamp="1"/><release version="48.0"/></releases>
+            <screenshots>
+              <screenshot><image type="source">https://example.org/second.png</image></screenshot>
+              <screenshot type="default"><image type="thumbnail" width="224">https://example.org/small.png</image><image type="source">https://example.org/main.png</image></screenshot>
+            </screenshots>
             <bundle type="flatpak" runtime="org.gnome.Platform/x86_64/48">app/org.gnome.Mahjongg/x86_64/stable</bundle>
           </component>
           <component type="desktop-application">
@@ -92,6 +96,7 @@ public class FlatpakTests
             Assert.Equal(Path.Combine(dir.FullName, "icons", "128x128", "org.gnome.Mahjongg.png"), m.IconPath);
             Assert.Equal(new[] { "Game", "BoardGame" }, m.Categories);
             Assert.Equal("org.gnome.Mahjongg", m.Methods.Single().Ref);
+            Assert.Equal(new[] { "https://example.org/main.png", "https://example.org/second.png" }, m.Screenshots);   // the default first
             Assert.Equal("flathub", m.Methods.Single().Remote);
         }
         finally { dir.Delete(true); }
@@ -114,7 +119,7 @@ public class OurCatalogTests
           "format": 1,
           "software": [
             { "id": "planner", "name": "Planner", "summary": "Economic computation for central planning", "license": "GPL-3.0-or-later",
-              "version": "1.0.0", "categories": ["Science"],
+              "version": "1.0.0", "categories": ["Science"], "screenshots": ["https://example.org/1.png", "http://example.org/plain.png"],
               "install": [
                 { "kind": "pacman", "package": "crimson-planner" },
                 { "kind": "flatpak", "ref": "org.crimsonbanner.Planner", "remote": "crimson-banner", "remoteUrl": "https://example.org/x.flatpakrepo" },
@@ -137,14 +142,54 @@ public class OurCatalogTests
         Assert.Equal(3, p.Methods.Count);
         Assert.Equal("a" + new string('a', 63), p.Methods[2].Sha256);
         Assert.Equal("crimson-banner", p.Methods[1].Remote);
+        Assert.Equal(new[] { "https://example.org/1.png" }, p.Screenshots);    // https only
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task The_catalogue_is_only_trusted_with_a_good_signature()
+    {
+        if (RedStarOS.Services.ProcessUtil.Which("gpg") == null || RedStarOS.Services.ProcessUtil.Which("gpgv") == null) return;
+        var dir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var home = Directory.CreateDirectory(Path.Combine(dir.FullName, "gnupg")).FullName;
+            File.SetUnixFileMode(home, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+            async System.Threading.Tasks.Task<int> Gpg(params string[] args)
+            {
+                var (code, _) = await RedStarOS.Services.ProcessUtil.RunAsync("gpg", new[] { "--homedir", home, "--batch" }.Concat(args), 60000);
+                return code;
+            }
+            Assert.Equal(0, await Gpg("--passphrase", "", "--quick-gen-key", "Test <t@example.invalid>", "ed25519", "sign", "never"));
+            var data = Path.Combine(dir.FullName, "catalog.json");
+            File.WriteAllText(data, "{ \"format\": 1, \"software\": [] }");
+            Assert.Equal(0, await Gpg("--detach-sign", "-o", data + ".sig", data));
+            var keyring = Path.Combine(dir.FullName, "key.gpg");
+            Assert.Equal(0, await Gpg("-o", keyring, "--export", "t@example.invalid"));
+
+            var bytes = File.ReadAllBytes(data);
+            var sig = File.ReadAllBytes(data + ".sig");
+            Assert.Null(await CatalogSignature.VerifyAsync(bytes, sig, keyring));
+            var changed = (byte[])bytes.Clone(); changed[3] ^= 1;
+            Assert.NotNull(await CatalogSignature.VerifyAsync(changed, sig, keyring));
+            Assert.NotNull(await CatalogSignature.VerifyAsync(bytes, new byte[] { 1, 2, 3 }, keyring));
+            Assert.NotNull(await CatalogSignature.VerifyAsync(bytes, sig, Path.Combine(dir.FullName, "none.gpg")));
+        }
+        finally
+        {
+            await RedStarOS.Services.ProcessUtil.RunAsync("gpgconf", new[] { "--homedir", Path.Combine(dir.FullName, "gnupg"), "--kill", "all" }, 10000);
+            dir.Delete(true);
+        }
     }
 
     [Fact]
     public void The_first_usable_way_to_install()
     {
         var p = OurCatalog.Parse(Catalog).Single();
-        Assert.Equal(InstallMethod.Pacman, OurCatalog.Usable(p, n => n == "pacman" ? "/usr/bin/pacman" : null)!.Kind);
-        Assert.Equal(InstallMethod.Flatpak, OurCatalog.Usable(p, n => n == "flatpak" ? "/usr/bin/flatpak" : null)!.Kind);
+        Assert.Equal(InstallMethod.Pacman, OurCatalog.Usable(p, n => n is "pacman" or "crimson-apps-repo" ? "/usr/bin/" + n : null)!.Kind);
+        // pacman alone isn't enough: [crimson-banner-apps] has to be there or addable (crimson-apps-repo)
+        Assert.NotEqual(InstallMethod.Pacman, OurCatalog.Usable(p, n => n == "pacman" ? "/usr/bin/pacman" : null, appsRepoEnabled: false)!.Kind);
+        Assert.Equal(InstallMethod.Pacman, OurCatalog.Usable(p, n => n == "pacman" ? "/usr/bin/pacman" : null, appsRepoEnabled: true)!.Kind);
+        Assert.Equal(InstallMethod.Flatpak, OurCatalog.Usable(p, n => n == "flatpak" ? "/usr/bin/flatpak" : null, appsRepoEnabled: false)!.Kind);
         Assert.Equal(InstallMethod.AppImage, OurCatalog.Usable(p, _ => null)!.Kind);
     }
 
@@ -172,7 +217,7 @@ public class AppImagesTests
               { "name": "Kdenlive", "description": "<p>Video editor. Does lots.</p>", "license": "GPL-3.0-or-later",
                 "categories": ["AudioVideo"], "authors": [ { "name": "KDE", "url": "https://kdenlive.org" } ],
                 "links": [ { "type": "GitHub", "url": "KDE/kdenlive" }, { "type": "Download", "url": "https://github.com/KDE/kdenlive/releases" } ],
-                "icons": [ "Kdenlive/icons/128x128/kdenlive.png" ] },
+                "icons": [ "Kdenlive/icons/128x128/kdenlive.png" ], "screenshots": [ "Kdenlive/screenshot.png" ] },
               { "name": "NoSource", "license": "MIT", "links": [ { "type": "Download", "url": "https://example.org" } ] },
               { "name": "Closed", "license": "LicenseRef-proprietary", "links": [ { "type": "GitHub", "url": "a/b" } ] },
               { "name": "Unstated", "license": null, "links": [ { "type": "GitHub", "url": "c/d" } ] },
@@ -186,6 +231,7 @@ public class AppImagesTests
         Assert.Equal("Video editor.", k.Summary);
         Assert.Equal(AppImages.IconBase + "Kdenlive/icons/128x128/kdenlive.png", k.IconUrl);
         Assert.Equal("https://kdenlive.org", k.Homepage);
+        Assert.Equal(new[] { AppImages.IconBase + "Kdenlive/screenshot.png" }, k.Screenshots);
         Assert.Equal(FreeLicences.Verdict.Unstated, items[1].Licence);
     }
 

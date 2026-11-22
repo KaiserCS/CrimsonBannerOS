@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# The [crimson-banner-apps] pacman repository: Crimson Banner OS's own apps (apps/README.md), published on GitHub
+# Releases by tools/publish-app.sh and signed with the project's key. Software runs this (through the administrator
+# password prompt) the first time someone installs one of them; ./install-arch.sh runs it once apps are published.
+#
+#   sudo crimson-apps-repo enable    trust the project's key and add the repository to /etc/pacman.conf
+#   sudo crimson-apps-repo disable   take it out again
+#   crimson-apps-repo status
+set -euo pipefail
+NAME=crimson-banner-apps
+CONF="${CRIMSON_PACMAN_CONF:-/etc/pacman.conf}"
+SERVER="${CRIMSON_APPS_SERVER:-https://github.com/KaiserCS/RedStarOS-Linux/releases/download/apps-\$arch}"
+KEYRING="${CRIMSON_APPS_KEYRING:-/usr/lib/crimson-banner/software/crimson-banner.gpg}"
+PACMAN_KEY="${CRIMSON_PACMAN_KEY:-pacman-key}"
+
+enabled() { grep -q "^\[$NAME\]" "$CONF"; }
+root() { [ -n "${CRIMSON_PACMAN_CONF:-}" ] || [ "$(id -u)" = 0 ] || { echo "Run it with sudo." >&2; exit 1; }; }
+
+case "${1:-status}" in
+  enable)
+    root
+    [ -s "$KEYRING" ] || { echo "This build has no project key ($KEYRING), so its apps can't be checked." >&2; exit 1; }
+    fpr="$(gpg --batch --with-colons --show-keys "$KEYRING" 2>/dev/null | awk -F: '/^fpr:/ {print $10; exit}')"
+    [ -n "$fpr" ] || { echo "$KEYRING isn't a key." >&2; exit 1; }
+    "$PACMAN_KEY" --list-keys "$fpr" >/dev/null 2>&1 || "$PACMAN_KEY" --add "$KEYRING"
+    "$PACMAN_KEY" --lsign-key "$fpr" >/dev/null
+    if enabled; then
+      sed -i "/^\[$NAME\]/,/^\[/{s#^Server *=.*#Server = $SERVER#}" "$CONF"
+    else
+      printf '\n# Crimson Banner OS apps (crimson-apps-repo)\n[%s]\nSigLevel = Required DatabaseRequired\nServer = %s\n' "$NAME" "$SERVER" >> "$CONF"
+    fi
+    echo "[$NAME] is set up (key $fpr)."
+    ;;
+  disable)
+    root
+    if enabled; then sed -i -e "/^# Crimson Banner OS apps (crimson-apps-repo)\$/d" -e "/^\[$NAME\]/,/^\[/{/^\[$NAME\]/d;/^\[/!d}" "$CONF"; fi
+    echo "[$NAME] is off."
+    ;;
+  status) if enabled; then echo enabled; else echo disabled; fi ;;
+  *) sed -n '3,10p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

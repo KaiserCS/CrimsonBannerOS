@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Controls.Templates;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -23,197 +23,518 @@ using RedStarOS.Services.Software;
 namespace RedStarOS.Views;
 
 /// <summary>
-/// Software: Crimson Banner OS's own programs (our catalogue, published with each release), Flatpaks from Flathub and
-/// AppImages from AppImageHub, with what's installed and its updates in one place. Free software only.
+/// Software: Crimson Banner OS's own programs (our signed catalogue, apps/README.md), Flatpaks from Flathub and
+/// AppImages from AppImageHub, with what's installed and its updates, in one place. Free software only.
+/// A sidebar picks the place; Explore is the front page; every program has a page of its own.
 /// </summary>
 public sealed class SoftwareWindow : Window
 {
-    private enum Tab { CrimsonBanner, Flatpak, AppImage, Installed }
+    private enum Place { Explore, CrimsonBanner, Flatpak, AppImage, Installed, Search }
 
-    private Tab _tab = Tab.CrimsonBanner;
-    private readonly Dictionary<Tab, ToggleButton> _tabs = new();
-    private readonly TextBox _search = new() { PlaceholderText = "Search", Width = 260, VerticalAlignment = VerticalAlignment.Center };
-    private readonly ListBox _list = new() { Width = 380 };
-    private readonly StackPanel _detail = new() { Spacing = 12, Margin = new Thickness(24, 20) };
-    private readonly StackPanel _banner = new() { Spacing = 8, Margin = new Thickness(12, 8, 12, 0) };
-    private readonly CheckBox _unstated = new() { Content = "Include AppImages that don't state a licence", Margin = new Thickness(12, 4) };
+    private Place _place = Place.Explore;
+    private readonly Dictionary<Place, Button> _nav = new();
+    private readonly TextBox _search = new() { PlaceholderText = "Search all software", MinWidth = 280, VerticalAlignment = VerticalAlignment.Center };
+    private readonly ContentControl _page = new();
+    private string? _category;
+    private int _shown = PageSize;
+    private const int PageSize = 60;
+    private SoftwareItem? _detail;            // the program whose page is open, if any
+    private ProgressBar? _detailBar;            // its install progress, updated without rebuilding the page
 
     private List<SoftwareItem> _ours = new(), _flatpaks = new(), _appimages = new(), _installed = new();
     private string? _oursNote, _appimageNote;
-    private bool _loadedFlatpak, _loadedAppImage;
+    private bool _loadedFlatpak, _loadedAppImage, _loadingFlatpak, _loadingAppImage, _showUnstated;
     private readonly Dictionary<string, (int Pct, CancellationTokenSource Cts)> _busy = new();
     private readonly Dictionary<string, AppImages.Asset> _appImageUpdates = new();
     private HashSet<string> _flatpakUpdates = new();
     private List<Flatpak.Installed> _flatpakInstalled = new();
     private HashSet<string> _pacmanInstalled = new();
-    private SoftwareItem? _selected;
+
+    /// <summary>Well-known free programs shown on Explore when Flathub has them.</summary>
+    private static readonly string[] Picks =
+    {
+        "org.libreoffice.LibreOffice", "org.mozilla.firefox", "org.gimp.GIMP", "org.inkscape.Inkscape", "org.kde.krita",
+        "org.videolan.VLC", "org.blender.Blender", "org.audacityteam.Audacity", "com.obsproject.Studio", "org.kde.kdenlive",
+        "org.mozilla.Thunderbird", "org.freecad.FreeCAD", "org.qgis.qgis", "org.octave.Octave", "org.kde.kstars", "org.gnu.emacs",
+    };
+
+    /// <summary>freedesktop.org's main categories, as people say them.</summary>
+    private static readonly (string Key, string Label, string Glyph)[] Categories =
+    {
+        ("Office", "Office", "document"), ("Graphics", "Graphics", "palette"), ("AudioVideo", "Sound & video", "film"),
+        ("Education", "Education", "note"), ("Science", "Science", "activity"), ("Development", "Development", "terminal"),
+        ("Game", "Games", "game"), ("Network", "Internet", "globe"), ("Utility", "Utilities", "settings"), ("System", "System", "drive"),
+    };
 
     public SoftwareWindow()
     {
         Title = "Software";
-        Width = 1040; Height = 700; MinWidth = 760; MinHeight = 480;
+        Width = 1120; Height = 740; MinWidth = 820; MinHeight = 520;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
-        var tabs = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-        foreach (var (t, label) in new[] { (Tab.CrimsonBanner, "Crimson Banner"), (Tab.Flatpak, "Flatpak"), (Tab.AppImage, "AppImage"), (Tab.Installed, "Installed") })
+        // ── sidebar ──
+        var side = new StackPanel { Spacing = 2, Margin = new Thickness(10, 14) };
+        side.Children.Add(new TextBlock { Text = "Software", Classes = { "h1" }, Margin = new Thickness(10, 0, 0, 14) });
+        foreach (var (p, label, glyph) in new[]
+                 {
+                     (Place.Explore, "Explore", "grid"), (Place.CrimsonBanner, "Crimson Banner", "bag"), (Place.Flatpak, "Flatpak", "download"),
+                     (Place.AppImage, "AppImage", "folder"), (Place.Installed, "Installed", "list"),
+                 })
         {
-            var b = new ToggleButton { Content = label, Padding = new Thickness(14, 6) };
-            b.Click += (_, _) => _ = Switch(t);
-            _tabs[t] = b;
-            tabs.Children.Add(b);
+            var b = new Button { Classes = { "flat" }, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Left, Padding = new Thickness(10, 8) };
+            b.Content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Children = { Icons.Create(glyph, 16), new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center } } };
+            b.Click += (_, _) => _ = Go(p);
+            _nav[p] = b;
+            side.Children.Add(b);
         }
-        var top = new DockPanel { Margin = new Thickness(12, 10) };
+        var sideBorder = new Border { Width = 220, BorderThickness = new Thickness(0, 0, 1, 0), Child = side };
+        sideBorder.Classes.Add("card");
+        sideBorder.CornerRadius = new CornerRadius(0);
+        sideBorder.Padding = new Thickness(0);
+
+        // ── top bar ──
+        _search.TextChanged += (_, _) => OnSearch();
+        _search.KeyDown += (_, e) => { if (e.Key == Key.Escape) _search.Text = ""; };
+        var top = new DockPanel { Margin = new Thickness(24, 14, 24, 6) };
         DockPanel.SetDock(_search, Dock.Right);
         top.Children.Add(_search);
-        top.Children.Add(tabs);
-        _search.TextChanged += (_, _) => Fill();
-        _unstated.IsCheckedChanged += (_, _) => Fill();
+        top.Children.Add(new Control());
 
-        _list.ItemTemplate = new FuncDataTemplate<SoftwareItem>((item, _) => Row(item), supportsRecycling: false);
-        _list.SelectionChanged += (_, _) => { _selected = _list.SelectedItem as SoftwareItem; ShowDetail(); };
-
-        var left = new DockPanel();
-        DockPanel.SetDock(_banner, Dock.Top);
-        DockPanel.SetDock(_unstated, Dock.Bottom);
-        left.Children.Add(_banner);
-        left.Children.Add(_unstated);
-        left.Children.Add(_list);
-
-        var body = new DockPanel();
-        DockPanel.SetDock(left, Dock.Left);
-        body.Children.Add(left);
-        body.Children.Add(new ScrollViewer { Content = _detail });
+        var main = new DockPanel();
+        DockPanel.SetDock(top, Dock.Top);
+        main.Children.Add(top);
+        main.Children.Add(_page);
 
         var root = new DockPanel();
-        DockPanel.SetDock(top, Dock.Top);
-        root.Children.Add(top);
-        var rule = new Border { Height = 1, Background = new SolidColorBrush(Color.FromArgb(40, 128, 128, 128)) };
-        DockPanel.SetDock(rule, Dock.Top);
-        root.Children.Add(rule);
-        root.Children.Add(body);
+        DockPanel.SetDock(sideBorder, Dock.Left);
+        root.Children.Add(sideBorder);
+        root.Children.Add(main);
         Content = root;
 
         Opened += async (_, _) =>
         {
-            await RefreshInstalled();
+            Render();
             await LoadOurs(fetch: true);
-            await Switch(Tab.CrimsonBanner);
+            await RefreshInstalled();
+            Render();
+            // Flathub and AppImageHub fill in Explore as they arrive
+            _ = LoadFlatpak(prepare: false);
+            _ = LoadAppImages(fetch: false);
+            _ = Task.Run(async () => { await Task.Delay(1500); await Dispatcher.UIThread.InvokeAsync(async () => { await RefreshInstalled(checkUpdates: true); if (_detail == null) Render(); }); });
         };
         Closed += (_, _) => { foreach (var b in _busy.Values) b.Cts.Cancel(); };
+        KeyDown += (_, e) => { if (e.Key == Key.Escape && _detail != null) { _detail = null; Render(); e.Handled = true; } };
     }
 
-    // ── tabs and lists ──
+    // ── navigation ──
 
-    private async Task Switch(Tab t)
+    private async Task Go(Place p, string? category = null)
     {
-        _tab = t;
-        foreach (var (k, b) in _tabs) b.IsChecked = k == t;
-        _unstated.IsVisible = t == Tab.AppImage;
-        _search.Text = "";
-        if (t == Tab.Flatpak && !_loadedFlatpak) await LoadFlatpak(prepare: false);
-        if (t == Tab.AppImage && !_loadedAppImage) await LoadAppImages(fetch: false);
-        if (t == Tab.Installed) await RefreshInstalled();
-        Fill();
+        _place = p;
+        _detail = null;
+        _category = category;
+        _shown = PageSize;
+        if (p != Place.Search && !string.IsNullOrEmpty(_search.Text)) { _search.Text = ""; _place = p; }
+        Render();
+        if (p == Place.Flatpak && !_loadedFlatpak) await LoadFlatpak(prepare: false);
+        if (p == Place.AppImage && !_loadedAppImage) await LoadAppImages(fetch: false);
+        if (p == Place.Installed) { await RefreshInstalled(); Render(); }
     }
 
-    private IEnumerable<SoftwareItem> Current() => _tab switch
-    {
-        Tab.CrimsonBanner => _ours,
-        Tab.Flatpak => _flatpaks,
-        Tab.AppImage => _appimages.Where(i => _unstated.IsChecked == true || i.Licence == FreeLicences.Verdict.Free),
-        _ => _installed,
-    };
+    private Place _beforeSearch = Place.Explore;
 
-    private void Fill()
+    private void OnSearch()
     {
         var q = (_search.Text ?? "").Trim();
-        var items = Current();
-        if (q.Length > 0)
-            items = items.Where(i => i.Name.Contains(q, StringComparison.CurrentCultureIgnoreCase)
-                                     || i.Summary.Contains(q, StringComparison.CurrentCultureIgnoreCase)
-                                     || i.Id.Contains(q, StringComparison.OrdinalIgnoreCase));
-        var list = items.ToList();
-        var keep = _selected?.Id;
-        _list.ItemsSource = list;
-        _list.SelectedItem = list.FirstOrDefault(i => i.Id == keep && i.Source == _selected?.Source) ?? list.FirstOrDefault();
-        FillBanner(list.Count);
-        if (list.Count == 0) { _selected = null; ShowDetail(); }
-        var updates = _installed.Count(i => i.UpdateAvailable);
-        _tabs[Tab.Installed].Content = updates > 0 ? $"Installed · {updates} update{(updates == 1 ? "" : "s")}" : "Installed";
+        if (q.Length > 0 && _place != Place.Search) { _beforeSearch = _place; _place = Place.Search; }
+        else if (q.Length == 0 && _place == Place.Search) _place = _beforeSearch;
+        _detail = null;
+        _shown = PageSize;
+        Render();
     }
 
-    private void FillBanner(int count)
+    private void Render()
     {
-        _banner.Children.Clear();
-        void Note(string text) => _banner.Children.Add(new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Opacity = 0.8, FontSize = 12 });
-        Button Action(string text, Func<Task> run)
+        foreach (var (k, b) in _nav)
         {
-            var b = new Button { Content = text };
-            b.Click += async (_, _) => { b.IsEnabled = false; try { await run(); } finally { b.IsEnabled = true; } };
-            _banner.Children.Add(b);
-            return b;
+            var on = k == _place || (_place == Place.Search && k == _beforeSearch);
+            b.FontWeight = on ? FontWeight.SemiBold : FontWeight.Normal;
+            b.Background = on ? (IBrush?)this.FindResource("ShellHoverBrush") : Brushes.Transparent;
         }
-        switch (_tab)
+        var updates = _installed.Count(i => i.UpdateAvailable);
+        if (_nav[Place.Installed].Content is StackPanel sp && sp.Children[1] is TextBlock t)
+            t.Text = updates > 0 ? $"Installed · {updates}" : "Installed";
+
+        _detailBar = null;
+        _page.Content = _detail != null ? DetailPage(_detail) : _place switch
         {
-            case Tab.CrimsonBanner:
-                if (_oursNote != null) Note(_oursNote);
-                if (_ours.Count == 0)
-                    Note("Programs made for Crimson Banner OS that are too big or too specialised for every install will be offered here. Nothing has been published yet.");
+            Place.Explore => ExplorePage(),
+            Place.CrimsonBanner => SourcePage(Place.CrimsonBanner),
+            Place.Flatpak => SourcePage(Place.Flatpak),
+            Place.AppImage => SourcePage(Place.AppImage),
+            Place.Installed => InstalledPage(),
+            _ => SearchPage(),
+        };
+    }
+
+    // ── pages ──
+
+    private static ScrollViewer Scroll(Control c) => new() { Content = c, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled };
+    private static StackPanel Column() => new() { Spacing = 14, Margin = new Thickness(24, 8, 24, 28) };
+    private static TextBlock H2(string text) => new() { Text = text, Classes = { "h2" }, Margin = new Thickness(0, 10, 0, 0) };
+    private static TextBlock Caption(string text) => new() { Text = text, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap };
+
+    private Control ExplorePage()
+    {
+        var col = Column();
+        // the banner
+        var banner = new Border { CornerRadius = new CornerRadius(14), Padding = new Thickness(26, 22), Background = new LinearGradientBrush
+        {
+            StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative), EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+            GradientStops = { new GradientStop(Color.Parse("#C8102E"), 0), new GradientStop(Color.Parse("#7A0A1C"), 1) },
+        } };
+        banner.Child = new StackPanel
+        {
+            Spacing = 6,
+            Children =
+            {
+                new TextBlock { Text = "Software for Crimson Banner OS", FontSize = 24, FontWeight = FontWeight.SemiBold, Foreground = Brushes.White },
+                new TextBlock { Text = "Free software from our own catalogue, Flathub and AppImageHub, in one place.", Foreground = Brushes.White, Opacity = 0.9, TextWrapping = TextWrapping.Wrap },
+            },
+        };
+        col.Children.Add(banner);
+
+        // our own
+        col.Children.Add(SectionHead("From Crimson Banner OS", "All", () => _ = Go(Place.CrimsonBanner)));
+        if (_ours.Count > 0) col.Children.Add(CardGrid(_ours.Take(6), showSource: false));
+        else col.Children.Add(EmptyCard("bag", "Nothing published yet", _oursNote ?? "Programs made for Crimson Banner OS that are too big or specialised for every install will appear here."));
+
+        // updates waiting
+        var updates = _installed.Where(i => i.UpdateAvailable).ToList();
+        if (updates.Count > 0)
+        {
+            col.Children.Add(SectionHead($"Updates ({updates.Count})", "Update all", () => _ = UpdateAll()));
+            col.Children.Add(CardGrid(updates.Take(6), showSource: true));
+        }
+
+        // picks from Flathub
+        col.Children.Add(SectionHead("Picks from Flathub", "Browse Flathub", () => _ = Go(Place.Flatpak)));
+        var picks = Picks.Select(id => _flatpaks.FirstOrDefault(f => f.Id == id)).Where(f => f != null).Cast<SoftwareItem>().Take(9).ToList();
+        if (picks.Count > 0) col.Children.Add(CardGrid(picks, showSource: false));
+        else if (_loadingFlatpak) col.Children.Add(Loading("Reading Flathub's catalogue…"));
+        else if (!Flatpak.Available) col.Children.Add(EmptyCard("download", "Flatpak isn't installed", "Flatpak (free software from freedesktop.org) brings most desktop programs, from Flathub.", ("Install Flatpak", new Func<Task>(InstallFlatpakItself))));
+        else col.Children.Add(EmptyCard("download", "Flathub isn't set up yet", "Its catalogue is fetched once and kept on this computer.", ("Set up Flathub", new Func<Task>(() => LoadFlatpak(prepare: true)))));
+
+        // categories
+        col.Children.Add(H2("Browse by category"));
+        var cats = new WrapPanel { Orientation = Orientation.Horizontal };
+        foreach (var (key, label, glyph) in Categories)
+        {
+            var b = new Button { Classes = { "tile" }, Width = 190, Height = 56, Margin = new Thickness(0, 0, 10, 10) };
+            b.Content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, VerticalAlignment = VerticalAlignment.Center, Children = { Icons.Create(glyph, 20), new TextBlock { Text = label, FontWeight = FontWeight.SemiBold, VerticalAlignment = VerticalAlignment.Center } } };
+            b.Click += (_, _) => _ = Go(Place.Flatpak, key);
+            cats.Children.Add(b);
+        }
+        col.Children.Add(cats);
+        return Scroll(col);
+    }
+
+    private Control SourcePage(Place p)
+    {
+        var col = Column();
+        var (title, about) = p switch
+        {
+            Place.CrimsonBanner => ("Crimson Banner OS", "Programs made for Crimson Banner OS, signed with the project's key. On Arch they come from the [crimson-banner-apps] repository and update with the system."),
+            Place.Flatpak => ("Flatpak", "Free programs from Flathub (run by the GNOME Foundation with KDE). New ones go into your own account: no password needed."),
+            _ => ("AppImage", "Free programs from AppImageHub, downloaded from each project's own release into your Applications folder, checked and added to the Start menu."),
+        };
+        col.Children.Add(new TextBlock { Text = title, Classes = { "h1" } });
+        col.Children.Add(Caption(about));
+
+        var actions = new WrapPanel { Orientation = Orientation.Horizontal };
+        void Action(string text, Func<Task> run)
+        {
+            var b = new Button { Content = text, Margin = new Thickness(0, 0, 8, 0) };
+            b.Click += async (_, _) => { b.IsEnabled = false; try { await run(); } finally { b.IsEnabled = true; } };
+            actions.Children.Add(b);
+        }
+        List<SoftwareItem> items;
+        string? note = null;
+        bool loading = false;
+        switch (p)
+        {
+            case Place.CrimsonBanner:
+                items = _ours; note = _oursNote;
                 Action("Check for new programs", () => LoadOurs(fetch: true));
                 break;
-            case Tab.Flatpak:
-                if (!Flatpak.Available)
-                {
-                    Note("Flatpak isn't installed. It's free software (LGPL) from freedesktop.org, and Flathub, run by the GNOME Foundation with KDE, is where most Flatpaks come from.");
-                    Action("Install Flatpak", InstallFlatpakItself);
-                }
-                else if (_flatpaks.Count == 0)
-                {
-                    Note("Flathub's catalogue isn't on this computer yet.");
-                    Action("Set up Flathub", () => LoadFlatpak(prepare: true));
-                }
-                else
-                {
-                    Note($"{count} free programs from Flathub. Programs that aren't free software aren't shown.");
-                    Action("Refresh", () => LoadFlatpak(prepare: true));
-                }
+            case Place.Flatpak:
+                items = _flatpaks; loading = _loadingFlatpak;
+                if (Flatpak.Available) Action(_flatpaks.Count == 0 ? "Set up Flathub" : "Refresh", () => LoadFlatpak(prepare: true));
+                else Action("Install Flatpak", new Func<Task>(InstallFlatpakItself));
                 break;
-            case Tab.AppImage:
-                if (_appimageNote != null) Note(_appimageNote);
-                Note($"{count} programs from AppImageHub, downloaded from each project's own latest release into your Applications folder.");
-                var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-                _banner.Children.Add(row);
-                var add = new Button { Content = "Add an AppImage file…" };
-                add.Click += async (_, _) => await AddAppImageFile();
-                var refresh = new Button { Content = "Refresh" };
-                refresh.Click += async (_, _) => { refresh.IsEnabled = false; await LoadAppImages(fetch: true); refresh.IsEnabled = true; };
-                row.Children.Add(add); row.Children.Add(refresh);
+            default:
+                items = _appimages.Where(i => _showUnstated || i.Licence == FreeLicences.Verdict.Free).ToList();
+                note = _appimageNote; loading = _loadingAppImage;
+                Action("Add an AppImage file…", AddAppImageFile);
+                Action("Refresh", () => LoadAppImages(fetch: true));
+                var unstated = new CheckBox { Content = "Include ones that don't state a licence", IsChecked = _showUnstated, Margin = new Thickness(8, 0, 0, 0) };
+                unstated.IsCheckedChanged += (_, _) => { _showUnstated = unstated.IsChecked == true; Render(); };
+                actions.Children.Add(unstated);
                 break;
-            case Tab.Installed:
-                if (_installed.Count == 0) Note("Nothing installed from here yet.");
-                if (_installed.Any(i => i.UpdateAvailable)) Action("Update all", UpdateAll);
-                else if (_installed.Count > 0) Note("Everything is up to date.");
-                Action("Check for updates", async () => { await RefreshInstalled(checkUpdates: true); Fill(); });
-                break;
+        }
+        col.Children.Add(actions);
+        if (note != null) col.Children.Add(Caption(note));
+
+        // category chips: the ones these programs use most
+        var cats = Categories.Where(c => items.Any(i => i.Categories.Contains(c.Key))).ToList();
+        if (cats.Count > 1)
+        {
+            var chips = new WrapPanel { Orientation = Orientation.Horizontal };
+            chips.Children.Add(Chip("All", _category == null, () => { _category = null; _shown = PageSize; Render(); }));
+            foreach (var (key, label, _) in cats)
+                chips.Children.Add(Chip(label, _category == key, () => { _category = key; _shown = PageSize; Render(); }));
+            col.Children.Add(chips);
+        }
+        var shown = _category == null ? items : items.Where(i => i.Categories.Contains(_category)).ToList();
+
+        if (loading && items.Count == 0) col.Children.Add(Loading(p == Place.Flatpak ? "Reading Flathub's catalogue…" : "Fetching AppImageHub's list…"));
+        else if (shown.Count == 0)
+            col.Children.Add(p switch
+            {
+                Place.CrimsonBanner => EmptyCard("bag", "Nothing published yet", "When the project publishes a program (tools/publish-app.sh), it appears here."),
+                Place.Flatpak when !Flatpak.Available => EmptyCard("download", "Flatpak isn't installed", "Install it, and Flathub's programs appear here."),
+                Place.Flatpak => EmptyCard("download", "Flathub isn't set up yet", "Set it up to see its programs."),
+                _ => EmptyCard("folder", "No programs to show", "Refresh, or tick the box to include ones that don't state a licence."),
+            });
+        else AddGridWithMore(col, shown, showSource: false);
+        return Scroll(col);
+    }
+
+    private Control InstalledPage()
+    {
+        var col = Column();
+        col.Children.Add(new TextBlock { Text = "Installed", Classes = { "h1" } });
+        var updates = _installed.Count(i => i.UpdateAvailable);
+        col.Children.Add(Caption(updates > 0 ? $"{updates} update{(updates == 1 ? "" : "s")} waiting." : _installed.Count > 0 ? "Everything is up to date." : ""));
+        var actions = new WrapPanel { Orientation = Orientation.Horizontal };
+        if (updates > 0) { var u = new Button { Content = "Update all", Classes = { "primary" }, Margin = new Thickness(0, 0, 8, 0) }; u.Click += async (_, _) => await UpdateAll(); actions.Children.Add(u); }
+        var check = new Button { Content = "Check for updates" };
+        check.Click += async (_, _) => { check.IsEnabled = false; check.Content = "Checking…"; await RefreshInstalled(checkUpdates: true); Render(); };
+        actions.Children.Add(check);
+        col.Children.Add(actions);
+        if (_installed.Count == 0) col.Children.Add(EmptyCard("list", "Nothing installed from here yet", "Programs installed from any of the three sources appear here, with their updates."));
+        else AddGridWithMore(col, _installed, showSource: true);
+        return Scroll(col);
+    }
+
+    private Control SearchPage()
+    {
+        var q = (_search.Text ?? "").Trim();
+        var col = Column();
+        col.Children.Add(new TextBlock { Text = $"Results for “{q}”", Classes = { "h1" } });
+        bool Hit(SoftwareItem i) => i.Name.Contains(q, StringComparison.CurrentCultureIgnoreCase) || i.Summary.Contains(q, StringComparison.CurrentCultureIgnoreCase)
+                                    || i.Id.Contains(q, StringComparison.OrdinalIgnoreCase);
+        // whole-name matches first, then name matches, then the rest
+        var all = _ours.Concat(_flatpaks).Concat(_appimages.Where(i => _showUnstated || i.Licence == FreeLicences.Verdict.Free)).Where(Hit)
+            .OrderByDescending(i => i.Name.Equals(q, StringComparison.CurrentCultureIgnoreCase))
+            .ThenByDescending(i => i.Name.StartsWith(q, StringComparison.CurrentCultureIgnoreCase))
+            .ThenByDescending(i => i.Name.Contains(q, StringComparison.CurrentCultureIgnoreCase))
+            .ThenBy(i => i.Source).ToList();
+        if (all.Count == 0)
+            col.Children.Add(EmptyCard("info", "Nothing found", _loadingFlatpak || _loadingAppImage ? "Still reading the catalogues; try again in a moment." : "Try another word, or browse a category on Explore."));
+        else AddGridWithMore(col, all, showSource: true);
+        return Scroll(col);
+    }
+
+    private Control DetailPage(SoftwareItem item)
+    {
+        var col = Column();
+        var back = new Button { Classes = { "flat" }, Content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, Children = { Icons.Create("arrow-left", 16), new TextBlock { Text = "Back" } } } };
+        back.Click += (_, _) => { _detail = null; Render(); };
+        col.Children.Add(back);
+
+        var head = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
+        var icon = IconFor(item, 96);
+        head.Children.Add(icon);
+        var title = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 4, Margin = new Thickness(18, 0) };
+        title.Children.Add(new TextBlock { Text = item.Name, FontSize = 26, FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap });
+        if (item.Developer is { Length: > 0 } dev) title.Children.Add(Caption(dev));
+        if (item.Summary.Length > 0) title.Children.Add(new TextBlock { Text = item.Summary, FontSize = 15, TextWrapping = TextWrapping.Wrap });
+        Grid.SetColumn(title, 1);
+        head.Children.Add(title);
+        var buttons = Buttons(item);
+        Grid.SetColumn(buttons, 2);
+        head.Children.Add(buttons);
+        col.Children.Add(head);
+
+        if (item.Screenshots.Count > 0)
+        {
+            var strip = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+            foreach (var url in item.Screenshots.Take(6)) strip.Children.Add(Screenshot(url));
+            col.Children.Add(new ScrollViewer { Content = strip, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto, VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled, Margin = new Thickness(0, 6) });
+        }
+
+        var body = new Grid { ColumnDefinitions = new ColumnDefinitions("*,24,300") };
+        if (item.Description.Length > 0 && item.Description != item.Summary)
+            body.Children.Add(new SelectableTextBlock { Text = item.Description, TextWrapping = TextWrapping.Wrap, LineHeight = 22 });
+        var facts = Facts(item);
+        Grid.SetColumn(facts, 2);
+        body.Children.Add(facts);
+        col.Children.Add(body);
+        return Scroll(col);
+    }
+
+    private Control Buttons(SoftwareItem item)
+    {
+        var panel = new StackPanel { Spacing = 8, VerticalAlignment = VerticalAlignment.Center, MinWidth = 180 };
+        if (_busy.TryGetValue(Key(item), out var busy))
+        {
+            _detailBar = new ProgressBar { Minimum = 0, Maximum = 100, Value = busy.Pct, Height = 8, IsIndeterminate = busy.Pct <= 0 };
+            panel.Children.Add(new TextBlock { Text = "Working…", Classes = { "caption" } });
+            panel.Children.Add(_detailBar);
+            var cancel = new Button { Content = "Cancel", HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Center };
+            cancel.Click += (_, _) => busy.Cts.Cancel();
+            panel.Children.Add(cancel);
+            return panel;
+        }
+        Button Btn(string text, Func<Task> act, bool primary)
+        {
+            var b = new Button { Content = text, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Center, Padding = new Thickness(18, 8) };
+            if (primary) b.Classes.Add("primary");
+            b.Click += async (_, _) => await act();
+            panel.Children.Add(b);
+            return b;
+        }
+        if (!item.Installed)
+        {
+            var method = Method(item);
+            if (method != null) Btn("Install", () => Do(item, "Installing", ct => Install(item, method, ct)), true);
+            else panel.Children.Add(new TextBlock { Text = "This computer can't install it yet: it needs " + string.Join(" or ", item.Methods.Select(m => m.Kind).Distinct()) + ".", TextWrapping = TextWrapping.Wrap, MaxWidth = 220, Classes = { "caption" } });
+            if (method != null) panel.Children.Add(new TextBlock { Text = method.Kind switch { InstallMethod.Pacman => "From [crimson-banner-apps] (pacman)", InstallMethod.Flatpak => "As a Flatpak, for your account", _ => "As an AppImage, in ~/Applications" }, Classes = { "caption" }, HorizontalAlignment = HorizontalAlignment.Center });
+        }
+        else
+        {
+            if (item.UpdateAvailable) Btn("Update", () => Do(item, "Updating", ct => Update(item, ct)), true);
+            if (CanOpen(item)) Btn("Open", () => { Open(item); return Task.CompletedTask; }, !item.UpdateAvailable);
+            Btn("Remove", () => Do(item, "Removing", ct => Remove(item, ct)), false);
+        }
+        return panel;
+    }
+
+    private Control Facts(SoftwareItem item)
+    {
+        var card = new Border { Classes = { "card" } };
+        var g = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
+        void Fact(string k, string? v)
+        {
+            if (string.IsNullOrWhiteSpace(v)) return;
+            var r = g.RowDefinitions.Count;
+            g.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            var kt = new TextBlock { Text = k, Classes = { "caption" }, Margin = new Thickness(0, 3, 14, 3) };
+            var vt = new SelectableTextBlock { Text = v, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3) };
+            Grid.SetRow(kt, r); Grid.SetRow(vt, r); Grid.SetColumn(vt, 1);
+            g.Children.Add(kt); g.Children.Add(vt);
+        }
+        Fact("From", SourceName(item.Source) + (item.Source == SoftwareSource.Flatpak ? " (" + (item.Methods.FirstOrDefault()?.Remote ?? Flatpak.Flathub) + ")" : ""));
+        Fact("Licence", item.License is { Length: > 0 } l ? l + (item.Licence == FreeLicences.Verdict.Free ? " · free software" : "") : "Not stated: check the project's page before relying on it");
+        Fact("Version", item.Installed && item.InstalledVersion is { Length: > 0 } iv && iv != item.Version
+            ? iv + (item.Version is { Length: > 0 } nv ? $" (latest {nv})" : "") : item.Version ?? item.InstalledVersion);
+        Fact("Installed in", item.Installed ? item.InstalledWhere : null);
+        Fact("Website", item.Homepage);
+        Fact("Categories", item.Categories.Count > 0 ? string.Join(", ", item.Categories.Take(5)) : null);
+        card.Child = g;
+        return card;
+    }
+
+    // ── building blocks ──
+
+    private Control SectionHead(string title, string action, Action go)
+    {
+        var d = new DockPanel { Margin = new Thickness(0, 10, 0, 0) };
+        var b = new Button { Classes = { "flat" }, Content = action + " ›" };
+        b.Click += (_, _) => go();
+        DockPanel.SetDock(b, Dock.Right);
+        d.Children.Add(b);
+        d.Children.Add(new TextBlock { Text = title, Classes = { "h2" }, VerticalAlignment = VerticalAlignment.Center });
+        return d;
+    }
+
+    private Control CardGrid(IEnumerable<SoftwareItem> items, bool showSource)
+    {
+        var w = new WrapPanel { Orientation = Orientation.Horizontal };
+        foreach (var i in items) w.Children.Add(Card(i, showSource));
+        return w;
+    }
+
+    private void AddGridWithMore(StackPanel col, List<SoftwareItem> items, bool showSource)
+    {
+        col.Children.Add(Caption($"{items.Count} program{(items.Count == 1 ? "" : "s")}"));
+        col.Children.Add(CardGrid(items.Take(_shown), showSource));
+        if (items.Count > _shown)
+        {
+            var more = new Button { Content = $"Show more ({items.Count - _shown} left)", HorizontalAlignment = HorizontalAlignment.Center };
+            more.Click += (_, _) => { _shown += PageSize; Render(); };
+            col.Children.Add(more);
         }
     }
 
-    private Control Row(SoftwareItem item)
+    private Control Card(SoftwareItem item, bool showSource)
     {
-        var status = item.UpdateAvailable ? "Update available" : item.Installed ? "Installed" : null;
-        var text = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 2 };
+        var b = new Button { Classes = { "tile" }, Width = 300, Height = 92, Margin = new Thickness(0, 0, 12, 12), Padding = new Thickness(12, 10) };
+        var g = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
+        g.Children.Add(IconFor(item, 52));
+        var text = new StackPanel { Spacing = 2, Margin = new Thickness(12, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
         text.Children.Add(new TextBlock { Text = item.Name, FontWeight = FontWeight.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
-        if (item.Summary.Length > 0) text.Children.Add(new TextBlock { Text = item.Summary, FontSize = 12, Opacity = 0.75, TextTrimming = TextTrimming.CharacterEllipsis });
-        if (status != null || _tab == Tab.Installed)
-            text.Children.Add(new TextBlock { Text = _tab == Tab.Installed ? SourceName(item.Source) + (status == "Update available" ? " · update available" : "") : status!, FontSize = 11, Foreground = new SolidColorBrush(Color.Parse(item.UpdateAvailable ? "#DD6B20" : "#38A169")) });
-        var g = new Grid { ColumnDefinitions = new ColumnDefinitions("44,*"), Margin = new Thickness(4) };
-        var icon = IconFor(item, 36);
-        g.Children.Add(icon);
+        if (item.Summary.Length > 0) text.Children.Add(new TextBlock { Text = item.Summary, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis });
+        var tag = item.UpdateAvailable ? "Update available" : item.Installed ? "Installed" : showSource ? SourceName(item.Source) : null;
+        if (showSource && (item.Installed || item.UpdateAvailable)) tag = SourceName(item.Source) + " · " + tag;
+        if (tag != null)
+        {
+            var t = new TextBlock { Text = tag, FontSize = 11, FontWeight = FontWeight.SemiBold };
+            if (item.UpdateAvailable) t.Foreground = new SolidColorBrush(Color.Parse("#DD6B20"));
+            else if (item.Installed) t.Foreground = new SolidColorBrush(Color.Parse("#38A169"));
+            else t.Opacity = 0.6;
+            text.Children.Add(t);
+        }
         Grid.SetColumn(text, 1);
-        text.Margin = new Thickness(10, 0, 0, 0);
         g.Children.Add(text);
-        return g;
+        b.Content = g;
+        b.Click += (_, _) => { _detail = item; Render(); };
+        return b;
     }
+
+    private Control Chip(string label, bool on, Action pick)
+    {
+        var b = new Button { Content = label, Padding = new Thickness(12, 4), Margin = new Thickness(0, 0, 6, 6), CornerRadius = new CornerRadius(14) };
+        b.Classes.Add(on ? "primary" : "tile");
+        b.Click += (_, _) => pick();
+        return b;
+    }
+
+    private Control EmptyCard(string glyph, string title, string text, (string Label, Func<Task> Run)? action = null)
+    {
+        var card = new Border { Classes = { "card" }, Padding = new Thickness(20, 18) };
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 16 };
+        row.Children.Add(new Border { Opacity = 0.6, VerticalAlignment = VerticalAlignment.Top, Child = Icons.Create(glyph, 32) });
+        var col = new StackPanel { Spacing = 6, MaxWidth = 620 };
+        col.Children.Add(new TextBlock { Text = title, FontWeight = FontWeight.SemiBold });
+        col.Children.Add(Caption(text));
+        if (action is { } a)
+        {
+            var b = new Button { Content = a.Label, Classes = { "primary" }, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 6, 0, 0) };
+            b.Click += async (_, _) => { b.IsEnabled = false; try { await a.Run(); } finally { b.IsEnabled = true; } };
+            col.Children.Add(b);
+        }
+        row.Children.Add(col);
+        card.Child = row;
+        return card;
+    }
+
+    private static Control Loading(string text) => new StackPanel
+    {
+        Spacing = 10, Margin = new Thickness(0, 20), HorizontalAlignment = HorizontalAlignment.Left,
+        Children = { new ProgressBar { IsIndeterminate = true, Width = 260, Height = 6 }, new TextBlock { Text = text, Classes = { "caption" } } },
+    };
 
     private static string SourceName(SoftwareSource s) => s switch
     {
@@ -222,80 +543,7 @@ public sealed class SoftwareWindow : Window
         _ => "AppImage",
     };
 
-    // ── the selected program ──
-
-    private void ShowDetail()
-    {
-        _detail.Children.Clear();
-        var item = _selected;
-        if (item == null) return;
-
-        var head = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 16 };
-        head.Children.Add(IconFor(item, 64));
-        var title = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 4 };
-        title.Children.Add(new TextBlock { Text = item.Name, FontSize = 22, FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap });
-        if (item.Developer is { Length: > 0 } dev) title.Children.Add(new TextBlock { Text = dev, Opacity = 0.75 });
-        head.Children.Add(title);
-        _detail.Children.Add(head);
-
-        if (item.Summary.Length > 0) _detail.Children.Add(new TextBlock { Text = item.Summary, FontSize = 15, TextWrapping = TextWrapping.Wrap });
-
-        var buttons = new WrapPanel { Orientation = Orientation.Horizontal };
-        _detail.Children.Add(buttons);
-        if (_busy.TryGetValue(Key(item), out var busy))
-        {
-            var bar = new ProgressBar { Minimum = 0, Maximum = 100, Value = busy.Pct, Width = 240, Height = 8, IsIndeterminate = busy.Pct <= 0, Margin = new Thickness(0, 0, 12, 0), VerticalAlignment = VerticalAlignment.Center };
-            buttons.Children.Add(bar);
-            var cancel = new Button { Content = "Cancel" };
-            cancel.Click += (_, _) => busy.Cts.Cancel();
-            buttons.Children.Add(cancel);
-        }
-        else
-        {
-            void Btn(string text, Func<Task> act, bool accent = false)
-            {
-                var b = new Button { Content = text, Margin = new Thickness(0, 0, 8, 8), Padding = new Thickness(16, 6) };
-                if (accent) b.Classes.Add("primary");
-                b.Click += async (_, _) => await act();
-                buttons.Children.Add(b);
-            }
-            if (!item.Installed)
-            {
-                var method = Method(item);
-                if (method != null) Btn("Install", () => Do(item, "Installing", ct => Install(item, method, ct)), true);
-                else buttons.Children.Add(new TextBlock { Text = "This computer has no way to install it yet (it needs " + string.Join(" or ", item.Methods.Select(m => m.Kind).Distinct()) + ").", TextWrapping = TextWrapping.Wrap });
-            }
-            else
-            {
-                if (CanOpen(item)) Btn("Open", () => { Open(item); return Task.CompletedTask; }, !item.UpdateAvailable);
-                if (item.UpdateAvailable) Btn("Update", () => Do(item, "Updating", ct => Update(item, ct)), true);
-                Btn("Remove", () => Do(item, "Removing", ct => Remove(item, ct)));
-            }
-        }
-
-        var facts = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), RowDefinitions = new RowDefinitions() };
-        void Fact(string k, string? v)
-        {
-            if (string.IsNullOrWhiteSpace(v)) return;
-            var r = facts.RowDefinitions.Count;
-            facts.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-            var kt = new TextBlock { Text = k, Opacity = 0.65, Margin = new Thickness(0, 2, 16, 2) };
-            var vt = new SelectableTextBlock { Text = v, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2) };
-            Grid.SetRow(kt, r); Grid.SetRow(vt, r); Grid.SetColumn(vt, 1);
-            facts.Children.Add(kt); facts.Children.Add(vt);
-        }
-        Fact("From", SourceName(item.Source) + (item.Source == SoftwareSource.Flatpak ? " (" + (item.Methods.FirstOrDefault()?.Remote ?? Flatpak.Flathub) + ")" : ""));
-        Fact("Licence", item.License is { Length: > 0 } l ? l + (item.Licence == FreeLicences.Verdict.Free ? " (free software)" : "") : "Not stated: check the project's own page before relying on it");
-        Fact("Version", item.Installed && item.InstalledVersion is { Length: > 0 } iv && iv != item.Version
-            ? iv + (item.Version is { Length: > 0 } nv ? $" (latest {nv})" : "") : item.Version ?? item.InstalledVersion);
-        Fact("Installed in", item.Installed ? item.InstalledWhere : null);
-        Fact("Website", item.Homepage);
-        Fact("Categories", item.Categories.Count > 0 ? string.Join(", ", item.Categories.Take(6)) : null);
-        _detail.Children.Add(facts);
-
-        if (item.Description.Length > 0 && item.Description != item.Summary)
-            _detail.Children.Add(new SelectableTextBlock { Text = item.Description, TextWrapping = TextWrapping.Wrap, LineHeight = 21 });
-    }
+    // ── doing things ──
 
     private static string Key(SoftwareItem i) => i.Source + ":" + i.Id;
 
@@ -308,7 +556,7 @@ public sealed class SoftwareWindow : Window
         if (_busy.ContainsKey(key)) return;
         var cts = new CancellationTokenSource();
         _busy[key] = (0, cts);
-        ShowDetail();
+        if (_detail == item) Render();
         string? error;
         try { error = await work(cts.Token); }
         catch (OperationCanceledException) { error = "cancelled"; }
@@ -317,8 +565,7 @@ public sealed class SoftwareWindow : Window
         if (error == null) Notifier.Show("Software", $"{verb} {item.Name}: done.", "software");
         else if (error != "cancelled") Notifier.Show("Software", $"{verb} {item.Name} didn't work: {error}", "software");
         await RefreshInstalled();
-        Fill();
-        ShowDetail();
+        Render();
     }
 
     private Action<int> ProgressFor(SoftwareItem item) => pct => Dispatcher.UIThread.Post(() =>
@@ -326,18 +573,22 @@ public sealed class SoftwareWindow : Window
         var key = Key(item);
         if (!_busy.TryGetValue(key, out var b)) return;
         _busy[key] = (pct, b.Cts);
-        if (_selected != null && Key(_selected) == key) ShowDetail();
+        if (_detail == item && _detailBar != null) { _detailBar.IsIndeterminate = pct <= 0; _detailBar.Value = pct; }
     });
 
-    // ── installing, updating, removing, opening ──
-
-    private Task<string?> Install(SoftwareItem item, InstallMethod m, CancellationToken ct) => m.Kind switch
+    private async Task<string?> Install(SoftwareItem item, InstallMethod m, CancellationToken ct)
     {
-        InstallMethod.Flatpak => Flatpak.InstallAsync(m, ProgressFor(item), ct),
-        InstallMethod.AppImage => AppImages.InstallAsync(item, m, ProgressFor(item), ct),
-        InstallMethod.Pacman => SystemUpdates.InstallByNameAsync(new[] { m.Package! }, ProgressFor(item), ct),
-        _ => Task.FromResult<string?>("unknown kind of install"),
-    };
+        switch (m.Kind)
+        {
+            case InstallMethod.Flatpak: return await Flatpak.InstallAsync(m, ProgressFor(item), ct);
+            case InstallMethod.AppImage: return await AppImages.InstallAsync(item, m, ProgressFor(item), ct);
+            case InstallMethod.Pacman:
+                // the first of our apps: [crimson-banner-apps] is added (the password is asked for) and the lists refreshed
+                if (await OurCatalog.EnableAppsRepoAsync(ct) is { } err) return "the apps repository couldn't be added: " + err;
+                return await SystemUpdates.InstallByNameAsync(new[] { m.Package! }, ProgressFor(item), ct);
+            default: return "unknown kind of install";
+        }
+    }
 
     private async Task<string?> Update(SoftwareItem item, CancellationToken ct)
     {
@@ -347,7 +598,7 @@ public sealed class SoftwareWindow : Window
             var m = item.Methods.FirstOrDefault(x => x.Kind == InstallMethod.AppImage) ?? new InstallMethod(InstallMethod.AppImage) { GitHub = rec.GitHub };
             return await AppImages.InstallAsync(new SoftwareItem { Source = item.Source, Id = rec.Id, Name = rec.Name, Version = item.Version }, m, ProgressFor(item), ct);
         }
-        return "There's no update for it here.";
+        return "There's no update for it here (pacman packages update with the system: Settings → Software Updates).";
     }
 
     private async Task<string?> Remove(SoftwareItem item, CancellationToken ct)
@@ -369,8 +620,8 @@ public sealed class SoftwareWindow : Window
 
     private Flatpak.Installed? FlatpakRow(SoftwareItem item)
     {
-        var refId = item.Methods.FirstOrDefault(m => m.Kind == InstallMethod.Flatpak)?.Ref?.Split('/') is { Length: >= 2 } parts ? parts[1]
-                  : item.Methods.FirstOrDefault(m => m.Kind == InstallMethod.Flatpak)?.Ref;
+        var r = item.Methods.FirstOrDefault(m => m.Kind == InstallMethod.Flatpak)?.Ref;
+        var refId = r?.Split('/') is { Length: >= 2 } parts ? parts[1] : r;
         var id = item.Source == SoftwareSource.Flatpak ? item.Id : refId;
         return id == null ? null : _flatpakInstalled.FirstOrDefault(f => f.Id == id);
     }
@@ -403,7 +654,7 @@ public sealed class SoftwareWindow : Window
         var err = await AppImages.AddFileAsync(path, CancellationToken.None);
         Notifier.Show("Software", err == null ? $"{Path.GetFileName(path)} is in your Applications folder and the Start menu." : "Couldn't add it: " + err, "software");
         await RefreshInstalled();
-        Fill();
+        Render();
     }
 
     // ── loading ──
@@ -412,31 +663,42 @@ public sealed class SoftwareWindow : Window
     {
         (_ours, _oursNote) = await OurCatalog.LoadAsync(SettingsStore.Current.SoftwareCatalogUrl, fetch);
         MarkInstalled(_ours);
-        if (_tab == Tab.CrimsonBanner) Fill();
+        if (_detail == null) Render();
     }
 
     private async Task LoadFlatpak(bool prepare)
     {
-        if (!Flatpak.Available) { _loadedFlatpak = true; return; }
-        if (prepare || Flatpak.Catalogue().Count == 0)
+        if (_loadingFlatpak) return;
+        if (!Flatpak.Available) { _loadedFlatpak = true; if (_detail == null) Render(); return; }
+        _loadingFlatpak = true;
+        if (_detail == null) Render();
+        try
         {
-            _banner.Children.Clear();
-            _banner.Children.Add(new TextBlock { Text = "Fetching Flathub's catalogue…", Opacity = 0.8 });
-            var err = await Flatpak.PrepareAsync(CancellationToken.None);
-            if (err != null) Notifier.Show("Software", err, "software");
+            if (prepare || Flatpak.Catalogue().Count == 0)
+            {
+                // fetched only when asked, or the first time: it's a few megabytes
+                if (prepare || _place == Place.Flatpak)
+                {
+                    var err = await Flatpak.PrepareAsync(CancellationToken.None);
+                    if (err != null) Notifier.Show("Software", err, "software");
+                }
+            }
+            _flatpaks = await Task.Run(() => Flatpak.Catalogue());
         }
-        _flatpaks = await Task.Run(() => Flatpak.Catalogue());
-        _loadedFlatpak = true;
+        finally { _loadingFlatpak = false; _loadedFlatpak = true; }
         MarkInstalled(_flatpaks);
-        if (_tab == Tab.Flatpak) Fill();
+        if (_detail == null) Render();
     }
 
     private async Task LoadAppImages(bool fetch)
     {
-        (_appimages, _appimageNote) = await AppImages.CatalogueAsync(fetch, CancellationToken.None);
-        _loadedAppImage = true;
+        if (_loadingAppImage) return;
+        _loadingAppImage = true;
+        if (_detail == null && _place == Place.AppImage) Render();
+        try { (_appimages, _appimageNote) = await AppImages.CatalogueAsync(fetch, CancellationToken.None); }
+        finally { _loadingAppImage = false; _loadedAppImage = true; }
         MarkInstalled(_appimages);
-        if (_tab == Tab.AppImage) Fill();
+        if (_detail == null) Render();
     }
 
     /// <summary>What's installed from each source, and (when asked) which have updates.</summary>
@@ -454,10 +716,8 @@ public sealed class SoftwareWindow : Window
         catch (Exception) { _pacmanInstalled = new(); }
 
         var installed = new List<SoftwareItem>();
-        // our own programs, however they were installed
         foreach (var i in _ours) { MarkOne(i); if (i.Installed) installed.Add(i); }
-        // every Flatpak app, with what Flathub's catalogue knows about it
-        var catalogue = _flatpaks.Count > 0 ? _flatpaks : (_loadedFlatpak ? new() : await Task.Run(() => Flatpak.Catalogue()));
+        var catalogue = _flatpaks;
         foreach (var f in _flatpakInstalled)
         {
             if (installed.Any(i => FlatpakRow(i)?.Id == f.Id)) continue;
@@ -466,12 +726,12 @@ public sealed class SoftwareWindow : Window
             {
                 Source = SoftwareSource.Flatpak, Id = f.Id, Name = known?.Name ?? f.Name, Summary = known?.Summary ?? "", Description = known?.Description ?? "",
                 License = known?.License, Developer = known?.Developer, Homepage = known?.Homepage, Version = known?.Version, IconPath = known?.IconPath,
-                Categories = known?.Categories ?? new(), Methods = { new InstallMethod(InstallMethod.Flatpak) { Remote = f.Origin, Ref = f.Id } },
+                Categories = known?.Categories ?? new(), Screenshots = known?.Screenshots ?? new(),
+                Methods = { new InstallMethod(InstallMethod.Flatpak) { Remote = f.Origin, Ref = f.Id } },
                 Installed = true, InstalledVersion = f.Version, InstalledWhere = f.Installation == "system" ? "the system (all users)" : "your account",
                 UpdateAvailable = _flatpakUpdates.Contains(f.Id),
             });
         }
-        // AppImages Software installed or was given
         foreach (var r in AppImages.InstalledRecords())
         {
             if (installed.Any(i => i.Id == r.Id)) continue;
@@ -480,6 +740,7 @@ public sealed class SoftwareWindow : Window
             {
                 Source = SoftwareSource.AppImage, Id = r.Id, Name = r.Name, Summary = known?.Summary ?? Path.GetFileName(r.File), Description = known?.Description ?? "",
                 License = known?.License, Developer = known?.Developer, Homepage = known?.Homepage, IconPath = r.Icon, IconUrl = known?.IconUrl,
+                Screenshots = known?.Screenshots ?? new(),
                 Version = _appImageUpdates.TryGetValue(r.Id, out var up) ? up.Tag : r.Version,
                 Methods = { new InstallMethod(InstallMethod.AppImage) { GitHub = r.GitHub } },
                 Installed = true, InstalledVersion = r.Version, InstalledWhere = r.File, UpdateAvailable = _appImageUpdates.ContainsKey(r.Id),
@@ -504,52 +765,69 @@ public sealed class SoftwareWindow : Window
                             || (i.Source == SoftwareSource.CrimsonBanner && rec != null && i.Version != null && rec.Version != i.Version);
     }
 
-    // ── icons ──
+    // ── pictures ──
 
     private static readonly Dictionary<string, Bitmap?> Bitmaps = new();
-    private static readonly HttpClient IconHttp = new() { Timeout = TimeSpan.FromSeconds(15) };
-    private static string IconCache => Path.Combine(Path.GetDirectoryName(OurCatalog.CachePath)!, "software-icons");
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
+    private static string PictureCache => Path.Combine(Path.GetDirectoryName(OurCatalog.CachePath)!, "software-pictures");
 
     private static Control IconFor(SoftwareItem item, double size)
     {
-        var holder = new Border { Width = size, Height = size, CornerRadius = new CornerRadius(size / 5), ClipToBounds = true };
-        if (LoadLocal(item.IconPath) is { } bmp) { holder.Child = new Image { Source = bmp, Stretch = Stretch.Uniform }; return holder; }
-        holder.Background = new SolidColorBrush(Color.Parse(AppIcons.NeutralColor));
+        var holder = new Border { Width = size, Height = size, CornerRadius = new CornerRadius(size / 5), ClipToBounds = true, VerticalAlignment = VerticalAlignment.Center };
+        if (Load(item.IconPath, 128) is { } bmp) { holder.Child = new Image { Source = bmp, Stretch = Stretch.Uniform }; return holder; }
+        holder.Background = new SolidColorBrush(Color.Parse(item.Source == SoftwareSource.CrimsonBanner ? "#C8102E" : AppIcons.NeutralColor));
         holder.Child = new TextBlock { Text = item.Name.Length > 0 ? item.Name[..1].ToUpperInvariant() : "?", FontSize = size * 0.45, FontWeight = FontWeight.SemiBold, Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
         if (item.IconUrl is { } url && url.StartsWith("https://", StringComparison.Ordinal))
-            _ = FetchIcon(url).ContinueWith(t =>
+            _ = Fetch(url).ContinueWith(t =>
             {
                 if (t.Result is { } path) Dispatcher.UIThread.Post(() =>
                 {
-                    if (LoadLocal(path) is { } b) { holder.Background = null; holder.Child = new Image { Source = b, Stretch = Stretch.Uniform }; }
+                    if (Load(path, 128) is { } b) { holder.Background = null; holder.Child = new Image { Source = b, Stretch = Stretch.Uniform }; }
                 });
             }, TaskScheduler.Default);
         return holder;
     }
 
-    private static Bitmap? LoadLocal(string? path)
+    private static Control Screenshot(string url)
+    {
+        var frame = new Border { Width = 400, Height = 250, CornerRadius = new CornerRadius(10), ClipToBounds = true, Classes = { "card" }, Padding = new Thickness(0) };
+        frame.Child = new ProgressBar { IsIndeterminate = true, Width = 120, Height = 4, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+        _ = Fetch(url).ContinueWith(t => Dispatcher.UIThread.Post(() =>
+        {
+            frame.Child = t.Result is { } path && Load(path, 800) is { } b
+                ? new Image { Source = b, Stretch = Stretch.Uniform }
+                : new TextBlock { Text = "The picture couldn't be loaded.", Classes = { "caption" }, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+        }), TaskScheduler.Default);
+        return frame;
+    }
+
+    private static Bitmap? Load(string? path, int width)
     {
         if (string.IsNullOrEmpty(path) || !File.Exists(path) || path.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)) return null;
+        var key = path + "@" + width;
         lock (Bitmaps)
         {
-            if (Bitmaps.TryGetValue(path, out var b)) return b;
-            try { using var s = File.OpenRead(path); b = Bitmap.DecodeToWidth(s, 128); }
+            if (Bitmaps.TryGetValue(key, out var b)) return b;
+            try { using var s = File.OpenRead(path); b = Bitmap.DecodeToWidth(s, width); }
             catch (Exception) { b = null; }
-            Bitmaps[path] = b;
+            Bitmaps[key] = b;
             return b;
         }
     }
 
-    private static async Task<string?> FetchIcon(string url)
+    /// <summary>A picture from the web, kept in the cache (PNG and JPEG only).</summary>
+    private static async Task<string?> Fetch(string url)
     {
-        var name = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(url)))[..24].ToLowerInvariant() + ".png";
-        var path = Path.Combine(IconCache, name);
+        var name = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(url)))[..24].ToLowerInvariant();
+        var path = Path.Combine(PictureCache, name);
         if (File.Exists(path)) return path;
         try
         {
-            var bytes = await IconHttp.GetByteArrayAsync(url);
-            if (bytes.Length < 8 || bytes[0] != 0x89 || bytes[1] != (byte)'P') return null;   // PNG only
-            Directory.CreateDirectory(IconCache);
+            var bytes = await Http.GetByteArrayAsync(url);
+            bool png = bytes.Length > 8 && bytes[0] == 0x89 && bytes[1] == (byte)'P';
+            bool jpeg = bytes.Length > 3 && bytes[0] == 0xFF && bytes[1] == 0xD8;
+            if (!png && !jpeg) return null;
+            Directory.CreateDirectory(PictureCache);
             await File.WriteAllBytesAsync(path, bytes);
             return path;
         }

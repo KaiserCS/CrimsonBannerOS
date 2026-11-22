@@ -53,6 +53,7 @@ if [ "$UNINSTALL" = 1 ]; then
   if [ "$(crimson-greeter-setup status 2>/dev/null)" = "Crimson Banner OS's login screen (greetd)" ]; then
     sudo crimson-greeter-setup disable
   fi
+  if [ "$(crimson-apps-repo status 2>/dev/null)" = enabled ]; then sudo crimson-apps-repo disable; fi
   installed=()
   for p in "${PACKAGES[@]}"; do pacman -Qq "$p" >/dev/null 2>&1 && installed+=("$p"); done
   if [ "${#installed[@]}" -gt 0 ]; then sudo pacman -Rns "${CONFIRM[@]}" "${installed[@]}"; else echo "None are installed."; fi
@@ -157,6 +158,15 @@ if [ "$EXTRAS" = 1 ]; then
   for p in "${extras[@]}"; do if pacman -Si "$p" >/dev/null 2>&1; then have+=("$p"); else missing+=("$p"); fi; done
   if [ "${#have[@]}" -gt 0 ]; then sudo pacman -S --needed "${CONFIRM[@]}" "${have[@]}"; fi
   [ "${#missing[@]}" -eq 0 ] || echo "Not in your repositories, so skipped: ${missing[*]} (the AUR may have them)."
+fi
+
+# ── 7. Crimson Banner's own apps ([crimson-banner-apps], once some are published: tools/publish-app.sh) ──
+APPS_DB="https://github.com/KaiserCS/RedStarOS-Linux/releases/download/apps-$(uname -m)/crimson-banner-apps.db"
+if [ "$(crimson-apps-repo status 2>/dev/null)" != enabled ] && [ -s /usr/lib/crimson-banner/software/crimson-banner.gpg ] \
+   && command -v curl >/dev/null && curl -fsIL -o /dev/null --max-time 15 "$APPS_DB"; then
+  step "Crimson Banner's apps repository"
+  sudo crimson-apps-repo enable
+  sudo pacman -Sy
 fi
 
 # ── 7. the login screen ──

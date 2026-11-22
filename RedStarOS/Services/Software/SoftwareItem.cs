@@ -34,6 +34,7 @@ public sealed class SoftwareItem
     public string? IconPath { get; set; }            // a local picture (AppStream's cached icon, an AppImage's .DirIcon)
     public string? IconUrl { get; init; }            // or one to fetch
     public List<string> Categories { get; init; } = new();
+    public List<string> Screenshots { get; init; } = new();   // picture URLs, the main one first
     public List<InstallMethod> Methods { get; init; } = new();
 
     // what's on this computer

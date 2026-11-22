@@ -28,7 +28,7 @@
 - Layout: `RedStarOS/` the Avalonia shell (C#), `compositor/` redstar-comp (C, wlroots), `wm/` redstar-wm (X11),
   `browser/` Crimson Online (C, GTK 4 + WebKitGTK),
   `tests/` C# tests, `compositor/test/` headless compositor tests, `browser/test/` the browser's unit tests and self-test,
-  `tools/packages.sh` the local NuGet feed.
+  `tools/packages.sh` the local NuGet feed, `apps/` our own apps for Software (`tools/publish-app.sh`).
 - The visible name is Crimson Banner OS (apps without a prefix, the browser Crimson Online); internal names
   (`redstar-*`, `RedStarOS`, `~/.config/redstaros`, app ids) stay as they are.
 - Package versions are exact and locked (`packages.lock.json`, locked mode on CI). Changing one means updating the lock
