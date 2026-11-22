@@ -75,7 +75,7 @@ package_crimson-banner() {
               'accountsservice: Settings → Users'
               'packagekit: system updates in Settings'
               'power-profiles-daemon: power mode'
-              'vlc: Video'
+              'vlc: Video and CD Player'
               'gst-plugins-good: sound and video in web pages and Voice Memos'
               'gst-plugins-bad: sound and video in web pages'
               'gst-libav: sound and video in web pages'
@@ -114,6 +114,7 @@ package_crimson-banner-shell() {
   install -Dm644 packaging/redstaros.png "$pkgdir/usr/share/icons/hicolor/256x256/apps/redstaros.png"
   install -Dm644 packaging/crimson-banner.pam "$pkgdir/etc/pam.d/crimson-banner"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 RedStarOS/Views/Deck/NOTICE "$pkgdir/usr/share/licenses/$pkgname/NOTICE.CDPlayer"
 }
 
 package_crimson-banner-greeter() {

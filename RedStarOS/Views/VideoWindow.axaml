@@ -1,61 +1,104 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later
+     Video, in the deck look it shares with CD Player (Styles/Deck.axaml): a faceplate under the picture with the
+     deck's display, hi-fi transport keys and pills. The keys' glyphs are put in by the code (Views/Deck). -->
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="RedStarOS.Views.VideoWindow"
         Title="Video"
-        Width="1040" Height="660" MinWidth="560" MinHeight="380"
-        WindowStartupLocation="CenterScreen">
+        Width="1040" Height="660" MinWidth="640" MinHeight="400"
+        WindowStartupLocation="CenterScreen"
+        RequestedThemeVariant="Dark"
+        Background="{StaticResource DeckBackdrop}"
+        FontFamily="Lucida Grande, Segoe UI, DejaVu Sans, Inter, sans-serif">
   <DockPanel>
-    <!-- Controls -->
-    <Border x:Name="ControlsBar" DockPanel.Dock="Bottom" Classes="card" CornerRadius="0" BorderThickness="0,1,0,0" Padding="10,6">
-      <StackPanel>
+    <!-- the faceplate -->
+    <Border x:Name="ControlsBar" DockPanel.Dock="Bottom" BorderBrush="{StaticResource DeckRuleBrush}" BorderThickness="0,1,0,0" Padding="16,8,16,10">
+      <Border.Background>
+        <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+          <GradientStop Color="#1C1C1F" Offset="0" />
+          <GradientStop Color="#111113" Offset="1" />
+        </LinearGradientBrush>
+      </Border.Background>
+      <StackPanel Spacing="8">
         <Grid ColumnDefinitions="Auto,*,Auto">
-          <TextBlock x:Name="TimeText" Grid.Column="0" Text="0:00" Classes="caption" VerticalAlignment="Center" MinWidth="46" />
-          <Slider x:Name="SeekSlider" Grid.Column="1" Minimum="0" Maximum="1000" Value="0" Margin="8,0" />
-          <TextBlock x:Name="LenText" Grid.Column="2" Text="0:00" Classes="caption" VerticalAlignment="Center" MinWidth="46" TextAlignment="Right" />
+          <TextBlock x:Name="TimeText" Grid.Column="0" Text="0:00" Classes="deck-hint" VerticalAlignment="Center" MinWidth="46" />
+          <Slider x:Name="SeekSlider" Grid.Column="1" Minimum="0" Maximum="1000" Value="0" Margin="10,0" />
+          <TextBlock x:Name="LenText" Grid.Column="2" Text="0:00" Classes="deck-hint" VerticalAlignment="Center" MinWidth="46" TextAlignment="Right" />
         </Grid>
-        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-          <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,4,0,0">
-            <Button Classes="flat" Content="📂 Open…" Tag="open" Click="OnCmd" ToolTip.Tip="Open files (O)" />
-            <Button Classes="flat" Content="⏮" Tag="prev" Click="OnCmd" ToolTip.Tip="Previous (Page Up)" />
-            <Button x:Name="PlayBtn" Classes="primary" Content="▶" Width="44" Tag="play" Click="OnCmd" ToolTip.Tip="Play / pause (Space)" />
-            <Button Classes="flat" Content="⏭" Tag="next" Click="OnCmd" ToolTip.Tip="Next (Page Down)" />
-            <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
-            <Button x:Name="MuteBtn" Classes="flat" Content="🔊" Tag="mute" Click="OnCmd" ToolTip.Tip="Mute (M)" />
-            <Slider x:Name="VolSlider" Minimum="0" Maximum="100" Value="80" Width="110" VerticalAlignment="Center" />
-            <TextBlock x:Name="VolText" Classes="caption" Width="38" VerticalAlignment="Center" TextAlignment="Center" />
-            <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
-            <ComboBox x:Name="SpeedBox" Width="84" VerticalAlignment="Center" ToolTip.Tip="Playback speed (, and .)" />
-            <Button x:Name="RepeatBtn" Classes="flat" Content="Repeat: off" Tag="repeat" Click="OnCmd" ToolTip.Tip="Repeat mode (R)" />
-            <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
-            <Button x:Name="SubsBtn" Classes="flat" Content="CC" Tag="togglesubs" Click="OnCmd" ToolTip.Tip="Show or hide subtitles (V)" />
-            <Button Classes="flat" Content="Load subtitles…" Tag="loadsubs" Click="OnCmd" ToolTip.Tip="Load a subtitle file (S)" />
-            <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
-            <Button x:Name="ListBtn" Classes="flat" Content="☰ Playlist" Tag="playlist" Click="OnCmd" ToolTip.Tip="Show or hide the playlist (L)" />
-            <Button Classes="flat" Content="⛶" Tag="fullscreen" Click="OnCmd" ToolTip.Tip="Full screen (F, double-click)" />
-            <Button Classes="flat" Content="Open with system player" Tag="external" Click="OnCmd" />
+
+        <Grid ColumnDefinitions="*,Auto,*">
+          <!-- the deck's display -->
+          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+            <Button Classes="deck-pill" Content="OPEN" Tag="open" Click="OnCmd" ToolTip.Tip="Open files (O)" />
+            <Border Classes="deck-lcd" Padding="12,4">
+              <StackPanel Orientation="Horizontal" Spacing="14">
+                <StackPanel>
+                  <TextBlock Classes="deck-lcd-label" Text="TRACK" />
+                  <TextBlock x:Name="LcdTrack" Classes="deck-digits" FontSize="18" Text="--/--" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0,0,4">
+                  <TextBlock x:Name="FlagPlay" Classes="deck-flag" Text="PLAY" />
+                  <TextBlock x:Name="FlagPause" Classes="deck-flag" Text="PAUSE" />
+                  <TextBlock x:Name="FlagRepeat" Classes="deck-flag" Text="REPEAT" />
+                </StackPanel>
+                <StackPanel>
+                  <TextBlock Classes="deck-lcd-label" Text="TIME" />
+                  <TextBlock x:Name="LcdTime" Classes="deck-digits" FontSize="18" Text="0:00" />
+                </StackPanel>
+              </StackPanel>
+            </Border>
           </StackPanel>
-        </ScrollViewer>
+
+          <!-- transport -->
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" Margin="12,0" VerticalAlignment="Center">
+            <Button x:Name="PrevBtn" Classes="deck-key" Tag="prev" Click="OnCmd" ToolTip.Tip="Previous (Page Up)" />
+            <Button x:Name="PlayBtn" Classes="deck-key primary" Tag="play" Click="OnCmd" ToolTip.Tip="Play / pause (Space)" />
+            <Button x:Name="NextBtn" Classes="deck-key" Tag="next" Click="OnCmd" ToolTip.Tip="Next (Page Down)" />
+          </StackPanel>
+
+          <!-- volume -->
+          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <Button x:Name="MuteBtn" Classes="deck-key" Width="40" Tag="mute" Click="OnCmd" ToolTip.Tip="Mute (M)" />
+            <Slider x:Name="VolSlider" Minimum="0" Maximum="100" Value="80" Width="110" VerticalAlignment="Center" />
+            <TextBlock x:Name="VolText" Classes="deck-hint" Width="40" VerticalAlignment="Center" TextAlignment="Center" />
+          </StackPanel>
+        </Grid>
+
+        <WrapPanel HorizontalAlignment="Center">
+          <WrapPanel.Styles>
+            <Style Selector="WrapPanel > :is(Control)">
+              <Setter Property="Margin" Value="3,0" />
+            </Style>
+          </WrapPanel.Styles>
+          <ComboBox x:Name="SpeedBox" Width="104" MinHeight="26" VerticalAlignment="Center" ToolTip.Tip="Playback speed (, and .)" />
+          <Button x:Name="RepeatBtn" Classes="deck-pill small" Content="REPEAT: OFF" Tag="repeat" Click="OnCmd" ToolTip.Tip="Repeat mode (R)" />
+          <Button x:Name="SubsBtn" Classes="deck-pill small" Content="CC" Tag="togglesubs" Click="OnCmd" ToolTip.Tip="Show or hide subtitles (V)" />
+          <Button Classes="deck-pill small" Content="LOAD SUBTITLES" Tag="loadsubs" Click="OnCmd" ToolTip.Tip="Load a subtitle file (S)" />
+          <Button x:Name="ListBtn" Classes="deck-pill small" Content="PLAYLIST" Tag="playlist" Click="OnCmd" ToolTip.Tip="Show or hide the playlist (L)" />
+          <Button x:Name="FullBtn" Classes="deck-key" Width="40" Height="28" Tag="fullscreen" Click="OnCmd" ToolTip.Tip="Full screen (F, double-click)" />
+          <Button Classes="deck-pill small" Content="SYSTEM PLAYER" Tag="external" Click="OnCmd" ToolTip.Tip="Open with the system's own player" />
+        </WrapPanel>
       </StackPanel>
     </Border>
 
     <!-- Thin hover strip used in full screen to bring the controls back -->
     <Border x:Name="HoverStrip" DockPanel.Dock="Bottom" Height="6" Background="Transparent" IsVisible="False" />
 
-    <!-- Playlist -->
-    <Border x:Name="ListPanel" DockPanel.Dock="Right" Width="270" Classes="card" CornerRadius="0" BorderThickness="1,0,0,0">
+    <!-- Playlist: the booklet -->
+    <Border x:Name="ListPanel" DockPanel.Dock="Right" Width="270" Background="#0BFFFFFF" BorderBrush="{StaticResource DeckRuleBrush}" BorderThickness="1,0,0,0">
       <DockPanel>
-        <StackPanel DockPanel.Dock="Top" Margin="10,8" Orientation="Horizontal" Spacing="6">
-          <TextBlock Text="Playlist" FontWeight="SemiBold" VerticalAlignment="Center" />
-          <TextBlock x:Name="ListCount" Classes="caption" VerticalAlignment="Center" />
+        <StackPanel DockPanel.Dock="Top" Margin="14,12,14,6" Orientation="Horizontal" Spacing="8">
+          <TextBlock Text="PLAYLIST" Classes="deck-label" VerticalAlignment="Center" />
+          <TextBlock x:Name="ListCount" Classes="deck-hint" VerticalAlignment="Center" />
         </StackPanel>
-        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="4" Margin="8">
-          <Button Classes="flat" Content="Add…" Tag="open" Click="OnCmd" />
-          <Button Classes="flat" Content="Remove" Tag="remove" Click="OnCmd" />
-          <Button Classes="flat" Content="Clear" Tag="clear" Click="OnCmd" />
-        </StackPanel>
-        <ListBox x:Name="PlayList" Background="Transparent" Margin="4,0">
+        <WrapPanel DockPanel.Dock="Bottom" Margin="12,8">
+          <Button Classes="deck-pill small" Content="ADD" Tag="open" Click="OnCmd" Margin="0,0,6,0" />
+          <Button Classes="deck-pill small" Content="REMOVE" Tag="remove" Click="OnCmd" Margin="0,0,6,0" />
+          <Button Classes="deck-pill small" Content="CLEAR" Tag="clear" Click="OnCmd" />
+        </WrapPanel>
+        <ListBox x:Name="PlayList" Classes="deck-list" Margin="6,0">
           <ListBox.ItemTemplate>
             <DataTemplate>
-              <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" Padding="4,5" ToolTip.Tip="{Binding Path}" />
+              <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" Padding="2,3" ToolTip.Tip="{Binding Path}" />
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>
@@ -65,9 +108,10 @@
     <!-- Stage -->
     <Grid x:Name="Stage" Background="Black">
       <Image x:Name="Video" Stretch="Uniform" />
-      <StackPanel x:Name="Overlay" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8" IsHitTestVisible="False">
-        <TextBlock x:Name="OverlayIcon" Text="🎬" FontSize="56" HorizontalAlignment="Center" Foreground="#CCCCCC" />
-        <TextBlock x:Name="OverlayText" Text="Drop videos or music here, or press O to open" Foreground="#CCCCCC" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="460" />
+      <StackPanel x:Name="Overlay" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10" IsHitTestVisible="False">
+        <TextBlock x:Name="OverlayIcon" Text="🎬" FontSize="52" HorizontalAlignment="Center" Foreground="#8A8E94" />
+        <TextBlock x:Name="OverlayText" Text="Drop videos here, or press O to open" Foreground="#8A8E94" FontWeight="SemiBold"
+                   HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="460" />
       </StackPanel>
     </Grid>
   </DockPanel>

@@ -6,5 +6,7 @@
     <FluentTheme />
     <!-- Design tokens + shared styles used by the shell, every app window and the tray panels. -->
     <StyleInclude Source="avares://RedStarOS/Styles/Shell.axaml" />
+    <!-- the hi-fi deck look of CD Player and Video -->
+    <StyleInclude Source="avares://RedStarOS/Styles/Deck.axaml" />
   </Application.Styles>
 </Application>

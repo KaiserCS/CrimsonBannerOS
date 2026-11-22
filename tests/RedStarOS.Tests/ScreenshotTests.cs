@@ -109,4 +109,26 @@ public class ScreenshotTests
         var dir = Sandbox();
         ShowAndCapture(new FileManagerWindow(dir), "FileManager-folder");
     }
+
+    [AvaloniaFact]
+    public void CD_Player_with_a_disc()
+    {
+        if (ShotDir == null) return;
+        // an album with a cover, drawn here: a red field with a white square
+        var dir = Path.Combine(Path.GetTempPath(), "redstar-cd-" + Guid.NewGuid().ToString("N")[..8], "Kraftwerk", "Radio-Activity");
+        Directory.CreateDirectory(dir);
+        var cover = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(300, 300));
+        using (var ctx = cover.CreateDrawingContext())
+        {
+            ctx.FillRectangle(new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.FromRgb(196, 20, 28)), new Avalonia.Rect(0, 0, 300, 300));
+            ctx.FillRectangle(Avalonia.Media.Brushes.White, new Avalonia.Rect(40, 40, 90, 90));
+        }
+        cover.Save(Path.Combine(dir, "cover.png"));
+        var names = new[] { "01 Geiger Counter", "02 Radioactivity", "03 Radioland", "04 Airwaves", "05 Intermission", "06 News", "07 The Voice of Energy" };
+        foreach (var n in names) File.WriteAllText(Path.Combine(dir, n + ".flac"), "");
+        var album = RedStarOS.Services.MusicLibrary.Scan(Path.GetDirectoryName(dir)!)[0];
+        var w = new CdPlayerWindow(null);
+        w.LoadAlbum(album, "YOUR MUSIC LIBRARY", play: false, first: 1);
+        ShowAndCapture(w, "CdPlayerWindow-disc");
+    }
 }

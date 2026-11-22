@@ -16,7 +16,7 @@ public static class AppIcons
     // icon names from Services/Icons (vector line icons)
     private static readonly Dictionary<string, string> Glyphs = new()
     {
-        ["studio"] = "clipboard", ["writer"] = "document", ["sheets"] = "sheet", ["slides"] = "slides", ["video"] = "film", ["pong"] = "game",
+        ["studio"] = "clipboard", ["writer"] = "document", ["sheets"] = "sheet", ["slides"] = "slides", ["video"] = "film", ["cdplayer"] = "disc", ["pong"] = "game",
         ["online"] = "globe", ["messenger"] = "chat", ["files"] = "folder", ["calculator"] = "calculator", ["notes"] = "note",
         ["imageviewer"] = "image", ["camera"] = "camera", ["calendar"] = "calendar", ["settings"] = "settings", ["terminal"] = "terminal",
         ["paint"] = "palette", ["clock"] = "clock", ["taskmgr"] = "activity",

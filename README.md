@@ -17,7 +17,7 @@ Why it's built this way, and which dependencies it accepts, is set out in [PRINC
 ## The apps
 
 - **Office:** Writer, Sheets, Slides, Studio
-- **Media:** Paint, Video (LibVLC), Screen Recorder, Voice Memos
+- **Media:** CD Player and Video (LibVLC; the deck look after [CDPlayer](https://github.com/Kizarov3/CDPlayer) by Kizarov3, MIT), Paint, Screen Recorder, Voice Memos
 - **Online:** Crimson Online, Messenger (Matrix)
 - **Games:** Blocks, Gems, Mahjongg, Ping Pong
 - **Utilities:** File Manager, Terminal, Calculator, Calendar, Camera, Clock, Notes, Image Viewer, Screenshot, Disks
@@ -135,4 +135,5 @@ version (SPDX: `GPL-3.0-or-later`). It is distributed in the hope that it will b
 see [LICENSE](LICENSE) for the full text.
 
 It uses Avalonia (MIT), LibVLC (LGPL-2.1-or-later, linked dynamically), wlroots (MIT), WebKitGTK (LGPL/BSD) and other
-libraries under GPL-compatible licences; their own terms still apply to them.
+libraries under GPL-compatible licences; their own terms still apply to them. CD Player's and Video's look follows CDPlayer by Kizarov3 (MIT); its notice is in
+`RedStarOS/Views/Deck/NOTICE`.

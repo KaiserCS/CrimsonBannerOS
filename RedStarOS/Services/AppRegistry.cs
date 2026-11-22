@@ -40,6 +40,7 @@ public static class AppRegistry
         new("online",      "Crimson Online",     "RSOnline",    null, true, () => BrowserLauncher.Launch()),
         new("messenger",   "Messenger",          "RSOnline",    () => new MessengerWindow(), true),
         new("video",       "Video",              "RSMedia",     null, false, () => VideoLauncher.Launch()),
+        new("cdplayer",    "CD Player",          "RSMedia",     null, false, () => CdPlayerLauncher.Launch()),
         new("terminal",    "Terminal",           "RSUtilities", null, true, () => TerminalLauncher.Launch()),
         new("files",       "File Manager",       "RSUtilities", () => new FileManagerWindow()),
         new("calculator",  "Calculator",         "RSUtilities", () => new CalculatorWindow()),
@@ -63,7 +64,7 @@ public static class AppRegistry
     {
         ["BlocksWindow"] = "blocks", ["MahjonggWindow"] = "mahjongg", ["GemsWindow"] = "gems", ["ScreenshotWindow"] = "screenshot", ["AreaPickerWindow"] = "screenshot",
         ["ScreenRecorderWindow"] = "recorder", ["DisksWindow"] = "disks", ["SoftwareWindow"] = "software", ["VoiceMemosWindow"] = "voicememos",
-        ["StudioWindow"] = "studio", ["VideoWindow"] = "video", ["WriterWindow"] = "writer", ["RichWriterWindow"] = "writer", ["TerminalWindow"] = "terminal", ["SpreadsheetWindow"] = "sheets", ["SlidesWindow"] = "slides", ["SlideShowWindow"] = "slides", ["SheetChartWindow"] = "sheets",
+        ["StudioWindow"] = "studio", ["VideoWindow"] = "video", ["CdPlayerWindow"] = "cdplayer", ["WriterWindow"] = "writer", ["RichWriterWindow"] = "writer", ["TerminalWindow"] = "terminal", ["SpreadsheetWindow"] = "sheets", ["SlidesWindow"] = "slides", ["SlideShowWindow"] = "slides", ["SheetChartWindow"] = "sheets",
         ["PongWindow"] = "pong", ["MessengerWindow"] = "messenger", ["FileManagerWindow"] = "files",
         ["CalculatorWindow"] = "calculator", ["NotesWindow"] = "notes", ["ImageViewerWindow"] = "imageviewer",
         ["CameraWindow"] = "camera", ["PaintWindow"] = "paint", ["ClockWindow"] = "clock", ["TaskManagerWindow"] = "taskmgr", ["CalendarWindow"] = "calendar", ["SettingsWindow"] = "settings",

@@ -22,7 +22,8 @@ public static class FileOpener
         if (ext == ".pdf") return "Crimson Online";
         if (FileOps.ImageExtensions.Contains(ext)) return "Image Viewer";
         if (ext == ".docx" || (FileOps.TextExtensions.Contains(ext) && ext != ".csv")) return "Writer";
-        if (FileOps.VideoExtensions.Contains(ext) || FileOps.AudioExtensions.Contains(ext)) return "Video";
+        if (FileOps.AudioExtensions.Contains(ext)) return "CD Player";
+        if (FileOps.VideoExtensions.Contains(ext)) return "Video";
         if (ext is ".csv" or ".tsv" or ".xlsx") return "Sheets";
         if (ext == ".rsslides") return "Slides";
         return null;
@@ -47,7 +48,11 @@ public static class FileOpener
         {
             WriterLauncher.Launch(path);
         }
-        else if (FileOps.VideoExtensions.Contains(ext) || FileOps.AudioExtensions.Contains(ext))
+        else if (FileOps.AudioExtensions.Contains(ext))
+        {
+            CdPlayerLauncher.Launch(path);
+        }
+        else if (FileOps.VideoExtensions.Contains(ext))
         {
             VideoLauncher.Launch(path);
         }

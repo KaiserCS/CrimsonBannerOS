@@ -20,6 +20,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using LibVLCSharp.Shared;
 using RedStarOS.Services;
+using RedStarOS.Views.Deck;
 
 namespace RedStarOS.Views;
 
@@ -105,6 +106,13 @@ public partial class VideoWindow : Window
     {
         _lib = lib;
         InitializeComponent();
+        // the deck look (Styles/Deck.axaml): the keys' glyphs and the sliders' colours
+        PlayBtn.Content = DeckGlyphs.Create("play", 26);
+        PrevBtn.Content = DeckGlyphs.Create("prev");
+        NextBtn.Content = DeckGlyphs.Create("next");
+        FullBtn.Content = DeckGlyphs.Create("fullscreen", 16);
+        DeckUi.Accent(SeekSlider);
+        DeckUi.Accent(VolSlider);
         _player = new MediaPlayer(_lib);
         // Frames are pulled out of libvlc into memory and drawn by Avalonia itself, so the picture is a normal
         // inline control that works on X11 and Wayland alike (no native child window).
@@ -250,7 +258,7 @@ public partial class VideoWindow : Window
             _items.Add(new PlayItem { Path = f });
             if (first < 0) first = _items.Count - 1;
         }
-        ListCount.Text = _items.Count == 0 ? "" : $"({_items.Count})";
+        ListCount.Text = _items.Count == 0 ? "" : $"{_items.Count} ITEMS"; RefreshTrackNo();
         int target = first >= 0 ? first : (_index < 0 && _items.Count > 0 ? 0 : -1);
         if (play && target >= 0)
         {
@@ -271,6 +279,7 @@ public partial class VideoWindow : Window
         _gen++;
         foreach (var it in _items) it.Active = false;
         _index = i;
+        RefreshTrackNo();
         var item = _items[i];
         item.Active = true;
         PlayList.SelectedItem = item;
@@ -279,7 +288,7 @@ public partial class VideoWindow : Window
         _resumeTo = LoadResume(item.Path);
         _time = 0; _length = 0;
         _updating = true; SeekSlider.Value = 0; _updating = false;
-        TimeText.Text = "0:00"; LenText.Text = "0:00";
+        TimeText.Text = LcdTime.Text = "0:00"; LenText.Text = "0:00";
         UpdateTitle();
 
         var audio = FileOps.AudioExtensions.Contains(Path.GetExtension(item.Path).ToLowerInvariant());
@@ -350,7 +359,7 @@ public partial class VideoWindow : Window
     private void OnTime(long t)
     {
         _time = t;
-        TimeText.Text = Fmt(t);
+        TimeText.Text = LcdTime.Text = Fmt(t);
         if (_length > 0)
         {
             _updating = true;
@@ -384,7 +393,7 @@ public partial class VideoWindow : Window
         ms = Math.Clamp(ms, 0, _length);
         _player.Time = ms;
         _time = ms;
-        TimeText.Text = Fmt(ms);
+        TimeText.Text = LcdTime.Text = Fmt(ms);
     }
 
     private void TogglePlay()
@@ -416,8 +425,8 @@ public partial class VideoWindow : Window
 
     private void RefreshVolume()
     {
-        VolText.Text = _st.Muted ? "mute" : _st.Volume + "%";
-        MuteBtn.Content = _st.Muted || _st.Volume == 0 ? "🔇" : _st.Volume < 40 ? "🔉" : "🔊";
+        VolText.Text = _st.Muted ? "MUTE" : _st.Volume + "%";
+        MuteBtn.Content = DeckGlyphs.Create(_st.Muted || _st.Volume == 0 ? "mute" : "volume");
         ApplyVolume();
     }
 
@@ -443,12 +452,22 @@ public partial class VideoWindow : Window
         RefreshRepeat(); SaveState();
     }
 
-    private void RefreshRepeat() =>
-        RepeatBtn.Content = "Repeat: " + _st.Repeat;
+    private void RefreshRepeat()
+    {
+        RepeatBtn.Content = "REPEAT: " + _st.Repeat.ToUpperInvariant();
+        DeckUi.SetOn(RepeatBtn, _st.Repeat != "off");
+        DeckUi.SetOn(FlagRepeat, _st.Repeat != "off");
+    }
+
+    /// <summary>The deck display's TRACK: which file of the playlist, of how many.</summary>
+    private void RefreshTrackNo() =>
+        LcdTrack.Text = _items.Count == 0 ? "--/--" : $"{(_index >= 0 && _index < _items.Count ? _index + 1 : 0):00}/{_items.Count:00}";
 
     private void RefreshPlayState()
     {
-        PlayBtn.Content = _playing ? "⏸" : "▶";
+        PlayBtn.Content = DeckGlyphs.Create(_playing ? "pause" : "play", 26);
+        DeckUi.SetOn(FlagPlay, _playing);
+        DeckUi.SetOn(FlagPause, !_playing && Current != null && _player.State == VLCState.Paused);
         UpdateTray();
     }
 
@@ -475,7 +494,11 @@ public partial class VideoWindow : Window
         catch { }
     }
 
-    private void RefreshSubs() => SubsBtn.Content = _st.SubsOn ? "CC" : "CC ✕";
+    private void RefreshSubs()
+    {
+        SubsBtn.Content = _st.SubsOn ? "CC" : "CC OFF";
+        DeckUi.SetOn(SubsBtn, _st.SubsOn);
+    }
 
     private void ToggleSubs() { _st.SubsOn = !_st.SubsOn; RefreshSubs(); ApplySubs(); SaveState(); }
 
@@ -526,7 +549,7 @@ public partial class VideoWindow : Window
         var wasCurrent = idx == _index;
         _items.RemoveAt(idx);
         if (idx < _index) _index--;
-        ListCount.Text = _items.Count == 0 ? "" : $"({_items.Count})";
+        ListCount.Text = _items.Count == 0 ? "" : $"{_items.Count} ITEMS"; RefreshTrackNo();
         if (wasCurrent)
         {
             _index = -1;
@@ -541,8 +564,8 @@ public partial class VideoWindow : Window
         _index = -1; _playing = false; _time = 0; _length = 0;
         Task.Run(() => { try { _player.Stop(); } catch { } });
         Video.IsVisible = false;
-        ShowOverlay("🎬", "Drop videos or music here, or press O to open");
-        TimeText.Text = "0:00"; LenText.Text = "0:00";
+        ShowOverlay("🎬", "Drop videos here, or press O to open");
+        TimeText.Text = LcdTime.Text = "0:00"; LenText.Text = "0:00";
         _updating = true; SeekSlider.Value = 0; _updating = false;
         UpdateTitle(); RefreshPlayState();
     }
@@ -645,7 +668,7 @@ public partial class VideoWindow : Window
             case "fullscreen": ToggleFullscreen(); break;
             case "external": OpenExternal(); break;
             case "remove": RemoveSelected(); break;
-            case "clear": _items.Clear(); ListCount.Text = ""; StopAll(); break;
+            case "clear": _items.Clear(); ListCount.Text = ""; StopAll(); RefreshTrackNo(); break;
         }
     }
 

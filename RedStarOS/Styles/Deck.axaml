@@ -1,0 +1,216 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later
+     The "deck": the look of CD Player and Video, a hi-fi deck in dark plastic. Pill buttons, round transport keys with
+     a glowing play key, a status pill and a display sunk into the panel with its red digits glowing.
+
+     After CDPlayer by Kizarov3 (MIT licence, github.com/Kizarov3/CDPlayer): its palette, pills, keys and deck display,
+     rebuilt here for Avalonia. Copyright (c) 2026 Kizarov3; the MIT notice is in RedStarOS/Views/Deck/NOTICE. -->
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Styles.Resources>
+    <!-- the palette (CDPlayer's dark theme) -->
+    <Color x:Key="DeckBg">#111113</Color>
+    <Color x:Key="DeckCard">#1F1F22</Color>
+    <Color x:Key="DeckAccent">#C4141C</Color>
+    <Color x:Key="DeckText">#E8E9EC</Color>
+    <Color x:Key="DeckMuted">#8A8E94</Color>
+    <SolidColorBrush x:Key="DeckAccentBrush" Color="#C4141C" />
+    <SolidColorBrush x:Key="DeckTextBrush" Color="#E8E9EC" />
+    <SolidColorBrush x:Key="DeckMutedBrush" Color="#8A8E94" />
+    <SolidColorBrush x:Key="DeckHintBrush" Color="#787A7E" />
+    <SolidColorBrush x:Key="DeckRuleBrush" Color="#16FFFFFF" />
+    <LinearGradientBrush x:Key="DeckBackdrop" StartPoint="0%,0%" EndPoint="0%,100%">
+      <GradientStop Color="#1C1C1F" Offset="0" />
+      <GradientStop Color="#09090A" Offset="1" />
+    </LinearGradientBrush>
+    <!-- the deck's display: dark glass with faint scan lines -->
+    <LinearGradientBrush x:Key="DeckLcdBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+      <GradientStop Color="#A8000000" Offset="0" />
+      <GradientStop Color="#85000000" Offset="1" />
+    </LinearGradientBrush>
+    <!-- a hi-fi key: lit from above -->
+    <LinearGradientBrush x:Key="DeckKeyFace" StartPoint="0%,0%" EndPoint="0%,100%">
+      <GradientStop Color="#33FFFFFF" Offset="0" />
+      <GradientStop Color="#14FFFFFF" Offset="0.5" />
+      <GradientStop Color="#0A000000" Offset="1" />
+    </LinearGradientBrush>
+  </Styles.Resources>
+
+  <!-- ── pills: the header's and the panels' buttons ── -->
+  <Style Selector="Button.deck-pill">
+    <Setter Property="Background" Value="#0CFFFFFF" />
+    <Setter Property="BorderBrush" Value="#1AFFFFFF" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="999" />
+    <Setter Property="Padding" Value="14,6" />
+    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="Foreground" Value="{StaticResource DeckTextBrush}" />
+    <Setter Property="FontSize" Value="11.5" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.deck-pill:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#14FFFFFF" />
+    <Setter Property="BorderBrush" Value="#26FFFFFF" />
+    <Setter Property="TextElement.Foreground" Value="{StaticResource DeckTextBrush}" />
+  </Style>
+  <Style Selector="Button.deck-pill:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#1FFFFFFF" />
+  </Style>
+  <Style Selector="Button.deck-pill.on">
+    <Setter Property="Background" Value="#1FFFFFFF" />
+    <Setter Property="Foreground" Value="{StaticResource DeckAccentBrush}" />
+  </Style>
+  <Style Selector="Button.deck-pill.small">
+    <Setter Property="Padding" Value="11,4" />
+    <Setter Property="MinHeight" Value="26" />
+    <Setter Property="FontSize" Value="10.5" />
+  </Style>
+  <Style Selector="Button.deck-pill:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#06FFFFFF" />
+    <Setter Property="TextElement.Foreground" Value="#55E8E9EC" />
+  </Style>
+
+  <!-- ── transport keys: hi-fi keys, the play key wider and glowing red ── -->
+  <Style Selector="Button.deck-key">
+    <Setter Property="Background" Value="{StaticResource DeckKeyFace}" />
+    <Setter Property="BorderBrush" Value="#8C000000" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="7" />
+    <Setter Property="Width" Value="50" />
+    <Setter Property="Height" Value="36" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Foreground" Value="#B0E8E9EC" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.deck-key:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#26FFFFFF" />
+    <Setter Property="BorderBrush" Value="#8C000000" />
+    <Setter Property="TextElement.Foreground" Value="{StaticResource DeckTextBrush}" />
+  </Style>
+  <Style Selector="Button.deck-key:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#0AFFFFFF" />
+  </Style>
+  <Style Selector="Button.deck-key.primary">
+    <Setter Property="Width" Value="92" />
+    <Setter Property="Foreground" Value="{StaticResource DeckAccentBrush}" />
+    <Setter Property="Effect">
+      <DropShadowEffect Color="#99C4141C" BlurRadius="10" OffsetX="0" OffsetY="0" />
+    </Setter>
+  </Style>
+  <Style Selector="Button.deck-key.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="TextElement.Foreground" Value="#E0202A" />
+  </Style>
+  <Style Selector="Button.deck-key.on">
+    <Setter Property="Foreground" Value="{StaticResource DeckAccentBrush}" />
+  </Style>
+
+  <!-- ── the status pill (READY TO PLAY / PLAYING) ── -->
+  <Style Selector="Border.deck-status">
+    <Setter Property="Background" Value="#66000000" />
+    <Setter Property="BorderBrush" Value="#14FFFFFF" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="999" />
+    <Setter Property="Padding" Value="16,6" />
+  </Style>
+  <Style Selector="TextBlock.deck-status">
+    <Setter Property="Foreground" Value="#F02028" />
+    <Setter Property="FontSize" Value="11.5" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="LetterSpacing" Value="0.4" />
+  </Style>
+
+  <!-- ── words on the panel ── -->
+  <Style Selector="TextBlock.deck-label">
+    <Setter Property="Foreground" Value="{StaticResource DeckMutedBrush}" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="LetterSpacing" Value="0.5" />
+  </Style>
+  <Style Selector="TextBlock.deck-title">
+    <Setter Property="Foreground" Value="{StaticResource DeckTextBrush}" />
+    <Setter Property="FontSize" Value="34" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </Style>
+  <Style Selector="TextBlock.deck-sub">
+    <Setter Property="Foreground" Value="{StaticResource DeckMutedBrush}" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </Style>
+  <Style Selector="TextBlock.deck-hint">
+    <Setter Property="Foreground" Value="{StaticResource DeckHintBrush}" />
+    <Setter Property="FontSize" Value="10.5" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="LetterSpacing" Value="0.3" />
+  </Style>
+
+  <!-- ── the deck's display ── -->
+  <Style Selector="Border.deck-lcd">
+    <Setter Property="Background" Value="{StaticResource DeckLcdBrush}" />
+    <Setter Property="BorderBrush" Value="#99000000" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="16,9" />
+  </Style>
+  <Style Selector="TextBlock.deck-lcd-label">
+    <Setter Property="Foreground" Value="#B3C4141C" />
+    <Setter Property="FontSize" Value="10" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="LetterSpacing" Value="1" />
+  </Style>
+  <Style Selector="TextBlock.deck-digits">
+    <Setter Property="Foreground" Value="#F02028" />
+    <Setter Property="FontFamily" Value="DejaVu Sans Mono, Liberation Mono, monospace" />
+    <Setter Property="FontSize" Value="26" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Effect">
+      <DropShadowEffect Color="#CCC4141C" BlurRadius="8" OffsetX="0" OffsetY="0" />
+    </Setter>
+  </Style>
+  <Style Selector="TextBlock.deck-flag">
+    <Setter Property="Foreground" Value="#33C4141C" />
+    <Setter Property="FontSize" Value="10" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="LetterSpacing" Value="1" />
+    <Setter Property="Margin" Value="0,0,10,0" />
+  </Style>
+  <Style Selector="TextBlock.deck-flag.on">
+    <Setter Property="Foreground" Value="#F02028" />
+    <Setter Property="Effect">
+      <DropShadowEffect Color="#CCC4141C" BlurRadius="6" OffsetX="0" OffsetY="0" />
+    </Setter>
+  </Style>
+
+  <!-- ── panels and lists ── -->
+  <Style Selector="Border.deck-card">
+    <Setter Property="Background" Value="#0BFFFFFF" />
+    <Setter Property="BorderBrush" Value="#16FFFFFF" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Padding" Value="14,12" />
+  </Style>
+  <Style Selector="ListBox.deck-list">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{StaticResource DeckTextBrush}" />
+  </Style>
+  <Style Selector="ListBox.deck-list ListBoxItem">
+    <Setter Property="Padding" Value="8,6" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Foreground" Value="{StaticResource DeckTextBrush}" />
+  </Style>
+  <Style Selector="ListBox.deck-list ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#0FFFFFFF" />
+  </Style>
+  <Style Selector="ListBox.deck-list ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#14FFFFFF" />
+  </Style>
+  <Style Selector="TextBox.deck-field">
+    <Setter Property="Background" Value="#4D000000" />
+    <Setter Property="BorderBrush" Value="#29FFFFFF" />
+    <Setter Property="Foreground" Value="{StaticResource DeckTextBrush}" />
+    <Setter Property="CornerRadius" Value="999" />
+    <Setter Property="Padding" Value="12,5" />
+    <Setter Property="MinHeight" Value="28" />
+  </Style>
+</Styles>

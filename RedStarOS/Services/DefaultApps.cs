@@ -21,7 +21,8 @@ public static class DefaultApps
         new("sheets", "Spreadsheets", "Sheets", new[] { ".xlsx", ".csv", ".tsv", ".ods" }, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv" }),
         new("pdf", "PDF documents", "Crimson Online", new[] { ".pdf" }, new[] { "application/pdf" }),
         new("images", "Pictures", "Image Viewer", new[] { ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg", ".tif", ".tiff" }, new[] { "image/png", "image/jpeg", "image/gif", "image/webp" }),
-        new("media", "Video and music", "Video", new[] { ".mp4", ".mkv", ".webm", ".avi", ".mov", ".mp3", ".ogg", ".flac", ".wav", ".m4a" }, new[] { "video/mp4", "video/x-matroska", "video/webm", "audio/mpeg", "audio/ogg", "audio/flac" }),
+        new("media", "Video", "Video", new[] { ".mp4", ".mkv", ".webm", ".avi", ".mov" }, new[] { "video/mp4", "video/x-matroska", "video/webm" }),
+        new("music", "Music", "CD Player", new[] { ".mp3", ".ogg", ".opus", ".flac", ".wav", ".m4a", ".aac" }, new[] { "audio/mpeg", "audio/ogg", "audio/flac", "audio/x-wav", "audio/mp4" }),
     };
 
     private static Dictionary<string, string>? _map;
