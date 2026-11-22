@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   appimage:
-    # 24.04: the oldest Ubuntu with WebKitGTK 6.0, which Red Star Online (built into the AppImage) needs.
+    # 24.04: the oldest Ubuntu with WebKitGTK 6.0, which Crimson Online (built into the AppImage) needs.
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
@@ -23,7 +23,7 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Tools for AppImage creation and delta updates, and Red Star Online's libraries
+      - name: Tools for AppImage creation and delta updates, and Crimson Online's libraries
         run: |
           sudo apt-get update
           sudo apt-get install -y zsync libfuse2t64 meson ninja-build pkg-config libgtk-4-dev libwebkitgtk-6.0-dev \

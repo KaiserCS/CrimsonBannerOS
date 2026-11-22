@@ -7,7 +7,7 @@ name: Check
 #                    session (artifact "session-screenshots")
 #   • compositor     redstar-comp (wlroots 0.20, in an Arch Linux container) built with warnings as errors, then its
 #                    behaviour tests on wlroots' virtual screen through Xwayland
-#   • packages       Red Star's own package feed (tools/packages.sh): filled once, then the shell is restored, built
+#   • packages       Crimson Banner's own package feed (tools/packages.sh): filled once, then the shell is restored, built
 #                    and published with nuget.org cut off
 #   • browser        Crimson Online (GTK 4 + WebKitGTK, in an Arch Linux container): unit tests and the real
 #                    browser's self-test, headless inside redstar-comp
