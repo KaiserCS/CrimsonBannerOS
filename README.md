@@ -136,4 +136,4 @@ see [LICENSE](LICENSE) for the full text.
 
 It uses Avalonia (MIT), LibVLC (LGPL-2.1-or-later, linked dynamically), wlroots (MIT), WebKitGTK (LGPL/BSD) and other
 libraries under GPL-compatible licences; their own terms still apply to them. CD Player's and Video's look follows CDPlayer by Kizarov3 (MIT); its notice is in
-`RedStarOS/Views/Deck/NOTICE`.
+`RedStarOS/Views/HiFi/NOTICE`.

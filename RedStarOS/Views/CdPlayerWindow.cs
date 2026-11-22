@@ -3,7 +3,7 @@
 // and time, the shelf holds the albums in ~/Music, and audio CDs play from the drive. Sound through LibVLC.
 //
 // After CDPlayer by Kizarov3 (MIT licence, github.com/Kizarov3/CDPlayer): its look, layout and keys, rebuilt as a
-// native app of the shell (no Electron, no streaming services). Views/Deck/NOTICE has CDPlayer's licence.
+// native app of the shell (no Electron, no streaming services). Views/HiFi/NOTICE has CDPlayer's licence.
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,7 +24,7 @@ using Avalonia.Styling;
 using Avalonia.Threading;
 using LibVLCSharp.Shared;
 using RedStarOS.Services;
-using RedStarOS.Views.Deck;
+using RedStarOS.Views.HiFi;
 
 namespace RedStarOS.Views;
 

@@ -8,7 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
 
-namespace RedStarOS.Views.Deck;
+namespace RedStarOS.Views.HiFi;
 
 public sealed class DiscView : Control
 {

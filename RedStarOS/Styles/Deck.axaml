@@ -3,7 +3,7 @@
      a glowing play key, a status pill and a display sunk into the panel with its red digits glowing.
 
      After CDPlayer by Kizarov3 (MIT licence, github.com/Kizarov3/CDPlayer): its palette, pills, keys and deck display,
-     rebuilt here for Avalonia. Copyright (c) 2026 Kizarov3; the MIT notice is in RedStarOS/Views/Deck/NOTICE. -->
+     rebuilt here for Avalonia. Copyright (c) 2026 Kizarov3; the MIT notice is in RedStarOS/Views/HiFi/NOTICE. -->
 <Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Styles.Resources>
     <!-- the palette (CDPlayer's dark theme) -->

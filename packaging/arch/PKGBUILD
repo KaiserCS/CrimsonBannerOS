@@ -114,7 +114,7 @@ package_crimson-banner-shell() {
   install -Dm644 packaging/redstaros.png "$pkgdir/usr/share/icons/hicolor/256x256/apps/redstaros.png"
   install -Dm644 packaging/crimson-banner.pam "$pkgdir/etc/pam.d/crimson-banner"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-  install -Dm644 RedStarOS/Views/Deck/NOTICE "$pkgdir/usr/share/licenses/$pkgname/NOTICE.CDPlayer"
+  install -Dm644 RedStarOS/Views/HiFi/NOTICE "$pkgdir/usr/share/licenses/$pkgname/NOTICE.CDPlayer"
 }
 
 package_crimson-banner-greeter() {

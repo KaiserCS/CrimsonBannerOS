@@ -1,4 +1,4 @@
-The deck look of CD Player and Video (RedStarOS/Styles/Deck.axaml, RedStarOS/Views/Deck/, CdPlayerWindow) follows
+The deck look of CD Player and Video (RedStarOS/Styles/Deck.axaml, RedStarOS/Views/HiFi/, CdPlayerWindow) follows
 CDPlayer by Kizarov3, https://github.com/Kizarov3/CDPlayer: its palette, pills, transport keys, deck display, disc
 and shelf. It is a rebuild in C# and Avalonia, not a copy of CDPlayer's code. CDPlayer's licence:
 

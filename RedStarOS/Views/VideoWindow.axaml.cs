@@ -20,7 +20,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using LibVLCSharp.Shared;
 using RedStarOS.Services;
-using RedStarOS.Views.Deck;
+using RedStarOS.Views.HiFi;
 
 namespace RedStarOS.Views;
 

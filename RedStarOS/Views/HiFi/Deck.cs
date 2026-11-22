@@ -11,7 +11,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using ShapePath = Avalonia.Controls.Shapes.Path;
 
-namespace RedStarOS.Views.Deck;
+namespace RedStarOS.Views.HiFi;
 
 public static class DeckColors
 {
