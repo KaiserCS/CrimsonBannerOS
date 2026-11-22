@@ -2,7 +2,7 @@
 
 Versions are YY.MM.N (README, "Versions"). `tools/release.sh` adds each release's section here.
 
-## 26.11.1 (not released yet)
+## 26.11.1 (2026-11-21)
 
 The first fix release: a menu bug in the Wayland session, and three additions.
 

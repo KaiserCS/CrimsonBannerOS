@@ -10,7 +10,7 @@
 
 pkgbase=crimson-banner
 pkgname=(crimson-banner crimson-banner-shell crimson-banner-greeter redstar-comp redstar-wm crimson-online)
-pkgver=26.11.0
+pkgver=26.11.1
 pkgrel=1
 pkgdesc='Crimson Banner OS desktop'
 arch=(x86_64 aarch64)
