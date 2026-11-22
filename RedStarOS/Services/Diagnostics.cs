@@ -129,10 +129,10 @@ public static class Diagnostics
             w.Write(content);
         }
         Add("system.txt", info.ToString());
-        foreach (var f in new[] { "crash.log", "crash.log.old", "browser.log", "browser-error.log" })
+        foreach (var f in new[] { "crash.log", "crash.log.old", "browser.log", "browser-error.log", "pointer-trace.log", "session.log" })
         {
             var p = AppPaths.ConfigFile(f);
-            if (File.Exists(p)) Add(f, Read(p));
+            if (File.Exists(p)) Add(f, f == "session.log" ? Tail(p, 4000) : Read(p));
         }
         return zipPath;
     }

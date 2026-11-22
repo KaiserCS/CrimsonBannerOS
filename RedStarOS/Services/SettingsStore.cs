@@ -92,6 +92,7 @@ public sealed class Settings
     public bool WaylandApps { get; set; } = true;               // inside redstar-comp other programs run natively on Wayland (screen sharing); off: all X11; next start
     public bool NativeWaylandShell { get; set; }               // experimental: Red Star's own windows natively on Wayland inside redstar-comp; next start
     public string Graphics { get; set; } = "auto";              // auto | gpu | software (Settings → Diagnostics)
+    public bool TracePointer { get; set; }                     // Diagnostics: record hover enter/exit (pointer-trace.log); next start
 }
 
 public static class AppPaths

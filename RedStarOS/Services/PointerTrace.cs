@@ -17,20 +17,26 @@ namespace RedStarOS.Services;
 public static class PointerTrace
 {
     private static StreamWriter? _out;
+    private const long MaxBytes = 8 << 20;           // stops there: a few minutes of hovering is plenty
+
+    /// <summary>Where Settings → Diagnostics → "Record pointer activity" writes it.</summary>
+    public static string LogPath => AppPaths.ConfigFile("pointer-trace.log");
     private static readonly Stopwatch Clock = Stopwatch.StartNew();
 
     public static void Install()
     {
         var path = Environment.GetEnvironmentVariable("REDSTAR_TRACE_POINTER");
+        bool fromSetting = false;
+        if (string.IsNullOrEmpty(path) && SettingsStore.Current.TracePointer) { path = LogPath; fromSetting = true; }
         if (string.IsNullOrEmpty(path) || _out != null) return;
-        try { _out = new StreamWriter(path, append: true) { AutoFlush = true }; }
+        try { _out = new StreamWriter(path, append: !fromSetting) { AutoFlush = true }; }      // a fresh log each start
         catch { return; }
         InputElement.PointerEnteredEvent.AddClassHandler<Control>((c, e) => Log("enter", c, e), handledEventsToo: true);
         InputElement.PointerExitedEvent.AddClassHandler<Control>((c, e) => Log("exit", c, e), handledEventsToo: true);
         // every 25th move a window gets, so a log without enters still shows whether the pointer reached the shell
         InputElement.PointerMovedEvent.AddClassHandler<TopLevel>((t, e) =>
         {
-            if (++_moves % 25 != 0 || _out == null) return;
+            if (++_moves % 25 != 0 || _out == null || _out.BaseStream.Length > MaxBytes) return;
             var p = e.GetPosition(t);
             lock (_out) _out.WriteLine($"{Clock.ElapsedMilliseconds}\tmove\t{t.GetType().Name}:{t.Bounds.Width:0}x{t.Bounds.Height:0}\t{(e.Source as Control)?.GetType().Name}\t{p.X:0.0},{p.Y:0.0}");
         }, handledEventsToo: true);
@@ -41,7 +47,7 @@ public static class PointerTrace
 
     private static void Log(string what, Control c, PointerEventArgs e)
     {
-        if (_out == null || !Traced(c)) return;
+        if (_out == null || !Traced(c) || _out.BaseStream.Length > MaxBytes) return;
         var top = TopLevel.GetTopLevel(c);
         var p = top != null ? e.GetPosition(top) : default;
         lock (_out) _out.WriteLine($"{Clock.ElapsedMilliseconds}\t{what}\t{Describe(c)}\t{top?.GetType().Name}\t{p.X:0.0},{p.Y:0.0}");

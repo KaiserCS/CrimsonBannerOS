@@ -827,6 +827,17 @@ public static class SettingsPages
             Avalonia.Automation.AutomationProperties.SetName(box, title);
             return new StackPanel { Spacing = 4, Children = { Eyebrow(title), box } };
         }
+        p.Children.Add(Eyebrow("HOVER PROBLEMS"));
+        var trace = new CheckBox
+        {
+            Content = "Record pointer activity: which buttons and menu items the pointer enters and leaves",
+            IsChecked = SettingsStore.Current.TracePointer
+        };
+        trace.IsCheckedChanged += (_, _) => { SettingsStore.Current.TracePointer = trace.IsChecked == true; SettingsStore.Save(); };
+        p.Children.Add(trace);
+        p.Children.Add(Note("For highlights that blink or flicker: turn this on, sign out and back in, move the pointer over the "
+                            + "things that blink for a few seconds, then Export diagnostics. It records only pointer positions over "
+                            + "Crimson Banner's own controls, stays on this computer, and is turned off again here."));
         p.Children.Add(LogBox("ERRORS (crash.log)", "crash.log"));
         p.Children.Add(LogBox("BROWSER (browser.log)", "browser.log"));
 

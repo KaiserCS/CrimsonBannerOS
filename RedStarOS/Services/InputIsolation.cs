@@ -214,6 +214,7 @@ public static class InputIsolation
         foreach (var (k, v) in AppDisplayEnv(SettingFlag("WaylandApps", fallback: true))) env[k] = v;
         env["REDSTAR_SHADOWS"] = SettingFlag("WindowShadows", fallback: true) ? "1" : "0";
         env["REDSTAR_REDUCE_MOTION"] = SettingFlag("ReduceMotion") ? "1" : "0";         // no window fades
+        if (SettingFlag("TracePointer")) env["REDSTAR_COMP_TRACE_POINTER"] = "1";       // Diagnostics: into session.log
         if (!session) { env["REDSTAR_NESTED"] = "1"; env["REDSTAR_NESTED_MODE"] = "redstar-comp"; }
         if (Env("REDSTAR_UI_SCALE") == null && Env("AVALONIA_GLOBAL_SCALE_FACTOR") is { } sc) env["REDSTAR_UI_SCALE"] = sc;
         foreach (var (k, v) in env) if (v == null) psi.Environment.Remove(k); else psi.Environment[k] = v;
