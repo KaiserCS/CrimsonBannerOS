@@ -387,7 +387,7 @@ public sealed class SoftwareWindow : Window
     private Control Buttons(SoftwareItem item)
     {
         var panel = new StackPanel { Spacing = 8, VerticalAlignment = VerticalAlignment.Center, MinWidth = 180 };
-        if (_busy.TryGetValue(Key(item), out var busy))
+        if (_busy.TryGetValue(BusyKey(item), out var busy))
         {
             _detailBar = new ProgressBar { Minimum = 0, Maximum = 100, Value = busy.Pct, Height = 8, IsIndeterminate = busy.Pct <= 0 };
             panel.Children.Add(new TextBlock { Text = "Working…", Classes = { "caption" } });
@@ -545,14 +545,14 @@ public sealed class SoftwareWindow : Window
 
     // ── doing things ──
 
-    private static string Key(SoftwareItem i) => i.Source + ":" + i.Id;
+    private static string BusyKey(SoftwareItem i) => i.Source + ":" + i.Id;
 
     private static InstallMethod? Method(SoftwareItem item) =>
         item.Source == SoftwareSource.CrimsonBanner ? OurCatalog.Usable(item, ProcessUtil.Which) : item.Methods.FirstOrDefault();
 
     private async Task Do(SoftwareItem item, string verb, Func<CancellationToken, Task<string?>> work)
     {
-        var key = Key(item);
+        var key = BusyKey(item);
         if (_busy.ContainsKey(key)) return;
         var cts = new CancellationTokenSource();
         _busy[key] = (0, cts);
@@ -570,7 +570,7 @@ public sealed class SoftwareWindow : Window
 
     private Action<int> ProgressFor(SoftwareItem item) => pct => Dispatcher.UIThread.Post(() =>
     {
-        var key = Key(item);
+        var key = BusyKey(item);
         if (!_busy.TryGetValue(key, out var b)) return;
         _busy[key] = (pct, b.Cts);
         if (_detail == item && _detailBar != null) { _detailBar.IsIndeterminate = pct <= 0; _detailBar.Value = pct; }
