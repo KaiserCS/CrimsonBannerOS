@@ -23,7 +23,8 @@
 - Versions are YY.MM.N from `VERSION` (README, "Versions"); `tools/version.sh` gives every part its version, and
   development builds are `26.11.0+5.g1a2b3c4`. Releases only with `tools/release.sh` when the owner asks (it tags;
   pushing a `v*` tag publishes a release). Don't hand-edit versions elsewhere.
-- After a change: commit to `main` on KaiserCS/RedStarOS-Linux, and send a zip of the tree as `RedStarOS-Linux.zip`
+- After a change: commit to `main` on KaiserCS/CrimsonBannerOS (formerly KaiserCS/RedStarOS-Linux; GitHub redirects the old
+  name), and send a zip of the tree as `CrimsonBannerOS.zip`
   (without `.git`, `bin`, `obj`, `node_modules`, `__pycache__`, screenshots, `compositor/build`).
 - Layout: `RedStarOS/` the Avalonia shell (C#), `compositor/` redstar-comp (C, wlroots), `wm/` redstar-wm (X11),
   `browser/` Crimson Online (C, GTK 4 + WebKitGTK),

@@ -10,7 +10,7 @@
 set -euo pipefail
 NAME=crimson-banner-apps
 CONF="${CRIMSON_PACMAN_CONF:-/etc/pacman.conf}"
-SERVER="${CRIMSON_APPS_SERVER:-https://github.com/KaiserCS/RedStarOS-Linux/releases/download/apps-\$arch}"
+SERVER="${CRIMSON_APPS_SERVER:-https://github.com/KaiserCS/CrimsonBannerOS/releases/download/apps-\$arch}"
 KEYRING="${CRIMSON_APPS_KEYRING:-/usr/lib/crimson-banner/software/crimson-banner.gpg}"
 PACMAN_KEY="${CRIMSON_PACMAN_KEY:-pacman-key}"
 

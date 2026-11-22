@@ -161,7 +161,7 @@ if [ "$EXTRAS" = 1 ]; then
 fi
 
 # ── 7. Crimson Banner's own apps ([crimson-banner-apps], once some are published: tools/publish-app.sh) ──
-APPS_DB="https://github.com/KaiserCS/RedStarOS-Linux/releases/download/apps-$(uname -m)/crimson-banner-apps.db"
+APPS_DB="https://github.com/KaiserCS/CrimsonBannerOS/releases/download/apps-$(uname -m)/crimson-banner-apps.db"
 if [ "$(crimson-apps-repo status 2>/dev/null)" != enabled ] && [ -s /usr/lib/crimson-banner/software/crimson-banner.gpg ] \
    && command -v curl >/dev/null && curl -fsIL -o /dev/null --max-time 15 "$APPS_DB"; then
   step "Crimson Banner's apps repository"

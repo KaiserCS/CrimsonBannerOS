@@ -1,12 +1,15 @@
-# Crimson Banner OS (formerly Red Star OS, Project ANDROMEDA RSO 1.2)
+# Crimson Banner OS
 
-Version **26.11.0** (see [Versions](#versions) and [CHANGELOG.md](CHANGELOG.md)).
+A self-reliant Linux desktop and distribution, based on Arch Linux, with its own parts: the desktop shell, a Wayland
+compositor (redstar-comp), an X11 window manager (redstar-wm), a web browser (Crimson Online), a login screen and a
+software centre. Everything is free software under the GPL.
 
-> **Renamed 20 Nov 2026.** Everything you see says Crimson Banner OS, and the apps lost their "Red Star" prefix
-> (the browser is Crimson Online). Program names, folders and settings keep their old names (`redstar-comp`,
-> `redstar-online`, `~/.config/redstaros`, the `RedStarOS` project), so existing installs carry on unchanged.
+- **Install on Arch, CachyOS or EndeavourOS:** `./install-arch.sh` ([details](#arch-packages-and-crimson-banners-own-pacman-repository)).
+- **Releases:** [GitHub Releases](https://github.com/KaiserCS/CrimsonBannerOS/releases) · [CHANGELOG.md](CHANGELOG.md) · [Versions](#versions).
+- Internally, programs and folders use short names: `redstar-comp`, `redstar-wm`, `redstar-online`, the `RedStarOS`
+  project and `~/.config/redstaros`.
 
-Avalonia 12 (12.1.6) / .NET 8 port of the original WinForms project, with a much more functional desktop.
+The shell is built with Avalonia 12 (12.1.6) on .NET 8.
 
 > **Principles:** the project is governed by self-reliance, in the Marxist-Leninist sense: it holds its own base
 > layers, keeps its work GPL, accounts for every outside dependency and its way out, and builds and runs without
@@ -125,7 +128,7 @@ Crimson Banner and not to the desktop underneath.
 ## Wayland compositor: redstar-comp (experimental, phase 2)
 
 `compositor/redstar-comp.c` is Crimson Banner's own Wayland compositor, built on wlroots 0.20. It takes the place of
-redstar-wm **and** picom: the same title bars (red star, title, minimise / maximise / close, double-click to
+redstar-wm **and** picom: the same title bars (the star emblem, title, minimise / maximise / close, double-click to
 maximise), 3 px borders, resizing from the edges, soft shadows, Alt+drag / Alt+right-drag, drag to the top edge to
 maximise and to the sides to snap, Alt+F4. Crimson Banner itself is unchanged: it still talks X11, through the Xwayland
 redstar-comp runs, and redstar-comp keeps what the shell reads — `_NET_WORKAREA` minus the taskbar,
@@ -400,7 +403,7 @@ A catalogue entry, as `tools/publish-app.sh` writes it from `app.json`:
   "install": [
     { "kind": "pacman",   "package": "crimson-planner" },
     { "kind": "flatpak",  "ref": "org.crimsonbanner.Planner", "remote": "flathub" },
-    { "kind": "appimage", "url": "https://github.com/KaiserCS/RedStarOS-Linux/releases/download/v26.12.0/Planner-x86_64.AppImage",
+    { "kind": "appimage", "url": "https://github.com/KaiserCS/CrimsonBannerOS/releases/download/v26.12.0/Planner-x86_64.AppImage",
                           "sha256": "…64 hex digits…" }
   ] }
 ```
@@ -522,12 +525,12 @@ A native Avalonia player built on **LibVLCSharp** (Start menu → **RSMedia → 
 - Video frames are decoded by libvlc into memory and drawn by Avalonia itself (no native child window), so the picture is inline on both X11 and Wayland. Large videos are scaled down to at most 1920 px wide for display.
 
 ## Changes in this revision
-- **Start menu has two sections**, switched with two icon tabs above the category rail — the red star for Crimson Banner
+- **Start menu has two sections**, switched with two icon tabs above the category rail — the star emblem for Crimson Banner
   apps, your distribution's own logo (os-release `LOGO=`, else a terminal glyph) for Linux apps (the last one
   used is remembered): *Crimson Banner* — All Crimson Banner apps, Recent, Office, Media, Games, Online, Utilities, System;
   *Linux* — All Linux apps, Recent, and the installed programs grouped as Internet / Multimedia / Graphics / Office /
   Development / Games / … (Other last), shown with their own icons. Each section keeps its own Recent list. Search
-  covers both and groups the results under RED STAR APPS, LINUX APPS (the open section first) and FILES, SETTINGS AND
+  covers both and groups the results under CRIMSON BANNER APPS, LINUX APPS (the open section first) and FILES, SETTINGS AND
   THE WEB. Without installed Linux programs (or for a child account) the tabs are hidden.
 - **Messenger** no longer ships sample messages or the fake "typing..." line (old sample messages are purged from saved history). The placeholder contact list is removed too.
 - **Full-screen desktop by default** (Settings → Appearance can switch it back to a maximised window).

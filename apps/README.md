@@ -22,7 +22,7 @@ apps/planner/
   "description": "Several paragraphs. Blank lines separate them.",
   "license": "GPL-3.0-or-later",
   "developer": "Crimson Banner OS",
-  "homepage": "https://github.com/KaiserCS/RedStarOS-Linux",
+  "homepage": "https://github.com/KaiserCS/CrimsonBannerOS",
   "categories": ["Science", "Office"],
   "icon": "icon.png",
   "screenshots": ["screenshot-1.png"],

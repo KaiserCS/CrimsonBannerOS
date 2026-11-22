@@ -21,7 +21,7 @@ namespace RedStarOS.Services.Software;
 public static class OurCatalog
 {
     /// <summary>The "apps" release, kept up to date in place by tools/publish-app.sh (not an OS release).</summary>
-    public const string DefaultUrl = "https://github.com/KaiserCS/RedStarOS-Linux/releases/download/apps/catalog.json";
+    public const string DefaultUrl = "https://github.com/KaiserCS/CrimsonBannerOS/releases/download/apps/catalog.json";
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
 
     public static string CachePath => Path.Combine(

@@ -16,7 +16,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$PWD"
-SLUG="${REDSTAR_GITHUB_REPO:-KaiserCS/RedStarOS-Linux}"
+SLUG="${REDSTAR_GITHUB_REPO:-KaiserCS/CrimsonBannerOS}"
 OUT="${REDSTAR_APPS_DIR:-/srv/crimson-banner-apps}"
 ARCH="$(uname -m)"
 NAME=crimson-banner-apps
