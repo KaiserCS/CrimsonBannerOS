@@ -2,7 +2,7 @@
 
 Versions are YY.MM.N (README, "Versions"). `tools/release.sh` adds each release's section here.
 
-## 26.11.2 (not released yet)
+## 26.11.2 (2026-11-22)
 
 A second fix release, with a new app.
 
