@@ -32,9 +32,23 @@ public static class DesktopEntries
                 yield return Path.Combine(d, "applications");
     }
 
+    private static string? _signature;
+
+    /// <summary>When each folder of .desktop files last changed (installing or removing a program changes it).</summary>
+    private static string Signature() => string.Join("|", Dirs().Distinct().Select(d =>
+    {
+        try { return Directory.Exists(d) ? Directory.GetLastWriteTimeUtc(d).Ticks.ToString() : "-"; }
+        catch { return "?"; }
+    }));
+
+    /// <summary>The installed programs. Read again when one of their folders has changed since the last time, so a
+    /// program installed from Software (or anywhere else) shows up the next time the Start menu opens.</summary>
     public static IReadOnlyList<LinuxApp> All()
     {
-        if (_cache != null) return _cache;
+        var sig = Signature();
+        if (_cache != null && sig == _signature) return _cache;
+        _signature = sig;
+        _byClass.Clear();
         var map = new Dictionary<string, LinuxApp>(StringComparer.OrdinalIgnoreCase);
         foreach (var dir in Dirs().Distinct())
         {

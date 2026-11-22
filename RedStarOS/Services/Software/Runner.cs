@@ -14,6 +14,17 @@ namespace RedStarOS.Services.Software;
 public static class Runner
 {
     private static readonly Regex Percent = new(@"(\d{1,3})(?:\.\d+)?\s?%");
+    private static readonly Regex Step = new(@"^\(\s*(\d+)/(\d+)\)");
+
+    /// <summary>How far a line of output says it has got: its last "NN%", else pacman's "(3/12)" step; -1 for neither.</summary>
+    public static int ProgressOf(string line)
+    {
+        var ms = Percent.Matches(line);
+        if (ms.Count > 0 && int.TryParse(ms[^1].Groups[1].Value, out var pct) && pct <= 100) return pct;
+        var s = Step.Match(line.Trim());
+        if (s.Success && int.TryParse(s.Groups[1].Value, out var n) && int.TryParse(s.Groups[2].Value, out var m) && m > 0 && n <= m) return n * 100 / m;
+        return -1;
+    }
 
     public static async Task<(int Code, string Tail)> RunAsync(string file, IEnumerable<string> args, Action<int>? progress,
         CancellationToken ct, IDictionary<string, string>? env = null)
@@ -30,8 +41,7 @@ public static class Runner
         {
             l = l.Trim();
             if (l.Length == 0) return;
-            var ms = Percent.Matches(l);
-            if (ms.Count > 0 && int.TryParse(ms[^1].Groups[1].Value, out var pct) && pct <= 100) progress?.Invoke(pct);
+            if (ProgressOf(l) is var pct and >= 0) progress?.Invoke(pct);
             lock (tail) { tail.Enqueue(l); while (tail.Count > 8) tail.Dequeue(); }
         }
         var outTask = Pump(p.StandardOutput, Line);

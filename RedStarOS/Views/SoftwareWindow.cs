@@ -600,6 +600,7 @@ public sealed class SoftwareWindow : Window
         catch (OperationCanceledException) { error = "cancelled"; }
         catch (Exception ex) { error = ex.Message; }
         _busy.Remove(key);
+        if (error == null) DesktopEntries.Reload();      // the Start menu shows (or drops) it the next time it opens
         if (error == null) Notifier.Show("Software", $"{verb} {item.Name}: done.", "software");
         else if (error != "cancelled") Notifier.Show("Software", $"{verb} {item.Name} didn't work: {error}", "software");
         await RefreshInstalled();

@@ -208,3 +208,25 @@ public class PolkitHelperTests
         Assert.Equal("Authentication failure", why);
     }
 }
+
+public class PacmanUpdatesTests
+{
+    [Fact]
+    public void Checkupdates_lines_become_updates()
+    {
+        var list = RedStarOS.Services.SystemUpdates.ParseCheckUpdates(
+            "linux 6.17.8.arch1-1 -> 6.17.9.arch1-1\nfirefox 145.0-1 -> 145.0.1-1\n\nnot an update line\n");
+        Assert.Equal(new[] { "firefox", "linux" }, list.Select(u => u.Name));
+        Assert.Equal("145.0.1-1", list[0].Version);
+        Assert.Equal("145.0-1 → 145.0.1-1", list[0].Summary);
+        Assert.Empty(RedStarOS.Services.SystemUpdates.ParseCheckUpdates(""));
+    }
+
+    [Theory]
+    [InlineData("Downloading 45%", 45)]
+    [InlineData("( 3/12) upgrading linux", 25)]
+    [InlineData("(12/12) checking keys in keyring", 100)]
+    [InlineData("resolving dependencies...", -1)]
+    [InlineData("1.2.3 is 400% better", -1)]
+    public void Progress_from_a_line(string line, int pct) => Assert.Equal(pct, RedStarOS.Services.Software.Runner.ProgressOf(line));
+}

@@ -94,7 +94,7 @@ package_crimson-banner() {
 package_crimson-banner-shell() {
   pkgdesc='Crimson Banner OS: the desktop shell, its apps and the login-screen sessions'
   depends=(dotnet-runtime-8.0 fontconfig freetype2 libx11 libxi libxrandr libxcursor libice libsm libxss libxkbcommon wayland
-           dbus polkit pam libxcrypt systemd zlib gcc-libs glibc)
+           dbus polkit pam libxcrypt systemd zlib gcc-libs glibc pacman-contrib)
   backup=(etc/pam.d/crimson-banner)
   cd "$pkgbase-$pkgver"
 
