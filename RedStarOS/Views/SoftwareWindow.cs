@@ -159,23 +159,61 @@ public sealed class SoftwareWindow : Window
         {
             var on = k == _place || (_place == Place.Search && k == _beforeSearch);
             b.FontWeight = on ? FontWeight.SemiBold : FontWeight.Normal;
-            b.Background = on ? (IBrush?)this.FindResource("ShellHoverBrush") : Brushes.Transparent;
+            b.Background = on ? Hover() : Brushes.Transparent;
         }
         var updates = _installed.Count(i => i.UpdateAvailable);
         if (_nav[Place.Installed].Content is StackPanel sp && sp.Children[1] is TextBlock t)
             t.Text = updates > 0 ? $"Installed · {updates}" : "Installed";
 
         _detailBar = null;
-        _page.Content = _detail != null ? DetailPage(_detail) : _place switch
+        try
         {
-            Place.Explore => ExplorePage(),
-            Place.CrimsonBanner => SourcePage(Place.CrimsonBanner),
-            Place.Flatpak => SourcePage(Place.Flatpak),
-            Place.AppImage => SourcePage(Place.AppImage),
-            Place.Installed => InstalledPage(),
-            _ => SearchPage(),
-        };
+            _page.Content = _detail != null ? DetailPage(_detail) : _place switch
+            {
+                Place.Explore => ExplorePage(),
+                Place.CrimsonBanner => SourcePage(Place.CrimsonBanner),
+                Place.Flatpak => SourcePage(Place.Flatpak),
+                Place.AppImage => SourcePage(Place.AppImage),
+                Place.Installed => InstalledPage(),
+                _ => SearchPage(),
+            };
+        }
+        catch (Exception ex)
+        {
+            // never a blank page: say what went wrong (and it's in crash.log for Diagnostics)
+            Diagnostics.Log("Software: " + (_detail != null ? "the page of " + _detail.Name : _place.ToString()), ex);
+            var col = Column();
+            col.Children.Add(EmptyCard("info", "This page couldn't be shown", ex.Message + " (the details are in Settings → Diagnostics)."));
+            _page.Content = Scroll(col);
+        }
     }
+
+    /// <summary>The sidebar's highlight: the theme's hover colour for the current light or dark variant.</summary>
+    private IBrush Hover() =>
+        this.TryFindResource("ShellHoverBrush", ActualThemeVariant, out var v) && v is IBrush b ? b : new SolidColorBrush(Color.FromArgb(0x22, 0x80, 0x80, 0x80));
+
+    /// <summary>For tests: draws every page once (Explore, each source, Installed, a search), as the sidebar would.</summary>
+    public IReadOnlyList<Control?> RenderEveryPage()
+    {
+        var pages = new List<Control?>();
+        foreach (var p in new[] { Place.Explore, Place.CrimsonBanner, Place.Flatpak, Place.AppImage, Place.Installed })
+        {
+            _place = p; _detail = null; Render();
+            pages.Add(_page.Content as Control);
+        }
+        _search.Text = "a";
+        pages.Add(_page.Content as Control);
+        _detail = new SoftwareItem { Source = SoftwareSource.CrimsonBanner, Id = "test", Name = "Test", Summary = "A test", Screenshots = { }, Methods = { new InstallMethod(InstallMethod.AppImage) { Url = "https://example.invalid/t.AppImage", Sha256 = new string('0', 64) } } };
+        Render();
+        pages.Add(_page.Content as Control);
+        _detail = null; _search.Text = "";
+        return pages;
+    }
+
+    /// <summary>For tests: whether the last page drawn is the error card.</summary>
+    public static bool IsErrorPage(Control? page) =>
+        page is ScrollViewer { Content: StackPanel sp } && sp.Children.OfType<Border>().Any(b => b.Child is StackPanel row && row.Children.OfType<StackPanel>()
+            .Any(c => c.Children.OfType<TextBlock>().Any(t => t.Text == "This page couldn't be shown")));
 
     // ── pages ──
 
