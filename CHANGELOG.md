@@ -2,6 +2,24 @@
 
 Versions are YY.MM.N (README, "Versions"). `tools/release.sh` adds each release's section here.
 
+## 26.11.2 (not released yet)
+
+A second fix release, with a new app.
+
+- **CD Player**, a music player built like a hi-fi CD deck, after [CDPlayer](https://github.com/Kizarov3/CDPlayer)
+  by Kizarov3 (MIT). The album cover spins on a disc in its jewel case. A deck display shows the track, the time and
+  the PLAY / PAUSE / SHUFFLE / REPEAT lights. The shelf holds the albums in your Music folder, and audio CDs play from
+  the drive. It runs natively in the shell, played through libVLC, with no Electron and no streaming accounts.
+  Music files now open in it, and Default apps has its own Music entry.
+- **Video** has the same deck look: a faceplate with the deck display, hi-fi transport keys, and the playlist as a
+  booklet.
+- **Fixed: system updates on Arch** failed with "url contained $arch, which is not set". Settings → Software Updates
+  now lists updates with `checkupdates` and installs them with `pacman -Syu`, behind the password prompt.
+- **Fixed: programs installed from Software** didn't appear in the Start menu until the next sign-in.
+- **Fixed: Software's pages were empty** in every tab.
+- **The repository is KaiserCS/CrimsonBannerOS**, and the README is rewritten: shorter, and up to date.
+- **Settings → Diagnostics → Record pointer activity**, for tracking down highlights that blink.
+
 ## 26.11.1 (2026-11-21)
 
 The first fix release: a menu bug in the Wayland session, and three additions.
@@ -20,7 +38,7 @@ The first fix release: a menu bug in the Wayland session, and three additions.
 - **Fixed (Wayland session)**: a context menu that reached past the bottom of its window had the window's border
   drawn through it, and its lower items couldn't be clicked. This affected every app with native Wayland menus.
 
-2026-11-21)
+## 26.11.0 (2026-11-21)
 
 The first version in the new numbering (it follows 1.3.0), and the first since the change of name.
 
