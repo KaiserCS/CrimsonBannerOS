@@ -2,7 +2,25 @@
 
 Versions are YY.MM.N (README, "Versions"). `tools/release.sh` adds each release's section here.
 
-## 26.11.0 (2026-11-21)
+## 26.11.1 (not released yet)
+
+The first fix release: a menu bug in the Wayland session, and three additions.
+
+- **Software**, a new app for installing more programs. It covers Crimson Banner OS's own apps, Flatpaks from
+  Flathub and AppImages from AppImageHub, plus what's installed and its updates, all in one place. It has an
+  Explore page, categories, one search across everything, and a page for each program with screenshots. Only free
+  software is shown.
+- **Our own apps, published without an OS release**: `tools/publish-app.sh` builds and signs each app in `apps/`
+  into the `[crimson-banner-apps]` pacman repository and a signed catalogue on GitHub Releases. Software checks
+  that signature against the project's key before showing anything.
+- **Crimson Banner OS's own login screen**, on greetd, to use instead of SDDM. It shares the lock screen's look,
+  with people to pick from, the desktop to start, and sleep, restart and shut down. `crimson-greeter-setup preview`
+  shows it in a window; `sudo crimson-greeter-setup enable` switches to it (`disable` goes back). If it ever fails to
+  start, the text login takes over.
+- **Fixed (Wayland session)**: a context menu that reached past the bottom of its window had the window's border
+  drawn through it, and its lower items couldn't be clicked. This affected every app with native Wayland menus.
+
+2026-11-21)
 
 The first version in the new numbering (it follows 1.3.0), and the first since the change of name.
 
