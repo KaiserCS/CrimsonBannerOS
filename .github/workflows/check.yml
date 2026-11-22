@@ -9,7 +9,7 @@ name: Check
 #                    behaviour tests on wlroots' virtual screen through Xwayland
 #   • packages       Red Star's own package feed (tools/packages.sh): filled once, then the shell is restored, built
 #                    and published with nuget.org cut off
-#   • browser        Red Star Online (GTK 4 + WebKitGTK, in an Arch Linux container): unit tests and the real
+#   • browser        Crimson Online (GTK 4 + WebKitGTK, in an Arch Linux container): unit tests and the real
 #                    browser's self-test, headless inside redstar-comp
 #   • arch-packages  ./install-arch.sh with nuget.org cut off: the Arch packages (packaging/arch) built from our own
 #                    feed, signed into our own pacman repository (tools/repo.sh) and installed from it with pacman
@@ -191,7 +191,7 @@ jobs:
         run: compositor/test/run-tests.sh
 
   browser:
-    name: Red Star Online (GTK 4 + WebKitGTK)
+    name: Crimson Online (GTK 4 + WebKitGTK)
     runs-on: ubuntu-latest
     container: archlinux:latest
     timeout-minutes: 30
