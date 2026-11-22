@@ -40,12 +40,12 @@ def shots(folder):
         for r in rel)
     os.makedirs(folder, exist_ok=True)
     with open(os.path.join(folder, 'index.html'), 'w') as f:
-        f.write(f'''<!doctype html><meta charset="utf-8"><title>Red Star OS screenshots</title>
+        f.write(f'''<!doctype html><meta charset="utf-8"><title>Crimson Banner OS screenshots</title>
 <style>body{{font:14px system-ui,sans-serif;margin:24px;background:#f4f5f7;color:#1a202c}}
 main{{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}}
 figure{{margin:0;background:#fff;border-radius:10px;padding:10px;box-shadow:0 1px 3px #0002}}
 img{{width:100%;border-radius:6px;border:1px solid #e2e8f0}}figcaption{{margin-top:6px;font-weight:600}}</style>
-<h1>Red Star OS — {len(rel)} screenshots</h1><main>{cards}</main>''')
+<h1>Crimson Banner OS — {len(rel)} screenshots</h1><main>{cards}</main>''')
     print(f'## 🖼️ {len(rel)} screenshots')
     print('Download the **screenshots** artifact and open `index.html` to see every window side by side.')
 
