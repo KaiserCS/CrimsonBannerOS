@@ -300,7 +300,7 @@ jobs:
       - name: Hover highlights (the desktop under a headless redstar-comp, a virtual mouse across the taskbar and Start menu)
         continue-on-error: true
         run: |
-          pacman -S --noconfirm --needed ttf-dejavu wayland
+          pacman -S --noconfirm --needed ttf-dejavu wayland grim
           for mode in native x11; do
             echo "======== $mode ========"
             sudo -u builder -H compositor/test/hover-probe.sh "$mode" || echo "hover probe ($mode): blinks or no result"

@@ -27,7 +27,17 @@ public static class PointerTrace
         catch { return; }
         InputElement.PointerEnteredEvent.AddClassHandler<Control>((c, e) => Log("enter", c, e), handledEventsToo: true);
         InputElement.PointerExitedEvent.AddClassHandler<Control>((c, e) => Log("exit", c, e), handledEventsToo: true);
+        // every 25th move a window gets, so a log without enters still shows whether the pointer reached the shell
+        InputElement.PointerMovedEvent.AddClassHandler<TopLevel>((t, e) =>
+        {
+            if (++_moves % 25 != 0 || _out == null) return;
+            var p = e.GetPosition(t);
+            lock (_out) _out.WriteLine($"{Clock.ElapsedMilliseconds}\tmove\t{t.GetType().Name}:{t.Bounds.Width:0}x{t.Bounds.Height:0}\t{(e.Source as Control)?.GetType().Name}\t{p.X:0.0},{p.Y:0.0}");
+        }, handledEventsToo: true);
+        lock (_out) _out.WriteLine($"{Clock.ElapsedMilliseconds}\tstart\tRedStarOS {Environment.ProcessId}\t-\t-");
     }
+
+    private static int _moves;
 
     private static void Log(string what, Control c, PointerEventArgs e)
     {

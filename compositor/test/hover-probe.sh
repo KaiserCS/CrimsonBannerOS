@@ -21,6 +21,7 @@ export REDSTAR_SESSION=1 REDSTAR_TRACE_POINTER="$WORK/shell-pointer.log" REDSTAR
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 [ "$MODE" = native ] && export REDSTAR_NATIVE_WAYLAND=1 || export REDSTAR_NATIVE_WAYLAND=0
 : > "$WORK/shell-pointer.log"
+echo '{ "WelcomeDone": true }' > "$WORK/config/redstaros/settings.json"     # no welcome window over the desktop
 
 # the taskbar runs along the bottom of the 1280×720 screen; the Start button is at its left end
 timeout 150 redstar-comp -- sh -c '
@@ -31,12 +32,16 @@ timeout 150 redstar-comp -- sh -c '
 		300,712:300,712:click 24,700:24,700:click \
 		60,660:60,300 200,660:200,300 40,400:400,400 400,500:40,500 \
 		> "$1/probe.log" 2>&1
+	command -v grim >/dev/null && grim -s 0.5 "$1/screen.png"
 	sleep 1
 ' sh "$WORK" "$WORK/hoverprobe" 2>"$WORK/comp.log"
 
 echo "---- probe ----"; cat "$WORK/probe.log" 2>/dev/null
 echo "---- shell log (last lines) ----"; tail -n 25 "$WORK/shell.log" 2>/dev/null
 echo "---- redstar-comp log (last lines, without the pointer trace) ----"; grep -v "^pointer	" "$WORK/comp.log" | tail -n 25
+echo "---- shell pointer log (first lines) ----"; head -n 30 "$WORK/shell-pointer.log"
+# a small picture of the screen, as text (CI's files can't always be fetched): base64 of a PNG
+[ -s "$WORK/screen.png" ] && { echo "---- screen.png (base64) ----"; base64 -w0 "$WORK/screen.png"; echo; echo "---- end screen.png ----"; }
 python3 "$HERE/hover-report.py" "$WORK/shell-pointer.log" "$WORK/comp.log"
 status=$?
 [ -n "${HOVER_PROBE_KEEP:-}" ] && cp "$WORK"/*.log "$HOVER_PROBE_KEEP"/ 2>/dev/null
