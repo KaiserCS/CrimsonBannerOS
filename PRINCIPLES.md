@@ -175,7 +175,6 @@ Known differences with that advice, recorded openly:
   off in our scripts (`DOTNET_CLI_TELEMETRY_OPTOUT`).
 - No accounts and no cloud services required to use Crimson Banner OS. User data stays local unless the user sends it
   somewhere.
-- Unlike the original Red Star OS, the system doesn't watermark files, watch what users do or report on them.
 
 ## 6. Decisions are open and written down
 
