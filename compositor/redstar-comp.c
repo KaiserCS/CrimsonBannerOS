@@ -2697,6 +2697,18 @@ static void set_hover(struct server *s, struct view *v, int part)
 	if (v && v->hover != btn) { v->hover = btn; view_update_decorations(v); }
 }
 
+/* REDSTAR_COMP_TRACE_POINTER=1: every change of the surface the pointer is over, on stderr (for chasing hover bugs) */
+static bool trace_pointer;
+
+static void trace_focus(struct server *s, struct wlr_surface *before, struct view *v, int part)
+{
+	struct wlr_surface *now = s->seat->pointer_state.focused_surface;
+	if (!trace_pointer || now == before) return;
+	const char *what = !v ? "-" : v->unmanaged ? "x11-unmanaged" : v->xdg && v->xdg->app_id ? v->xdg->app_id : v->title;
+	fprintf(stderr, "pointer\t%.1f,%.1f\t%p -> %p\tview %s\tpart %d\n", s->cursor->x, s->cursor->y, (void *)before, (void *)now,
+		what ? what : "?", part);
+}
+
 static void process_motion(struct server *s, uint32_t time)
 {
 	if (s->grab == G_MOVE || s->grab == G_RESIZE) {
@@ -2709,14 +2721,17 @@ static void process_motion(struct server *s, uint32_t time)
 	uint32_t edges;
 	struct view *v = view_at(s, s->cursor->x, s->cursor->y, &surface, &sx, &sy, &part, &edges);
 	if (s->grab != G_BUTTON) set_hover(s, v, part);
+	struct wlr_surface *before = s->seat->pointer_state.focused_surface;
 	if (!surface) {
 		set_cursor(s, part == P_EDGE ? edge_cursor(edges) : "default");
 		wlr_seat_pointer_clear_focus(s->seat);
+		trace_focus(s, before, v, part);
 		return;
 	}
 	s->cursor_name = NULL;                   /* the client sets its own cursor */
 	wlr_seat_pointer_notify_enter(s->seat, surface, sx, sy);
 	wlr_seat_pointer_notify_motion(s->seat, time, sx, sy);
+	trace_focus(s, before, v, part);
 }
 
 static void cursor_motion(struct wl_listener *l, void *data)
@@ -3675,6 +3690,8 @@ int main(int argc, char **argv)
 	positions_load();
 	const char *rm = getenv("REDSTAR_REDUCE_MOTION");
 	reduce_motion = rm && strcmp(rm, "1") == 0;
+	const char *tp = getenv("REDSTAR_COMP_TRACE_POINTER");
+	trace_pointer = tp && strcmp(tp, "1") == 0;
 	s->fade_timer = wl_event_loop_add_timer(s->loop, fade_tick, s);
 	setenv("XDG_SESSION_TYPE", "wayland", true);
 	setenv("REDSTAR_COMPOSITOR_RUNNING", "redstar-comp", true);

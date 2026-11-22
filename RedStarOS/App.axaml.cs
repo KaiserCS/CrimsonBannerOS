@@ -14,6 +14,7 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         Diagnostics.Install();                  // unexpected errors → crash.log, the session keeps running
+        PointerTrace.Install();                 // REDSTAR_TRACE_POINTER=file: hover enter/exit, for chasing hover bugs
         if (Program.Greeter && ApplicationLifetime is IClassicDesktopStyleApplicationLifetime greeter)
         {
             // the login screen: none of the desktop, just the window that signs people in
