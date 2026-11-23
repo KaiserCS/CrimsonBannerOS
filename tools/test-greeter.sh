@@ -51,14 +51,24 @@ eq "disabled again: no config of ours left" "$([ -e "$ROOT/etc/greetd/config.tom
 # ── crimson-greeter's fallback ──
 export CRIMSON_GREETER_RUN="$T/run" CRIMSON_GREETER_CACHE="$T/cache"
 mkdir -p "$T/run" "$T/cache"
-printf '#!/bin/sh\nexit "${STUB_CODE:-0}"\n' > "$T/bin/redstar-comp"
+printf '#!/bin/sh\necho wayland >> "%s/tried"\nexit "${STUB_CODE:-0}"\n' "$T" > "$T/bin/redstar-comp"
+printf '#!/bin/sh\necho x11 >> "%s/tried"\nexit "${STUB_X11:-${STUB_CODE:-0}}"\n' "$T" > "$T/bin/xinit"
+printf '#!/bin/sh\n' > "$T/bin/Xorg"
 printf '#!/bin/sh\necho agreety "$@"\n' > "$T/bin/agreety"
-chmod +x "$T/bin/redstar-comp" "$T/bin/agreety"
+chmod +x "$T/bin/redstar-comp" "$T/bin/xinit" "$T/bin/Xorg" "$T/bin/agreety"
+export CRIMSON_GREETER_XORG="$T/bin/Xorg"
 greeter() { PATH="$T/bin:$PATH" sh "$SRC/packaging/greeter/crimson-greeter"; }
 STUB_CODE=1 greeter >/dev/null || true
 STUB_CODE=1 greeter >/dev/null || true
 eq "two quick failures are counted" "$(cat "$T/run/failures")" "2"
+eq "both on Wayland" "$(tr '\n' ' ' < "$T/tried")" "wayland wayland "
+STUB_CODE=1 greeter >/dev/null || true
+STUB_CODE=1 greeter >/dev/null || true
+eq "then twice on X11" "$(tr '\n' ' ' < "$T/tried")" "wayland wayland x11 x11 "
 eq "then the text login" "$(greeter | tail -n 1)" "agreety --cmd /bin/sh -l"
+echo 2 > "$T/run/failures"
+STUB_X11=0 greeter >/dev/null
+eq "the X11 login screen working resets the count" "$(cat "$T/run/failures")" "0"
 echo 0 > "$T/run/failures"
 STUB_CODE=1 greeter >/dev/null || true
 STUB_CODE=0 greeter >/dev/null

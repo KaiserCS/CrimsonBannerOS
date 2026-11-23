@@ -65,7 +65,13 @@ public sealed class GreeterWindow : Window
         Title = "Crimson Banner OS";
         WindowDecorations = WindowDecorations.None;
         if (demo) { Width = 1100; Height = 720; WindowStartupLocation = WindowStartupLocation.CenterScreen; }
-        else { WindowState = WindowState.FullScreen; Topmost = true; }
+        else
+        {
+            WindowState = WindowState.FullScreen; Topmost = true;
+            // on X11 with no window manager (the login screen's fallback when redstar-comp can't start), full screen
+            // isn't honoured: the window covers the screen itself
+            Opened += (_, _) => CoverScreen();
+        }
         try { Background = new ImageBrush(new Bitmap(AssetLoader.Open(new Uri("avares://RedStarOS/Assets/login-bg.jpg")))) { Stretch = Stretch.UniformToFill }; }
         catch { Background = new SolidColorBrush(Color.Parse("#1A0A0C")); }
 
@@ -304,5 +310,16 @@ public sealed class GreeterWindow : Window
             if (code != 0) Fail($"Couldn't {label.ToLowerInvariant()}: {output.Split('\n').LastOrDefault()}");
         };
         return b;
+    }
+
+    private void CoverScreen()
+    {
+        var screen = Screens.ScreenFromWindow(this) ?? Screens.Primary ?? Screens.All.FirstOrDefault();
+        if (screen == null) return;
+        var b = screen.Bounds;
+        if (Math.Abs(Bounds.Width * screen.Scaling - b.Width) < 2 && Math.Abs(Bounds.Height * screen.Scaling - b.Height) < 2) return;
+        Position = b.Position;
+        Width = b.Width / screen.Scaling;
+        Height = b.Height / screen.Scaling;
     }
 }

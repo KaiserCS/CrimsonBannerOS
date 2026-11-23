@@ -3,17 +3,18 @@
 # Crimson Banner OS's login screen, as greetd starts it (/etc/greetd/config.toml, written by crimson-greeter-setup):
 # redstar-comp on this console, with the shell's login screen (RedStarOS --greeter) inside it.
 #
-# If it fails to come up twice in a row, greetd's text login (agreety) is used instead until the computer restarts,
-# so a broken login screen can never lock anyone out. greetd starts this again after every session ends.
+# If that fails to come up twice in a row (graphics redstar-comp can't drive, such as a VM's without 3D), the same
+# login screen runs on X11 instead. If that fails twice too, greetd's text login (agreety) is used until the computer
+# restarts, so a broken login screen can never lock anyone out. greetd starts this again after every session ends.
 RUN="${CRIMSON_GREETER_RUN:-/run/crimson-greeter}"
 CACHE="${CRIMSON_GREETER_CACHE:-/var/cache/crimson-greeter}"
 FAILS="$RUN/failures"
 fails="$(cat "$FAILS" 2>/dev/null || echo 0)"
 case "$fails" in ''|*[!0-9]*) fails=0 ;; esac
 
-if [ "$fails" -ge 2 ]; then
+if [ "$fails" -ge 4 ]; then
   echo "Crimson Banner OS's login screen didn't start ($fails tries); using the text login until the next restart."
-  echo "Its log: $CACHE/greeter.log"
+  echo "Its logs: $CACHE/greeter.log (Wayland), $CACHE/greeter-x11.log (X11)"
   exec agreety --cmd "${CRIMSON_GREETER_FALLBACK:-/bin/sh -l}"
 fi
 
@@ -23,8 +24,16 @@ export CRIMSON_GREETER_STATE="$CACHE/state.json"
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
 
 start="$(date +%s)"
-redstar-comp -- /usr/lib/crimson-banner/RedStarOS --greeter >"$CACHE/greeter.log" 2>&1
-code=$?
+XORG="${CRIMSON_GREETER_XORG:-/usr/bin/Xorg}"
+if [ "$fails" -ge 2 ] && command -v xinit >/dev/null 2>&1 && [ -x "$XORG" ]; then
+  # X11: its own display, on the console greetd gave the login screen
+  xinit /usr/lib/crimson-banner/RedStarOS --greeter -- "$XORG" :7 "vt${XDG_VTNR:-1}" -nolisten tcp -keeptty \
+    >"$CACHE/greeter-x11.log" 2>&1
+  code=$?
+else
+  redstar-comp -- /usr/lib/crimson-banner/RedStarOS --greeter >"$CACHE/greeter.log" 2>&1
+  code=$?
+fi
 if [ "$code" -eq 0 ]; then
   echo 0 > "$FAILS" 2>/dev/null
 elif [ $(( $(date +%s) - start )) -lt 20 ]; then
