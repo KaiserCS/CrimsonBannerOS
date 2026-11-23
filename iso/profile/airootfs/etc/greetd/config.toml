@@ -4,7 +4,7 @@
 vt = 1
 
 [initial_session]
-command = "startx /usr/bin/env /usr/bin/redstaros-session"
+command = "systemd-cat --identifier=crimson-live startx /usr/bin/env /usr/bin/redstaros-session"
 user = "liveuser"
 
 [default_session]

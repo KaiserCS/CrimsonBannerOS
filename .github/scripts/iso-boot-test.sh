@@ -15,7 +15,7 @@ if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; ACCEL=(-accel kvm -cpu host); 
 echo "Booting $(basename "$ISO") ($LABEL, ${ACCEL[1]})"
 qemu-system-x86_64 "${ACCEL[@]}" -m 4096 -smp 2 -cdrom "$ISO" \
   -kernel "$T/crimson/boot/x86_64/vmlinuz-$KERNEL" -initrd "$T/crimson/boot/x86_64/initramfs-$KERNEL.img" \
-  -append "archisobasedir=crimson archisolabel=$LABEL console=ttyS0,115200 systemd.show_status=1 systemd.journald.forward_to_console=1" \
+  -append "archisobasedir=crimson archisolabel=$LABEL console=ttyS0,115200 cow_spacesize=50% systemd.show_status=1 systemd.journald.forward_to_console=1" \
   -vga std -display none -serial "file:$T/serial.log" -monitor "unix:$T/mon.sock,server,nowait" \
   -nic user,model=virtio-net-pci &
 QEMU=$!
