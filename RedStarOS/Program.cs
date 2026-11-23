@@ -20,6 +20,7 @@ internal static class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        RedStarOS.Services.NativeIsolation.Apply();   // Skia's and HarfBuzz's own copies, not the system's (before any text is drawn)
         if (args.Contains("--greeter") || args.Contains("--greeter-demo"))
         {
             Greeter = true;
