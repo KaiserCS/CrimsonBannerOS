@@ -40,6 +40,12 @@ status=0
 timeout 150 "$COMP" -- sh -c '"$1" && echo "--- native Wayland window ---" && "$2" && echo "--- keyboard and mouse ---" && "$3" && echo "--- nested (a window on another desktop) ---" && "$4"' \
 	sh "$WORK/comptest" "$WORK/nativetest" "$WORK/inputtest" "$WORK/nested.sh" \
 	2>"$WORK/comp.log" || status=$?
+# a renderer wlroots can't make (like GL on a VM without 3D graphics): redstar-comp falls back to drawing in software
+if [ "$status" = 0 ]; then
+	WLR_RENDERER=unavailable timeout 30 "$COMP" -- true 2>"$WORK/fallback.log" && grep -q "drawing in software" "$WORK/fallback.log" \
+		&& echo "ok   software drawing when GPU drawing isn't available" \
+		|| { echo "FAIL no software fallback for the renderer"; tail -n 20 "$WORK/fallback.log"; status=1; }
+fi
 if [ "$status" != 0 ]; then
 	echo "---- redstar-comp log ----"
 	tail -n 60 "$WORK/comp.log"

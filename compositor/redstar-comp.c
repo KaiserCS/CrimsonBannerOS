@@ -58,6 +58,7 @@
 #include <wlr/backend/session.h>
 #include <wlr/interfaces/wlr_buffer.h>
 #include <wlr/render/allocator.h>
+#include <wlr/render/pixman.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_buffer.h>
 #include <wlr/types/wlr_compositor.h>
@@ -3564,6 +3565,12 @@ int main(int argc, char **argv)
 	if (!nested_wl) s->backend = wlr_backend_autocreate(s->loop, &s->session);
 	if (!s->backend) { wlr_log(WLR_ERROR, "no backend (no display to run on?)"); return 1; }
 	s->renderer = wlr_renderer_autocreate(s->backend);
+	if (!s->renderer) {
+		/* no GPU drawing here (a VM without 3D graphics, a driver Mesa can't use): wlroots only falls back to
+		 * software by itself when there's no GPU at all, so we do: pixman draws into dumb buffers on the screen */
+		wlr_log(WLR_INFO, "no GPU renderer: drawing in software (pixman)");
+		s->renderer = wlr_pixman_renderer_create();
+	}
 	if (!s->renderer) { wlr_log(WLR_ERROR, "no renderer"); return 1; }
 	wlr_renderer_init_wl_display(s->renderer, s->display);
 	s->allocator = wlr_allocator_autocreate(s->backend, s->renderer);
