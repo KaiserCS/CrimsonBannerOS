@@ -13,6 +13,9 @@ nano
 bash-completion
 xdg-user-dirs
 xdg-utils
+# stack traces of crashes in the journal (systemd-coredump, coredumpctl)
+elfutils
+gdb
 
 # booting the ISO and the installed system
 syslinux
