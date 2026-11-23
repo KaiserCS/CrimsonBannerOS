@@ -1,0 +1,35 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Run by the installer inside the newly installed system (Calamares' shellprocess@cleanup): turns the copy of the
+# live system into an ordinary installed one. Then it deletes itself.
+#   crimson-live-cleanup KERNEL      (linux, linux-libre or linux-t2)
+set -eu
+KERNEL="${1:?which kernel}"
+
+# the live session's own settings
+rm -f /etc/sudoers.d/liveuser /etc/xdg/autostart/install-crimson-banner.desktop \
+      /usr/share/applications/install-crimson-banner.desktop /usr/local/bin/crimson-install
+rm -f /etc/mkinitcpio.conf.d/archiso.conf /etc/systemd/journald.conf.d/volatile-storage.conf \
+      /etc/systemd/logind.conf.d/do-not-suspend.conf
+rm -f /etc/systemd/system/multi-user.target.wants/pacman-init.service /etc/systemd/system/pacman-init.service \
+      /etc/systemd/system/etc-pacman.d-gnupg.mount
+rm -rf /etc/calamares
+
+# the kernel: archiso keeps its image outside the live root, so it comes back from the modules folder
+for d in /usr/lib/modules/*/; do
+  if [ -f "$d/pkgbase" ] && [ "$(cat "$d/pkgbase")" = "$KERNEL" ]; then
+    install -Dm644 "$d/vmlinuz" "/boot/vmlinuz-$KERNEL"
+  fi
+done
+[ -f "/boot/vmlinuz-$KERNEL" ] || { echo "crimson-live-cleanup: no kernel $KERNEL in /usr/lib/modules" >&2; exit 1; }
+
+# pacman's keyring, made here (offline) instead of copied from the live session
+rm -rf /etc/pacman.d/gnupg
+pacman-key --init
+pacman-key --populate
+
+# Crimson Banner OS's login screen instead of the live session's automatic sign-in
+install -Dm644 /usr/share/crimson-banner/greetd-config.toml /etc/greetd/config.toml
+systemctl enable greetd.service >/dev/null 2>&1 || ln -sf /usr/lib/systemd/system/greetd.service /etc/systemd/system/display-manager.service
+
+rm -f "$0"

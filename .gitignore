@@ -33,3 +33,4 @@ packaging/arch/*.pkg.tar.*
 # tools/iso.sh: the installer ISOs and their package repository
 /out/
 /iso-repo/
+!/iso/profile/airootfs/usr/local/bin/

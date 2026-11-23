@@ -1,0 +1,5 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# "Install Crimson Banner OS" on the live desktop: Calamares, as root, with its log kept for a bug report.
+exec sudo --preserve-env=DISPLAY,XAUTHORITY,WAYLAND_DISPLAY,XDG_RUNTIME_DIR \
+  /usr/bin/calamares -d >/tmp/crimson-install.log 2>&1
