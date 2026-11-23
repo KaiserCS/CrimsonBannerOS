@@ -1,0 +1,16 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# For CI's boot test only, and only when the kernel command line asks (crimson.test=…): what greetd starts on the
+# live ISO, so the installed system's login screen and both sessions can be checked without installing.
+#   crimson.test=greeter   the login screen, as on an installed system
+#   crimson.test=wayland   the live user straight into the Wayland session (redstar-comp)
+#   crimson.test=x11       the live user straight into the X11 session (the live ISO's usual)
+# The installer removes this.
+set -eu
+mode="$(sed -n 's/.*crimson\.test=\([a-z0-9]*\).*/\1/p' /proc/cmdline)"
+case "$mode" in
+  greeter) install -m644 /usr/share/crimson-banner/greetd-config.toml /etc/greetd/config.toml ;;
+  wayland) sed -i 's|^command = "systemd-cat --identifier=crimson-live /usr/local/bin/crimson-live-session"|command = "systemd-cat --identifier=crimson-live /usr/bin/redstaros-session --wayland"|' /etc/greetd/config.toml ;;
+  *) ;;
+esac
+echo "crimson-live-test: $mode"

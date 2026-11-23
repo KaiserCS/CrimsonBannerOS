@@ -9,7 +9,8 @@ KERNEL="${1:?which kernel}"
 # the live session's own settings
 rm -f /etc/sudoers.d/liveuser /etc/xdg/autostart/install-crimson-banner.desktop \
       /usr/share/applications/install-crimson-banner.desktop /usr/local/bin/crimson-install \
-      /usr/local/bin/crimson-live-session
+      /usr/local/bin/crimson-live-session /usr/local/bin/crimson-live-test \
+      /etc/systemd/system/crimson-live-test.service /etc/systemd/system/multi-user.target.wants/crimson-live-test.service
 rm -f /etc/mkinitcpio.conf.d/archiso.conf /etc/systemd/journald.conf.d/volatile-storage.conf \
       /etc/systemd/logind.conf.d/do-not-suspend.conf /etc/systemd/coredump.conf.d/live.conf
 rm -f /etc/systemd/system/multi-user.target.wants/pacman-init.service /etc/systemd/system/pacman-init.service \

@@ -90,8 +90,9 @@ jobs:
           fail-on-cache-miss: true
       - name: Build the ISO
         run: .github/scripts/iso-docker.sh iso ${{ matrix.variant }}
-      - name: Start it in QEMU
-        run: .github/scripts/iso-boot-test.sh "$(ls out/*.iso)" ${{ matrix.kernel }}
+      - name: Start it in QEMU (live session, Wayland session, login screen)
+        # the live session, the Wayland session and the login screen, on plain and on VMware graphics (no 3D)
+        run: .github/scripts/iso-boot-test.sh "$(ls out/*.iso)" ${{ matrix.kernel }} x11:std x11:vmware wayland:vmware greeter:vmware
       - name: Attach it to the release
         if: startsWith(github.ref, 'refs/tags/v') || inputs.publish
         env:
@@ -145,8 +146,9 @@ jobs:
           fail-on-cache-miss: true
       - name: Build the ISO
         run: .github/scripts/iso-docker.sh iso ${{ matrix.variant }}
-      - name: Start it in QEMU
-        run: .github/scripts/iso-boot-test.sh "$(ls out/*.iso)" ${{ matrix.kernel }}
+      - name: Start it in QEMU (live session, Wayland session, login screen)
+        # the live session, the Wayland session and the login screen, on plain and on VMware graphics (no 3D)
+        run: .github/scripts/iso-boot-test.sh "$(ls out/*.iso)" ${{ matrix.kernel }} x11:std x11:vmware wayland:vmware greeter:vmware
       - name: Attach it to the release
         if: startsWith(github.ref, 'refs/tags/v') || inputs.publish
         env:
