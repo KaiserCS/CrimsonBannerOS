@@ -39,6 +39,7 @@ Each is a live Crimson Banner OS with an installer (Calamares) that needs no net
 | `crimson-banner-libre-VERSION-x86_64.iso` | Linux-libre | hardware that works with free firmware | none |
 | `crimson-banner-mac-VERSION-x86_64.iso` | Linux for Intel Macs (t2linux) | T2 Macs (2018–2020) and older Intel Macs | as the first, plus Broadcom's wl Wi-Fi driver; T2 Macs' Wi-Fi firmware is copied from their own macOS |
 
+The Linux ISO comes first; the libre and Mac ones are put aside until later (their recipes are in `iso/`).
 Write one to a USB stick (`sudo dd if=crimson-banner-….iso of=/dev/sdX bs=4M status=progress`, or any image
 writer), start the computer from it, and choose **Install Crimson Banner OS**. `tools/iso.sh all` builds them on any
 Arch machine ([iso/README.md](iso/README.md)).

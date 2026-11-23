@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Crimson Banner OS's installer ISOs (tools/iso.sh, iso/): the two kernels Arch doesn't ship, then the three ISOs,
-# each started in QEMU to check the live session comes up. On a v* tag they are attached to its release; run by
+# Crimson Banner OS's installer ISOs (tools/iso.sh, iso/), each started in QEMU to check the live session comes up.
+# The Linux ISO is built on every change; the libre and Mac ones (and the two kernels Arch doesn't ship) are put
+# aside for now and only built when asked for by hand ("libre_and_mac"). On a v* tag they are attached to its release; run by
 # hand with "publish", they go to the "iso-testing" pre-release. Everything here is also tools/iso.sh on any Arch
 # machine: CI only repeats it.
 name: Installer ISOs
@@ -16,8 +17,8 @@ on:
         description: Publish the ISOs to the "iso-testing" pre-release
         type: boolean
         default: false
-      linux_only:
-        description: Only the Linux ISO (no kernels to build; for trying out changes to the ISO quickly)
+      libre_and_mac:
+        description: Also the libre and Mac ISOs (put aside for now; they build their own kernels, an hour or two each)
         type: boolean
         default: false
 
@@ -35,7 +36,7 @@ jobs:
       fail-fast: false
       matrix:
         kernel: [linux-libre, linux-t2]
-    if: ${{ !inputs.linux_only }}
+    if: ${{ inputs.libre_and_mac }}
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
@@ -111,7 +112,7 @@ jobs:
   iso:
     name: ISO (${{ matrix.variant }})
     needs: kernel
-    if: ${{ !cancelled() && !inputs.linux_only }}
+    if: ${{ !cancelled() && inputs.libre_and_mac }}
     strategy:
       fail-fast: false
       matrix:

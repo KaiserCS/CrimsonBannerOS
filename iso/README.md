@@ -4,6 +4,9 @@ Three live, installable ISOs of Crimson Banner OS, built with archiso. Each one 
 Calamares, which copies that live system to the disk as it is. Installing needs no network, and nothing is sent
 anywhere.
 
+**For now only the `linux` ISO is built** (on every change, by CI). The `libre` and `mac` ones are put aside until
+later: their recipes stay here, and `tools/iso.sh all libre` or the workflow's `libre_and_mac` option still builds them.
+
 | Variant | Kernel | Firmware | Built from |
 |---|---|---|---|
 | `linux` | Arch's `linux` | linux-firmware, AMD/Intel microcode, sof-firmware | Arch's repositories |
