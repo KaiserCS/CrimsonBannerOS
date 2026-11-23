@@ -1,0 +1,2 @@
+# The live session only (the installer removes it): the installer and system tools run without a password.
+liveuser ALL=(ALL:ALL) NOPASSWD: ALL

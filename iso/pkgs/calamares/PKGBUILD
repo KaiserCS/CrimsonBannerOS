@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Calamares, the installer of Crimson Banner OS's ISOs (codeberg.org/Calamares/calamares: GPL-3.0-or-later, run by
+# its community). Built from the release tarball with Qt 6, its Python modules and without the modules for other
+# distributions' tooling; the configuration and branding are ours (iso/calamares), not installed from here.
+pkgname=calamares
+pkgver=3.4.2
+pkgrel=1
+pkgdesc='Distribution-independent installer framework'
+url='https://codeberg.org/Calamares/calamares'
+arch=(x86_64)
+license=(GPL-3.0-or-later)
+depends=(kcoreaddons kpmcore libpwquality qt6-declarative qt6-svg yaml-cpp python polkit-qt6
+         efibootmgr grub dosfstools mtools squashfs-tools rsync gptfdisk)
+# ckbcomp (iso/pkgs/ckbcomp) is needed at run time too; the ISO lists it, so it needn't be in the build's way
+makedepends=(extra-cmake-modules libglvnd ninja qt6-tools qt6-translations cmake)
+source=("$pkgname-$pkgver.tar.gz::$url/releases/download/v$pkgver/$pkgname-$pkgver.tar.gz")
+sha256sums=('733bbbb00dc9f84874bd5c22960952f317ea2537565431179fa2152b2fbfdccc')
+
+build() {
+  # modules for tools Crimson Banner OS doesn't use (dracut, OpenRC, the dummies) are left out
+  local skip=(dracut dracutlukscfg dummycpp dummyprocess dummypython dummypythonqt interactiveterminal
+              services-openrc openrcdmcryptcfg mkinitfs zfs zfshostid plasmalnf tracking)
+  cmake -B build -S "$pkgname-$pkgver" -G Ninja -Wno-dev \
+    -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib \
+    -DWITH_QT6=ON -DINSTALL_CONFIG=OFF -DBUILD_TESTING=OFF -DBUILD_CRASH_REPORTING=OFF \
+    -DSKIP_MODULES="${skip[*]}"
+  cmake --build build
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+}

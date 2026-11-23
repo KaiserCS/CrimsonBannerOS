@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: GPL-3.0-or-later (this recipe; ckbcomp is GPL-2.0-or-later)
+# ckbcomp, from Debian's console-setup: Calamares' keyboard page uses it to turn an X keyboard layout into a console
+# keymap. (Not in Arch's repositories; this follows the AUR's recipe.)
+pkgname=ckbcomp
+pkgver=1.249
+pkgrel=1
+pkgdesc='Compile an XKB keyboard description to a keymap suitable for loadkeys'
+url='https://salsa.debian.org/installer-team/console-setup'
+arch=(any)
+license=(GPL-2.0-or-later)
+depends=(perl)
+source=("console-setup-$pkgver.tar.gz::$url/-/archive/$pkgver/console-setup-$pkgver.tar.gz")
+sha256sums=('15570cf19f6251da4c7e0a25745da7b8a7ab27092484ba166039d5da2b06c093')
+
+package() {
+  cd "console-setup-$pkgver"
+  install -Dm755 Keyboard/ckbcomp -t "$pkgdir/usr/bin/"
+}

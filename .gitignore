@@ -29,3 +29,7 @@ packaging/arch/pkg/
 packaging/arch/*.pkg.tar.*
 # the version stamp inside source tarballs (tools/repo.sh)
 .build-version
+
+# tools/iso.sh: the installer ISOs and their package repository
+/out/
+/iso-repo/

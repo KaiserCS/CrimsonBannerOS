@@ -1,0 +1,11 @@
+linux-t2
+linux-t2-headers
+linux-firmware
+intel-ucode
+sof-firmware
+dkms
+broadcom-wl-dkms
+apple-bcm-firmware-fetcher
+apple-t2-audio-config
+t2fanrd
+tiny-dfr

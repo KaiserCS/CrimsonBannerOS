@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Install Crimson Banner OS
+Comment=Put Crimson Banner OS on this computer's disk
+Exec=/usr/local/bin/crimson-install
+Icon=redstaros
+Categories=System;
+Terminal=false

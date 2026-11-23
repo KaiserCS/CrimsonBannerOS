@@ -1,0 +1,16 @@
+[Unit]
+Description=Copy the Wi-Fi and Bluetooth firmware from this Mac's macOS (T2 Macs)
+ConditionPathExists=!/var/lib/apple-bcm-firmware-fetcher/installed-files
+Before=NetworkManager.service bluetooth.service
+After=local-fs.target
+
+[Service]
+Type=oneshot
+# only on Apple hardware; never fails the boot (a Mac without macOS just has no Wi-Fi until it's fetched another way)
+ExecCondition=/bin/sh -c 'grep -qx "Apple Inc." /sys/class/dmi/id/sys_vendor'
+ExecStart=-/usr/bin/apple-bcm-firmware-fetcher
+ExecStartPost=-/bin/sh -c 'modprobe -r brcmfmac_wcc brcmfmac 2>/dev/null; modprobe brcmfmac 2>/dev/null; modprobe -r hci_bcm4377 2>/dev/null; modprobe hci_bcm4377 2>/dev/null'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -30,6 +30,19 @@ Programs installed on the system (from pacman, Flatpak or Software) appear in th
 
 ## Installing
 
+**On a new computer: the installer ISOs** (being built; they'll be on [Releases](https://github.com/KaiserCS/CrimsonBannerOS/releases)).
+Each is a live Crimson Banner OS with an installer (Calamares) that needs no network. There are three, one per kernel:
+
+| ISO | Kernel | For | Non-free parts |
+|---|---|---|---|
+| `crimson-banner-VERSION-x86_64.iso` | Linux | most PCs | linux-firmware, CPU microcode, sound firmware |
+| `crimson-banner-libre-VERSION-x86_64.iso` | Linux-libre | hardware that works with free firmware | none |
+| `crimson-banner-mac-VERSION-x86_64.iso` | Linux for Intel Macs (t2linux) | T2 Macs (2018–2020) and older Intel Macs | as the first, plus Broadcom's wl Wi-Fi driver; T2 Macs' Wi-Fi firmware is copied from their own macOS |
+
+Write one to a USB stick (`sudo dd if=crimson-banner-….iso of=/dev/sdX bs=4M status=progress`, or any image
+writer), start the computer from it, and choose **Install Crimson Banner OS**. `tools/iso.sh all` builds them on any
+Arch machine ([iso/README.md](iso/README.md)).
+
 **On Arch, CachyOS or EndeavourOS** (the supported way):
 
 ```bash
@@ -119,6 +132,7 @@ Releases.
 | `compositor/`, `wm/`, `browser/` | redstar-comp, redstar-wm, Crimson Online, each with its tests |
 | `tests/` | the shell's tests |
 | `packaging/` | the Arch packages (`arch/PKGBUILD`), sessions, login screen, PAM |
+| `iso/` | the installer ISOs: archiso profile, Calamares settings, the three variants, kernel recipes |
 | `apps/`, `software/` | our own apps for Software, and its catalogue and key |
 | `tools/` | releases, versions, the package repository and feed, publishing apps |
 

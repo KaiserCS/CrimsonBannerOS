@@ -1,0 +1,159 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Crimson Banner OS's installer ISOs (tools/iso.sh, iso/): the two kernels Arch doesn't ship, then the three ISOs,
+# each started in QEMU to check the live session comes up. On a v* tag they are attached to its release; run by
+# hand with "publish", they go to the "iso-testing" pre-release. Everything here is also tools/iso.sh on any Arch
+# machine: CI only repeats it.
+name: Installer ISOs
+
+on:
+  push:
+    tags: ['v*']
+    branches: [main]
+    paths: ['iso/**', 'tools/iso.sh', '.github/workflows/iso.yml', '.github/scripts/iso-*.sh']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the ISOs to the "iso-testing" pre-release
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: iso-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kernel:
+    name: Kernel ${{ matrix.kernel }}
+    strategy:
+      fail-fast: false
+      matrix:
+        kernel: [linux-libre, linux-t2]
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      # a kernel is rebuilt only when its recipe changes
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: iso-repo
+          key: kernel-${{ matrix.kernel }}-${{ hashFiles(format('iso/pkgs/{0}/**', matrix.kernel)) }}
+      - name: Room on the disk
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          df -h / /mnt
+      - name: Build ${{ matrix.kernel }}
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: .github/scripts/iso-docker.sh recipe ${{ matrix.kernel }}
+      - run: ls -l iso-repo
+
+  iso-linux:
+    name: ISO (${{ matrix.variant }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { variant: linux, kernel: linux }
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # tools/version.sh counts from the last release
+      - name: Room on the disk
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          df -h / /mnt
+      - name: The libre kernel, from the cache
+        if: matrix.variant == 'libre'
+        uses: actions/cache/restore@v4
+        with:
+          path: iso-repo
+          key: kernel-linux-libre-${{ hashFiles('iso/pkgs/linux-libre/**') }}
+          fail-on-cache-miss: true
+      - name: The Mac kernel, from the cache
+        if: matrix.variant == 'mac'
+        uses: actions/cache/restore@v4
+        with:
+          path: iso-repo
+          key: kernel-linux-t2-${{ hashFiles('iso/pkgs/linux-t2/**') }}
+          fail-on-cache-miss: true
+      - name: Build the ISO
+        run: .github/scripts/iso-docker.sh iso ${{ matrix.variant }}
+      - name: Start it in QEMU
+        run: .github/scripts/iso-boot-test.sh "$(ls out/*.iso)" ${{ matrix.kernel }}
+      - name: Attach it to the release
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          if [ "${{ inputs.publish }}" = true ]; then
+            tag=iso-testing
+            gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --prerelease --title "Installer ISOs (testing)" \
+              --notes "Test builds of the installer ISOs from main. Not a release."
+          fi
+          for f in out/*.iso out/*.iso.sha256; do
+            size=$(stat -c %s "$f")
+            if [ "$size" -ge $((2 * 1024 * 1024 * 1024)) ]; then echo "::error::$f is over 2 GiB"; exit 1; fi
+          done
+          gh release upload "$tag" out/*.iso out/*.iso.sha256 --clobber
+
+  iso:
+    name: ISO (${{ matrix.variant }})
+    needs: kernel
+    if: ${{ !cancelled() }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { variant: libre, kernel: linux-libre }
+          - { variant: mac, kernel: linux-t2 }
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # tools/version.sh counts from the last release
+      - name: Room on the disk
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          df -h / /mnt
+      - name: The libre kernel, from the cache
+        if: matrix.variant == 'libre'
+        uses: actions/cache/restore@v4
+        with:
+          path: iso-repo
+          key: kernel-linux-libre-${{ hashFiles('iso/pkgs/linux-libre/**') }}
+          fail-on-cache-miss: true
+      - name: The Mac kernel, from the cache
+        if: matrix.variant == 'mac'
+        uses: actions/cache/restore@v4
+        with:
+          path: iso-repo
+          key: kernel-linux-t2-${{ hashFiles('iso/pkgs/linux-t2/**') }}
+          fail-on-cache-miss: true
+      - name: Build the ISO
+        run: .github/scripts/iso-docker.sh iso ${{ matrix.variant }}
+      - name: Start it in QEMU
+        run: .github/scripts/iso-boot-test.sh "$(ls out/*.iso)" ${{ matrix.kernel }}
+      - name: Attach it to the release
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          if [ "${{ inputs.publish }}" = true ]; then
+            tag=iso-testing
+            gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --prerelease --title "Installer ISOs (testing)" \
+              --notes "Test builds of the installer ISOs from main. Not a release."
+          fi
+          for f in out/*.iso out/*.iso.sha256; do
+            size=$(stat -c %s "$f")
+            if [ "$size" -ge $((2 * 1024 * 1024 * 1024)) ]; then echo "::error::$f is over 2 GiB"; exit 1; fi
+          done
+          gh release upload "$tag" out/*.iso out/*.iso.sha256 --clobber

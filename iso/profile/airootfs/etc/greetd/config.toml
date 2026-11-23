@@ -1,0 +1,12 @@
+# The live session: greetd signs liveuser straight into Crimson Banner OS (X11, which works on any graphics).
+# After installing, the installer replaces this with Crimson Banner OS's login screen (crimson-greeter-setup enable).
+[terminal]
+vt = 1
+
+[initial_session]
+command = "startx /usr/bin/env /usr/bin/redstaros-session"
+user = "liveuser"
+
+[default_session]
+command = "/usr/bin/crimson-greeter"
+user = "greeter"

@@ -33,8 +33,13 @@ same change that adds it, or it doesn't go in.
 | Dependency | Used for | Controlled by | Licence | Status and way out |
 |---|---|---|---|---|
 | Linux, Mesa, libdrm | the base system | community (Linux Foundation, freedesktop.org) | GPL-2.0, MIT | foundation; accepted |
-| Arch Linux (its packages, pacman, makepkg, repo-add; archiso next) | the distribution base: the system Crimson Banner installs on, its package manager and the tools that build and publish our packages | the Arch Linux team, a volunteer community with its own governance; an associated project of Software in the Public Interest (non-profit) since 2011 | GPL-2.0-or-later (pacman, archiso); each package under its own licence | **commons, chosen 20 Nov 2026** over Debian (too far behind for wlroots 0.20 and .NET 8), Guix System (needs Linux-libre; .NET isn't packaged) and the company-run bases (Fedora, Ubuntu, openSUSE). Our packages are plain PKGBUILDs (`packaging/arch`) in our own signed repository (`tools/repo.sh`), so they aren't held by Arch's servers. Way out: Parabola (FSF-endorsed) and every other pacman-based system read the same PKGBUILDs. |
+| Arch Linux (its packages, pacman, makepkg, repo-add, archiso) | the distribution base: the system Crimson Banner installs on, its package manager and the tools that build and publish our packages | the Arch Linux team, a volunteer community with its own governance; an associated project of Software in the Public Interest (non-profit) since 2011 | GPL-2.0-or-later (pacman, archiso); each package under its own licence | **commons, chosen 20 Nov 2026** over Debian (too far behind for wlroots 0.20 and .NET 8), Guix System (needs Linux-libre; .NET isn't packaged) and the company-run bases (Fedora, Ubuntu, openSUSE). Our packages are plain PKGBUILDs (`packaging/arch`) in our own signed repository (`tools/repo.sh`), so they aren't held by Arch's servers. Way out: Parabola (FSF-endorsed) and every other pacman-based system read the same PKGBUILDs. |
 | GnuPG | signing our packages and repository | GNU project | GPL-3.0-or-later | accepted (commons) |
+| archiso | building the installer ISOs (`tools/iso.sh`, `iso/profile`) | Arch Linux community | GPL-3.0-or-later | **commons** (22 Nov 2026). Our profile is a plain folder in the repository. Way out: any live-image builder (Parabola's is a fork of it) |
+| Calamares, ckbcomp | the installer on the ISOs, with our own configuration and branding (`iso/calamares`); ckbcomp turns keyboard layouts into console keymaps for it | the Calamares community (on Codeberg); Debian's installer team (ckbcomp) | GPL-3.0-or-later; GPL-2.0-or-later | **commons** (22 Nov 2026), built by us from release tarballs (`iso/pkgs`). Neither is in Arch's repositories. Its GeoIP lookup, network check and log upload are off, so installing sends nothing anywhere. Way out: archinstall (Arch, GPL-3.0), or an installer of our own |
+| Linux-libre | the kernel of the libre ISO | FSFLA (Free Software Foundation Latin America) | GPL-2.0-only | **commons** (22 Nov 2026), built by us from the FSFLA's signed release with Arch's patch and configuration (`iso/pkgs/linux-libre`), so all three ISOs run the same kernel version. Way out: Parabola's build |
+| t2linux: linux-t2 and its patches, t2fanrd, apple-t2-audio-config, apple-bcm-firmware-fetcher; tiny-dfr (Asahi Linux) | the Mac ISO: keyboard, trackpad, audio, fans and Touch Bar on T2 Macs, and copying their Wi-Fi/Bluetooth firmware from macOS | the t2linux community; the Asahi Linux community | GPL-2.0, GPL-3.0, MIT | **commons** (22 Nov 2026), built by us from their recipes kept in `iso/pkgs`, with every git source pinned to a commit. Their own package repository is unsigned, so we don't use it. Way out: mainline Linux, as more of the T2 patches go upstream |
+| Non-free firmware and drivers: linux-firmware, AMD and Intel microcode, sof-firmware, Broadcom wl | the Linux and Mac ISOs only: Wi-Fi, graphics, sound and CPU fixes on most hardware; wl for the Wi-Fi of older Macs | the hardware makers, packaged by Arch | proprietary (redistributable) | **an exception, by decision (22 Nov 2026).** The owner chose it so the hardware works; it is the one place Crimson Banner ships non-free code. The libre ISO carries none of it (`tools/iso.sh` checks every build), and T2 Macs' Wi-Fi firmware is copied from the Mac's own macOS, never shipped. Way out: free firmware as it appears, and the libre ISO |
 | greetd (and agreety) | the login screen's base: it starts on the console, signs people in through PAM and starts their desktop; Crimson Banner's own login screen runs on it, and agreety is its text fallback | community project (kennylevinsen and contributors) | GPL-3.0-or-later | **commons** (21 Nov 2026), replacing SDDM (KDE community, GPL-2.0). Way out: any display manager; `crimson-greeter-setup disable` returns to the previous one |
 | Flatpak | Software's Flatpak tab: installing, updating and running Flatpaks (its own `flatpak` command) | freedesktop.org community | LGPL-2.1-or-later | **commons, optional** (21 Nov 2026): nothing needs it to build, test or run; Software offers to install it. Way out: the AppImage tab and our own catalogue don't use it |
 | Flathub | where most Flatpaks come from; Software reads its AppStream catalogue from disk, not a web API | the Flathub team, a GNOME Foundation program (non-profit) with KDE e.V. | the catalogue is CC0; each program has its own licence | **accepted, optional, filtered** (21 Nov 2026): Software lists only free software (`FreeLicences`), because Flathub also carries non-free programs. Hosted, but nothing needs it to build, test or run. Way out: any other Flatpak remote, or our own |
@@ -90,8 +95,10 @@ whenever a layer changes.
 | Packages and their repository | `packaging/arch`, `tools/repo.sh`: our PKGBUILDs, signed with our own key, in our own pacman repository | ours |
 | Installing more software | Software: our own catalogue, Flatpak and AppImage in one app of our own, free software only | ours |
 | Login screen | Crimson Banner's own login screen (`RedStarOS --greeter` in redstar-comp), on greetd | ours |
+| Installer images | `iso/` and `tools/iso.sh` on archiso; Calamares as the installer; the libre and Mac kernels built by us | commons |
 
-**Now: 13 of 16 (81%).** The login screen, our own on greetd in place of SDDM, was added on 21 Nov 2026, as was
+**Now: 13 of 17 (76%).** The installer images were added on 22 Nov 2026 as a commons layer: the ISOs and their
+build are ours, but the installer program is Calamares. Before that, 13 of 16 (81%): the login screen, our own on greetd in place of SDDM, was added on 21 Nov 2026, as was
 Software, our own way to install more programs (12 of 15). Before that,
 11 of 14 (79%): the two distribution layers were added on 20 Nov 2026, when Arch Linux was chosen as the
 base and our own signed pacman repository was set up. Before that: **9 of 12 (75%): the target was reached, and from
@@ -139,7 +146,21 @@ doesn't make it.
   whose licence is free (the FSF's list of free licences, by SPDX id; `FreeLicences`), and our own catalogue accepts
   only free software.
 
+- **Installer images (22 Nov 2026).** The FSDG asks that a distribution ship only free software and free firmware,
+  with Linux-libre as its kernel. The libre ISO follows that for everything on it: Linux-libre, no firmware blobs, no
+  microcode, no Broadcom wl, checked by `tools/iso.sh` on every build. Calamares, archiso and Linux-libre are under
+  the GPL, on GNU's list of free licences. The installed system still updates from Arch's repositories, which also
+  carry non-free packages; the FSDG asks for repositories without them (Parabola's `your-freedom` list does this for
+  Arch's).
+
 Known differences with that advice, recorded openly:
+- **The Linux and Mac ISOs ship non-free firmware (decided 22 Nov 2026).** linux-firmware, the AMD and Intel
+  microcode, sof-firmware and, on the Mac ISO, Broadcom's wl driver. The FSDG doesn't allow any of them. They are there
+  so the hardware people own works, and the README says which ISO carries what. What would change
+  it: free firmware for that hardware; until then, the libre ISO is the FSDG-minded choice.
+- **The libre ISO's installed system updates from Arch.** Nothing non-free is installed from the ISO, but Arch's
+  repositories offer non-free packages afterwards. What would change it: a blacklist like Parabola's `your-freedom`
+  on the libre edition, or Parabola's repositories underneath it.
 - **AppImages that don't state a licence.** Many of AppImageHub's entries name no licence. Software hides them unless
   you tick "Include AppImages that don't state a licence", and then marks each one as not stated. That box can show a
   program that turns out not to be free, which the FSDG wouldn't allow. What would change it: dropping the box, if
@@ -149,7 +170,7 @@ Known differences with that advice, recorded openly:
   ship Linux-libre. Crimson Banner keeps the mainline kernel so that hardware works (Wi-Fi cards, GPUs and other
   devices whose firmware isn't free). This means that, as a distribution, it wouldn't meet the FSDG. Mainline Linux is
   still community-governed free software, so the kernel layer stays *commons*. What would change this: free firmware
-  for the hardware people use, or a Linux-libre edition next to the main one.
+  for the hardware people use. Since 22 Nov 2026 there is a Linux-libre edition next to the main one (the libre ISO).
 - **Arch Linux as the base** isn't an FSF-endorsed distribution (see above). Together with the mainline kernel, this
   is the main reason Crimson Banner wouldn't meet the FSDG. What would change it: a Parabola-based edition, with
   Linux-libre and Parabola's repositories underneath our own.

@@ -1,0 +1,84 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# What every Crimson Banner OS ISO carries, live and installed (each variant adds its kernel: variants/*/packages).
+# The installer copies the live system to disk as it is, so everything here is there after installing, offline.
+
+# the base system
+base
+sudo
+mkinitcpio
+mkinitcpio-archiso
+man-db
+less
+nano
+bash-completion
+xdg-user-dirs
+xdg-utils
+
+# booting the ISO and the installed system
+syslinux
+memtest86+
+memtest86+-efi
+grub
+efibootmgr
+os-prober
+
+# disks and file systems, for the installer's partitioning and for Disks
+dosfstools
+e2fsprogs
+btrfs-progs
+xfsprogs
+exfatprogs
+ntfs-3g
+cryptsetup
+lvm2
+udisks2
+
+# the installer
+calamares
+ckbcomp
+
+# Crimson Banner OS: the shell, login screen, compositor, window manager and browser
+crimson-banner
+greetd
+xorg-server
+xorg-xinit
+xf86-input-libinput
+xf86-video-vesa
+xf86-video-fbdev
+mesa
+
+# fonts
+ttf-dejavu
+noto-fonts
+noto-fonts-emoji
+
+# sound, networks, Bluetooth, printing
+pipewire
+pipewire-pulse
+pipewire-alsa
+wireplumber
+libpulse
+alsa-utils
+networkmanager
+bluez
+bluez-utils
+cups
+
+# the desktop's optional programs (crimson-banner's optdepends): video and music, screenshots and recording,
+# drives and users, power modes, the screen reader, Flatpaks
+accountsservice
+power-profiles-daemon
+vlc
+gst-plugins-good
+gst-plugins-bad
+gst-libav
+orca
+espeak-ng
+grim
+wf-recorder
+wl-clipboard
+maim
+xclip
+ffmpeg
+picom
+flatpak
