@@ -5,9 +5,10 @@
 # stack of every thread, and this prints the crashing thread's to the journal, so a broken ISO says why.
 export DOTNET_DbgEnableMiniDump=1 DOTNET_DbgMiniDumpType=1 DOTNET_EnableCrashReport=1
 export DOTNET_DbgMiniDumpName=/tmp/redstaros-crash-%p.dmp
-startx /usr/bin/env /usr/bin/redstaros-session &
-X=$!
-while kill -0 "$X" 2>/dev/null; do
+# the crash reports are watched for in the background: startx itself must run in the foreground, on the console
+# (Xorg.wrap lets only console users start X)
+watch_reports() {
+while :; do
   for f in /tmp/redstaros-crash-*.crashreport.json; do
     [ -f "$f" ] || continue
     sleep 2
@@ -28,4 +29,8 @@ PY
   done
   sleep 1
 done
-wait "$X"
+}
+watch_reports &
+W=$!
+startx /usr/bin/env /usr/bin/redstaros-session
+kill "$W" 2>/dev/null
