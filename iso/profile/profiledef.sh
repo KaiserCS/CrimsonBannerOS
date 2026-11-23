@@ -26,7 +26,6 @@ file_permissions=(
   ["/root/.gnupg"]="0:0:700"
   ["/home/liveuser"]="1000:1000:750"
   ["/home/liveuser/Desktop"]="1000:1000:755"
-  ["/home/liveuser/Desktop/install-crimson-banner.desktop"]="1000:1000:755"
   ["/home/liveuser/.config"]="1000:1000:755"
   ["/home/liveuser/.config/redstaros"]="1000:1000:755"
   ["/home/liveuser/.config/redstaros/settings.json"]="1000:1000:644"
