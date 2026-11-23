@@ -16,6 +16,10 @@ on:
         description: Publish the ISOs to the "iso-testing" pre-release
         type: boolean
         default: false
+      linux_only:
+        description: Only the Linux ISO (no kernels to build; for trying out changes to the ISO quickly)
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -31,6 +35,7 @@ jobs:
       fail-fast: false
       matrix:
         kernel: [linux-libre, linux-t2]
+    if: ${{ !inputs.linux_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
@@ -106,7 +111,7 @@ jobs:
   iso:
     name: ISO (${{ matrix.variant }})
     needs: kernel
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && !inputs.linux_only }}
     strategy:
       fail-fast: false
       matrix:
