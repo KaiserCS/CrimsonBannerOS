@@ -35,8 +35,11 @@ jobs:
         run: ./build-appimage.sh x64
 
       - uses: actions/upload-artifact@v5
+        # a full artifact storage mustn't stop the release below
+        continue-on-error: true
         with:
           name: RedStarOS-x86_64
+          retention-days: 3
           path: |
             dist/RedStarOS-x86_64.AppImage
             dist/RedStarOS-x86_64.AppImage.zsync

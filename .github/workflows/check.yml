@@ -71,19 +71,23 @@ jobs:
           python3 .github/scripts/summary.py shots screenshots >> "$GITHUB_STEP_SUMMARY" || true
 
       - uses: actions/upload-artifact@v5
+        # the account's artifact storage can fill up; that mustn't fail a check whose tests passed
+        continue-on-error: true
         if: always()
         with:
           name: screenshots
           path: screenshots
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 3
 
       - uses: actions/upload-artifact@v5
+        # the account's artifact storage can fill up; that mustn't fail a check whose tests passed
+        continue-on-error: true
         if: failure()
         with:
           name: test-results
           path: TestResults
-          retention-days: 14
+          retention-days: 3
 
   window-manager:
     name: Window manager (Xvfb)
@@ -110,12 +114,14 @@ jobs:
         run: /usr/bin/python3 wm/test/session_test.py
 
       - uses: actions/upload-artifact@v5
+        # the account's artifact storage can fill up; that mustn't fail a check whose tests passed
+        continue-on-error: true
         if: always()
         with:
           name: session-screenshots
           path: session-screenshots
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 3
 
   packages:
     name: Own package feed (offline build)
@@ -143,12 +149,14 @@ jobs:
           fi
 
       - uses: actions/upload-artifact@v5
+        # the account's artifact storage can fill up; that mustn't fail a check whose tests passed
+        continue-on-error: true
         with:
           name: lock-files
           path: |
             RedStarOS/packages.lock.json
             tests/RedStarOS.Tests/packages.lock.json
-          retention-days: 14
+          retention-days: 3
 
       - name: Cut off nuget.org and empty every package cache
         run: |
