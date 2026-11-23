@@ -32,8 +32,9 @@ if [ "$ok" = 1 ]; then
   if ! grep -q "Started Session 1 of User liveuser" "$T/serial.log" || grep -qE "Removed session 1\.|session-1.scope: Deactivated" "$T/serial.log"; then
     echo "The live user's session didn't stay up"; ok=0
   fi
-  if grep -aqE "terminated abnormally|malloc\(\)|double free|corrupted|free\(\): invalid" "$T/serial.log"; then
+  if grep -aqE "terminated abnormally|malloc\(\)|double free|corrupted|free\(\): invalid|crash report" "$T/serial.log"; then
     echo "A program crashed in the live session"; ok=0
+    sleep 150     # time for .NET's crash report and systemd-coredump's stack traces
   fi
 fi
 echo "screendump $T/screen.ppm" | socat - "UNIX-CONNECT:$T/mon.sock" >/dev/null || true
@@ -42,6 +43,11 @@ echo "quit" | socat - "UNIX-CONNECT:$T/mon.sock" >/dev/null 2>&1 || true
 wait "$QEMU" 2>/dev/null || true
 echo "---- serial console (filtered) ----"
 sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' "$T/serial.log" | grep -aE "Reached target|Failed|greetd|Greeter|session|Session|Xorg|xinit|startx|redstaros|RedStarOS|crimson|calamares|error|liveuser|abnormally|Stack trace|#[0-9]+ +0x|Module |malloc" | tail -n 250 || true
+if grep -aqE "terminated abnormally|crash report|malloc\(\)" "$T/serial.log"; then
+  echo "---- the crash, in full ----"
+  sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' "$T/serial.log" | grep -aE "crash report|crash:|crashed thread|   frame |malloc|abnormally" | head -n 120
+  sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' "$T/serial.log" | awk '/Stack trace of thread/{n++} n==1' | head -n 60
+fi
 if [ -f "$T/screen.ppm" ]; then
   python3 -c "from PIL import Image; im=Image.open('$T/screen.ppm'); im.thumbnail((960,720)); im.save('$T/screen.png', optimize=True)"
   echo "---- screen.png ----"; base64 -w0 "$T/screen.png"; echo; echo "---- end screen.png ----"

@@ -1,6 +1,31 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-or-later
 # The live session, as greetd starts it for the live user: Crimson Banner OS on X11. Its output goes to the journal
-# (greetd runs it under systemd-cat), and a crash's stack trace comes from systemd-coredump (elfutils), so a broken
-# ISO says why.
-exec startx /usr/bin/env /usr/bin/redstaros-session
+# (greetd runs it under systemd-cat). If the shell crashes, .NET writes a crash report with the managed and native
+# stack of every thread, and this prints the crashing thread's to the journal, so a broken ISO says why.
+export DOTNET_DbgEnableMiniDump=1 DOTNET_DbgMiniDumpType=1 DOTNET_EnableCrashReport=1
+export DOTNET_DbgMiniDumpName=/tmp/redstaros-crash-%p.dmp
+startx /usr/bin/env /usr/bin/redstaros-session &
+X=$!
+while kill -0 "$X" 2>/dev/null; do
+  for f in /tmp/redstaros-crash-*.crashreport.json; do
+    [ -f "$f" ] || continue
+    sleep 2
+    echo "crash report: $f"
+    python3 - "$f" <<'PY'
+import json, sys
+r = json.load(open(sys.argv[1]))
+p = r.get("payload", {})
+print("crash:", p.get("ExceptionType"), p.get("process_name"))
+for t in p.get("threads", []):
+    if t.get("crashed"):
+        print("crashed thread", t.get("native_thread_id"), t.get("managed_exception_type", ""))
+        for fr in t.get("stack", [])[:60]:
+            name = fr.get("method_name") or fr.get("unmanaged_name") or ""
+            print("   frame", fr.get("filename", fr.get("native_image", "")), name)
+PY
+    rm -f "$f" /tmp/redstaros-crash-*.dmp
+  done
+  sleep 1
+done
+wait "$X"
