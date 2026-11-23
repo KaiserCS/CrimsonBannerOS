@@ -176,6 +176,7 @@ struct keyboard {
 };
 
 struct server {
+	bool software;                 /* drawing with pixman: no GPU renderer could be made */
 	struct wl_display *display;
 	struct wl_event_loop *loop;
 	struct wlr_backend *backend;
@@ -3570,6 +3571,9 @@ int main(int argc, char **argv)
 		 * software by itself when there's no GPU at all, so we do: pixman draws into dumb buffers on the screen */
 		wlr_log(WLR_INFO, "no GPU renderer: drawing in software (pixman)");
 		s->renderer = wlr_pixman_renderer_create();
+		s->software = true;
+		/* Xwayland then draws in software too: its GPU buffers (glamor) are ones pixman can't read */
+		setenv("XWAYLAND_NO_GLAMOR", "1", 1);
 	}
 	if (!s->renderer) { wlr_log(WLR_ERROR, "no renderer"); return 1; }
 	wlr_renderer_init_wl_display(s->renderer, s->display);
@@ -3609,7 +3613,9 @@ int main(int argc, char **argv)
 	struct wlr_xdg_activation_v1 *activation = wlr_xdg_activation_v1_create(s->display);
 	s->xdg_activate.notify = xdg_activate;
 	wl_signal_add(&activation->events.request_activate, &s->xdg_activate);
-	if (wlr_renderer_get_texture_formats(s->renderer, WLR_BUFFER_CAP_DMABUF))
+	/* GPU buffers from programs: only when drawing on the GPU (in software, a tiled GPU buffer can't be read, and
+	 * offering them made Xwayland fail with "importing the supplied dmabufs failed", taking the shell with it) */
+	if (!s->software && wlr_renderer_get_texture_formats(s->renderer, WLR_BUFFER_CAP_DMABUF))
 		wlr_linux_dmabuf_v1_create_with_renderer(s->display, 5, s->renderer);
 	outputs_load();
 
