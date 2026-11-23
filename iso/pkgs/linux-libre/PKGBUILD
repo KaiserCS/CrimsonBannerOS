@@ -71,6 +71,10 @@ prepare() {
   cd $_srcname
 
   echo "Setting version..."
+  # Linux-libre's own EXTRAVERSION (-gnu) would stop Arch's patch, which sets it to -archN: it moves to a
+  # localversion file instead, so the version still says it's Linux-libre (7.3.5-arch1-gnu-1-libre)
+  sed -i 's/^EXTRAVERSION = -gnu$/EXTRAVERSION =/' Makefile
+  echo "-gnu" > localversion.10-libre
   echo "-$pkgrel" > localversion.20-pkgrel
   echo "${pkgbase#linux}" > localversion.30-pkgname
 

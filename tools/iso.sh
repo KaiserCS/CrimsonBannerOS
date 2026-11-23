@@ -64,10 +64,12 @@ import_keys() {
     if [ -f "$dir/keys/pgp/$fpr.asc" ]; then gpg --batch --quiet --import "$dir/keys/pgp/$fpr.asc"; continue; fi
     gpg --batch --list-keys "$fpr" >/dev/null 2>&1 && continue
     gpg --batch --keyserver hkps://keyserver.ubuntu.com --recv-keys "$fpr" \
-      || gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys "$fpr" || die "can't get the key $fpr for $dir"
+      || gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys "$fpr" || true
+    gpg --batch --list-keys "$fpr" >/dev/null 2>&1 || { echo "(no key $fpr: its signatures can't be checked)"; continue; }
     mkdir -p "$dir/keys/pgp"
     gpg --batch --armor --export "$fpr" > "$dir/keys/pgp/$fpr.asc"
     echo "Saved the key $fpr to ${dir#"$ROOT"/}/keys/pgp: commit it."
+    echo "NEWKEY ${dir#"$ROOT"/}/keys/pgp/$fpr.asc $(base64 -w0 "$dir/keys/pgp/$fpr.asc")"
   done
 }
 
