@@ -1,0 +1,23 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# The live session, as greetd starts it for the live user: Crimson Banner OS on X11. If the shell crashes, .NET's
+# crash report (native and managed stack of the crashing thread) goes to the journal, so a broken ISO says why.
+export DOTNET_DbgEnableMiniDump=1 DOTNET_DbgMiniDumpType=1 DOTNET_EnableCrashReport=1
+export DOTNET_DbgMiniDumpName=/tmp/redstaros-crash-%p.dmp
+startx /usr/bin/env /usr/bin/redstaros-session
+for f in /tmp/redstaros-crash-*.crashreport.json; do
+  [ -f "$f" ] || continue
+  echo "crash report: $f"
+  python3 - "$f" <<'PY'
+import json, sys
+r = json.load(open(sys.argv[1]))
+p = r.get("payload", {})
+print("signal:", p.get("ExceptionType"), "process:", p.get("process_name"))
+for t in p.get("threads", []):
+    if t.get("crashed") or t.get("is_managed") and t.get("managed_exception_type"):
+        print("thread", t.get("native_thread_id"), t.get("managed_exception_type", ""))
+        for fr in t.get("stack", [])[:40]:
+            print("  ", fr.get("native_image", fr.get("filename", "")), fr.get("method_name") or fr.get("unmanaged_name") or hex(int(fr.get("native_address", "0"), 16)))
+PY
+  rm -f "$f"
+done

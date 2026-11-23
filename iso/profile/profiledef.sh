@@ -32,4 +32,5 @@ file_permissions=(
   ["/home/liveuser/.config/redstaros/settings.json"]="1000:1000:644"
   ["/usr/local/bin/crimson-install"]="0:0:755"
   ["/usr/local/bin/crimson-live-cleanup"]="0:0:755"
+  ["/usr/local/bin/crimson-live-session"]="0:0:755"
 )
