@@ -37,7 +37,8 @@ run_case() {
     sleep 1
   done
   [ "$ok" = 1 ] || why="didn't reach the graphical target"
-  [ "$ok" = 1 ] && sleep 120      # the session (or login screen) starting, and staying
+  # the session (or login screen) starting, and staying; crimson-live-logs prints their logs at 100 s
+  [ "$ok" = 1 ] && sleep 120
   echo "screendump $d/screen.ppm" | socat - "UNIX-CONNECT:$d/mon.sock" >/dev/null 2>&1 || true
   sleep 2
   echo "quit" | socat - "UNIX-CONNECT:$d/mon.sock" >/dev/null 2>&1 || true
@@ -60,8 +61,12 @@ run_case() {
       why="${why:+$why; }something crashed or failed"
     fi
   fi
+  echo "---- what tripped the crash check ($1) ----"
+  grep -aE "terminated abnormally|malloc\(\)|double free|corrupted|free\(\): invalid|crash report|no renderer|importing the supplied dmabufs failed|Restarting Xwayland|redstar-comp did not start|exited without creating" <<<"$log" | head -n 20 || true
+  echo "---- the session's own logs ($1) ----"
+  grep -a "^LOG| " <<<"$log" || true
   echo "---- serial console, filtered ($1) ----"
-  grep -aE "Reached target|Failed|greetd|Greeter|crimson|redstar|RedStarOS|Xwayland|XWAYLAND|renderer|pixman|dmabuf|Xorg|picom|abnormally|Stack trace|#[0-9]+ +0x|malloc|session" <<<"$log" | tail -n 120 || true
+  grep -aE "Reached target|Failed|greetd|Greeter|crimson|redstar|RedStarOS|Xwayland|XWAYLAND|renderer|pixman|dmabuf|Xorg|picom|abnormally|Stack trace|#[0-9]+ +0x|malloc|session" <<<"$log" | grep -av "^LOG| \|xdg-desktop-portal\|Portal service\|RealtimeKit" | tail -n 120 || true
   if [ -f "$d/screen.ppm" ]; then
     local bright
     bright="$(python3 -c "from PIL import Image, ImageStat; im=Image.open('$d/screen.ppm').convert('L'); print(int(ImageStat.Stat(im).mean[0]))")"

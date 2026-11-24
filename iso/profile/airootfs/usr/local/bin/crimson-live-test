@@ -5,8 +5,20 @@
 #   crimson.test=greeter   the login screen, as on an installed system
 #   crimson.test=wayland   the live user straight into the Wayland session (redstar-comp)
 #   crimson.test=x11       the live user straight into the X11 session (the live ISO's usual)
+# crimson-live-test logs (crimson-live-logs.service) prints their logs to the serial console after 100 s.
 # The installer removes this.
 set -eu
+if [ "${1:-}" = logs ]; then
+  # 100 s in: the session's and the login screen's own logs, to the serial console for CI to print
+  sleep 100
+  for f in /home/liveuser/.config/redstaros/session.log /var/cache/crimson-greeter/greeter.log \
+           /var/cache/crimson-greeter/greeter-x11.log /home/liveuser/.local/share/xorg/Xorg.0.log; do
+    [ -f "$f" ] || continue
+    echo "LOG| ==== $f"
+    tail -n 150 "$f" | sed 's/^/LOG| /'
+  done > /dev/ttyS0 2>&1
+  exit 0
+fi
 mode="$(sed -n 's/.*crimson\.test=\([a-z0-9]*\).*/\1/p' /proc/cmdline)"
 case "$mode" in
   greeter) install -m644 /usr/share/crimson-banner/greetd-config.toml /etc/greetd/config.toml ;;
