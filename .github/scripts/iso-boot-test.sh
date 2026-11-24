@@ -21,9 +21,10 @@ if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; ACCEL=(-accel kvm -cpu host); 
 failed=()
 
 run_case() {
-  local what="${1%%:*}" vga="${1##*:}" d="$T/$1" ok=0 why=""
+  local what="${1%%:*}" vga="${1##*:}" ok=0 why=""
+  local d="$T/$what-$vga"     # no ":" in the path: QEMU reads it as an option separator
   mkdir -p "$d"
-  echo "======== $what on $vga graphics ($(basename "$ISO"), ${ACCEL[1]}) ========"
+  echo "======== $what on $vga graphics, $(date -u +%H:%M:%S) ($(basename "$ISO"), ${ACCEL[1]}) ========"
   qemu-system-x86_64 "${ACCEL[@]}" -m 4096 -smp 2 -cdrom "$ISO" \
     -kernel "$T/crimson/boot/x86_64/vmlinuz-$KERNEL" -initrd "$T/crimson/boot/x86_64/initramfs-$KERNEL.img" \
     -append "archisobasedir=crimson archisolabel=$LABEL console=ttyS0,115200 cow_spacesize=50% systemd.show_status=1 systemd.journald.forward_to_console=1 crimson.test=$what" \
@@ -40,7 +41,10 @@ run_case() {
   echo "screendump $d/screen.ppm" | socat - "UNIX-CONNECT:$d/mon.sock" >/dev/null 2>&1 || true
   sleep 2
   echo "quit" | socat - "UNIX-CONNECT:$d/mon.sock" >/dev/null 2>&1 || true
+  for _ in $(seq 15); do kill -0 "$qemu" 2>/dev/null || break; sleep 1; done
+  kill -9 "$qemu" 2>/dev/null || true       # never wait on a QEMU that didn't take "quit"
   wait "$qemu" 2>/dev/null || true
+  [ -f "$d/serial.log" ] || touch "$d/serial.log"
   local log; log="$(sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' "$d/serial.log")"
 
   if [ "$ok" = 1 ]; then
