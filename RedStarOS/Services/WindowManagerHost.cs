@@ -99,6 +99,9 @@ public static class WindowManagerHost
         if (InputIsolation.InRedStarComp) return;           // redstar-comp manages windows and composites itself
         if (Environment.GetEnvironmentVariable("REDSTAR_GPU") == null)
             Environment.SetEnvironmentVariable("REDSTAR_GPU", Graphics.GpuFlagFor(null));   // apps started from here inherit it
+        // a virtual machine's display adapter (vmwgfx…): programs that draw with OpenGL use Mesa's software driver
+        if (Graphics.Mode != "gpu" && Graphics.OnlySoftwareOnlyNodes() && Environment.GetEnvironmentVariable("LIBGL_ALWAYS_SOFTWARE") == null)
+            Environment.SetEnvironmentVariable("LIBGL_ALWAYS_SOFTWARE", "1");
         var started = new List<Process>();
         if (NoneRunning() && StartBuiltin() is { } wm) { started.Add(wm); System.Threading.Thread.Sleep(200); }
         // transparent popups need a compositor; start one when it's installed and none is running

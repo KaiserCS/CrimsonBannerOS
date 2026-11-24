@@ -24,6 +24,7 @@
  */
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
+#include <dirent.h>
 #include <drm_fourcc.h>
 #include <getopt.h>
 #include "version.h"
@@ -3527,6 +3528,37 @@ static void usage(const char *me)
 		"  Keys: Alt+F4 close, Alt+drag move, Alt+right-drag resize, Ctrl+Alt+Backspace quit.\n", me);
 }
 
+/* True when there are GPU render nodes but every one is a virtual machine's display adapter (as in the shell's
+ * Graphics.SoftwareOnlyDrivers). VMware's vmwgfx offers a render node even without 3D; wlroots' GPU renderer, and
+ * the GPU buffers it hands Xwayland, then fail and take the session down, so we draw in software from the start.
+ * REDSTAR_COMP_SYS_DRM points this at another folder (the tests). */
+static bool only_software_drm_drivers(const char *sys_drm)
+{
+	static const char *const vm[] = { "vmwgfx", "qxl", "bochs", "bochs-drm", "cirrus", "cirrus-qemu", "simpledrm",
+		"hyperv_drm", "vboxvideo", "udl", "ast", "mgag200", NULL };
+	const char *over = getenv("REDSTAR_COMP_SYS_DRM");
+	if (over && *over) sys_drm = over;
+	DIR *dir = opendir(sys_drm);
+	if (!dir) return false;
+	int nodes = 0, vm_nodes = 0;
+	struct dirent *e;
+	while ((e = readdir(dir))) {
+		if (strncmp(e->d_name, "renderD", 7) != 0) continue;
+		nodes++;
+		char link[512], target[512];
+		snprintf(link, sizeof link, "%s/%s/device/driver", sys_drm, e->d_name);
+		ssize_t n = readlink(link, target, sizeof target - 1);
+		if (n <= 0) continue;
+		target[n] = '\0';
+		const char *name = strrchr(target, '/');
+		name = name ? name + 1 : target;
+		for (int i = 0; vm[i]; i++)
+			if (!strcmp(name, vm[i])) { vm_nodes++; break; }
+	}
+	closedir(dir);
+	return nodes > 0 && vm_nodes == nodes;
+}
+
 int main(int argc, char **argv)
 {
 	int c;
@@ -3565,7 +3597,12 @@ int main(int argc, char **argv)
 	bool nested_wl = (s->backend = nested_backend_create(s->loop)) != NULL;
 	if (!nested_wl) s->backend = wlr_backend_autocreate(s->loop, &s->session);
 	if (!s->backend) { wlr_log(WLR_ERROR, "no backend (no display to run on?)"); return 1; }
-	s->renderer = wlr_renderer_autocreate(s->backend);
+	const char *force = getenv("REDSTAR_COMP_GPU");
+	bool vm_only = !nested_wl && !host_display && !(force && strcmp(force, "1") == 0) && only_software_drm_drivers("/sys/class/drm");
+	if (vm_only || (force && strcmp(force, "0") == 0))
+		wlr_log(WLR_INFO, "%s: not trying the GPU", vm_only ? "a virtual machine's display adapter (vmwgfx, qxl…)" : "REDSTAR_COMP_GPU=0");
+	else
+		s->renderer = wlr_renderer_autocreate(s->backend);
 	if (!s->renderer) {
 		/* no GPU drawing here (a VM without 3D graphics, a driver Mesa can't use): wlroots only falls back to
 		 * software by itself when there's no GPU at all, so we do: pixman draws into dumb buffers on the screen */
@@ -3574,6 +3611,8 @@ int main(int argc, char **argv)
 		s->software = true;
 		/* Xwayland then draws in software too: its GPU buffers (glamor) are ones pixman can't read */
 		setenv("XWAYLAND_NO_GLAMOR", "1", 1);
+		/* and programs that draw with OpenGL use Mesa's software driver, not the adapter's that can't draw */
+		if (vm_only) setenv("LIBGL_ALWAYS_SOFTWARE", "1", 1);
 	}
 	if (!s->renderer) { wlr_log(WLR_ERROR, "no renderer"); return 1; }
 	wlr_renderer_init_wl_display(s->renderer, s->display);

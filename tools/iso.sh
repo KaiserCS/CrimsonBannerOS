@@ -145,9 +145,9 @@ cmd_image() {
     [ ! -d "iso/variants/$v/airootfs" ] || cp -a "iso/variants/$v/airootfs/." "$P/airootfs/"
     mkdir -p "$P/airootfs/etc/calamares"
     cp -a iso/calamares/. "$P/airootfs/etc/calamares/"
-    mapfile -t files < <(find "$P" -type f \( -name '*.cfg' -o -name '*.conf' -o -name '*.desc' -o -name 'profiledef.sh' \))
+    mapfile -t files < <(find "$P" -type f \( -name '*.cfg' -o -name '*.conf' -o -name '*.desc' -o -name 'profiledef.sh' -o -name os-release \))
     fill "${files[@]}"
-    if grep -rl '@[A-Z_]*@' "$P" --include='*.conf' --include='*.cfg' --include='*.desc' --include=profiledef.sh; then
+    if grep -rl '@[A-Z_]*@' "$P" --include='*.conf' --include='*.cfg' --include='*.desc' --include=profiledef.sh --include=os-release; then
       die "values left unfilled in the files above"
     fi
     mkarchiso -v -r -w "$WORK/work-$v" -o "$OUT" "$P"

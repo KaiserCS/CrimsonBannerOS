@@ -118,7 +118,7 @@ fi
 echo "==> Arch packaging"
 bash -n packaging/arch/PKGBUILD && bash -n tools/repo.sh && bash -n install-arch.sh && bash -n tools/iso.sh \
   && for f in iso/pkgs/*/PKGBUILD; do bash -n "$f" || exit 1; done \
-  && sh -n iso/profile/airootfs/usr/local/bin/crimson-live-cleanup && sh -n iso/profile/airootfs/usr/local/bin/crimson-install
+  && sh -n iso/profile/airootfs/usr/local/bin/crimson-live-cleanup && sh -n iso/profile/airootfs/usr/local/bin/crimson-install && sh -n iso/profile/airootfs/usr/local/bin/crimson-os-release
 if [ "$PACKAGES" = 1 ]; then
   if command -v makepkg >/dev/null 2>&1; then
     if [ -f "$(tools/repo.sh where)/signing-key" ] || [ -n "${REDSTAR_REPO_KEY:-}" ]; then

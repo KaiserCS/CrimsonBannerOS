@@ -1,0 +1,12 @@
+# Crimson Banner OS's name at the text login and in tools that read os-release, kept after Arch's filesystem
+# package (which carries Arch's) is upgraded.
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = filesystem
+
+[Action]
+Description = Naming the system Crimson Banner OS…
+When = PostTransaction
+Exec = /usr/local/bin/crimson-os-release

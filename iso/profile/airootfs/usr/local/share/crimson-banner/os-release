@@ -1,0 +1,11 @@
+NAME="Crimson Banner OS"
+PRETTY_NAME="Crimson Banner OS @VERSION@"
+ID=crimsonbanner
+ID_LIKE=arch
+VERSION="@VERSION@"
+VERSION_ID=@VERSION@
+BUILD_ID=rolling
+ANSI_COLOR="38;2;200;16;46"
+HOME_URL="https://github.com/KaiserCS/CrimsonBannerOS"
+SUPPORT_URL="https://github.com/KaiserCS/CrimsonBannerOS/issues"
+BUG_REPORT_URL="https://github.com/KaiserCS/CrimsonBannerOS/issues"

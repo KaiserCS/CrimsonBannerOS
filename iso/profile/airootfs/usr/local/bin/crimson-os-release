@@ -1,0 +1,10 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Names the system Crimson Banner OS: /etc/os-release (read before Arch's /usr/lib/os-release) and the text login's
+# greeting. Run by the installer and again by a pacman hook whenever Arch's filesystem package is upgraded.
+set -eu
+src=/usr/local/share/crimson-banner/os-release
+[ -f "$src" ] || exit 0
+rm -f /etc/os-release
+install -m644 "$src" /etc/os-release
+printf '\\S{PRETTY_NAME} \\r (\\l)\n\n' > /etc/issue

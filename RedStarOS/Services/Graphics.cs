@@ -47,9 +47,44 @@ public static class Graphics
     private static bool OwnDisplay =>
         Environment.GetEnvironmentVariable("REDSTAR_NESTED") == "1" || Environment.GetEnvironmentVariable("REDSTAR_SESSION") == "1";
 
-    public static bool HasRenderNode()
+    /// <summary>
+    /// Kernel drivers whose render node can't be relied on to draw: virtual machines' display adapters. VMware's
+    /// vmwgfx (VMware, VirtualBox's VMSVGA, QEMU's -vga vmware) offers DRI3 and a render node even without 3D, and
+    /// with it Mesa, picom's glx backend and wlroots fail and take the session down; "safe graphics" (nomodeset)
+    /// only worked because it leaves no render node at all. On these the desktop draws in software.
+    /// </summary>
+    public static readonly string[] SoftwareOnlyDrivers =
+        { "vmwgfx", "qxl", "bochs", "bochs-drm", "cirrus", "cirrus-qemu", "simpledrm", "hyperv_drm", "vboxvideo", "udl", "ast", "mgag200" };
+
+    /// <summary>The kernel driver behind a render node (renderD128 → "amdgpu"), or null.</summary>
+    public static string? DriverOf(string node, string sysDrm = "/sys/class/drm")
     {
-        try { return Directory.Exists("/dev/dri") && Directory.GetFiles("/dev/dri", "renderD*").Length > 0; }
+        try
+        {
+            var link = Path.Combine(sysDrm, Path.GetFileName(node), "device", "driver");
+            var target = new FileInfo(link).LinkTarget;
+            return target == null ? null : Path.GetFileName(target.TrimEnd('/'));
+        }
+        catch { return null; }
+    }
+
+    /// <summary>True when there's a render node whose driver can draw (not a virtual machine's display adapter).</summary>
+    public static bool HasRenderNode() => HasRenderNode("/dev/dri", "/sys/class/drm");
+
+    public static bool HasRenderNode(string devDri, string sysDrm)
+    {
+        try
+        {
+            if (!Directory.Exists(devDri)) return false;
+            return Directory.GetFiles(devDri, "renderD*").Any(n => DriverOf(n, sysDrm) is not { } d || !SoftwareOnlyDrivers.Contains(d));
+        }
+        catch { return false; }
+    }
+
+    /// <summary>A render node exists but only on a driver that can't draw (see SoftwareOnlyDrivers).</summary>
+    public static bool OnlySoftwareOnlyNodes()
+    {
+        try { return Directory.Exists("/dev/dri") && Directory.GetFiles("/dev/dri", "renderD*").Length > 0 && !HasRenderNode(); }
         catch { return false; }
     }
 

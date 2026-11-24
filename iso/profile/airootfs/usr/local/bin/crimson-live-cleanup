@@ -34,4 +34,7 @@ pacman-key --populate
 install -Dm644 /usr/share/crimson-banner/greetd-config.toml /etc/greetd/config.toml
 systemctl enable greetd.service >/dev/null 2>&1 || ln -sf /usr/lib/systemd/system/greetd.service /etc/systemd/system/display-manager.service
 
+# its name: Crimson Banner OS, not Arch Linux, at the text login and in os-release
+/usr/local/bin/crimson-os-release
+
 rm -f "$0"

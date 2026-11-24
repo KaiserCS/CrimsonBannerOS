@@ -33,4 +33,5 @@ file_permissions=(
   ["/usr/local/bin/crimson-live-cleanup"]="0:0:755"
   ["/usr/local/bin/crimson-live-session"]="0:0:755"
   ["/usr/local/bin/crimson-live-test"]="0:0:755"
+  ["/usr/local/bin/crimson-os-release"]="0:0:755"
 )
