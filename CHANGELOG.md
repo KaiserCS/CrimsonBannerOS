@@ -2,6 +2,32 @@
 
 Versions are YY.MM.N (README, "Versions"). `tools/release.sh` adds each release's section here.
 
+## 26.11.3 (2026-11-25)
+
+The first release with an installer, updates for installed systems, and a new look throughout.
+
+- **Installer ISO.** A live, offline installer for Crimson Banner OS (archiso and Calamares): it boots the whole
+  desktop, opens the installer, and copies the live system to the disk. It's attached to the release. The libre and
+  Intel Mac editions are put aside for now; their recipes are in `iso/`.
+- **Updates for installed systems.** Each release's packages are published as the signed `[crimson-banner]` pacman
+  repository (`tools/publish-os.sh`, signed with the project's key `19E7 1BAC DC32 A511 D657 F1FA 9EC9 146D 98BE
+  ECA0` on the owner's computer). Systems installed from this ISO turn it on themselves, so Settings → Software
+  Updates brings each release with the rest of the system. `crimson-repo` turns it on or off by hand.
+- **A new look for every window**, after CD Player's deck: a graphite backdrop with panels lifted off it, rounder
+  controls, small spaced capitals for labels, lists with the chosen row in a soft wash of the accent, and flyouts and
+  menus as panels, in the light and dark themes. Software is rebuilt in it (a red-digit display of what's there,
+  cards that fill the window, a program's page as panels), and Settings has a sidebar like Software's.
+- **Dark with the Crimson accent** is now the default for new accounts, the live session and the login screen.
+- **New branding**, all drawn from source in `branding/`: one mark (a crimson swallowtail banner with the star) on the
+  app icon, the Start button, the start-up splash, Welcome and the installer; four 4K wallpapers (Banner, the new
+  default; Folds; Deck; and Daylight, the default in the light theme); the login screen on a blurred Banner; and
+  Studio's own icons. The earlier wallpapers are still in Settings → Wallpaper.
+- **Virtual machines.** VMware's display adapter (and VirtualBox's, QXL, Bochs…) now draws in software, as safe
+  graphics did: the login screen comes up first time, and the Wayland and X11 sessions no longer crash or go black.
+  Where redstar-comp has no display device at all, the login screen and the Wayland session use X11 instead.
+- **Installed systems are named Crimson Banner OS**, not Arch Linux, at the text login and in `/etc/os-release`.
+- **Fixed: a crash in text shaping** (Skia's and HarfBuzz's native libraries now keep their own symbols).
+
 ## 26.11.2 (2026-11-22)
 
 A second fix release, with a new app.
