@@ -21,7 +21,7 @@ from_qemu() {   # the mode QEMU gives, if this is QEMU and it gives one
   return 0
 }
 mode="$(sed -n 's/.*crimson\.test=\([a-z0-9]*\).*/\1/p' /proc/cmdline)"
-via="kernel command line"
+via="the kernel command line"
 [ -n "$mode" ] || { mode="$(from_qemu)"; via=QEMU; }
 [ -n "$mode" ] || exit 0
 
@@ -104,4 +104,4 @@ case "$mode" in
   wayland) sed -i 's|^command = "systemd-cat --identifier=crimson-live /usr/local/bin/crimson-live-session"|command = "systemd-cat --identifier=crimson-live /usr/bin/redstaros-session --wayland"|' /etc/greetd/config.toml ;;
   *) ;;
 esac
-echo "crimson-live-test: $mode (from the $via)"
+echo "crimson-live-test: $mode (from $via)"

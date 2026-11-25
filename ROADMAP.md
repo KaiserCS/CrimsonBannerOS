@@ -23,10 +23,10 @@ Now that people can install it, a bad release reaches every installed system at 
       (25 Nov 2026: `tools/publish-os.sh --testing`, `crimson-repo channel`, Settings → Software Updates)
 - [ ] **Rollback:** Btrfs by default in the installer, with a snapshot before each update (snapper) that the boot
       menu can start.
-- [ ] **ISO size:** 1.76 GiB of GitHub's 2 GiB per file (every build prints what takes it: `.github/scripts/iso-size.sh`).
-      The boot files are on it twice (BIOS and UEFI), and the live initramfs carries every GPU's firmware (`kms`):
-      about 470 MiB together. Firmware and kernel modules come compressed already, so they're about half of the
-      live system's 1,338 MiB however hard it's squeezed.
+- [x] ~~**ISO size:** 1.76 GiB of GitHub's 2 GiB per file~~ (25 Nov 2026: 1.42 GiB. UEFI boots through GRUB, so the
+      boot files are on it once, and the live initramfs no longer carries every GPU's firmware; both menus are now
+      booted by CI. Every build prints what takes the room: `.github/scripts/iso-size.sh`.) What's left is half
+      firmware and kernel modules, which come compressed already; past 2 GiB, the ISOs move to another host.
 
 ## 2. Real hardware
 
