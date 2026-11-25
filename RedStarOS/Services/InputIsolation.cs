@@ -236,6 +236,13 @@ public static class InputIsolation
         p.WaitForExit();
         if (!started)
         {
+            // a session with no other display to fall back on: end it cleanly (back to the login screen) instead of
+            // starting with no display at all, which aborts
+            if (session && Env("DISPLAY") == null)
+            {
+                Log($"redstar-comp did not start (exit {p.ExitCode}); see session.log — no other display here, ending the session");
+                return p.ExitCode == 0 ? 1 : p.ExitCode;
+            }
             Log($"redstar-comp did not start (exit {p.ExitCode}); see session.log — starting the usual way");
             return null;
         }

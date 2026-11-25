@@ -4,8 +4,9 @@
 #   iso-boot-test.sh ISO KERNEL CASE…        a case is WHAT:GRAPHICS
 #     WHAT      x11 (the live session, X11), wayland (the Wayland session, in redstar-comp), greeter (the login screen
 #               of an installed system); the ISO's crimson-live-test sets this up from crimson.test= on the command line
-#     GRAPHICS  std (a plain framebuffer) or vmware (QEMU's VMware SVGA: the vmwgfx driver, no 3D, like VMware
-#               without 3D acceleration)
+#     GRAPHICS  std (QEMU's standard VGA, bochs-drm), vmware (QEMU's VMware SVGA, which Linux's vmwgfx doesn't drive:
+#               only an old frame buffer, no KMS device, so Wayland has to give way to X11) or virtio (virtio-gpu: a
+#               KMS device without 3D, so redstar-comp draws in software, as on VMware's own vmwgfx)
 # Each case must reach the graphical target, keep its session (or login screen) up for two minutes without a crash,
 # and show something other than a black screen. A picture of each screen is printed as base64 between
 # "---- screen.png (CASE) ----" lines, since CI's files can't always be fetched.
@@ -51,6 +52,7 @@ run_case() {
   if [ "$ok" = 1 ]; then
     case "$what" in
       x11|wayland)
+        # (with no display device the Wayland session hands over to X11 in the same session: still session 1)
         if ! grep -q "Started Session 1 of User liveuser" <<<"$log" || grep -qE "Removed session 1\.|session-1.scope: Deactivated" <<<"$log"; then
           why="the live user's session didn't stay up"
         fi ;;

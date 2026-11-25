@@ -57,6 +57,8 @@ printf '#!/bin/sh\n' > "$T/bin/Xorg"
 printf '#!/bin/sh\necho agreety "$@"\n' > "$T/bin/agreety"
 chmod +x "$T/bin/redstar-comp" "$T/bin/xinit" "$T/bin/Xorg" "$T/bin/agreety"
 export CRIMSON_GREETER_XORG="$T/bin/Xorg"
+mkdir -p "$T/dri" && touch "$T/dri/card0"
+export CRIMSON_GREETER_DRI="$T/dri"
 greeter() { PATH="$T/bin:$PATH" sh "$SRC/packaging/greeter/crimson-greeter"; }
 STUB_CODE=1 greeter >/dev/null || true
 STUB_CODE=1 greeter >/dev/null || true
@@ -74,5 +76,9 @@ STUB_CODE=1 greeter >/dev/null || true
 STUB_CODE=0 greeter >/dev/null
 eq "someone signing in resets the count" "$(cat "$T/run/failures")" "0"
 eq "and it's the graphical one again" "$(STUB_CODE=0 greeter; echo done)" "done"
+# no KMS display device at all (an old frame buffer only): X11 straight away
+rm -f "$T/tried" "$T/dri/card0"; echo 0 > "$T/run/failures"
+STUB_CODE=0 greeter >/dev/null
+eq "no display device: X11 first" "$(tr '\n' ' ' < "$T/tried")" "x11 "
 
 exit "$fail"

@@ -18,6 +18,15 @@ if [ "$1" = "--wayland" ]; then
         echo "$(date '+%F %T') Crimson Banner OS (Wayland): redstar-comp is not installed — build it (compositor/build.sh) and run install-session.sh again" >> "$CFG/session.log"
         exit 1
     fi
+    # no KMS display device (an old frame buffer only): redstar-comp has nothing to draw on, so the X11 session
+    has_kms=no
+    for c in /dev/dri/card*; do [ -e "$c" ] && has_kms=yes && break; done
+    if [ "$has_kms" = no ] && [ -z "$DISPLAY$WAYLAND_DISPLAY" ] && command -v startx >/dev/null 2>&1; then
+        echo "$(date '+%F %T') Crimson Banner OS (Wayland): no display device for redstar-comp (/dev/dri/card*); starting the X11 session instead" >> "$CFG/session.log"
+        self="$(command -v "$0" 2>/dev/null || echo "$0")"
+        case "$self" in /*) ;; *) self="$PWD/$self" ;; esac
+        exec startx "$self"
+    fi
     export REDSTAR_WAYLAND=1
     unset DISPLAY WAYLAND_DISPLAY
     echo "$(date '+%F %T') Crimson Banner OS (Wayland) session starting: $APP" >> "$CFG/session.log"
