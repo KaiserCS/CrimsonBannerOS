@@ -1,6 +1,5 @@
 [Unit]
-Description=Crimson Banner OS boot test: the session's logs to the serial console (CI only)
-ConditionKernelCommandLine=crimson.test
+Description=Crimson Banner OS boot test: the logs to the serial port (CI only)
 
 [Service]
 Type=simple

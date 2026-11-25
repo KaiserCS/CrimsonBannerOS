@@ -32,7 +32,7 @@ release when it's tagged.
 
 | | |
 |---|---|
-| `profile/` | the archiso profile every variant shares: boot menus (`syslinux/`, `efiboot/`, `grub/`), the live system's files (`airootfs/`: the live user, its automatic sign-in through greetd, the installer's launcher, `crimson-live-cleanup`) |
+| `profile/` | the archiso profile every variant shares: boot menus (`syslinux/` for BIOS, `grub/` for UEFI and for starting the ISO from a file), the live system's files (`airootfs/`: the live user, its automatic sign-in through greetd, the installer's launcher, `crimson-live-cleanup`) |
 | `packages.common` | the packages every ISO carries (the desktop, its optional programs, the installer, file systems) |
 | `variants/*/` | each variant's kernel and firmware (`packages`), its settings (`variant.conf`: kernel, boot parameters, services) and extra files (`airootfs/`) |
 | `calamares/` | the installer's settings, its modules' configuration and its branding |

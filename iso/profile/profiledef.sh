@@ -13,7 +13,9 @@ iso_application="Crimson Banner OS live and installer (@VARIANT_TITLE@)"
 iso_version="@VERSION@"
 install_dir="crimson"
 buildmodes=('iso')
-bootmodes=('bios.syslinux' 'uefi.systemd-boot')
+# UEFI through GRUB, which reads the kernel and initramfs from the ISO itself, as SYSLINUX does for BIOS; systemd-boot
+# needed its own copy of them in the EFI boot image, about 230 MiB more (ROADMAP.md, "ISO size")
+bootmodes=('bios.syslinux' 'uefi.grub')
 pacman_conf="pacman.conf"
 airootfs_image_type="squashfs"
 # xz with the x86 filter: the smallest image, so each ISO stays under GitHub's 2 GiB per release file

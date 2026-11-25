@@ -1,6 +1,5 @@
 [Unit]
-Description=Crimson Banner OS boot test (CI only, crimson.test= on the kernel command line)
-ConditionKernelCommandLine=crimson.test
+Description=Crimson Banner OS boot test (CI only: crimson.test= on the kernel command line, or from QEMU)
 Before=greetd.service display-manager.service
 
 [Service]

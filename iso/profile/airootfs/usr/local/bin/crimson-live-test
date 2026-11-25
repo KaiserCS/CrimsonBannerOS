@@ -1,7 +1,10 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-or-later
-# For CI's boot test only, and only when the kernel command line asks (crimson.test=…): what greetd starts on the
-# live ISO, so the installed system's login screen and both sessions can be checked without installing.
+# For CI's boot test only, and only when asked: what greetd starts on the live ISO, so the installed system's login
+# screen and both sessions can be checked without installing. Asked on the kernel command line (crimson.test=…), or,
+# when the ISO starts through its own boot menu (SYSLINUX or GRUB, whose command lines CI can't change), by QEMU
+# (-fw_cfg name=opt/org.crimson-banner/test,string=x11): then the journal goes to the serial port as well, since no
+# console is set up there. On any other machine it does nothing.
 #   crimson.test=greeter   the login screen, as on an installed system
 #   crimson.test=wayland   the live user straight into the Wayland session (redstar-comp)
 #   crimson.test=x11       the live user straight into the X11 session (the live ISO's usual)
@@ -11,7 +14,20 @@
 # crimson-live-test logs (crimson-live-logs.service) prints their logs to the serial console after 100 s.
 # The installer removes this.
 set -eu
+FW_CFG=/sys/firmware/qemu_fw_cfg/by_name/opt/org.crimson-banner/test/raw
+from_qemu() {   # the mode QEMU gives, if this is QEMU and it gives one
+  [ -r "$FW_CFG" ] || modprobe -q qemu_fw_cfg 2>/dev/null || true
+  [ -r "$FW_CFG" ] && tr -cd 'a-z0-9' < "$FW_CFG"
+  return 0
+}
+mode="$(sed -n 's/.*crimson\.test=\([a-z0-9]*\).*/\1/p' /proc/cmdline)"
+via="kernel command line"
+[ -n "$mode" ] || { mode="$(from_qemu)"; via=QEMU; }
+[ -n "$mode" ] || exit 0
+
 if [ "${1:-}" = logs ]; then
+  # started through the ISO's own boot menu: the journal to the serial port, as the kernel's console would be
+  if [ "$via" = QEMU ]; then journalctl -b -f -o short-monotonic --no-hostname > /dev/ttyS0 2>&1 & fi
   # 100 s in: the session's and the login screen's own logs, to the serial console for CI to print
   sleep 100
   for f in /home/liveuser/.config/redstaros/session.log /var/cache/crimson-greeter/greeter.log \
@@ -20,6 +36,7 @@ if [ "${1:-}" = logs ]; then
     echo "LOG| ==== $f"
     tail -n 150 "$f" | sed 's/^/LOG| /'
   done > /dev/ttyS0 2>&1
+  wait
   exit 0
 fi
 if [ "${1:-}" = drive ]; then
@@ -75,7 +92,6 @@ if [ "${1:-}" = drive ]; then
   sudo systemctl poweroff
   exit 0
 fi
-mode="$(sed -n 's/.*crimson\.test=\([a-z0-9]*\).*/\1/p' /proc/cmdline)"
 case "$mode" in
   greeter) install -m644 /usr/share/crimson-banner/greetd-config.toml /etc/greetd/config.toml ;;
   install)
@@ -88,4 +104,4 @@ case "$mode" in
   wayland) sed -i 's|^command = "systemd-cat --identifier=crimson-live /usr/local/bin/crimson-live-session"|command = "systemd-cat --identifier=crimson-live /usr/bin/redstaros-session --wayland"|' /etc/greetd/config.toml ;;
   *) ;;
 esac
-echo "crimson-live-test: $mode"
+echo "crimson-live-test: $mode (from the $via)"
