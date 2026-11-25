@@ -278,24 +278,37 @@ public partial class DesktopWindow : Window
     private void ShowSplash()
     {
         if (Content is not Grid root) return;
-        var star = new IconView { Kind = "star", Size = 96, Brush = new SolidColorBrush(Color.Parse("#E0283E")), HorizontalAlignment = HorizontalAlignment.Center };
+        // the deck's graphite, lit by a crimson glow, with the mark (branding/)
         var splash = new Border
         {
             Background = new LinearGradientBrush
             {
                 StartPoint = new Avalonia.RelativePoint(0.5, 0, Avalonia.RelativeUnit.Relative),
                 EndPoint = new Avalonia.RelativePoint(0.5, 1, Avalonia.RelativeUnit.Relative),
-                GradientStops = { new GradientStop(Color.Parse("#4A0812"), 0), new GradientStop(Color.Parse("#12040A"), 1) },
+                GradientStops = { new GradientStop(Color.Parse("#1D1D21"), 0), new GradientStop(Color.Parse("#070708"), 1) },
             },
             ZIndex = 10000, IsHitTestVisible = false,
-            Child = new StackPanel
+            Child = new Panel
             {
-                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Spacing = 14,
                 Children =
                 {
-                    star,
-                    new TextBlock { Text = "Crimson Banner OS", Foreground = Brushes.White, FontSize = 34, FontWeight = FontWeight.Light, HorizontalAlignment = HorizontalAlignment.Center },
-                    new TextBlock { Text = "Version " + AppVersion.Current.Short, Foreground = Brushes.White, Opacity = 0.55, FontSize = 13, HorizontalAlignment = HorizontalAlignment.Center },
+                    new Border
+                    {
+                        Background = new RadialGradientBrush
+                        {
+                            GradientStops = { new GradientStop(Color.Parse("#55C4141C"), 0), new GradientStop(Color.Parse("#00C4141C"), 1) },
+                        },
+                    },
+                    new StackPanel
+                    {
+                        HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Spacing = 10,
+                        Children =
+                        {
+                            Brand.Mark(132),
+                            new TextBlock { Text = "Crimson Banner OS", Foreground = Brushes.White, FontSize = 34, FontWeight = FontWeight.Bold, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Avalonia.Thickness(0, 8, 0, 0) },
+                            new TextBlock { Text = ("Version " + AppVersion.Current.Short).ToUpperInvariant(), Foreground = new SolidColorBrush(Color.Parse("#F02028")), FontSize = 11, FontWeight = FontWeight.Bold, LetterSpacing = 1, HorizontalAlignment = HorizontalAlignment.Center },
+                        }
+                    },
                 }
             }
         };

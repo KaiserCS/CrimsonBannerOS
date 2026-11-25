@@ -157,6 +157,7 @@ def main():
 
     # the mark, the icon, the Start button and a new account's picture
     save(svg("mark.svg", 512), "branding", "mark-512.png")
+    save(svg("mark.svg", 256), "RedStarOS", "Assets", "mark.png")          # Brand.Mark: the splash, Welcome
     save(icon(256), "packaging", "redstaros.png")
     save(icon(512), "branding", "icon-512.png")
     save(start_button(128), "RedStarOS", "Assets", "icon-start.png")

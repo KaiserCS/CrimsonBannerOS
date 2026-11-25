@@ -124,7 +124,7 @@ public sealed class WelcomeWindow : Window
     private Control Hello()
     {
         var p = new StackPanel { Spacing = 16, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 20, 0, 0) };
-        p.Children.Add(new IconView { Kind = "star", Size = 84, Brush = Red, HorizontalAlignment = HorizontalAlignment.Center });
+        p.Children.Add(Brand.Mark(96));
         p.Children.Add(new TextBlock { Text = "Welcome to Crimson Banner OS", FontSize = 30, FontWeight = FontWeight.SemiBold, HorizontalAlignment = HorizontalAlignment.Center });
         p.Children.Add(new TextBlock
         {

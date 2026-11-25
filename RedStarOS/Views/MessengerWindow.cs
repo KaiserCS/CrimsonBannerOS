@@ -150,7 +150,7 @@ public sealed class MessengerWindow : Window
                 Spacing = 10,
                 Children =
                 {
-                    new TextBlock { Text = "💬", FontSize = 40, HorizontalAlignment = HorizontalAlignment.Center },
+                    new Border { HorizontalAlignment = HorizontalAlignment.Center, Child = Icons.Create("chat", 44) },
                     new TextBlock { Text = "Messenger", FontSize = 26, FontWeight = FontWeight.SemiBold, HorizontalAlignment = HorizontalAlignment.Center },
                     new TextBlock { Text = "Chat with anyone on Matrix, the open network for messaging.", TextWrapping = TextWrapping.Wrap,
                         TextAlignment = TextAlignment.Center, Classes = { "caption" } },
