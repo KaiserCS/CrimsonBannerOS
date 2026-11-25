@@ -65,4 +65,4 @@ echo "-- documentation and translations (uncompressed) --"
 for p in usr/share/doc usr/share/man usr/share/info usr/share/help usr/share/locale usr/share/gtk-doc usr/include; do
   awk -v p="/$p/" 'index($2, p) == 1 { s += $1 } END { print s + 0 }' "$T/files" | awk -v p="/$p" '{ print $1, p }'
 done | sort -rn | mib
-rm -rf "$T"
+chmod -R u+w "$T" 2>/dev/null; rm -rf "$T" 2>/dev/null || true
