@@ -5,6 +5,9 @@
 #   crimson.test=greeter   the login screen, as on an installed system
 #   crimson.test=wayland   the live user straight into the Wayland session (redstar-comp)
 #   crimson.test=x11       the live user straight into the X11 session (the live ISO's usual)
+#   crimson.test=install   the live session as usual, then the installer driven from the keyboard (crimson-live-test
+#                          drive) onto the empty disk, as user "tester", password "crimson"; then the machine powers
+#                          off, and CI checks and boots what was installed (.github/scripts/iso-install-test.sh)
 # crimson-live-test logs (crimson-live-logs.service) prints their logs to the serial console after 100 s.
 # The installer removes this.
 set -eu
@@ -19,9 +22,54 @@ if [ "${1:-}" = logs ]; then
   done > /dev/ttyS0 2>&1
   exit 0
 fi
+if [ "${1:-}" = drive ]; then
+  # in the live user's X session (autostart): Calamares (running as root, on this display) driven as a person would,
+  # from the keyboard. Each step goes to the journal, which the serial console carries, and CI pictures the screen.
+  say() { logger -t crimson-install-test "$*"; }
+  win() { xdotool search --onlyvisible --class calamares 2>/dev/null | head -n 1; }
+  for _ in $(seq 240); do [ -n "$(win)" ] && break; sleep 1; done
+  [ -n "$(win)" ] || { say "FAILED: the installer's window never appeared"; exit 1; }
+  sleep 8
+  press() {   # key, then wait, then say which step it was
+    w="$(win)"; [ -n "$w" ] || { say "FAILED: the installer closed before: $3"; exit 1; }
+    xdotool windowactivate --sync "$w" 2>/dev/null || xdotool windowfocus --sync "$w" 2>/dev/null || true
+    xdotool key --clearmodifiers "$1"; sleep "$2"; say "step: $3"
+  }
+  say "step: the installer is open"
+  press alt+n 4 "welcome to location"
+  press alt+n 4 "location to keyboard"
+  press alt+n 6 "keyboard to disk (erase the disk, as set)"
+  press alt+n 4 "disk to users"
+  # users: the name first (the login name and the computer's name follow it), then the password twice
+  w="$(win)"; xdotool windowactivate --sync "$w" 2>/dev/null || true
+  xdotool type --delay 60 "Tester"; sleep 1
+  xdotool key Tab Tab Tab; xdotool type --delay 60 "crimson"; xdotool key Tab; xdotool type --delay 60 "crimson"; sleep 2
+  say "step: users filled in"
+  press alt+n 4 "users to summary"
+  press alt+i 10 "summary to installing"
+  # installing: Calamares closes by itself when it's done (quit-at-end in test mode)
+  for _ in $(seq 2400); do [ -n "$(win)" ] || break; sleep 1; done
+  if [ -n "$(win)" ]; then say "FAILED: still installing after 40 minutes"; exit 1; fi
+  grep -aE "ERROR|Installation failed|Job .* failed" /tmp/crimson-install.log | tail -n 20 | while IFS= read -r l; do say "log: $l"; done
+  if grep -aq "Installation failed\|onInstallationFailed" /tmp/crimson-install.log; then
+    say "FAILED: the installer reported a failure"; tail -n 60 /tmp/crimson-install.log | while IFS= read -r l; do say "log: $l"; done
+  else
+    say "installed"
+  fi
+  sync; sleep 3
+  sudo systemctl poweroff
+  exit 0
+fi
 mode="$(sed -n 's/.*crimson\.test=\([a-z0-9]*\).*/\1/p' /proc/cmdline)"
 case "$mode" in
   greeter) install -m644 /usr/share/crimson-banner/greetd-config.toml /etc/greetd/config.toml ;;
+  install)
+    # Calamares for a test: no "are you sure?", no final page, and it closes when it's done
+    sed -i -e 's/^prompt-install:.*/prompt-install: false/' -e 's/^quit-at-end:.*/quit-at-end: true/' /etc/calamares/settings.conf
+    sed -i '/^  - show:$/{N;/\n      - finished$/d}' /etc/calamares/settings.conf
+    printf '[Desktop Entry]\nType=Application\nName=Install test (CI)\nExec=/usr/local/bin/crimson-live-test drive\nNoDisplay=true\n' \
+      > /etc/xdg/autostart/crimson-install-test.desktop
+    ;;
   wayland) sed -i 's|^command = "systemd-cat --identifier=crimson-live /usr/local/bin/crimson-live-session"|command = "systemd-cat --identifier=crimson-live /usr/bin/redstaros-session --wayland"|' /etc/greetd/config.toml ;;
   *) ;;
 esac

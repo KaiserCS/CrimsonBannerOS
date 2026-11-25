@@ -39,6 +39,8 @@ udisks2
 # the installer
 calamares
 ckbcomp
+# CI's install test drives the installer with xdotool; it's removed from installed systems with Calamares
+xdotool
 
 # Crimson Banner OS: the shell, login screen, compositor, window manager and browser
 crimson-banner
