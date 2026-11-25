@@ -25,12 +25,13 @@ public static class SettingsPages
     private static StackPanel Page(string title, string subtitle)
     {
         var p = new StackPanel { Spacing = 10 };
+        p.Children.Add(new TextBlock { Text = "SETTINGS", Classes = { "kicker", "accent" }, Margin = new Thickness(0, 0, 0, -8) });
         p.Children.Add(new TextBlock { Text = title, Classes = { "h1" } });
         p.Children.Add(new TextBlock { Text = subtitle, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap });
         return p;
     }
     private static TextBlock Eyebrow(string t) => new() { Text = t, Classes = { "eyebrow" }, Margin = new Thickness(0, 10, 0, 0) };
-    private static TextBlock Note(string t) => new() { Text = t, Opacity = 0.7, TextWrapping = TextWrapping.Wrap, FontSize = 13 };
+    private static TextBlock Note(string t) => new() { Text = t, Classes = { "muted" }, TextWrapping = TextWrapping.Wrap, FontSize = 13 };
     private static Button Btn(string text, Action act, bool primary = false)
     {
         var b = new Button { Content = text, Padding = new Thickness(12, 5) };
@@ -44,11 +45,7 @@ public static class SettingsPages
         foreach (var k in kids) p.Children.Add(k);
         return p;
     }
-    private static Border Card(Control child) => new()
-    {
-        Child = child, Padding = new Thickness(12, 8), CornerRadius = new CornerRadius(8),
-        Background = new SolidColorBrush(Color.FromArgb(22, 128, 128, 128))
-    };
+    private static Border Card(Control child) => new() { Child = child, Classes = { "panel" }, Padding = new Thickness(16, 12) };
     private static Window? Owner(Control c) => TopLevel.GetTopLevel(c) as Window;
     private static async Task<(int Code, string Out)> Run(string tool, params string[] args)
     {

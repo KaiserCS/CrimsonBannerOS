@@ -163,6 +163,10 @@ def main():
     save(start_button(128), "RedStarOS", "Assets", "icon-start.png")
     save(avatar(256), "RedStarOS", "Assets", "avatar.png")
 
+    # Studio's three programs (Studio's window, and their entries in the Start menu where they use these)
+    for app, asset in (("writer", "studio-writer.png"), ("sheets", "studio-sheet.png"), ("slides", "studio-slides.png")):
+        save(svg(f"app-{app}.svg", 128), "RedStarOS", "Assets", asset)
+
     # the installer ISO: the boot menu and Calamares
     save(splash(640, 480), "iso", "profile", "syslinux", "splash.png")
     save(svg("mark.svg", 256), "iso", "calamares", "branding", "crimson", "logo.png")

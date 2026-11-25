@@ -105,6 +105,32 @@
     <Setter Property="Background" Value="{DynamicResource ShellBackdropBrush}" />
   </Style>
 
+  <!-- ===== Every list: a panel (unless it sets its own background), rounded rows, the chosen one in a soft wash of
+       the accent rather than a solid block (lists with classes of their own, as the desktop's, keep theirs) ===== -->
+  <Style Selector="ListBox">
+    <Setter Property="Background" Value="{DynamicResource ShellPanelBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellPanelBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="4" />
+  </Style>
+  <Style Selector="ListBoxItem">
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Margin" Value="0,1" />
+  </Style>
+  <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ShellHoverBrush}" />
+  </Style>
+  <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ShellAccentSoftBrush}" />
+  </Style>
+  <Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ShellAccentSoftBrush}" />
+  </Style>
+  <Style Selector="ListBoxItem:selected:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ShellAccentSoftBrush}" />
+  </Style>
+
   <!-- ===== Typography: one scale for every window ===== -->
   <Style Selector="TextBlock.h1">
     <Setter Property="FontSize" Value="24" />
