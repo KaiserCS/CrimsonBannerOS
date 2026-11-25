@@ -26,6 +26,13 @@ public class ScreenshotTests
     /// <summary>Shows the window, saves a picture of it when screenshots are on, closes it.</summary>
     private static void ShowAndCapture(Window w, string name)
     {
+        // REDSTAR_SCREENSHOT_THEME=Light (or Dark): every picture in that theme (CI takes both)
+        if (Environment.GetEnvironmentVariable("REDSTAR_SCREENSHOT_THEME") is { Length: > 0 } theme
+            && RedStarOS.Services.SettingsStore.Current.Theme != theme)
+        {
+            RedStarOS.Services.SettingsStore.Current.Theme = theme;
+            RedStarOS.Services.ThemeService.Apply();
+        }
         w.Show();
         Dispatcher.UIThread.RunJobs();
         if (ShotDir is { } dir)

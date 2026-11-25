@@ -70,10 +70,19 @@ jobs:
           python3 .github/scripts/summary.py tests TestResults >> "$GITHUB_STEP_SUMMARY" || true
           python3 .github/scripts/summary.py shots screenshots >> "$GITHUB_STEP_SUMMARY" || true
 
-      - name: Software's and CD Player's screens, in the log (for when the artifact can't be fetched)
+      - name: Every window again, in the light theme
+        env:
+          REDSTAR_SCREENSHOTS: ${{ github.workspace }}/screenshots-light
+          REDSTAR_SCREENSHOT_THEME: Light
+        run: dotnet test tests/RedStarOS.Tests/RedStarOS.Tests.csproj -c Release --no-build --filter "FullyQualifiedName~ScreenshotTests"
+
+      - name: Every window, dark and light, as contact sheets in the log (for when the artifact can't be fetched)
         if: always()
         run: |
-          for f in screenshots/Software-*.png screenshots/CdPlayerWindow-disc.png screenshots/SettingsWindow.png; do
+          sudo apt-get -qq install -y python3-pil >/dev/null 2>&1 || true
+          python3 .github/scripts/contact-sheet.py screenshots dark
+          python3 .github/scripts/contact-sheet.py screenshots-light light
+          for f in screenshots/Software-*.png; do
             [ -f "$f" ] || continue
             echo "---- $(basename "$f") ----"; base64 -w0 "$f"; echo; echo "---- end ----"
           done
