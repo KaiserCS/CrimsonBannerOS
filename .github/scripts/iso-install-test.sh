@@ -33,7 +33,7 @@ picture() {   # socket name: the screen, printed as base64
   echo "---- screen.png ($2) ----"; base64 -w0 "$T/$2.png"; echo; echo "---- end screen.png ----"
 }
 brightness() { python3 -c "from PIL import Image, ImageStat; print(int(ImageStat.Stat(Image.open('$1').convert('L')).mean[0]))" 2>/dev/null || echo 0; }
-clean() { sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' "$1"; }
+clean() { sed 's/\x1b\[[0-9;:?]*[a-zA-Z]//g' "$1"; }
 
 # ── 1. installing ──
 echo "======== installing ($(basename "$ISO"), ${ACCEL[1]}, $(date -u +%H:%M:%S)) ========"
@@ -64,7 +64,7 @@ echo "---- the installer's steps ----"
 clean "$T/install.log" | grep -a "crimson-install-test" | sed 's/.*crimson-install-test\[[0-9]*\]: //' | tail -n 200
 echo "---- serial console, filtered (installing) ----"
 clean "$T/install.log" | grep -aE "Reached target|Failed|calamares|Calamares|crimson|abnormally|session" | grep -av "crimson-install-test" | tail -n 60
-if ! clean "$T/install.log" | grep -aq "crimson-install-test\[[0-9]*\]: installed"; then
+if ! clean "$T/install.log" | grep -a "crimson-install-test\[[0-9]*\]:" | grep -av "log: " | grep -aqw installed; then
   echo "---- serial console, the end (installing) ----"; clean "$T/install.log" | tail -n 40
   fail install "the installer didn't finish"
   echo "Failed: ${failed[*]}"; exit 1

@@ -357,6 +357,8 @@ jobs:
 
       - name: The update channel (tools/publish-os.sh --local) as an installed system sees it (crimson-repo enable os)
         run: |
+          # the version, before publishing writes CI's own key over software/crimson-banner.gpg (restored below)
+          want="$(sudo -u builder -H tools/version.sh --pkgver)-1"
           sudo -u builder -H env REDSTAR_OS_DIR=/srv/crimson-banner-os tools/publish-os.sh --local
           sudo -u builder -H env REDSTAR_REPO=/srv/crimson-banner-os tools/repo.sh check
           # a system installed from the ISO: no [crimson-banner] of its own (this one has ./install-arch.sh's, file://)
@@ -371,11 +373,12 @@ jobs:
           for p in crimson-banner crimson-banner-shell crimson-banner-greeter redstar-comp redstar-wm crimson-online; do
             pacman -Sl crimson-banner | grep -q "^crimson-banner $p " || { echo "not in the update repository: $p"; exit 1; }
           done
-          [ "$(pacman -Si crimson-banner/crimson-banner | sed -n 's/^Version *: //p')" = "$(sudo -u builder -H tools/version.sh --pkgver)-1" ]
+          got="$(pacman -Si crimson-banner/crimson-banner | sed -n 's/^Version *: //p')"
+          [ "$got" = "$want" ] || { echo "the update repository has $got, not $want"; exit 1; }
           crimson-repo disable os
           [ "$(crimson-repo status os)" = disabled ]
           cp /tmp/pacman.conf.mine /etc/pacman.conf
-          rm -f software/crimson-banner.gpg
+          sudo -u builder git checkout -- software/crimson-banner.gpg
 
       - name: ./install-arch.sh --uninstall
         run: |
