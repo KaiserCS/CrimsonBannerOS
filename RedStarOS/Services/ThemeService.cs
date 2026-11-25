@@ -82,7 +82,7 @@ public static class ThemeService
     private static readonly string[] HcKeys =
     {
         "TextFillColorPrimaryBrush", "TextFillColorSecondaryBrush", "TextFillColorTertiaryBrush",
-        "ShellBorderBrush", "ShellCardBrush", "ShellFocusBrush", "HcStrokeBrush", "HcStrokeInverseBrush", "HcFocusBrush",
+        "ShellBorderBrush", "ShellCardBrush", "ShellMutedBrush", "ShellPanelBorderBrush", "ShellFocusBrush", "HcStrokeBrush", "HcStrokeInverseBrush", "HcFocusBrush",
         "SystemControlFocusVisualPrimaryBrush", "SystemControlFocusVisualSecondaryBrush",
         "ControlStrokeColorDefaultBrush", "CardStrokeColorDefaultBrush", "TextControlBorderBrush", "ButtonBorderBrush",
     };
@@ -109,7 +109,7 @@ public static class ThemeService
         var focus = dark ? Color.Parse("#FFD700") : Color.Parse("#0000C8");
         var fgB = new SolidColorBrush(fg);
         foreach (var k in new[] { "TextFillColorPrimaryBrush", "TextFillColorSecondaryBrush", "TextFillColorTertiaryBrush",
-                                  "ShellBorderBrush", "HcStrokeBrush", "ControlStrokeColorDefaultBrush", "CardStrokeColorDefaultBrush",
+                                  "ShellBorderBrush", "ShellMutedBrush", "ShellPanelBorderBrush", "HcStrokeBrush", "ControlStrokeColorDefaultBrush", "CardStrokeColorDefaultBrush",
                                   "TextControlBorderBrush", "ButtonBorderBrush" })
             app.Resources[k] = fgB;
         app.Resources["ShellCardBrush"] = new SolidColorBrush(dark ? Color.FromArgb(0x30, 255, 255, 255) : Color.FromArgb(0x18, 0, 0, 0));

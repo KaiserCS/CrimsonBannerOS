@@ -26,6 +26,23 @@
           <SolidColorBrush x:Key="ShellRuleBrush" Color="#14000000" />
           <SolidColorBrush x:Key="ShellMutedBrush" Color="#686B71" />
           <SolidColorBrush x:Key="ShellFieldBrush" Color="#0A000000" />
+          <!-- every standard control (Fluent's own keys): white controls with a hairline, on the pale backdrop -->
+          <SolidColorBrush x:Key="ButtonBackground" Color="#FFFFFF" />
+          <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#F2F2F5" />
+          <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#E8E8EC" />
+          <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="#F4F4F6" />
+          <SolidColorBrush x:Key="ButtonBorderBrush" Color="#21000000" />
+          <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#33000000" />
+          <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#29000000" />
+          <SolidColorBrush x:Key="TextControlBackground" Color="#FFFFFF" />
+          <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#FFFFFF" />
+          <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#FFFFFF" />
+          <SolidColorBrush x:Key="TextControlBorderBrush" Color="#2B000000" />
+          <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#42000000" />
+          <SolidColorBrush x:Key="ComboBoxBackground" Color="#FFFFFF" />
+          <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#F2F2F5" />
+          <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#21000000" />
+          <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#33000000" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
           <SolidColorBrush x:Key="ShellCardBrush" Color="#12FFFFFF" />
@@ -42,8 +59,30 @@
           <SolidColorBrush x:Key="ShellRuleBrush" Color="#16FFFFFF" />
           <SolidColorBrush x:Key="ShellMutedBrush" Color="#8A8E94" />
           <SolidColorBrush x:Key="ShellFieldBrush" Color="#4D000000" />
+          <!-- every standard control (Fluent's own keys): the deck's plastic, and fields sunk into it -->
+          <SolidColorBrush x:Key="ButtonBackground" Color="#17FFFFFF" />
+          <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#24FFFFFF" />
+          <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#0FFFFFFF" />
+          <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="#0AFFFFFF" />
+          <SolidColorBrush x:Key="ButtonBorderBrush" Color="#22FFFFFF" />
+          <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#33FFFFFF" />
+          <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#1AFFFFFF" />
+          <SolidColorBrush x:Key="TextControlBackground" Color="#40000000" />
+          <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#52000000" />
+          <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#66000000" />
+          <SolidColorBrush x:Key="TextControlBorderBrush" Color="#2AFFFFFF" />
+          <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#3DFFFFFF" />
+          <SolidColorBrush x:Key="ComboBoxBackground" Color="#17FFFFFF" />
+          <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#24FFFFFF" />
+          <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#22FFFFFF" />
+          <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#33FFFFFF" />
         </ResourceDictionary>
       </ResourceDictionary.ThemeDictionaries>
+
+      <!-- every control's corners (Fluent's keys): rounder, as the panels -->
+      <CornerRadius x:Key="ControlCornerRadius">8</CornerRadius>
+      <CornerRadius x:Key="OverlayCornerRadius">12</CornerRadius>
+      <Thickness x:Key="ButtonPadding">14,7,14,7</Thickness>
 
       <!-- Fallbacks: ThemeService replaces these with the user's accent colour at start-up. -->
       <SolidColorBrush x:Key="ShellAccentBrush" Color="#0078D4" />
@@ -61,35 +100,43 @@
     </ResourceDictionary>
   </Styles.Resources>
 
+  <!-- ===== Every window: the deck's backdrop (a window that sets its own background keeps it) ===== -->
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{DynamicResource ShellBackdropBrush}" />
+  </Style>
+
   <!-- ===== Typography: one scale for every window ===== -->
   <Style Selector="TextBlock.h1">
-    <Setter Property="FontSize" Value="22" />
-    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontSize" Value="24" />
+    <Setter Property="FontWeight" Value="Bold" />
   </Style>
   <Style Selector="TextBlock.h2">
     <Setter Property="FontSize" Value="16" />
-    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontWeight" Value="Bold" />
   </Style>
   <Style Selector="TextBlock.caption">
     <Setter Property="FontSize" Value="12" />
-    <Setter Property="Opacity" Value="0.65" />
+    <Setter Property="Foreground" Value="{DynamicResource ShellMutedBrush}" />
   </Style>
+  <!-- a section's label: small spaced capitals, as the deck's (write the text in capitals) -->
   <Style Selector="TextBlock.eyebrow">
     <Setter Property="FontSize" Value="11" />
-    <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="Opacity" Value="0.55" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="LetterSpacing" Value="0.8" />
+    <Setter Property="Foreground" Value="{DynamicResource ShellMutedBrush}" />
   </Style>
   <Style Selector="TextBlock.brand">
     <Setter Property="Foreground" Value="{DynamicResource RedStarBrush}" />
   </Style>
 
   <!-- ===== Surfaces ===== -->
+  <!-- a card is a panel lifted off the backdrop (the same as Border.panel, with less room inside) -->
   <Style Selector="Border.card">
-    <Setter Property="Background" Value="{DynamicResource ShellCardBrush}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource ShellBorderBrush}" />
+    <Setter Property="Background" Value="{DynamicResource ShellPanelBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellPanelBorderBrush}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="10" />
-    <Setter Property="Padding" Value="12" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="14" />
   </Style>
   <Style Selector="Border.divider">
     <Setter Property="Background" Value="{DynamicResource ShellBorderBrush}" />
@@ -149,10 +196,10 @@
 
   <!-- Quick-setting tile (flyouts). ".on" = active, filled with the accent colour. -->
   <Style Selector="Button.tile">
-    <Setter Property="Background" Value="{DynamicResource ShellCardBrush}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource ShellBorderBrush}" />
+    <Setter Property="Background" Value="{DynamicResource ShellPanelBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellPanelBorderBrush}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="CornerRadius" Value="12" />
     <Setter Property="Padding" Value="12,10" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
