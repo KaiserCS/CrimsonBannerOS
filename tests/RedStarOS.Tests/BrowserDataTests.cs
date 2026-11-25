@@ -3,6 +3,7 @@ using Xunit;
 
 namespace RedStarOS.Tests;
 
+[Collection("environment")]     // writes browser-data.json, which RedStarOnlineTests watches: never at the same time
 public class BrowserDataTests
 {
     [Fact]
