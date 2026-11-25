@@ -90,6 +90,8 @@ jobs:
           fail-on-cache-miss: true
       - name: Build the ISO
         run: .github/scripts/iso-docker.sh iso ${{ matrix.variant }}
+      - name: What takes the room (GitHub takes files up to 2 GiB)
+        run: .github/scripts/iso-size.sh "$(ls out/*.iso)"
       - name: Start it in QEMU (live session, Wayland session, login screen)
         # the live session, the Wayland session and the login screen, on plain and on VMware graphics (no 3D)
         run: .github/scripts/iso-boot-test.sh "$(ls out/*.iso)" ${{ matrix.kernel }} x11:std x11:vmware wayland:vmware greeter:vmware wayland:virtio greeter:virtio
@@ -149,6 +151,8 @@ jobs:
           fail-on-cache-miss: true
       - name: Build the ISO
         run: .github/scripts/iso-docker.sh iso ${{ matrix.variant }}
+      - name: What takes the room (GitHub takes files up to 2 GiB)
+        run: .github/scripts/iso-size.sh "$(ls out/*.iso)"
       - name: Start it in QEMU (live session, Wayland session, login screen)
         # the live session, the Wayland session and the login screen, on plain and on VMware graphics (no 3D)
         run: .github/scripts/iso-boot-test.sh "$(ls out/*.iso)" ${{ matrix.kernel }} x11:std x11:vmware wayland:vmware greeter:vmware wayland:virtio greeter:virtio
