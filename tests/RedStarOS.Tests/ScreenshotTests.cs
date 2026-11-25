@@ -131,4 +131,18 @@ public class ScreenshotTests
         w.LoadAlbum(album, "YOUR MUSIC LIBRARY", play: false, first: 1);
         ShowAndCapture(w, "CdPlayerWindow-disc");
     }
+
+    // ─────────── Software's pages, with sample programs (CI has no catalogue to read) ───────────
+    [AvaloniaTheory]
+    [InlineData("explore")]
+    [InlineData("crimson")]
+    [InlineData("installed")]
+    [InlineData("search")]
+    [InlineData("detail")]
+    public void Software_pages(string page)
+    {
+        var w = new SoftwareWindow();
+        w.ShowSample(page);
+        ShowAndCapture(w, "Software-" + page);
+    }
 }

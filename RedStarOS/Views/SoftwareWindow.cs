@@ -114,6 +114,7 @@ public sealed class SoftwareWindow : Window
         Opened += async (_, _) =>
         {
             Render();
+            if (_sample) return;            // screenshots: the sample programs, not the real catalogues
             await LoadOurs(fetch: true);
             await RefreshInstalled();
             Render();
@@ -208,6 +209,50 @@ public sealed class SoftwareWindow : Window
         pages.Add(_page.Content as Control);
         _detail = null; _search.Text = "";
         return pages;
+    }
+
+    /// <summary>
+    /// For screenshots (tests): a few sample programs in each place, then the page asked for ("explore", "crimson",
+    /// "flatpak", "installed", "search" or "detail"), as if the catalogues had been read.
+    /// </summary>
+    private bool _sample;
+
+    public void ShowSample(string page)
+    {
+        _sample = true;
+        SoftwareItem Item(SoftwareSource src, string id, string name, string summary, string cat, bool installed = false, bool update = false) => new()
+        {
+            Source = src, Id = id, Name = name, Summary = summary, License = "GPL-3.0-or-later", Developer = name + " developers",
+            Version = "2.4.1", Categories = { cat }, Installed = installed, InstalledVersion = installed ? (update ? "2.3.0" : "2.4.1") : null,
+            UpdateAvailable = update, Homepage = "https://example.invalid/" + id,
+            Description = summary + ".\n\nA longer description of what it does, how it fits with the rest of the system and who makes it.",
+            Methods = { new InstallMethod(src == SoftwareSource.Flatpak ? InstallMethod.Flatpak : InstallMethod.AppImage) { Url = "https://example.invalid/" + id, Sha256 = new string('0', 64) } },
+        };
+        _ours = new()
+        {
+            Item(SoftwareSource.CrimsonBanner, "planner", "Planner", "Economic computation for central planning", "Office"),
+            Item(SoftwareSource.CrimsonBanner, "archive", "People's Archive", "Library catalogue and reading room", "Education", installed: true),
+            Item(SoftwareSource.CrimsonBanner, "atlas", "Atlas", "Maps that work without the network", "Science"),
+        };
+        _oursNote = null;
+        _flatpaks = new()
+        {
+            Item(SoftwareSource.Flatpak, "org.libreoffice.LibreOffice", "LibreOffice", "The office suite: documents, sheets and slides", "Office", installed: true, update: true),
+            Item(SoftwareSource.Flatpak, "org.gimp.GIMP", "GIMP", "Edit photos and make pictures", "Graphics"),
+            Item(SoftwareSource.Flatpak, "org.inkscape.Inkscape", "Inkscape", "Vector drawing", "Graphics"),
+            Item(SoftwareSource.Flatpak, "org.kde.krita", "Krita", "Digital painting", "Graphics"),
+            Item(SoftwareSource.Flatpak, "org.videolan.VLC", "VLC", "Plays every kind of film and music", "AudioVideo"),
+            Item(SoftwareSource.Flatpak, "org.blender.Blender", "Blender", "3D modelling and animation", "Graphics"),
+        };
+        _appimages = new() { Item(SoftwareSource.AppImage, "kdenlive", "Kdenlive", "Video editing", "AudioVideo") };
+        _loadedFlatpak = _loadedAppImage = true;
+        _loadingFlatpak = _loadingAppImage = false;
+        _installed = _ours.Concat(_flatpaks).Where(i => i.Installed).ToList();
+        _detail = null; _category = null;
+        _place = page switch { "crimson" => Place.CrimsonBanner, "flatpak" => Place.Flatpak, "installed" => Place.Installed, _ => Place.Explore };
+        if (page == "search") { _search.Text = "in"; return; }
+        if (page == "detail") _detail = _flatpaks[0];
+        Render();
     }
 
     /// <summary>For tests: whether the last page drawn is the error card.</summary>

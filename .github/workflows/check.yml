@@ -70,6 +70,14 @@ jobs:
           python3 .github/scripts/summary.py tests TestResults >> "$GITHUB_STEP_SUMMARY" || true
           python3 .github/scripts/summary.py shots screenshots >> "$GITHUB_STEP_SUMMARY" || true
 
+      - name: Software's and CD Player's screens, in the log (for when the artifact can't be fetched)
+        if: always()
+        run: |
+          for f in screenshots/Software-*.png screenshots/CdPlayerWindow-disc.png screenshots/SettingsWindow.png; do
+            [ -f "$f" ] || continue
+            echo "---- $(basename "$f") ----"; base64 -w0 "$f"; echo; echo "---- end ----"
+          done
+
       - uses: actions/upload-artifact@v5
         # the account's artifact storage can fill up; that mustn't fail a check whose tests passed
         continue-on-error: true
