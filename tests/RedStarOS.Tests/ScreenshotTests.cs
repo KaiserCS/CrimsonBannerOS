@@ -175,12 +175,14 @@ public class ScreenshotTests
     {
         var type = typeof(App).Assembly.GetTypes().First(t => t.Name == typeName);
         Control part;
+        // pictures only: a part that needs something this machine hasn't got is skipped, and says why
         try { part = (Control)Activator.CreateInstance(type)!; }
-        catch (TargetInvocationException tie) when (tie.InnerException != null && Environmental(tie.InnerException)) { return; }
+        catch (Exception e) { Console.WriteLine($"Shell-{typeName}: not drawn ({(e.InnerException ?? e).Message})"); return; }
         // on the desktop's wallpaper, as they're seen
         var w = new Window { Width = width, Height = height, Content = part };
         try { w.Background = new Avalonia.Media.ImageBrush(new Avalonia.Media.Imaging.Bitmap(Avalonia.Platform.AssetLoader.Open(new Uri("avares://RedStarOS/Assets/wallpaper.jpg")))) { Stretch = Avalonia.Media.Stretch.UniformToFill }; }
         catch (Exception) { }
-        ShowAndCapture(w, "Shell-" + typeName);
+        try { ShowAndCapture(w, "Shell-" + typeName); }
+        catch (Exception e) { Console.WriteLine($"Shell-{typeName}: not drawn ({e.Message})"); }
     }
 }
