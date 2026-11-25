@@ -27,8 +27,8 @@ public sealed class Settings
     public string? PasswordHash { get; set; }
 
     public bool Fullscreen { get; set; } = true;       // desktop covers the whole screen
-    public string Theme { get; set; } = "Light";      // Light | Dark | System
-    public string Accent { get; set; } = "#0078D4";
+    public string Theme { get; set; } = "Dark";       // Light | Dark | System (Dark: Crimson Banner OS's own look)
+    public string Accent { get; set; } = "#C8102E";   // Crimson (ThemeService.Accents)
 
     public string? SoftwareCatalogUrl { get; set; }   // Software's Crimson Banner tab; null = the latest release's catalog.json
     public string? UpdateUrl { get; set; }            // e.g. https://api.github.com/repos/USER/REPO/releases/latest
