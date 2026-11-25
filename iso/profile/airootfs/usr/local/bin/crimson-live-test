@@ -47,15 +47,25 @@ if [ "${1:-}" = drive ]; then
   say "step: users filled in"
   press alt+n 4 "users to summary"
   press alt+i 10 "summary to installing"
-  # installing: Calamares closes by itself when it's done (quit-at-end in test mode)
-  for _ in $(seq 2400); do [ -n "$(win)" ] || break; sleep 1; done
-  if [ -n "$(win)" ]; then say "FAILED: still installing after 40 minutes"; exit 1; fi
-  grep -aE "ERROR|Installation failed|Job .* failed" /tmp/crimson-install.log | tail -n 20 | while IFS= read -r l; do say "log: $l"; done
-  if grep -aq "Installation failed\|onInstallationFailed" /tmp/crimson-install.log; then
-    say "FAILED: the installer reported a failure"; tail -n 60 /tmp/crimson-install.log | while IFS= read -r l; do say "log: $l"; done
-  else
-    say "installed"
-  fi
+  # installing: Calamares closes by itself when it's done (quit-at-end in test mode); a failure leaves its message up
+  log=/tmp/crimson-install.log
+  failed() {   # the installer's log, then the verdict; CI pictures the screen, then the machine powers off
+    grep -aE "ERROR|WARNING|[Ff]ailed|failed|exit code" "$log" | tail -n 40 | while IFS= read -r l; do say "log: $l"; done
+    say "log: ---- the last lines ----"
+    tail -n 60 "$log" | while IFS= read -r l; do say "log: $l"; done
+    say "FAILED: $1"; sleep 45; sync; sudo systemctl poweroff; exit 1
+  }
+  i=0; result=""
+  while [ "$i" -lt 2400 ]; do
+    [ -n "$(win)" ] || break
+    grep -aq "Installation failed\|onInstallationFailed\|installation failed" "$log" 2>/dev/null && { result=failed; break; }
+    i=$((i + 1)); [ $((i % 120)) = 0 ] && say "step: installing, $((i / 60)) minutes in"
+    sleep 1
+  done
+  [ "$result" = failed ] && failed "the installer reported a failure"
+  [ -n "$(win)" ] && failed "still installing after 40 minutes"
+  grep -aq "Installation failed\|onInstallationFailed\|installation failed" "$log" && failed "the installer reported a failure"
+  say "installed"
   sync; sleep 3
   sudo systemctl poweroff
   exit 0

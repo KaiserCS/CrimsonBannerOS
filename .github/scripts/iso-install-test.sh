@@ -48,9 +48,9 @@ seen=0
 for _ in $(seq $((3600 * SLOW))); do
   kill -0 "$qemu" 2>/dev/null || break
   # a picture at each of the driver's steps
-  n="$(grep -ac "crimson-install-test\[[0-9]*\]: step:" "$T/install.log" 2>/dev/null)"; n="${n:-0}"
+  n="$(grep -a "crimson-install-test\[[0-9]*\]:" "$T/install.log" 2>/dev/null | grep -av "log: " | grep -ac "step:")"; n="${n:-0}"
   while [ "$seen" -lt "$n" ]; do seen=$((seen + 1)); sleep 2; picture "$T/install.sock" "install-step-$seen"; done
-  grep -aq "crimson-install-test\[[0-9]*\]: FAILED" "$T/install.log" 2>/dev/null && { sleep 20; picture "$T/install.sock" "install-failed"; break; }
+  grep -a "crimson-install-test\[[0-9]*\]:" "$T/install.log" 2>/dev/null | grep -av "log: " | grep -q "FAILED:" && { sleep 15; picture "$T/install.sock" "install-failed"; break; }
   sleep 1
 done
 if kill -0 "$qemu" 2>/dev/null; then
@@ -61,10 +61,11 @@ if kill -0 "$qemu" 2>/dev/null; then
 fi
 wait "$qemu" 2>/dev/null || true
 echo "---- the installer's steps ----"
-clean "$T/install.log" | grep -a "crimson-install-test" | sed 's/.*crimson-install-test\[[0-9]*\]: //' | tail -n 100
+clean "$T/install.log" | grep -a "crimson-install-test" | sed 's/.*crimson-install-test\[[0-9]*\]: //' | tail -n 200
 echo "---- serial console, filtered (installing) ----"
 clean "$T/install.log" | grep -aE "Reached target|Failed|calamares|Calamares|crimson|abnormally|session" | grep -av "crimson-install-test" | tail -n 60
 if ! clean "$T/install.log" | grep -aq "crimson-install-test\[[0-9]*\]: installed"; then
+  echo "---- serial console, the end (installing) ----"; clean "$T/install.log" | tail -n 40
   fail install "the installer didn't finish"
   echo "Failed: ${failed[*]}"; exit 1
 fi
