@@ -711,13 +711,13 @@ public sealed class SoftwareWindow : Window
         var text = new StackPanel { Spacing = 3, Margin = new Thickness(14, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
         text.Children.Add(new TextBlock { Text = item.Name, FontSize = 14.5, FontWeight = FontWeight.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
         if (item.Summary.Length > 0) text.Children.Add(new TextBlock { Text = item.Summary, Classes = { "muted" }, FontSize = 12, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis });
-        var foot = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(0, 4, 0, 0) };
-        if (showSource) { var src = Badge(SourceName(item.Source)); src.Margin = new Thickness(0); foot.Children.Add(src); }
+        var foot = new WrapPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 4, 0, 0) };   // wraps in a narrow card
+        if (showSource) { var src = Badge(SourceName(item.Source)); src.Margin = new Thickness(0, 0, 8, 2); foot.Children.Add(src); }
         if (item.UpdateAvailable || item.Installed)
             foot.Children.Add(new TextBlock
             {
                 Text = item.UpdateAvailable ? "● UPDATE AVAILABLE" : "● INSTALLED", FontSize = 10, FontWeight = FontWeight.Bold, LetterSpacing = 0.5,
-                Foreground = item.UpdateAvailable ? UpdateInk : InstalledInk, VerticalAlignment = VerticalAlignment.Center,
+                Foreground = item.UpdateAvailable ? UpdateInk : InstalledInk, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 1, 0, 2),
             });
         if (foot.Children.Count > 0) text.Children.Add(foot);
         Grid.SetColumn(text, 1);
