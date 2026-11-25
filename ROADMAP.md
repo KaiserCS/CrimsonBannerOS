@@ -17,8 +17,8 @@ with the date, as `PRINCIPLES.md` does.
 
 Now that people can install it, a bad release reaches every installed system at once.
 
-- [ ] **Install test in CI** (in progress, 25 Nov 2026): boot the ISO, install with Calamares to a virtual disk, boot the installed system and
-      check its login screen and a signed-in session.
+- [x] ~~**Install test in CI:** boot the ISO, install with Calamares to a virtual disk, boot the installed system and
+      check its login screen and a signed-in session~~ (25 Nov 2026: `.github/scripts/iso-install-test.sh`, on every ISO build)
 - [ ] **Upgrade test in CI:** install the last release, update to the new one through `[crimson-banner]`, and sign in.
 - [ ] **A testing channel:** builds from main published to an `os-testing` repository; `[crimson-banner]` for releases only.
 - [ ] **Rollback:** Btrfs by default in the installer, with a snapshot before each update (snapper) that the boot
