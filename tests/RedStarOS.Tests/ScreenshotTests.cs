@@ -163,4 +163,24 @@ public class ScreenshotTests
             if (light) { RedStarOS.Services.SettingsStore.Current.Theme = before; RedStarOS.Services.ThemeService.Apply(); }
         }
     }
+
+    // ─────────── the shell's own parts (the taskbar, the Start menu and the panels), each in a window of its size ───────────
+    [AvaloniaTheory]
+    [InlineData("Taskbar", 1280, 56)]
+    [InlineData("StartMenu", 640, 720)]
+    [InlineData("QuickSettingsPanel", 380, 560)]
+    [InlineData("NotificationPanel", 380, 560)]
+    [InlineData("CalendarPanel", 380, 480)]
+    public void Shell_parts(string typeName, int width, int height)
+    {
+        var type = typeof(App).Assembly.GetTypes().First(t => t.Name == typeName);
+        Control part;
+        try { part = (Control)Activator.CreateInstance(type)!; }
+        catch (TargetInvocationException tie) when (tie.InnerException != null && Environmental(tie.InnerException)) { return; }
+        // on the desktop's wallpaper, as they're seen
+        var w = new Window { Width = width, Height = height, Content = part };
+        try { w.Background = new Avalonia.Media.ImageBrush(new Avalonia.Media.Imaging.Bitmap(Avalonia.Platform.AssetLoader.Open(new Uri("avares://RedStarOS/Assets/wallpaper.jpg")))) { Stretch = Avalonia.Media.Stretch.UniformToFill }; }
+        catch (Exception) { }
+        ShowAndCapture(w, "Shell-" + typeName);
+    }
 }
