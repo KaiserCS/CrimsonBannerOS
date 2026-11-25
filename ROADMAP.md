@@ -19,7 +19,6 @@ Now that people can install it, a bad release reaches every installed system at 
 
 - [x] ~~**Install test in CI:** boot the ISO, install with Calamares to a virtual disk, boot the installed system and
       check its login screen and a signed-in session~~ (25 Nov 2026: `.github/scripts/iso-install-test.sh`, on every ISO build)
-- [ ] **Upgrade test in CI:** install the last release, update to the new one through `[crimson-banner]`, and sign in.
 - [ ] **A testing channel:** builds from main published to an `os-testing` repository; `[crimson-banner]` for releases only.
 - [ ] **Rollback:** Btrfs by default in the installer, with a snapshot before each update (snapper) that the boot
       menu can start.
@@ -61,6 +60,8 @@ Now that people can install it, a bad release reaches every installed system at 
 
 ## 7. Put aside, still open
 
+- [ ] **Upgrade test in CI:** install the last release, update to the new one through `[crimson-banner]`, and sign in
+      (put aside 25 Nov 2026; the install test covers installing, and updates are tried by hand for now).
 - [ ] The libre and Intel Mac ISOs (their recipes are in `iso/`).
 - [ ] CD Player: lyrics, the CD changer, mini mode.
 
@@ -68,7 +69,7 @@ Now that people can install it, a bad release reaches every installed system at 
 
 Extrapolated from the first eight days; it holds only if the pace does.
 
-- **Next two weeks:** the install and upgrade tests, a testing channel, the remaining app passes, a first round of
+- **Next two weeks:** the install test (done), a testing channel, the remaining app passes, a first round of
   hardware: enough for a 26.12.0 to call a beta.
 - **One to two months:** Wayland by default, translations' plumbing, the Codeberg mirror (82%), the libre ISO (its
   kernel recipe already builds).
@@ -77,4 +78,4 @@ Extrapolated from the first eight days; it holds only if the pace does.
 
 **Writing code isn't the bottleneck; checking it in the real world is.** VMware alone took about two of the eight
 days, and that was one virtual machine. Every kind of hardware and every installed system adds that kind of work,
-so section 1 comes first: the install and upgrade tests are what let the pace continue safely.
+so section 1 comes first: tests like the install test are what let the pace continue safely.
