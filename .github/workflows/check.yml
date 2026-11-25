@@ -319,8 +319,8 @@ jobs:
           pacman -Rns --noconfirm ci-hello
           crimson-apps-repo disable
           # leave the tree as it was (publishing writes the shell's copy of the catalogue and the key)
-          sudo -u builder git checkout -- software/catalog.json
-          rm -rf apps/ci-hello software/crimson-banner.gpg
+          sudo -u builder git checkout -- software/catalog.json software/crimson-banner.gpg
+          rm -rf apps/ci-hello
 
       - name: Every signature in the repository
         run: sudo -u builder -H --preserve-env=REDSTAR_REPO tools/repo.sh check

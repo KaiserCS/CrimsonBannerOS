@@ -47,7 +47,7 @@ if [ "${1:-}" = drive ]; then
   say "step: users filled in"
   press alt+n 4 "users to summary"
   press alt+i 10 "summary to installing"
-  # installing: Calamares closes by itself when it's done (quit-at-end in test mode); a failure leaves its message up
+  # installing: a failure leaves Calamares's message up
   log=/tmp/crimson-install.log
   failed() {   # the installer's log, then the verdict; CI pictures the screen, then the machine powers off
     grep -aE "ERROR|WARNING|[Ff]ailed|failed|exit code" "$log" | tail -n 40 | while IFS= read -r l; do say "log: $l"; done
@@ -55,15 +55,20 @@ if [ "${1:-}" = drive ]; then
     tail -n 60 "$log" | while IFS= read -r l; do say "log: $l"; done
     say "FAILED: $1"; sleep 45; sync; sudo systemctl poweroff; exit 1
   }
+  # done: the last job (unmounting) has run and Calamares has let the machine sleep again. Without its finished page
+  # (taken out in test mode) it stays open, so its log says when it's done rather than its window
+  done_() { grep -aq 'Starting job "Unmounting file systems' "$log" 2>/dev/null && \
+            sed -n '/Starting job "Unmounting file systems/,$p' "$log" | grep -aq "uninhibitSleep"; }
   i=0; result=""
   while [ "$i" -lt 2400 ]; do
     [ -n "$(win)" ] || break
     grep -aq "Installation failed\|onInstallationFailed\|installation failed" "$log" 2>/dev/null && { result=failed; break; }
+    done_ && { sleep 5; break; }
     i=$((i + 1)); [ $((i % 120)) = 0 ] && say "step: installing, $((i / 60)) minutes in"
     sleep 1
   done
   [ "$result" = failed ] && failed "the installer reported a failure"
-  [ -n "$(win)" ] && failed "still installing after 40 minutes"
+  [ -n "$(win)" ] && ! done_ && failed "still installing after 40 minutes"
   grep -aq "Installation failed\|onInstallationFailed\|installation failed" "$log" && failed "the installer reported a failure"
   say "installed"
   sync; sleep 3
