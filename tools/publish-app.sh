@@ -37,6 +37,8 @@ for a in "$@"; do
 done
 [ "$UNSIGNED" = 0 ] || [ "$LOCAL" = 1 ] || { echo "--unsigned only goes with --local: published apps are always signed." >&2; exit 2; }
 
+# shellcheck source=tools/lib/gh-release.sh
+. tools/lib/gh-release.sh
 step() { printf '\n\033[1;31m==>\033[0m \033[1m%s\033[0m\n' "$*"; }
 die() { echo "$*" >&2; exit 1; }
 need() { command -v "$1" >/dev/null 2>&1 || die "$1 is missing: $2"; }
@@ -159,12 +161,7 @@ cp "$OUT/catalog/catalog.json" software/catalog.json
 
 if [ "$UNSIGNED" = 0 ]; then
   gpg --batch --yes -u "$KEY" --detach-sign -o "$OUT/catalog/catalog.json.sig" "$OUT/catalog/catalog.json"
-  # the public key the shell checks the catalogue with
-  tmp="$(mktemp)"; gpg --export "$KEY" > "$tmp"
-  if ! cmp -s "$tmp" software/crimson-banner.gpg 2>/dev/null; then
-    mv "$tmp" software/crimson-banner.gpg
-    echo "Wrote software/crimson-banner.gpg (the project's public key): commit it, so the shell checks the catalogue."
-  else rm -f "$tmp"; fi
+  export_public_key "$KEY"     # the public key the shell checks the catalogue with
 fi
 
 if [ "$LOCAL" = 1 ]; then
@@ -176,36 +173,6 @@ fi
 # ── 3. upload: the two releases, kept up to date in place ──
 need gh "pacman -S github-cli, then gh auth login"
 gh auth status >/dev/null 2>&1 || die "Sign in to GitHub first: gh auth login"
-
-ensure_release() {   # tag title notes
-  gh release view "$1" -R "$SLUG" >/dev/null 2>&1 && return 0
-  gh release create "$1" -R "$SLUG" --title "$2" --notes "$3" --latest=false >/dev/null
-}
-
-# local files → the release: new or changed ones uploaded, ones no longer here deleted
-sync_release() {     # tag dir
-  local tag="$1" dir="$2" stage
-  stage="$(mktemp -d)"
-  # pacman's .db/.files are links to the real files: GitHub needs them as files
-  for f in "$dir"/*; do [ -e "$f" ] && cp -L "$f" "$stage/"; done
-  declare -A remote=()
-  while IFS=$'\t' read -r n s; do [ -n "$n" ] && remote["$n"]="$s"; done \
-    < <(gh release view "$tag" -R "$SLUG" --json assets --jq '.assets[] | "\(.name)\t\(.size)"')
-  local up=()
-  for f in "$stage"/*; do
-    b="$(basename "$f")"
-    case "$b" in
-      *.db|*.db.*|*.files|*.files.*|catalog.json|catalog.json.sig) up+=("$f") ;;   # always: same size can mean new contents
-      *) [ "${remote[$b]:-}" = "$(stat -c %s "$f")" ] || up+=("$f") ;;
-    esac
-  done
-  [ "${#up[@]}" -eq 0 ] || gh release upload "$tag" -R "$SLUG" --clobber "${up[@]}"
-  for n in "${!remote[@]}"; do
-    [ -e "$stage/$n" ] || gh release delete-asset "$tag" "$n" -R "$SLUG" -y
-  done
-  echo "$tag: ${#up[@]} file(s) uploaded"
-  rm -rf "$stage"
-}
 
 step "Uploading to GitHub ($SLUG)"
 ensure_release "$CAT_TAG" "Crimson Banner OS apps" "Software's Crimson Banner tab: the signed catalogue, icons, screenshots and AppImages. Kept up to date by tools/publish-app.sh; not an OS release."

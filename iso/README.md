@@ -44,14 +44,13 @@ release when it's tagged.
 
 Calamares partitions the disk, then copies the live system's root image (`unpackfs`). Next, `crimson-live-cleanup`
 turns the copy into an installed system: it removes the live user's automatic sign-in and passwordless sudo, puts the
-kernel back in `/boot`, makes a fresh pacman keyring and switches greetd to Crimson Banner OS's login screen. After
+kernel back in `/boot`, makes a fresh pacman keyring, switches greetd to Crimson Banner OS's login screen, names
+the system (`/etc/os-release`) and, once `tools/publish-os.sh` has published it, turns on the `[crimson-banner]`
+update repository, so Software Updates brings each release. After
 that, Calamares creates the person's account, removes the installer's packages, builds the initramfs and installs
 GRUB (BIOS and UEFI, with the fallback EFI path that Macs need).
 
 ## Still to do
 
-- An update channel for Crimson Banner OS's own packages on installed systems, such as our signed repository
-  published on GitHub Releases like `[crimson-banner-apps]`. Until then, Arch's packages update with pacman, and
-  Crimson Banner OS updates with `./install-arch.sh --pull`.
 - On the libre edition, a blacklist of Arch's non-free packages (like Parabola's `your-freedom`).
 - Free firmware for the libre ISO (`linux-libre-firmware`).

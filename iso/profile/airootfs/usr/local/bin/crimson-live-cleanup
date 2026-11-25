@@ -31,6 +31,14 @@ rm -rf /etc/pacman.d/gnupg
 pacman-key --init
 pacman-key --populate
 
+# updates: the [crimson-banner] repository (the system's own packages), trusted by the project's key that the shell
+# carries. Only once tools/publish-os.sh has published it (it leaves software/os-repo in the tree): a repository
+# pacman can't fetch would stop every update, Arch's too. [crimson-banner-apps] is turned on by Software when an app
+# is first installed.
+if [ -f /usr/lib/crimson-banner/software/os-repo ] && [ -s /usr/lib/crimson-banner/software/crimson-banner.gpg ]; then
+  crimson-repo enable os || echo "crimson-live-cleanup: the update repository couldn't be set up" >&2
+fi
+
 # Crimson Banner OS's login screen instead of the live session's automatic sign-in
 install -Dm644 /usr/share/crimson-banner/greetd-config.toml /etc/greetd/config.toml
 systemctl enable greetd.service >/dev/null 2>&1 || ln -sf /usr/lib/systemd/system/greetd.service /etc/systemd/system/display-manager.service

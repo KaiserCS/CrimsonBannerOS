@@ -82,7 +82,10 @@ lock you out. The reason is logged in `/var/cache/crimson-greeter/greeter.log`.
 
 - **The system** (Settings → Software Updates). On Arch this goes straight to pacman: `checkupdates` lists the
   updates, and installing runs `pacman -Syu` behind the password prompt. Other systems go through PackageKit.
-- **Crimson Banner OS itself:** `./install-arch.sh --pull`. The AppImage checks for new releases once a day.
+- **Crimson Banner OS itself:** on a system installed from the ISO, with the rest of the system: each release's
+  packages are published as the signed `[crimson-banner]` pacman repository (`tools/publish-os.sh`), so Software
+  Updates brings them. On a machine set up with `./install-arch.sh`: `./install-arch.sh --pull` (it builds your own
+  `[crimson-banner]`). The AppImage checks for new releases once a day. `crimson-repo status` shows which you have.
 - **Programs from Software:** its Installed page, with Update all.
 
 ## Publishing our own apps
@@ -122,8 +125,17 @@ app end to end.
 Releases are numbered **YY.MM.N**: the year, the month, then a fix number. `VERSION` holds the latest release, and
 `tools/version.sh` gives every part of the system the same version. A build after a release reads like
 `26.11.1+5.g1a2b3c4`: 5 commits later, at commit `1a2b3c4`. `tools/release.sh` makes a release: it sets
-`VERSION`, writes the [changelog](CHANGELOG.md), commits and tags. Pushing the tag publishes the AppImage on GitHub
-Releases.
+`VERSION`, writes the [changelog](CHANGELOG.md), commits and tags. Pushing the tag publishes the AppImage and the
+installer ISOs on GitHub Releases. Then, from the tag, on the computer with the project's signing key:
+
+```bash
+git checkout v26.12.0 && tools/publish-os.sh && git checkout main   # installed systems get the release as an update
+```
+
+It builds the packages from the release's commit, signs them and uploads the `[crimson-banner]` repository to the
+`os-x86_64` release. The first time, it writes `software/crimson-banner.gpg` and `software/os-repo`: commit them,
+and ISOs built from then on turn updates on when they install (`crimson-repo enable os`; on a system installed
+before, run that once by hand).
 
 ## Project layout
 

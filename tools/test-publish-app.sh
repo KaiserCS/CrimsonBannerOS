@@ -12,7 +12,7 @@ eq() { if [ "$2" = "$3" ]; then echo "ok   $1"; else echo "FAIL $1: got '$2', ex
 command -v gpg >/dev/null && command -v gpgv >/dev/null && command -v python3 >/dev/null || { echo "(gpg, gpgv and python3 are needed: skipped)"; exit 0; }
 
 tree="$T/tree"; mkdir -p "$tree/tools" "$tree/software" "$tree/apps/planner"
-cp "$SRC/tools/publish-app.sh" "$tree/tools/"
+cp "$SRC/tools/publish-app.sh" "$tree/tools/"; cp -r "$SRC/tools/lib" "$tree/tools/"
 export GNUPGHOME="$T/gnupg"; mkdir -m 700 "$GNUPGHOME"
 gpg --batch --passphrase '' --quick-gen-key "Test <test@example.invalid>" ed25519 sign never 2>/dev/null
 export REDSTAR_REPO_KEY="$(gpg --with-colons --list-keys test@example.invalid | awk -F: '/^fpr:/ {print $10; exit}')"
@@ -76,5 +76,25 @@ repo enable >/dev/null
 eq "enabling twice adds it once" "$(grep -c '^\[crimson-banner-apps\]' "$T/pacman.conf")" "1"
 repo disable >/dev/null
 eq "disabled leaves pacman.conf as it was" "$(cat "$T/pacman.conf")" "$(printf '[options]\nA=1\n\n[extra]\nInclude = x')"
+
+# ── crimson-repo os: the update repository, [crimson-banner] ──
+osrepo() { CRIMSON_PACMAN_CONF="$T/pacman.conf" CRIMSON_KEYRING="$tree/software/crimson-banner.gpg" CRIMSON_PACMAN_KEY="$T/pacman-key" \
+           "$SRC/packaging/crimson-repo" "$1" os; }
+osrepo enable >/dev/null
+eq "the update repository is on" "$(osrepo status)" "enabled"
+eq "its server is the os release" "$(sed -n '/^\[crimson-banner\]/,/^\[/p' "$T/pacman.conf" | grep -c '^Server = https://github.com/KaiserCS/CrimsonBannerOS/releases/download/os-\$arch$')" "1"
+eq "signed too" "$(sed -n '/^\[crimson-banner\]/,/^\[/p' "$T/pacman.conf" | grep -c 'SigLevel = Required DatabaseRequired')" "1"
+repo enable >/dev/null
+eq "both repositories at once" "$(grep -c '^\[crimson-banner\(-apps\)\?\]' "$T/pacman.conf")" "2"
+osrepo disable >/dev/null
+eq "turning updates off leaves the apps" "$(grep -c '^\[crimson-banner\]' "$T/pacman.conf") $(repo status)" "0 enabled"
+repo disable >/dev/null
+eq "and both off leaves pacman.conf as it was" "$(cat "$T/pacman.conf")" "$(printf '[options]\nA=1\n\n[extra]\nInclude = x')"
+# a machine with ./install-arch.sh's own [crimson-banner] (its builds, file://): left alone
+printf '[options]\nA=1\n\n[crimson-banner]\nSigLevel = Required DatabaseRequired\nServer = file:///srv/crimson-banner/$arch\n' > "$T/pacman.conf"
+before="$(cat "$T/pacman.conf")"
+eq "your own builds' repository is recognised" "$(osrepo status)" "local"
+osrepo enable >/dev/null; osrepo disable >/dev/null
+eq "and neither enable nor disable touches it" "$(cat "$T/pacman.conf")" "$before"
 
 exit "$fail"

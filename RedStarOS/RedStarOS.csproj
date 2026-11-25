@@ -39,6 +39,7 @@
     <None Include="../software/catalog.json" Link="software/catalog.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <!-- the project's public key: Software checks the catalogue's signature with it (tools/publish-app.sh writes it) -->
     <None Include="../software/crimson-banner.gpg" Link="software/crimson-banner.gpg" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('../software/crimson-banner.gpg')" />
+    <None Include="../software/os-repo" Link="software/os-repo" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('../software/os-repo')" />
     <None Include="../wm/redstar-wm" Link="redstar-wm" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('../wm/redstar-wm') And '$(RedStarNative)' == 'true'" />
   </ItemGroup>
 

@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Crimson Banner OS's own pacman repositories, published on GitHub Releases and signed with the project's key
+# (its public half ships with the shell: /usr/lib/crimson-banner/software/crimson-banner.gpg):
+#   os     [crimson-banner]       the system's own packages (the shell, the login screen, redstar-comp…), published
+#                                 for each release by tools/publish-os.sh: Settings → Software Updates updates them
+#                                 with the rest of the system
+#   apps   [crimson-banner-apps]  the apps in Software's Crimson Banner tab (tools/publish-app.sh)
+#
+#   sudo crimson-repo enable [os|apps]    trust the project's key and add the repository to /etc/pacman.conf
+#   sudo crimson-repo disable [os|apps]   take it out again
+#   crimson-repo status [os|apps]         enabled, disabled, or (os) local: your own builds' [crimson-banner]
+#
+# The installer turns both on. A machine set up with ./install-arch.sh already has a [crimson-banner] of its own
+# (built from your tree, file://): it's left alone. $CRIMSON_OS_SERVER / $CRIMSON_APPS_SERVER point a repository at
+# another server (any web server or folder that has the same files).
+set -euo pipefail
+CMD="${1:-status}"
+WHICH="${2:-os}"
+CONF="${CRIMSON_PACMAN_CONF:-/etc/pacman.conf}"
+BASE="https://github.com/KaiserCS/CrimsonBannerOS/releases/download"
+case "$WHICH" in
+  os)   NAME=crimson-banner;      SERVER="${CRIMSON_OS_SERVER:-$BASE/os-\$arch}"
+        MARK="# Crimson Banner OS updates (crimson-repo)" ;;
+  apps) NAME=crimson-banner-apps; SERVER="${CRIMSON_APPS_SERVER:-$BASE/apps-\$arch}"
+        MARK="# Crimson Banner OS apps (crimson-apps-repo)" ;;
+  *) echo "Which repository: os or apps (got '$WHICH')" >&2; exit 2 ;;
+esac
+KEYRING="${CRIMSON_KEYRING:-${CRIMSON_APPS_KEYRING:-/usr/lib/crimson-banner/software/crimson-banner.gpg}}"
+PACMAN_KEY="${CRIMSON_PACMAN_KEY:-pacman-key}"
+
+present() { grep -q "^\[$NAME\]" "$CONF"; }
+# ours: added by this script. Only [crimson-banner] can be someone else's (./install-arch.sh's local one); a
+# [crimson-banner-apps] section is always this repository, however it was added
+ours() { [ "$WHICH" = apps ] || grep -qxF "$MARK" "$CONF"; }
+root() { [ -n "${CRIMSON_PACMAN_CONF:-}" ] || [ "$(id -u)" = 0 ] || { echo "Run it with sudo." >&2; exit 1; }; }
+remove_section() { sed -i -e "\\|^$MARK\$|d" -e "/^\[$NAME\]/,/^\[/{/^\[$NAME\]/d;/^\[/!d}" "$CONF"; }
+
+case "$CMD" in
+  enable)
+    root
+    if present && ! ours; then
+      echo "[$NAME] is already in $CONF (your own builds, from ./install-arch.sh): left as it is."
+      exit 0
+    fi
+    [ -s "$KEYRING" ] || { echo "This build has no project key ($KEYRING), so its packages can't be checked." >&2; exit 1; }
+    fpr="$(gpg --batch --with-colons --show-keys "$KEYRING" 2>/dev/null | awk -F: '/^fpr:/ {print $10; exit}')"
+    [ -n "$fpr" ] || { echo "$KEYRING isn't a key." >&2; exit 1; }
+    "$PACMAN_KEY" --list-keys "$fpr" >/dev/null 2>&1 || "$PACMAN_KEY" --add "$KEYRING"
+    "$PACMAN_KEY" --lsign-key "$fpr" >/dev/null
+    if present; then
+      sed -i "/^\[$NAME\]/,/^\[/{s#^Server *=.*#Server = $SERVER#}" "$CONF"
+    else
+      printf '\n%s\n[%s]\nSigLevel = Required DatabaseRequired\nServer = %s\n' "$MARK" "$NAME" "$SERVER" >> "$CONF"
+    fi
+    echo "[$NAME] is set up (key $fpr)."
+    ;;
+  disable)
+    root
+    if present && ! ours; then
+      echo "[$NAME] in $CONF is your own builds' (./install-arch.sh), not this one: left as it is."
+      exit 0
+    fi
+    if present; then remove_section; fi
+    echo "[$NAME] is off."
+    ;;
+  status)
+    if ! present; then echo disabled
+    elif ours; then echo enabled
+    else echo local
+    fi ;;
+  *) sed -n '3,18p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

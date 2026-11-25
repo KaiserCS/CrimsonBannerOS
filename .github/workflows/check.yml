@@ -229,7 +229,7 @@ jobs:
     name: Arch packages and our pacman repository
     runs-on: ubuntu-latest
     container: archlinux:latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       # outside the build user's home (mode 700), so pacman, as root, can read it
       REDSTAR_REPO: /srv/crimson-banner
@@ -337,6 +337,28 @@ jobs:
           redstar-wm --version | grep -qx "redstar-wm $want"
           redstar-online --version | grep -qx "redstar-online $want"
           echo "All report $want"
+
+      - name: The update channel (tools/publish-os.sh --local) as an installed system sees it (crimson-repo enable os)
+        run: |
+          sudo -u builder -H env REDSTAR_OS_DIR=/srv/crimson-banner-os tools/publish-os.sh --local
+          sudo -u builder -H env REDSTAR_REPO=/srv/crimson-banner-os tools/repo.sh check
+          # a system installed from the ISO: no [crimson-banner] of its own (this one has ./install-arch.sh's, file://)
+          cp /etc/pacman.conf /tmp/pacman.conf.mine
+          [ "$(crimson-repo status os)" = local ]
+          crimson-repo enable os | grep -q "left as it is"
+          sed -i '/^\[crimson-banner\]/,/^\[/{/^\[crimson-banner\]/d;/^\[/!d}' /etc/pacman.conf
+          CRIMSON_OS_SERVER="file:///srv/crimson-banner-os/\$arch" CRIMSON_KEYRING="$PWD/software/crimson-banner.gpg" crimson-repo enable os
+          [ "$(crimson-repo status os)" = enabled ]
+          pacman -Sy
+          # every package of ours comes from it, at the version just published
+          for p in crimson-banner crimson-banner-shell crimson-banner-greeter redstar-comp redstar-wm crimson-online; do
+            pacman -Sl crimson-banner | grep -q "^crimson-banner $p " || { echo "not in the update repository: $p"; exit 1; }
+          done
+          [ "$(pacman -Si crimson-banner/crimson-banner | sed -n 's/^Version *: //p')" = "$(sudo -u builder -H tools/version.sh --pkgver)-1" ]
+          crimson-repo disable os
+          [ "$(crimson-repo status os)" = disabled ]
+          cp /tmp/pacman.conf.mine /etc/pacman.conf
+          rm -f software/crimson-banner.gpg
 
       - name: ./install-arch.sh --uninstall
         run: |
