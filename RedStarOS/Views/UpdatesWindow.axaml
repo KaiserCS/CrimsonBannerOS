@@ -3,9 +3,10 @@
         Title="Software Updates"
         Width="520" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner">
-  <StackPanel Margin="20" Spacing="10">
+  <StackPanel Margin="24,20" Spacing="10">
+    <TextBlock Text="CRIMSON BANNER OS" Classes="kicker accent" Margin="0,0,0,-8" />
     <TextBlock Text="Software Updates" Classes="h1" />
-    <TextBlock x:Name="VersionLabel" />
+    <TextBlock x:Name="VersionLabel" TextWrapping="Wrap" Classes="muted" />
     <TextBlock Text="UPDATE SOURCE (GITHUB RELEASES API URL)" Classes="eyebrow" Margin="0,8,0,0" />
     <TextBox x:Name="UrlBox" PlaceholderText="https://api.github.com/repos/USER/REPO/releases/latest" />
     <StackPanel Orientation="Horizontal" Spacing="8">
