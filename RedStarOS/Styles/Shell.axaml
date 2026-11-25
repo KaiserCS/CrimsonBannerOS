@@ -16,12 +16,32 @@
           <SolidColorBrush x:Key="ShellHoverBrush" Color="#10000000" />
           <SolidColorBrush x:Key="ShellBorderBrush" Color="#1F000000" />
           <SolidColorBrush x:Key="ShellToastBrush" Color="#F7FFFFFF" />
+          <!-- panels (the deck look, light): a soft grey backdrop, white panels lifted off it -->
+          <LinearGradientBrush x:Key="ShellBackdropBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+            <GradientStop Color="#F6F6F8" Offset="0" />
+            <GradientStop Color="#E8E8EC" Offset="1" />
+          </LinearGradientBrush>
+          <SolidColorBrush x:Key="ShellPanelBrush" Color="#FFFFFF" />
+          <SolidColorBrush x:Key="ShellPanelBorderBrush" Color="#17000000" />
+          <SolidColorBrush x:Key="ShellRuleBrush" Color="#14000000" />
+          <SolidColorBrush x:Key="ShellMutedBrush" Color="#686B71" />
+          <SolidColorBrush x:Key="ShellFieldBrush" Color="#0A000000" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
           <SolidColorBrush x:Key="ShellCardBrush" Color="#12FFFFFF" />
           <SolidColorBrush x:Key="ShellHoverBrush" Color="#1AFFFFFF" />
           <SolidColorBrush x:Key="ShellBorderBrush" Color="#26FFFFFF" />
           <SolidColorBrush x:Key="ShellToastBrush" Color="#F72B2B2B" />
+          <!-- panels (the deck look, as CD Player's): graphite backdrop, panels in dark plastic -->
+          <LinearGradientBrush x:Key="ShellBackdropBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+            <GradientStop Color="#1C1C1F" Offset="0" />
+            <GradientStop Color="#09090A" Offset="1" />
+          </LinearGradientBrush>
+          <SolidColorBrush x:Key="ShellPanelBrush" Color="#0EFFFFFF" />
+          <SolidColorBrush x:Key="ShellPanelBorderBrush" Color="#18FFFFFF" />
+          <SolidColorBrush x:Key="ShellRuleBrush" Color="#16FFFFFF" />
+          <SolidColorBrush x:Key="ShellMutedBrush" Color="#8A8E94" />
+          <SolidColorBrush x:Key="ShellFieldBrush" Color="#4D000000" />
         </ResourceDictionary>
       </ResourceDictionary.ThemeDictionaries>
 
@@ -229,5 +249,183 @@
   </Style>
   <Style Selector="Button.hubtile:pointerover /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource ShellHoverBrush}" />
+  </Style>
+
+  <!-- =====================================================================================
+       Panels: CD Player's deck look for every window, in light and dark. A backdrop (ShellBackdropBrush) with
+       panels lifted off it, small spaced capitals for labels (kicker), pill buttons, and a dark display with red
+       digits for figures (lcd). Software uses them first; Styles/Deck.axaml keeps CD Player's own, always dark.
+       ===================================================================================== -->
+  <Style Selector="Border.panel">
+    <Setter Property="Background" Value="{DynamicResource ShellPanelBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellPanelBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="18,16" />
+  </Style>
+  <Style Selector="Button.panel">
+    <Setter Property="Background" Value="{DynamicResource ShellPanelBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellPanelBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="14,12" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Stretch" />
+  </Style>
+  <Style Selector="Button.panel:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ShellHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellAccentSoftBrush}" />
+  </Style>
+  <Style Selector="Button.panel:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ShellCardBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.kicker">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="LetterSpacing" Value="0.8" />
+    <Setter Property="Foreground" Value="{DynamicResource ShellMutedBrush}" />
+  </Style>
+  <Style Selector="TextBlock.kicker.accent">
+    <Setter Property="Foreground" Value="{DynamicResource ShellAccentBrush}" />
+  </Style>
+  <Style Selector="TextBlock.display">
+    <Setter Property="FontSize" Value="30" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+  <Style Selector="TextBlock.muted">
+    <Setter Property="Foreground" Value="{DynamicResource ShellMutedBrush}" />
+  </Style>
+
+  <!-- pills: the deck's buttons. .accent is filled with the accent colour; .on is the chosen one of a set -->
+  <Style Selector="Button.pill">
+    <Setter Property="Background" Value="{DynamicResource ShellCardBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="999" />
+    <Setter Property="Padding" Value="14,6" />
+    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="FontSize" Value="11.5" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.pill:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ShellHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellBorderBrush}" />
+  </Style>
+  <Style Selector="Button.pill.on">
+    <Setter Property="Background" Value="{DynamicResource ShellAccentSoftBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellAccentBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource ShellAccentBrush}" />
+  </Style>
+  <Style Selector="Button.pill.on:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ShellAccentSoftBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellAccentBrush}" />
+    <Setter Property="TextElement.Foreground" Value="{DynamicResource ShellAccentBrush}" />
+  </Style>
+  <Style Selector="Button.pill.accent">
+    <Setter Property="Background" Value="{DynamicResource ShellAccentBrush}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+  <Style Selector="Button.pill.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ShellAccentBrush}" />
+    <Setter Property="TextElement.Foreground" Value="White" />
+    <Setter Property="Opacity" Value="0.88" />
+  </Style>
+  <Style Selector="Button.pill.large">
+    <Setter Property="Padding" Value="22,9" />
+    <Setter Property="MinHeight" Value="38" />
+    <Setter Property="FontSize" Value="12.5" />
+  </Style>
+  <Style Selector="Button.pill:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Opacity" Value="0.45" />
+  </Style>
+
+  <!-- a small label in a pill (a program's source, a count) -->
+  <Style Selector="Border.badge">
+    <Setter Property="Background" Value="{DynamicResource ShellCardBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="999" />
+    <Setter Property="Padding" Value="8,1" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Border.badge TextBlock">
+    <Setter Property="FontSize" Value="10" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="LetterSpacing" Value="0.5" />
+  </Style>
+  <Style Selector="Border.badge.accent">
+    <Setter Property="Background" Value="{DynamicResource ShellAccentBrush}" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="Border.badge.accent TextBlock">
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+
+  <Style Selector="TextBox.pill-field">
+    <Setter Property="Background" Value="{DynamicResource ShellFieldBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellBorderBrush}" />
+    <Setter Property="CornerRadius" Value="999" />
+    <Setter Property="Padding" Value="16,7" />
+    <Setter Property="MinHeight" Value="34" />
+  </Style>
+
+  <!-- the display: dark glass with red digits, in both themes (it's a display, like the deck's) -->
+  <Style Selector="Border.lcd">
+    <Setter Property="Background" Value="#F00C0C0E" />
+    <Setter Property="BorderBrush" Value="#99000000" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="16,10" />
+  </Style>
+  <Style Selector="TextBlock.lcd-label">
+    <Setter Property="Foreground" Value="#B3C4141C" />
+    <Setter Property="FontSize" Value="10" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="LetterSpacing" Value="1" />
+  </Style>
+  <Style Selector="TextBlock.lcd-digits">
+    <Setter Property="Foreground" Value="#F02028" />
+    <Setter Property="FontFamily" Value="DejaVu Sans Mono, Liberation Mono, monospace" />
+    <Setter Property="FontSize" Value="26" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Effect">
+      <DropShadowEffect Color="#CCC4141C" BlurRadius="8" OffsetX="0" OffsetY="0" />
+    </Setter>
+  </Style>
+
+  <!-- a status pill: a dot and a word (READY, READING FLATHUB…) -->
+  <Style Selector="Border.status">
+    <Setter Property="Background" Value="{DynamicResource ShellFieldBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="999" />
+    <Setter Property="Padding" Value="14,6" />
+  </Style>
+  <Style Selector="Border.status TextBlock">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="LetterSpacing" Value="0.5" />
+  </Style>
+
+  <!-- a sidebar's places: the chosen one lit, with an accent bar (set in code) -->
+  <Style Selector="Button.nav">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Padding" Value="12,9" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+  </Style>
+  <Style Selector="Button.nav:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ShellHoverBrush}" />
+  </Style>
+  <Style Selector="Button.nav.on">
+    <Setter Property="Background" Value="{DynamicResource ShellCardBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 </Styles>
