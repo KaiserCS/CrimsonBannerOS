@@ -25,7 +25,7 @@ Now that people can install it, a bad release reaches every installed system at 
       menu can start.
 - [ ] **ISO size:** 1.76 GiB of GitHub's 2 GiB per file (every build prints what takes it: `.github/scripts/iso-size.sh`).
       The boot files are on it twice (BIOS and UEFI), and the live initramfs carries every GPU's firmware (`kms`):
-      about 470 MiB together. Firmware and kernel modules come compressed already, so they're two-thirds of the
+      about 470 MiB together. Firmware and kernel modules come compressed already, so they're about half of the
       live system's 1,338 MiB however hard it's squeezed.
 
 ## 2. Real hardware
