@@ -6,26 +6,34 @@
 # place. Installed systems have the repository turned on (crimson-repo enable os), so Settings → Software Updates
 # brings them the release. The signing key never leaves this computer.
 #
-#   tools/publish-os.sh           after tools/release.sh and pushing the tag, from the release's commit
-#   tools/publish-os.sh --local   into the folder only (/srv/crimson-banner-os): nothing uploaded, e.g. to serve it
-#                                 from your own server or to try it; any commit
+#   tools/publish-os.sh                the newest release (the newest v* tag), after tools/release.sh and pushing
+#                                      its tag; built from the tag in a temporary copy, so nothing is checked out
+#   tools/publish-os.sh --tag v26.11.3 a particular release
+#   tools/publish-os.sh --local        this tree as it is, into the folder only (/srv/crimson-banner-os): nothing
+#                                      uploaded, e.g. to serve it from your own server or to try it
 #
-# Needs: makepkg and repo-add (Arch), gpg, and for uploading gh (GitHub's CLI, signed in: gh auth login).
-# $REDSTAR_OS_DIR changes the folder, $REDSTAR_REPO_KEY the key, $REDSTAR_GITHUB_REPO the repository.
+# Needs: makepkg and repo-add (Arch), gpg with the project's key, and for uploading gh (GitHub's CLI, signed in:
+# gh auth login). $REDSTAR_OS_DIR changes the folder, $REDSTAR_REPO_KEY the key, $REDSTAR_GITHUB_REPO the repository.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 SLUG="${REDSTAR_GITHUB_REPO:-KaiserCS/CrimsonBannerOS}"
 OUT="${REDSTAR_OS_DIR:-/srv/crimson-banner-os}"
 ARCH="$(uname -m)"
 TAG="os-$ARCH"
+# the project's signing key (its public half: software/crimson-banner.gpg). Signing with another needs
+# $REDSTAR_REPO_KEY set on purpose, since installed systems trust only the key their shell carries.
+PROJECT_KEY=19E71BACDC32A511D657F1FA9EC9146D98BEECA0
 
 LOCAL=0
-for a in "$@"; do
-  case "$a" in
+RELEASE=""
+while [ $# -gt 0 ]; do
+  case "$1" in
     --local) LOCAL=1 ;;
+    --tag) RELEASE="${2:?--tag needs a release tag, such as v26.11.3}"; shift ;;
     -h|--help) sed -n '3,/^set -e/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;;
-    *) echo "Unknown option: $a" >&2; exit 2 ;;
+    *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
+  shift
 done
 
 # shellcheck source=tools/lib/gh-release.sh
@@ -36,32 +44,43 @@ need() { command -v "$1" >/dev/null 2>&1 || die "$1 is missing: $2"; }
 need gpg "pacman -S gnupg"
 need makepkg "build on an Arch-based system (pacman -S base-devel)"
 
-# ── the release: only a release's own commit goes to everyone ──
-VER="$(tools/version.sh --pkgver)"
+# ── what to build: a release's own commit (only that goes to everyone), or with --local this tree ──
+SRC="$PWD"
+cleanup() { [ "$SRC" = "$PWD" ] || git worktree remove --force "$SRC" >/dev/null 2>&1 || true; }
+trap cleanup EXIT
 if [ "$LOCAL" = 0 ]; then
-  git rev-parse -q --verify "refs/tags/v$VER" >/dev/null && [ "$(git rev-parse "v$VER^{commit}")" = "$(git rev-parse HEAD)" ] \
-    || die "HEAD isn't a release (v$VER): check out the release's tag first (git checkout vX), or use --local."
-  git diff --quiet HEAD -- && [ -z "$(git ls-files --others --exclude-standard)" ] \
-    || die "The tree has changes: published packages are exactly the release's commit."
+  git fetch -q --tags origin 2>/dev/null || true
+  [ -n "$RELEASE" ] || RELEASE="$(git tag -l 'v[0-9]*' --sort=-v:refname | head -n 1)"
+  [ -n "$RELEASE" ] || die "There's no release yet: make one with tools/release.sh and push its tag."
+  git rev-parse -q --verify "refs/tags/$RELEASE" >/dev/null || die "There's no release $RELEASE (git tag -l 'v*' lists them)."
+  SRC="$(mktemp -d "${TMPDIR:-/tmp}/crimson-publish-os.XXXXXX")"
+  git worktree add -q --detach "$SRC" "$RELEASE"
+  [ -f "$SRC/packaging/crimson-repo" ] || die "$RELEASE is older than the update channel (it hasn't crimson-repo): publish a newer release."
 fi
+VER="$(cd "$SRC" && tools/version.sh --pkgver)"
 
-# ── the key (tools/repo.sh key, ./install-arch.sh) ──
+# ── the key ──
 KEY="${REDSTAR_REPO_KEY:-}"
+if [ -z "$KEY" ] && gpg --list-secret-keys "$PROJECT_KEY" >/dev/null 2>&1; then KEY="$PROJECT_KEY"; fi
 for f in /srv/crimson-banner/signing-key "${XDG_DATA_HOME:-$HOME/.local/share}/redstaros/repo/signing-key"; do
   [ -n "$KEY" ] || { [ -f "$f" ] && KEY="$(cat "$f")"; } || true
 done
-[ -n "$KEY" ] || die "No signing key: run tools/repo.sh key (or ./install-arch.sh) first."
+[ -n "$KEY" ] || die "No signing key: the project's ($PROJECT_KEY) isn't in this computer's GnuPG keyring."
 gpg --list-secret-keys "$KEY" >/dev/null 2>&1 || die "The signing key $KEY isn't in this computer's GnuPG keyring."
+FPR="$(gpg --with-colons --fingerprint "$KEY" 2>/dev/null | awk -F: '/^fpr:/ {print $10; exit}')"
+if [ "$LOCAL" = 0 ] && [ "$FPR" != "$PROJECT_KEY" ] && [ -z "${REDSTAR_REPO_KEY:-}" ]; then
+  die "The key found ($FPR) isn't the project's ($PROJECT_KEY): installed systems wouldn't trust it. Set REDSTAR_REPO_KEY to sign with it anyway."
+fi
 
 # ── the folder ──
 if [ ! -d "$OUT" ]; then
   if mkdir -p "$OUT" 2>/dev/null; then :; else sudo install -d -o "$(id -un)" -g "$(id -gn)" "$OUT"; fi
 fi
 
-step "Building and signing Crimson Banner OS $VER ($ARCH)"
-REDSTAR_REPO="$OUT" REDSTAR_REPO_KEY="$KEY" REDSTAR_REPO_WORK="${XDG_CACHE_HOME:-$HOME/.cache}/redstaros/publish-os" \
-  tools/repo.sh build
-REDSTAR_REPO="$OUT" REDSTAR_REPO_KEY="$KEY" tools/repo.sh check
+step "Building and signing Crimson Banner OS $VER ($ARCH)${RELEASE:+, from $RELEASE}"
+(cd "$SRC" && REDSTAR_REPO="$OUT" REDSTAR_REPO_KEY="$KEY" REDSTAR_REPO_WORK="${XDG_CACHE_HOME:-$HOME/.cache}/redstaros/publish-os" \
+  tools/repo.sh build)
+(cd "$SRC" && REDSTAR_REPO="$OUT" REDSTAR_REPO_KEY="$KEY" tools/repo.sh check)
 export_public_key "$KEY"
 
 if [ "$LOCAL" = 1 ]; then

@@ -4,7 +4,7 @@
 # pkgver, adds the release's section to CHANGELOG.md (from the commits since the last release, for you to edit),
 # commits "Crimson Banner OS X" and tags it vX, signed with the repository's key when there is one. Nothing is
 # pushed: look it over, then git push origin main vX. The tag makes CI publish the AppImage and the ISOs as a
-# release, and tools/publish-os.sh (from the tag) publishes the packages as installed systems' update.
+# release, and tools/publish-os.sh then publishes its packages as installed systems' update.
 #
 #   tools/release.sh            the next version (tools/version.sh --next): YY.MM.0, or the next fix this month
 #   tools/release.sh 26.12.0    a version you choose (it must be newer than the last one)
@@ -79,4 +79,4 @@ fi
 echo
 echo "Crimson Banner OS $VER: committed and tagged v$VER$( [ -n "$KEY" ] && echo " (signed)")."
 echo "Look it over (git show v$VER), then:  git push origin main v$VER"
-echo "then publish it as an update for installed systems:  git checkout v$VER && tools/publish-os.sh && git checkout main"
+echo "then publish it as an update for installed systems:  tools/publish-os.sh"
