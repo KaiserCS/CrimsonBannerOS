@@ -673,14 +673,14 @@ public sealed class SoftwareWindow : Window
         }
         var left = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, VerticalAlignment = VerticalAlignment.Center };
         left.Children.Add(Kicker(title));
-        if (count is { } n) left.Children.Add(Badge(n.ToString()));
+        if (count is { } n) { var badge = Badge(n.ToString()); badge.Margin = new Thickness(0); left.Children.Add(badge); }
         d.Children.Add(left);
         return d;
     }
 
     private Control CardGrid(IEnumerable<SoftwareItem> items, bool showSource)
     {
-        var g = new ResponsiveGrid { MinItemWidth = 290, Gap = 14 };
+        var g = new ResponsiveGrid { MinItemWidth = 250, Gap = 14 };
         foreach (var i in items) g.Children.Add(Card(i, showSource));
         return g;
     }

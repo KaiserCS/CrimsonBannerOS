@@ -139,10 +139,21 @@ public class ScreenshotTests
     [InlineData("installed")]
     [InlineData("search")]
     [InlineData("detail")]
+    [InlineData("explore-light")]
     public void Software_pages(string page)
     {
-        var w = new SoftwareWindow();
-        w.ShowSample(page);
-        ShowAndCapture(w, "Software-" + page);
+        var light = page.EndsWith("-light");
+        var before = RedStarOS.Services.SettingsStore.Current.Theme;
+        if (light) { RedStarOS.Services.SettingsStore.Current.Theme = "Light"; RedStarOS.Services.ThemeService.Apply(); }
+        try
+        {
+            var w = new SoftwareWindow();
+            w.ShowSample(light ? page[..^"-light".Length] : page);
+            ShowAndCapture(w, "Software-" + page);
+        }
+        finally
+        {
+            if (light) { RedStarOS.Services.SettingsStore.Current.Theme = before; RedStarOS.Services.ThemeService.Apply(); }
+        }
     }
 }
