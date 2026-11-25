@@ -53,6 +53,8 @@ jobs:
             libx11-dev gcc tar xz-utils zstd p7zip-full shared-mime-info libvlc5 vlc-plugin-base \
             dbus libglib2.0-bin
 
+      - name: ISOs split for GitHub and joined again (tools/split-iso.sh, merge-iso.sh, merge-iso.ps1 in PowerShell)
+        run: tools/test-split-iso.sh
       - name: Build
         run: dotnet build RedStarOS/RedStarOS.csproj -c Release
 

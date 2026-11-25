@@ -40,10 +40,12 @@ sh -n packaging/greeter/crimson-greeter && bash -n packaging/greeter/crimson-gre
 tools/test-greeter.sh >/dev/null || { tools/test-greeter.sh; exit 1; }
 ok "crimson-greeter and crimson-greeter-setup"
 
-echo "==> Publishing apps and updates (tools/publish-app.sh, tools/publish-os.sh, packaging/crimson-repo)"
+echo "==> Publishing apps, updates and ISOs (tools/publish-app.sh, tools/publish-os.sh, packaging/crimson-repo, tools/split-iso.sh)"
 bash -n tools/publish-app.sh && bash -n tools/publish-os.sh && bash -n tools/lib/gh-release.sh && bash -n packaging/crimson-repo && sh -n packaging/crimson-apps-repo
 tools/test-publish-app.sh >/dev/null 2>&1 || { tools/test-publish-app.sh; exit 1; }
-ok "the catalogue, its signature and the apps repository"
+bash -n tools/split-iso.sh && sh -n tools/merge-iso.sh
+tools/test-split-iso.sh >/dev/null 2>&1 || { tools/test-split-iso.sh; exit 1; }
+ok "the catalogue, its signature, the apps repository, and ISOs split and joined"
 
 echo "==> Building"
 dotnet build RedStarOS/RedStarOS.csproj -c Release -nologo -v quiet "${NORESTORE[@]}"

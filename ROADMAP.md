@@ -26,7 +26,8 @@ Now that people can install it, a bad release reaches every installed system at 
 - [x] ~~**ISO size:** 1.76 GiB of GitHub's 2 GiB per file~~ (25 Nov 2026: 1.42 GiB. UEFI boots through GRUB, so the
       boot files are on it once, and the live initramfs no longer carries every GPU's firmware; both menus are now
       booted by CI. Every build prints what takes the room: `.github/scripts/iso-size.sh`.) What's left is half
-      firmware and kernel modules, which come compressed already; past 2 GiB, the ISOs move to another host.
+      firmware and kernel modules, which come compressed already. Past 2 GiB, a release splits the ISO into parts
+      with merge scripts (`tools/split-iso.sh`); another host (the Internet Archive) is the next step if that's not enough.
 
 ## 2. Real hardware
 

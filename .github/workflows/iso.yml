@@ -109,11 +109,20 @@ jobs:
             gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --prerelease --title "Installer ISOs (testing)" \
               --notes "Test builds of the installer ISOs from main. Not a release."
           fi
-          for f in out/*.iso out/*.iso.sha256; do
-            size=$(stat -c %s "$f")
-            if [ "$size" -ge $((2 * 1024 * 1024 * 1024)) ]; then echo "::error::$f is over 2 GiB"; exit 1; fi
+          # an ISO over GitHub's 2 GiB per file goes up in parts, with merge-iso.sh and merge-iso.ps1 to join them
+          files=()
+          for iso in out/*.iso; do
+            tools/split-iso.sh "$iso" > "$RUNNER_TEMP/upload.txt"
+            mapfile -t -O "${#files[@]}" files < "$RUNNER_TEMP/upload.txt"
           done
-          gh release upload "$tag" out/*.iso out/*.iso.sha256 --clobber
+          if ls out/*.part01 >/dev/null 2>&1; then
+            notes="$(gh release view "$tag" --json body -q .body || true)"
+            grep -q "merge-iso" <<<"$notes" || gh release edit "$tag" --notes "$notes
+
+          **An ISO here is in parts** (GitHub takes files up to 2 GiB). Download every \`.partNN\`, its \`.parts.sha256\` and \`.sha256\`, and the merge script into one folder, then run \`sh merge-iso.sh\` (Linux, macOS) or \`merge-iso.ps1\` (Windows: right-click, Run with PowerShell). It checks each part, joins them and checks the ISO." \
+              || echo "::warning::couldn't add the note on joining the parts to the release"
+          fi
+          gh release upload "$tag" "${files[@]}" out/*.iso.sha256 --clobber
 
   iso:
     name: ISO (${{ matrix.variant }})
@@ -167,8 +176,17 @@ jobs:
             gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --prerelease --title "Installer ISOs (testing)" \
               --notes "Test builds of the installer ISOs from main. Not a release."
           fi
-          for f in out/*.iso out/*.iso.sha256; do
-            size=$(stat -c %s "$f")
-            if [ "$size" -ge $((2 * 1024 * 1024 * 1024)) ]; then echo "::error::$f is over 2 GiB"; exit 1; fi
+          # an ISO over GitHub's 2 GiB per file goes up in parts, with merge-iso.sh and merge-iso.ps1 to join them
+          files=()
+          for iso in out/*.iso; do
+            tools/split-iso.sh "$iso" > "$RUNNER_TEMP/upload.txt"
+            mapfile -t -O "${#files[@]}" files < "$RUNNER_TEMP/upload.txt"
           done
-          gh release upload "$tag" out/*.iso out/*.iso.sha256 --clobber
+          if ls out/*.part01 >/dev/null 2>&1; then
+            notes="$(gh release view "$tag" --json body -q .body || true)"
+            grep -q "merge-iso" <<<"$notes" || gh release edit "$tag" --notes "$notes
+
+          **An ISO here is in parts** (GitHub takes files up to 2 GiB). Download every \`.partNN\`, its \`.parts.sha256\` and \`.sha256\`, and the merge script into one folder, then run \`sh merge-iso.sh\` (Linux, macOS) or \`merge-iso.ps1\` (Windows: right-click, Run with PowerShell). It checks each part, joins them and checks the ISO." \
+              || echo "::warning::couldn't add the note on joining the parts to the release"
+          fi
+          gh release upload "$tag" "${files[@]}" out/*.iso.sha256 --clobber

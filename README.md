@@ -44,6 +44,11 @@ Write one to a USB stick (`sudo dd if=crimson-banner-….iso of=/dev/sdX bs=4M s
 writer), start the computer from it, and choose **Install Crimson Banner OS**. `tools/iso.sh all` builds them on any
 Arch machine ([iso/README.md](iso/README.md)).
 
+An ISO over 2 GiB (GitHub's limit per file; the Linux one is 1.42 GiB) comes in parts: download every
+`….iso.partNN`, the `.parts.sha256` and `.sha256` files and the merge script into one folder, then run
+`sh merge-iso.sh` (Linux, macOS) or `merge-iso.ps1` (Windows: right-click, Run with PowerShell). It checks each
+part, joins them and checks the ISO (`tools/split-iso.sh` makes the parts).
+
 **On Arch, CachyOS or EndeavourOS** (the supported way):
 
 ```bash

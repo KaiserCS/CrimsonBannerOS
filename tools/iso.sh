@@ -176,7 +176,7 @@ check_iso() {
   rm -f "$list"
   local size; size=$(stat -c %s "$iso")
   echo "Size: $((size / 1024 / 1024)) MiB"
-  [ "$size" -lt $((2 * 1024 * 1024 * 1024)) ] || echo "::warning::$(basename "$iso") is over 2 GiB, too big for one GitHub release file"
+  [ "$size" -lt $((2 * 1024 * 1024 * 1024)) ] || echo "::warning::$(basename "$iso") is over 2 GiB, too big for one GitHub release file: it will be published in parts (tools/split-iso.sh)"
 }
 
 case "${1:-}" in
