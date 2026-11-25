@@ -1,4 +1,5 @@
 using System.Reflection;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -178,8 +179,16 @@ public class ScreenshotTests
         // pictures only: a part that needs something this machine hasn't got is skipped, and says why
         try { part = (Control)Activator.CreateInstance(type)!; }
         catch (Exception e) { Console.WriteLine($"Shell-{typeName}: not drawn ({(e.InnerException ?? e).Message})"); return; }
-        // on the desktop's wallpaper, as they're seen
-        var w = new Window { Width = width, Height = height, Content = part };
+        // on the desktop's wallpaper, as they're seen; the panels in the flyout that holds them in the shell
+        Control content = part;
+        if (typeName != "Taskbar")
+        {
+            var flyout = new Border { Margin = new Avalonia.Thickness(12), CornerRadius = new Avalonia.CornerRadius(14), BorderThickness = new Avalonia.Thickness(1), ClipToBounds = true, Child = part };
+            flyout.Bind(Border.BackgroundProperty, flyout.GetResourceObservable("FlyoutPresenterBackground"));
+            flyout.Bind(Border.BorderBrushProperty, flyout.GetResourceObservable("FlyoutBorderThemeBrush"));
+            content = flyout;
+        }
+        var w = new Window { Width = width, Height = height, Content = content };
         try { w.Background = new Avalonia.Media.ImageBrush(new Avalonia.Media.Imaging.Bitmap(Avalonia.Platform.AssetLoader.Open(new Uri("avares://RedStarOS/Assets/wallpaper.jpg")))) { Stretch = Avalonia.Media.Stretch.UniformToFill }; }
         catch (Exception) { }
         try { ShowAndCapture(w, "Shell-" + typeName); }

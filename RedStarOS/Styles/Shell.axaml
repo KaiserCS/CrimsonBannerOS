@@ -43,6 +43,13 @@
           <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#F2F2F5" />
           <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#21000000" />
           <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#33000000" />
+          <!-- flyouts, menus and drop-down lists: a white panel with a hairline -->
+          <SolidColorBrush x:Key="FlyoutPresenterBackground" Color="#FAFFFFFF" />
+          <SolidColorBrush x:Key="FlyoutBorderThemeBrush" Color="#1F000000" />
+          <SolidColorBrush x:Key="MenuFlyoutPresenterBackground" Color="#FAFFFFFF" />
+          <SolidColorBrush x:Key="MenuFlyoutPresenterBorderBrush" Color="#1F000000" />
+          <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="#FAFFFFFF" />
+          <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="#1F000000" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
           <SolidColorBrush x:Key="ShellCardBrush" Color="#12FFFFFF" />
@@ -76,6 +83,13 @@
           <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#24FFFFFF" />
           <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#22FFFFFF" />
           <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#33FFFFFF" />
+          <!-- flyouts, menus and drop-down lists: a graphite panel with a hairline, as the deck's -->
+          <SolidColorBrush x:Key="FlyoutPresenterBackground" Color="#F51C1C20" />
+          <SolidColorBrush x:Key="FlyoutBorderThemeBrush" Color="#26FFFFFF" />
+          <SolidColorBrush x:Key="MenuFlyoutPresenterBackground" Color="#F51C1C20" />
+          <SolidColorBrush x:Key="MenuFlyoutPresenterBorderBrush" Color="#26FFFFFF" />
+          <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="#F51C1C20" />
+          <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="#26FFFFFF" />
         </ResourceDictionary>
       </ResourceDictionary.ThemeDictionaries>
 
