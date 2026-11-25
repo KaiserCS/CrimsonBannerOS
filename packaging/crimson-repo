@@ -3,24 +3,30 @@
 # Crimson Banner OS's own pacman repositories, published on GitHub Releases and signed with the project's key
 # (its public half ships with the shell: /usr/lib/crimson-banner/software/crimson-banner.gpg):
 #   os     [crimson-banner]       the system's own packages (the shell, the login screen, redstar-comp…), published
-#                                 for each release by tools/publish-os.sh: Settings → Software Updates updates them
-#                                 with the rest of the system
+#                                 by tools/publish-os.sh: Settings → Software Updates updates them with the rest of
+#                                 the system. Two channels, one repository on two servers: releases (each release),
+#                                 and testing (builds of main, and each release as it comes out)
 #   apps   [crimson-banner-apps]  the apps in Software's Crimson Banner tab (tools/publish-app.sh)
 #
 #   sudo crimson-repo enable [os|apps]    trust the project's key and add the repository to /etc/pacman.conf
 #   sudo crimson-repo disable [os|apps]   take it out again
 #   crimson-repo status [os|apps]         enabled, disabled, or (os) local: your own builds' [crimson-banner]
+#   crimson-repo channel                  the update channel: releases or testing (or disabled, local)
+#   sudo crimson-repo channel testing     builds of main, before they're released; "releases" goes back. Going back
+#                                         keeps the newer testing build until the next release overtakes it
 #
 # The installer turns both on. A machine set up with ./install-arch.sh already has a [crimson-banner] of its own
 # (built from your tree, file://): it's left alone. $CRIMSON_OS_SERVER / $CRIMSON_APPS_SERVER point a repository at
-# another server (any web server or folder that has the same files).
+# another server (any web server or folder that has the same files), $CRIMSON_OS_TESTING_SERVER the testing channel.
 set -euo pipefail
 CMD="${1:-status}"
 WHICH="${2:-os}"
+[ "$CMD" = channel ] && WHICH=os
 CONF="${CRIMSON_PACMAN_CONF:-/etc/pacman.conf}"
 BASE="https://github.com/KaiserCS/CrimsonBannerOS/releases/download"
 case "$WHICH" in
   os)   NAME=crimson-banner;      SERVER="${CRIMSON_OS_SERVER:-$BASE/os-\$arch}"
+        TESTING_SERVER="${CRIMSON_OS_TESTING_SERVER:-$BASE/os-testing-\$arch}"
         MARK="# Crimson Banner OS updates (crimson-repo)" ;;
   apps) NAME=crimson-banner-apps; SERVER="${CRIMSON_APPS_SERVER:-$BASE/apps-\$arch}"
         MARK="# Crimson Banner OS apps (crimson-apps-repo)" ;;
@@ -34,6 +40,15 @@ present() { grep -q "^\[$NAME\]" "$CONF"; }
 # [crimson-banner-apps] section is always this repository, however it was added
 ours() { [ "$WHICH" = apps ] || grep -qxF "$MARK" "$CONF"; }
 root() { [ -n "${CRIMSON_PACMAN_CONF:-}" ] || [ "$(id -u)" = 0 ] || { echo "Run it with sudo." >&2; exit 1; }; }
+server() { sed -n "/^\[$NAME\]/,/^\[/{s/^Server *= *//p}" "$CONF" | head -n 1; }
+set_server() { sed -i "/^\[$NAME\]/,/^\[/{s#^Server *=.*#Server = $1#}" "$CONF"; }
+channel() {   # releases, testing, disabled or local
+  if ! present; then echo disabled
+  elif ! ours; then echo local
+  elif [ "$(server)" = "$TESTING_SERVER" ] || server | grep -q '/os-testing-'; then echo testing
+  else echo releases
+  fi
+}
 remove_section() { sed -i -e "\\|^$MARK\$|d" -e "/^\[$NAME\]/,/^\[/{/^\[$NAME\]/d;/^\[/!d}" "$CONF"; }
 
 case "$CMD" in
@@ -49,7 +64,8 @@ case "$CMD" in
     "$PACMAN_KEY" --list-keys "$fpr" >/dev/null 2>&1 || "$PACMAN_KEY" --add "$KEYRING"
     "$PACMAN_KEY" --lsign-key "$fpr" >/dev/null
     if present; then
-      sed -i "/^\[$NAME\]/,/^\[/{s#^Server *=.*#Server = $SERVER#}" "$CONF"
+      # on again: the channel chosen stays (testing keeps its server)
+      if [ "$WHICH" = os ] && [ "$(channel)" = testing ]; then set_server "$TESTING_SERVER"; else set_server "$SERVER"; fi
     else
       printf '\n%s\n[%s]\nSigLevel = Required DatabaseRequired\nServer = %s\n' "$MARK" "$NAME" "$SERVER" >> "$CONF"
     fi
@@ -64,10 +80,26 @@ case "$CMD" in
     if present; then remove_section; fi
     echo "[$NAME] is off."
     ;;
+  channel)
+    want="${2:-}"; [ "$want" = os ] && want="${3:-}"
+    if [ -z "$want" ]; then channel; exit 0; fi
+    case "$want" in
+      releases|stable) want=releases ;;
+      testing) ;;
+      *) echo "Which channel: releases or testing (got '$want')" >&2; exit 2 ;;
+    esac
+    root
+    case "$(channel)" in
+      disabled) echo "Updates from Crimson Banner OS are off: sudo crimson-repo enable os first." >&2; exit 1 ;;
+      local) echo "[$NAME] in $CONF is your own builds' (./install-arch.sh): it has no channels." >&2; exit 1 ;;
+    esac
+    if [ "$want" = testing ]; then set_server "$TESTING_SERVER"; else set_server "$SERVER"; fi
+    echo "The update channel is $want."
+    ;;
   status)
     if ! present; then echo disabled
     elif ours; then echo enabled
     else echo local
     fi ;;
-  *) sed -n '3,18p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+  *) sed -n '3,23p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
 esac

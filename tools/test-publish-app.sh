@@ -90,11 +90,33 @@ osrepo disable >/dev/null
 eq "turning updates off leaves the apps" "$(grep -c '^\[crimson-banner\]' "$T/pacman.conf") $(repo status)" "0 enabled"
 repo disable >/dev/null
 eq "and both off leaves pacman.conf as it was" "$(cat "$T/pacman.conf")" "$(printf '[options]\nA=1\n\n[extra]\nInclude = x')"
+# the update channel: releases, or testing (the same repository from os-testing-$arch)
+ch() { CRIMSON_PACMAN_CONF="$T/pacman.conf" CRIMSON_KEYRING="$tree/software/crimson-banner.gpg" CRIMSON_PACMAN_KEY="$T/pacman-key" \
+       "$SRC/packaging/crimson-repo" channel "$@"; }
+eq "no channel while updates are off" "$(ch)" "disabled"
+ch testing >/dev/null 2>&1 && eq "choosing a channel needs updates on" "accepted" "refused"
+osrepo enable >/dev/null
+eq "releases by default" "$(ch)" "releases"
+ch testing >/dev/null
+eq "testing chosen" "$(ch)" "testing"
+eq "testing's server" "$(sed -n '/^\[crimson-banner\]/,/^\[/p' "$T/pacman.conf" | grep -c '^Server = https://github.com/KaiserCS/CrimsonBannerOS/releases/download/os-testing-\$arch$')" "1"
+eq "still one repository" "$(grep -c '^\[crimson-banner\]' "$T/pacman.conf")" "1"
+osrepo enable >/dev/null
+eq "turning updates on again keeps testing" "$(ch)" "testing"
+ch nightly >/dev/null 2>&1 && eq "only releases or testing" "accepted" "refused"
+ch releases >/dev/null
+eq "back to releases" "$(ch)" "releases"
+eq "the releases' server again" "$(sed -n '/^\[crimson-banner\]/,/^\[/p' "$T/pacman.conf" | grep -c '^Server = https://github.com/KaiserCS/CrimsonBannerOS/releases/download/os-\$arch$')" "1"
+ch testing >/dev/null; osrepo disable >/dev/null
+eq "off from testing leaves pacman.conf as it was" "$(cat "$T/pacman.conf")" "$(printf '[options]\nA=1\n\n[extra]\nInclude = x')"
 # a machine with ./install-arch.sh's own [crimson-banner] (its builds, file://): left alone
 printf '[options]\nA=1\n\n[crimson-banner]\nSigLevel = Required DatabaseRequired\nServer = file:///srv/crimson-banner/$arch\n' > "$T/pacman.conf"
 before="$(cat "$T/pacman.conf")"
 eq "your own builds' repository is recognised" "$(osrepo status)" "local"
 osrepo enable >/dev/null; osrepo disable >/dev/null
 eq "and neither enable nor disable touches it" "$(cat "$T/pacman.conf")" "$before"
+eq "it has no channel" "$(ch)" "local"
+ch testing >/dev/null 2>&1 && eq "nor can it be given one" "accepted" "refused"
+eq "and choosing one doesn't touch it" "$(cat "$T/pacman.conf")" "$before"
 
 exit "$fail"

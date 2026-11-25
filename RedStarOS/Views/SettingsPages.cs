@@ -675,6 +675,7 @@ public static class SettingsPages
             // installed from our pacman repository: pacman updates it, with everything else (below)
             p.Children.Add(Card(Note("Crimson Banner OS comes from its own pacman repository, so it updates together with "
                                      + "the system packages below.")));
+            ChannelSection(p);
             SystemPackagesSection(p);
             return p;
         }
@@ -707,6 +708,66 @@ public static class SettingsPages
 
         SystemPackagesSection(p);
         return p;
+    }
+
+    /// <summary>Releases or testing: which of [crimson-banner]'s two servers this system updates from.</summary>
+    private static void ChannelSection(StackPanel p)
+    {
+        p.Children.Add(Eyebrow("UPDATE CHANNEL"));
+        var choices = new[] { "Releases (recommended)", "Testing: builds of main, before they're released" };
+        var box = new ComboBox { ItemsSource = choices, MinWidth = 340, IsEnabled = false };
+        Avalonia.Automation.AutomationProperties.SetName(box, "Update channel");
+        var note = Note("Looking…");
+        p.Children.Add(box);
+        p.Children.Add(note);
+        const string releasesNote = "Each release, once it's been checked.";
+        const string testingNote = "The newest changes, a few days or weeks before a release, and less checked: something may break. "
+                                   + "Going back to releases keeps the newer build until the next release overtakes it.";
+        bool loading = true;
+        box.SelectionChanged += async (_, _) =>
+        {
+            if (loading || box.SelectedIndex < 0) return;
+            bool testing = box.SelectedIndex == 1;
+            box.IsEnabled = false;
+            note.Text = "Switching… (you'll be asked for the administrator password)";
+            var err = await UpdateChannel.SetAsync(testing);
+            box.IsEnabled = true;
+            if (err != null)
+            {
+                loading = true; box.SelectedIndex = testing ? 0 : 1; loading = false;
+                note.Text = "The channel wasn't changed: " + err;
+                return;
+            }
+            note.Text = (testing ? testingNote : releasesNote) + " Check for system updates below to get it.";
+        };
+        _ = System.Threading.Tasks.Task.Run(async () =>
+        {
+            var state = await UpdateChannel.CurrentAsync();
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                switch (state)
+                {
+                    case UpdateChannel.State.Releases or UpdateChannel.State.Testing:
+                        box.SelectedIndex = state == UpdateChannel.State.Testing ? 1 : 0;
+                        box.IsEnabled = true;
+                        note.Text = state == UpdateChannel.State.Testing ? testingNote : releasesNote;
+                        break;
+                    case UpdateChannel.State.Off:
+                        box.IsVisible = false;
+                        note.Text = "Updates from Crimson Banner OS's repository are off (sudo crimson-repo enable os turns them on).";
+                        break;
+                    case UpdateChannel.State.OwnBuilds:
+                        box.IsVisible = false;
+                        note.Text = "This system installs your own builds (./install-arch.sh), so it has no channel: ./install-arch.sh --pull updates it.";
+                        break;
+                    default:
+                        box.IsVisible = false;
+                        note.Text = "The update channel can't be read here (crimson-repo is missing).";
+                        break;
+                }
+                loading = false;
+            });
+        });
     }
 
     /// <summary>The system's packages, through PackageKit (pacman on Arch).</summary>

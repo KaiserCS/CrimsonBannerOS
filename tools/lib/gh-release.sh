@@ -2,10 +2,11 @@
 # Shared by tools/publish-app.sh and tools/publish-os.sh (sourced, not run): GitHub releases kept up to date in
 # place, and the project's public key in the tree. Needs $SLUG (owner/repository) and gh, signed in.
 
-# the release, made the first time (never marked as the latest OS release)
-ensure_release() {   # tag title notes
+# the release, made the first time (never marked as the latest OS release; "prerelease" marks it as one)
+ensure_release() {   # tag title notes [prerelease]
   gh release view "$1" -R "$SLUG" >/dev/null 2>&1 && return 0
-  gh release create "$1" -R "$SLUG" --title "$2" --notes "$3" --latest=false >/dev/null
+  local pre=(); [ "${4:-}" = prerelease ] && pre=(--prerelease)
+  gh release create "$1" -R "$SLUG" --title "$2" --notes "$3" --latest=false "${pre[@]}" >/dev/null
 }
 
 # local files → the release: new or changed ones uploaded, ones no longer here deleted

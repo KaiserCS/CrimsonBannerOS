@@ -375,6 +375,17 @@ jobs:
           done
           got="$(pacman -Si crimson-banner/crimson-banner | sed -n 's/^Version *: //p')"
           [ "$got" = "$want" ] || { echo "the update repository has $got, not $want"; exit 1; }
+          # the testing channel: the same repository from another server (here a copy, in its own folder)
+          mkdir -p /srv/crimson-banner-os-testing && cp -a /srv/crimson-banner-os/x86_64 /srv/crimson-banner-os-testing/
+          export CRIMSON_OS_TESTING_SERVER="file:///srv/crimson-banner-os-testing/\$arch"
+          [ "$(crimson-repo channel)" = releases ]
+          crimson-repo channel testing
+          [ "$(crimson-repo channel)" = testing ]
+          grep -qx "Server = file:///srv/crimson-banner-os-testing/\$arch" /etc/pacman.conf
+          pacman -Sy
+          pacman -Si crimson-banner/crimson-banner-shell >/dev/null
+          crimson-repo channel releases
+          [ "$(crimson-repo channel)" = releases ]
           crimson-repo disable os
           [ "$(crimson-repo status os)" = disabled ]
           cp /tmp/pacman.conf.mine /etc/pacman.conf

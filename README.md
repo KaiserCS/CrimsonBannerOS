@@ -86,6 +86,9 @@ lock you out. The reason is logged in `/var/cache/crimson-greeter/greeter.log`.
   packages are published as the signed `[crimson-banner]` pacman repository (`tools/publish-os.sh`), so Software
   Updates brings them. On a machine set up with `./install-arch.sh`: `./install-arch.sh --pull` (it builds your own
   `[crimson-banner]`). The AppImage checks for new releases once a day. `crimson-repo status` shows which you have.
+- **The update channel:** releases, or testing, which is builds of main before they're released (Settings → Software
+  Updates → Update channel, or `sudo crimson-repo channel testing`; `releases` goes back). Both are the same
+  `[crimson-banner]` repository on two servers. Testing gets each release too, so it never falls behind.
 - **Programs from Software:** its Installed page, with Update all.
 
 ## Publishing our own apps
@@ -131,10 +134,13 @@ installer ISOs on GitHub Releases. Then, on the computer with the project's sign
 ```bash
 tools/publish-os.sh                  # installed systems get the newest release as an update
 tools/publish-os.sh --tag v26.12.0   # or a particular one
+tools/publish-os.sh --testing        # main, as pushed, to the testing channel, whenever it's worth trying
 ```
 
 It builds the packages from the release's tagged commit (in a temporary copy: nothing is checked out), signs them
-with the project's key and uploads the `[crimson-banner]` repository to the `os-x86_64` release. The project's key
+with the project's key and uploads the `[crimson-banner]` repository to the `os-x86_64` release, and to
+`os-testing-x86_64` too unless testing already has something newer. `--testing` builds `origin/main` the same way
+and uploads it to `os-testing-x86_64` only. The project's key
 is `19E7 1BAC DC32 A511 D657  F1FA 9EC9 146D 98BE ECA0`; the script won't sign a published release with another. The first time, it writes `software/crimson-banner.gpg` and `software/os-repo`: commit them,
 and ISOs built from then on turn updates on when they install (`crimson-repo enable os`; on a system installed
 before, run that once by hand).

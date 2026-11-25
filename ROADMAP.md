@@ -19,7 +19,8 @@ Now that people can install it, a bad release reaches every installed system at 
 
 - [x] ~~**Install test in CI:** boot the ISO, install with Calamares to a virtual disk, boot the installed system and
       check its login screen and a signed-in session~~ (25 Nov 2026: `.github/scripts/iso-install-test.sh`, on every ISO build)
-- [ ] **A testing channel:** builds from main published to an `os-testing` repository; `[crimson-banner]` for releases only.
+- [x] ~~**A testing channel:** builds from main published to an `os-testing` repository; `[crimson-banner]` for releases only~~
+      (25 Nov 2026: `tools/publish-os.sh --testing`, `crimson-repo channel`, Settings → Software Updates)
 - [ ] **Rollback:** Btrfs by default in the installer, with a snapshot before each update (snapper) that the boot
       menu can start.
 - [ ] **ISO size:** 1.76 GiB of GitHub's 2 GiB per file. Trim before it's a blocker (optional programs, docs, locales).
@@ -69,7 +70,7 @@ Now that people can install it, a bad release reaches every installed system at 
 
 Extrapolated from the first eight days; it holds only if the pace does.
 
-- **Next two weeks:** the install test (done), a testing channel, the remaining app passes, a first round of
+- **Next two weeks:** the install test and a testing channel (both done), the remaining app passes, a first round of
   hardware: enough for a 26.12.0 to call a beta.
 - **One to two months:** Wayland by default, translations' plumbing, the Codeberg mirror (82%), the libre ISO (its
   kernel recipe already builds).
