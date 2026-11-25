@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later
+     Crimson Banner OS's mark: a crimson swallowtail banner on a rod, with the star. branding/README.md -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="cloth" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E8243A"/>
+      <stop offset="0.55" stop-color="#C8102E"/>
+      <stop offset="1" stop-color="#7E0A1C"/>
+    </linearGradient>
+    <!-- the cloth's folds: light, shade, light -->
+    <linearGradient id="folds" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.16"/>
+      <stop offset="0.32" stop-color="#000000" stop-opacity="0.10"/>
+      <stop offset="0.62" stop-color="#FFFFFF" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.22"/>
+    </linearGradient>
+    <linearGradient id="rod" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4A4A50"/>
+      <stop offset="1" stop-color="#1A1A1E"/>
+    </linearGradient>
+  </defs>
+  <!-- the banner, hanging from the rod, cut in a swallowtail -->
+  <path d="M 62,46 L 194,46 L 194,222 L 128,184 L 62,222 Z" fill="url(#cloth)"/>
+  <path d="M 62,46 L 194,46 L 194,222 L 128,184 L 62,222 Z" fill="url(#folds)"/>
+  <!-- the rod and its finials -->
+  <rect x="40" y="32" width="176" height="16" rx="8" fill="url(#rod)"/>
+  <circle cx="40" cy="40" r="11" fill="url(#rod)"/>
+  <circle cx="216" cy="40" r="11" fill="url(#rod)"/>
+  <!-- the star -->
+  <path d="M 128,72 L 137.4,100.9 L 167.9,100.9 L 143.2,118.8 L 152.7,147.8 L 128,129.9 L 103.3,147.8 L 112.8,118.8 L 88.1,100.9 L 118.6,100.9 Z" fill="#FFFFFF"/>
+</svg>

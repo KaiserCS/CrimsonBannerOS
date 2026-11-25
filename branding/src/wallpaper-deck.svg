@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later
+     "Deck": the hi-fi deck's panel, plain graphite with one red line of light, and a small banner. branding/README.md -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3840 2160" width="3840" height="2160">
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1C1C1F"/>
+      <stop offset="1" stop-color="#09090A"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#F02028" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#F02028" stop-opacity="1"/>
+      <stop offset="1" stop-color="#F02028" stop-opacity="0"/>
+    </linearGradient>
+    <pattern id="dots" width="48" height="48" patternUnits="userSpaceOnUse">
+      <circle cx="24" cy="24" r="2.2" fill="#FFFFFF" opacity="0.045"/>
+    </pattern>
+    <radialGradient id="fade" cx="0.5" cy="0.6" r="0.75">
+      <stop offset="0" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.7"/>
+    </radialGradient>
+    <filter id="glow" x="-10%" y="-400%" width="120%" height="900%"><feGaussianBlur stdDeviation="28"/></filter>
+    <filter id="glow2" x="-10%" y="-900%" width="120%" height="1900%"><feGaussianBlur stdDeviation="90"/></filter>
+  </defs>
+  <rect width="3840" height="2160" fill="url(#panel)"/>
+  <rect width="3840" height="2160" fill="url(#dots)"/>
+  <rect width="3840" height="2160" fill="url(#fade)"/>
+  <!-- the line of light, and its glow on the panel -->
+  <rect x="320" y="1380" width="3200" height="80" fill="url(#line)" opacity="0.25" filter="url(#glow2)"/>
+  <rect x="520" y="1408" width="2800" height="24" fill="url(#line)" opacity="0.7" filter="url(#glow)"/>
+  <rect x="720" y="1417" width="2400" height="5" fill="url(#line)"/>
+  <!-- a small banner over it -->
+  <g transform="translate(1920 1120) scale(1.6) translate(-128 -134)" opacity="0.92">
+    <path d="M 62,46 L 194,46 L 194,222 L 128,184 L 62,222 Z" fill="#C8102E"/>
+    <rect x="40" y="32" width="176" height="16" rx="8" fill="#3A3A40"/>
+    <path d="M 128,72 L 137.4,100.9 L 167.9,100.9 L 143.2,118.8 L 152.7,147.8 L 128,129.9 L 103.3,147.8 L 112.8,118.8 L 88.1,100.9 L 118.6,100.9 Z" fill="#FFFFFF"/>
+  </g>
+</svg>

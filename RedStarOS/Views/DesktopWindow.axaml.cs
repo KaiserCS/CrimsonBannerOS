@@ -66,6 +66,7 @@ public partial class DesktopWindow : Window
         WindowState = SettingsStore.Current.Fullscreen ? WindowState.FullScreen : WindowState.Maximized;
 
         WallpaperService.Changed += LoadWallpaper;
+        ThemeService.Changed += OnThemeChanged;
         Notifier.PostedRecord += ShowToast;
         LoadWallpaper();
         RefreshDesktopIcons();
@@ -140,6 +141,7 @@ public partial class DesktopWindow : Window
     {
         _background.Stop();
         WallpaperService.Changed -= LoadWallpaper;
+        ThemeService.Changed -= OnThemeChanged;
         Notifier.PostedRecord -= ShowToast;
         X11Desktop.Shortcut -= OnGlobalShortcut;
         base.OnClosed(e);
@@ -315,6 +317,12 @@ public partial class DesktopWindow : Window
 
     // ------------------------------------------------------------ Wallpaper
 
+    /// <summary>Light or dark: the default wallpaper follows, when no other has been chosen.</summary>
+    private void OnThemeChanged()
+    {
+        if (string.IsNullOrEmpty(SettingsStore.Current.WallpaperPath)) LoadWallpaper();
+    }
+
     private void LoadWallpaper()
     {
         try
@@ -327,7 +335,9 @@ public partial class DesktopWindow : Window
             }
             else
             {
-                bmp = new Bitmap(AssetLoader.Open(new Uri("avares://RedStarOS/Assets/wallpaper.jpg")));
+                // none chosen: Banner, or Daylight in the light theme (branding/)
+                bmp = new Bitmap(AssetLoader.Open(new Uri(ThemeService.IsDark
+                    ? "avares://RedStarOS/Assets/wallpaper.jpg" : "avares://RedStarOS/Assets/Wallpapers/crimson-daylight-4k.jpg")));
             }
             var old = WallpaperImage.Source as IDisposable;
             WallpaperImage.Source = bmp;

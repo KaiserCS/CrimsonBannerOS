@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later
+     "Banner" (the default wallpaper): the banner, very large, lit from the left in a graphite room. branding/README.md -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3840 2160" width="3840" height="2160">
+  <defs>
+    <linearGradient id="room" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1D1D21"/>
+      <stop offset="1" stop-color="#070708"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="2560" cy="900" r="1700" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#C4141C" stop-opacity="0.42"/>
+      <stop offset="0.5" stop-color="#7A0A12" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cloth" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E52A40"/>
+      <stop offset="0.5" stop-color="#B80E28"/>
+      <stop offset="1" stop-color="#5C0714"/>
+    </linearGradient>
+    <!-- folds: soft vertical bands of light and shade across the cloth -->
+    <linearGradient id="folds" x1="2060" y1="0" x2="3060" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.20"/>
+      <stop offset="0.18" stop-color="#000000" stop-opacity="0.18"/>
+      <stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0.12"/>
+      <stop offset="0.6" stop-color="#000000" stop-opacity="0.22"/>
+      <stop offset="0.8" stop-color="#FFFFFF" stop-opacity="0.07"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.38"/>
+    </linearGradient>
+    <linearGradient id="rod" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#55555C"/>
+      <stop offset="1" stop-color="#141417"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="60"/></filter>
+    <filter id="haze" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="140"/></filter>
+    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#FFE3E6" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="3840" height="2160" fill="url(#room)"/>
+  <rect width="3840" height="2160" fill="url(#glow)"/>
+  <!-- light falling from the upper left -->
+  <polygon points="300,-200 1100,-200 3100,2400 1900,2400" fill="url(#beam)" filter="url(#haze)"/>
+  <!-- the banner's shadow on the wall -->
+  <path d="M 2120,420 Q 2560,400 3000,420 L 3000,1900 Q 2780,1760 2560,1660 Q 2340,1760 2120,1900 Z" fill="#000000" opacity="0.55" transform="translate(70 60)" filter="url(#soft)"/>
+  <!-- the banner: its edges sway a little, as cloth does -->
+  <path d="M 2060,380 Q 2560,360 3060,380 C 3040,900 3090,1400 3060,1880 Q 2810,1730 2560,1620 Q 2310,1730 2060,1880 C 2030,1400 2080,900 2060,380 Z" fill="url(#cloth)"/>
+  <path d="M 2060,380 Q 2560,360 3060,380 C 3040,900 3090,1400 3060,1880 Q 2810,1730 2560,1620 Q 2310,1730 2060,1880 C 2030,1400 2080,900 2060,380 Z" fill="url(#folds)"/>
+  <!-- the star, catching the light -->
+  <path d="M 2560,640 L 2618.8,821 L 2809.1,821 L 2655.2,932.9 L 2714.0,1113.9 L 2560,1002 L 2406,1113.9 L 2464.8,932.9 L 2310.9,821 L 2501.2,821 Z" fill="#FFFFFF" opacity="0.94"/>
+  <!-- the rod -->
+  <rect x="1940" y="330" width="1240" height="64" rx="32" fill="url(#rod)"/>
+  <circle cx="1940" cy="362" r="46" fill="url(#rod)"/>
+  <circle cx="3180" cy="362" r="46" fill="url(#rod)"/>
+  <rect x="1940" y="334" width="1240" height="10" rx="5" fill="#FFFFFF" opacity="0.10"/>
+</svg>

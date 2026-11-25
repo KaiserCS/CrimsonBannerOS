@@ -24,8 +24,9 @@ public static class WallpaperService
     }
 
     /// <summary>
-    /// The Red Star collection: five 4K (3840 × 2160) wallpapers shipped inside the app, copied out the first time
-    /// they're needed. Older, lower-resolution copies from earlier versions are replaced.
+    /// The collection shipped inside the app, copied out the first time it's needed: Crimson Banner's own 4K
+    /// (3840 × 2160) wallpapers (branding/), the earlier red-star ones and the galaxy picture. Older,
+    /// lower-resolution copies from earlier versions are replaced.
     /// </summary>
     public static string CollectionFolder
     {
