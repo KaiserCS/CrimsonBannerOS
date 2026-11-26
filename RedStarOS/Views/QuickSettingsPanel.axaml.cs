@@ -21,6 +21,7 @@ public partial class QuickSettingsPanel : UserControl, IShellPanel
     public QuickSettingsPanel()
     {
         InitializeComponent();
+        SettingsButton.Content = Icons.Glyph("settings", 18);
 
         UserLabel.Text = Environment.UserName;
         HostLabel.Text = Environment.MachineName;
@@ -68,7 +69,7 @@ public partial class QuickSettingsPanel : UserControl, IShellPanel
         UpdateMuteButton();
     }
 
-    private void UpdateMuteButton() => MuteButton.Content = _muted ? "🔇" : "🔊";
+    private void UpdateMuteButton() => MuteButton.Content = Icons.Glyph(_muted ? "volume-mute" : "volume", 18);
 
     private void RefreshNetwork()
     {
@@ -82,7 +83,7 @@ public partial class QuickSettingsPanel : UserControl, IShellPanel
     {
         var b = SystemInfo.BatteryInfo();
         BatteryCard.IsVisible = b != null;
-        if (b != null) BatteryLabel.Text = (b.Charging ? "⚡ " : "🔋 ") + b.Percent + "%" + (b.Charging ? "  ·  Charging" : "");
+        if (b != null) BatteryLabel.Text = b.Percent + "%" + (b.Charging ? "  ·  Charging" : "");
     }
 
     private void RefreshToggles()

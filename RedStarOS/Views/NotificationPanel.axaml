@@ -35,7 +35,7 @@
         </ListBox.ItemTemplate>
       </ListBox>
       <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4" Margin="0,40">
-        <TextBlock Text="🔔" FontSize="30" HorizontalAlignment="Center" Opacity="0.5" />
+        <ContentControl x:Name="EmptyIcon" HorizontalAlignment="Center" Opacity="0.45" Margin="0,0,0,4" />
         <TextBlock Text="You're all caught up" Classes="caption" HorizontalAlignment="Center" />
       </StackPanel>
     </Grid>

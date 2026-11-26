@@ -13,7 +13,7 @@
         <TextBlock x:Name="UserLabel" FontSize="14" FontWeight="SemiBold" />
         <TextBlock x:Name="HostLabel" Classes="caption" />
       </StackPanel>
-      <Button Grid.Column="2" Classes="flat" Content="⚙" FontSize="18" Width="40" Height="40" Padding="0"
+      <Button Grid.Column="2" Classes="flat" x:Name="SettingsButton" Width="40" Height="40" Padding="0"
               HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
               ToolTip.Tip="Settings" Click="OnSettings" />
     </Grid>
@@ -53,7 +53,7 @@
     <!-- Volume -->
     <Border Classes="card" Padding="8,6">
       <Grid ColumnDefinitions="Auto,*,48">
-        <Button x:Name="MuteButton" Classes="flat" Width="38" Height="36" Padding="0" Content="🔊" FontSize="16"
+        <Button x:Name="MuteButton" Classes="flat" Width="38" Height="36" Padding="0"
                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                 ToolTip.Tip="Mute / unmute" Click="OnMute" />
         <Slider x:Name="VolumeSlider" Grid.Column="1" Minimum="0" Maximum="100" VerticalAlignment="Center" Margin="4,0" />

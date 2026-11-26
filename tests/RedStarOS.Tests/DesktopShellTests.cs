@@ -127,6 +127,20 @@ public class DesktopShellTests : IDisposable
     }
 
     [Fact]
+    public void The_clock_panels_month_starts_on_the_countrys_first_day_and_shows_six_weeks()
+    {
+        // November 2026 begins on a Sunday
+        var sun = CalendarPanel.PageDays(new DateTime(2026, 11, 1), DayOfWeek.Sunday);
+        Assert.Equal(42, sun.Count);
+        Assert.Equal(new DateTime(2026, 11, 1), sun[0]);
+        Assert.Equal(new DateTime(2026, 12, 12), sun[^1]);
+        var mon = CalendarPanel.PageDays(new DateTime(2026, 11, 1), DayOfWeek.Monday);
+        Assert.Equal(new DateTime(2026, 10, 26), mon[0]);             // the week before, from its Monday
+        Assert.All(mon.Where((_, i) => i % 7 == 0), d => Assert.Equal(DayOfWeek.Monday, d.DayOfWeek));
+        Assert.Contains(new DateTime(2026, 11, 30), mon);
+    }
+
+    [Fact]
     public void Jump_lists_are_the_files_each_app_opens()
     {
         var recent = new[] { "/d/report.docx", "/d/photo.png", "/d/budget.xlsx", "/d/notes.txt", "/d/report.docx", "/d/song.mp3", "/d/gone.docx" };

@@ -54,7 +54,12 @@ public partial class NotificationPanel : UserControl, IShellPanel
         EmptyState.IsVisible = rows.Count == 0;
         List.IsVisible = rows.Count > 0;
 
-        DndButton.Content = Notifier.DoNotDisturb ? "🔕 On" : "🔕 Off";
+        DndButton.Content = new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 6,
+            Children = { Icons.Glyph(Notifier.DoNotDisturb ? "bell-off" : "bell", 15), new TextBlock { Text = Notifier.DoNotDisturb ? "Do not disturb" : "Alerts on", VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center } },
+        };
+        EmptyIcon.Content ??= Icons.Glyph("bell", 32);
         DndNote.IsVisible = Notifier.DoNotDisturb;
     }
 

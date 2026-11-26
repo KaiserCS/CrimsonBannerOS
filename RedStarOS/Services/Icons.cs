@@ -44,6 +44,7 @@ public static class Icons
         ["arrow-right"] = "M 5,12 L 19,12 M 13,6 L 19,12 L 13,18",
         ["arrow-up"] = "M 12,19 L 12,5 M 6,11 L 12,5 L 18,11",
         ["chevron-right"] = "M 9,6 L 15,12 L 9,18",
+        ["chevron-left"] = "M 15,6 L 9,12 L 15,18",
         ["chevron-down"] = "M 6,9 L 12,15 L 18,9",
         ["chevron-up"] = "M 6,15 L 12,9 L 18,15",
         ["bag"] = "M 5.5,8 L 18.5,8 L 17.7,19.2 A 2,2 0 0 1 15.7,21 L 8.3,21 A 2,2 0 0 1 6.3,19.2 Z M 9,8 L 9,6.5 A 3,3 0 0 1 15,6.5 L 15,8",
