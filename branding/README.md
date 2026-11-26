@@ -11,6 +11,7 @@ licence, GPL-3.0-or-later.
 | `src/app-writer.svg`, `app-sheets.svg`, `app-slides.svg` | Studio's three programs, on the same graphite tile |
 | `src/app-planner.svg` | Planner (`apps/planner`): a plan's columns rising to a crimson target line |
 | `src/app-archive.svg` | People's Archive (`apps/archive`): an open book with a crimson ribbon |
+| `src/app-atlas.svg` | Atlas (`apps/atlas`): a folded map with a road, a river and a crimson pin |
 | `src/wallpaper-banner.svg` | **Banner**, the default wallpaper (`Assets/wallpaper.jpg`), and, blurred and dimmed, the login screen's backdrop |
 | `src/wallpaper-folds.svg` | **Folds**: the banner's cloth up close |
 | `src/wallpaper-deck.svg` | **Deck**: plain graphite with one red line of light, like CD Player's panel |

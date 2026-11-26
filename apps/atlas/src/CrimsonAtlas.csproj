@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Atlas (apps/atlas): maps of the world on this computer, published to Software (tools/publish-app.sh).
+       It draws with SkiaSharp, which comes with Avalonia (Avalonia.Skia), at the version the shell locks. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <AssemblyName>CrimsonAtlas</AssemblyName>
+    <RootNamespace>CrimsonAtlas</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <!-- its own version, not the OS's: apps are published without an OS release (the PKGBUILD's pkgver matches) -->
+    <Version>1.0.0</Version>
+    <RedStarVersionFull>$(Version)</RedStarVersionFull>
+    <RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers>
+    <!-- every package at an exact version with its hash, as the shell's (packages.lock.json) -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- the shell's own styles, shared rather than copied, so Atlas looks like the rest of the system -->
+    <AvaloniaResource Include="../../../RedStarOS/Styles/Shell.axaml" Link="Styles/Shell.axaml" />
+    <!-- what our apps share (apps/shared): the look, and its building blocks -->
+    <Compile Include="../../shared/*.cs" Link="Shared/%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.6" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Atlas's icon: a folded map with a road, a river and a crimson pin, on the graphite tile. branding/README.md -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>
+    <clipPath id="map"><path d="M 44 78 L 96 62 L 160 80 L 212 64 L 212 186 L 160 202 L 96 184 L 44 200 Z"/></clipPath>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <!-- three panels of a folded map, the middle one in shadow -->
+  <path d="M 44 78 L 96 62 L 96 184 L 44 200 Z" fill="#F2F2F5"/>
+  <path d="M 96 62 L 160 80 L 160 202 L 96 184 Z" fill="#DCDCE3"/>
+  <path d="M 160 80 L 212 64 L 212 186 L 160 202 Z" fill="#F2F2F5"/>
+  <g clip-path="url(#map)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 30 150 C 70 140 90 170 128 160 C 160 152 176 120 224 126" stroke="#7FB0D0" stroke-width="9"/>
+    <path d="M 60 70 C 80 110 110 120 140 128 C 170 136 190 170 200 210" stroke="#B4B4BC" stroke-width="6"/>
+  </g>
+  <!-- the pin -->
+  <path d="M 150 134 C 146 122 128 110 128 92 A 22 22 0 0 1 172 92 C 172 110 154 122 150 134 Z" fill="#C8102E" stroke="#0C0C0E" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="150" cy="92" r="8" fill="#F2F2F5"/>
+</svg>

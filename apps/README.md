@@ -1,6 +1,6 @@
 # Crimson Banner OS apps
 
-Programs published to the Crimson Banner tab of Software. So far: [Planner](planner/README.md) and [People's Archive](archive/README.md). They don't belong in every install (large or specialised
+Programs published to the Crimson Banner tab of Software. So far: [Planner](planner/README.md), [People's Archive](archive/README.md) and [Atlas](atlas/README.md). They don't belong in every install (large or specialised
 tools), so they're installed on demand. Each app is a folder here; `tools/publish-app.sh` builds it, signs it and
 publishes it, without an OS release.
 

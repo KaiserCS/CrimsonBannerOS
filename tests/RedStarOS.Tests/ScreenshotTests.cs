@@ -180,6 +180,20 @@ public class ScreenshotTests
         finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
     }
 
+    // ─────────── Atlas (apps/atlas), on its example island ───────────
+    [AvaloniaTheory]
+    [InlineData("map", "night")]
+    [InlineData("map-search", "night")]
+    [InlineData("map-street", "day")]
+    [InlineData("maps", "night")]
+    [InlineData("about", "night")]
+    public void Atlas_pages(string page, string palette)
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "atlas-shot-" + Guid.NewGuid().ToString("N"));
+        try { ShowAndCapture(CrimsonAtlas.Views.AtlasWindow.Sample(page, dir, palette), "Atlas-" + page); }
+        finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
+    }
+
     // ─────────── Software's pages, with sample programs (CI has no catalogue to read) ───────────
     [AvaloniaTheory]
     [InlineData("explore")]

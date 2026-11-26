@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Atlas
+GenericName=Maps
+Comment=Maps of the world that work without the network
+Exec=crimson-atlas %f
+Icon=crimson-atlas
+Terminal=false
+Categories=Education;Geography;Maps;
+Keywords=map;maps;atlas;offline;OpenStreetMap;Mapsforge;geography;
+StartupWMClass=crimson-atlas
+X-CrimsonBanner-App=true

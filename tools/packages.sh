@@ -16,7 +16,7 @@ set -euo pipefail
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1 DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE=1
 cd "$(dirname "$0")/.."
 FEED="${REDSTAR_PACKAGES:-${XDG_DATA_HOME:-$HOME/.local/share}/redstaros/packages}"
-PROJECTS=(RedStarOS/RedStarOS.csproj tests/RedStarOS.Tests/RedStarOS.Tests.csproj apps/planner/src/CrimsonPlanner.csproj apps/archive/src/PeoplesArchive.csproj)
+PROJECTS=(RedStarOS/RedStarOS.csproj tests/RedStarOS.Tests/RedStarOS.Tests.csproj apps/planner/src/CrimsonPlanner.csproj apps/archive/src/PeoplesArchive.csproj apps/atlas/src/CrimsonAtlas.csproj)
 RIDS=(linux-x64 linux-arm64)
 
 # lock files present: they must match (no silent upgrade); missing: this run writes them

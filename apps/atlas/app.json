@@ -1,0 +1,18 @@
+{
+  "id": "atlas",
+  "name": "Atlas",
+  "summary": "Maps of the world that work without the network",
+  "description": "Atlas keeps maps of the world on this computer and draws them itself: land and sea, woods and fields, rivers and lakes, buildings, roads by importance, railways and borders, with the names of cities, towns, villages and peaks placed so they don't overlap.\n\nThe maps are the Mapsforge project's, made from OpenStreetMap, the map of the world drawn by its own people, and remade every few weeks. Pick a continent, then a country or region, and download it; a download that stops carries on from where it was. Once a map is here, it needs no network: move around, zoom from a whole country down to its streets, and search its places by name, with or without accents.\n\nDay and Night colours, the scale at the middle of the map, and the credit OpenStreetMap's contributors are owed. An example island comes with it, to try it before downloading.\n\nAtlas goes online only to list the maps and download the one you pick, and sends nothing about where you look.",
+  "license": "GPL-3.0-or-later",
+  "developer": "Crimson Banner OS",
+  "homepage": "https://github.com/KaiserCS/CrimsonBannerOS/tree/main/apps/atlas",
+  "categories": [
+    "Education",
+    "Utility"
+  ],
+  "icon": "icon.png",
+  "screenshots": [
+    "screenshot-1.png"
+  ],
+  "package": "crimson-atlas"
+}

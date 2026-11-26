@@ -52,7 +52,9 @@ Now that people can install it, a bad release reaches every installed system at 
       (and any OPDS catalogue), a shelf, and a reading room for EPUB and text~~ (25 Nov 2026; published with
       `tools/publish-app.sh apps/archive`). Gutenberg comes from its catalogue file and PGLAF's
       mirror (its website refuses programs); confirm Wikisource's download address on a real search.
-- [ ] **Atlas:** maps that work without the network, from an existing OpenStreetMap download service.
+- [x] ~~**Atlas** 1.0 (`apps/atlas`): maps that work without the network: the Mapsforge project's maps of
+      OpenStreetMap (from the Esslingen mirror, resumable), drawn on this computer, with search~~ (25 Nov 2026;
+      publish with `tools/publish-app.sh apps/atlas`). Next: routes, and labels along roads and rivers.
 
 ## 4. Reach more people
 
