@@ -68,6 +68,7 @@ public sealed class DesktopIconsView : Canvas
         ClipToBounds = true;
         _reload.Tick += (_, _) => { _reload.Stop(); Reload(); };
         SizeChanged += (_, _) => LayOut();
+        ContextRequested += OnMenu;
         AttachedToVisualTree += (_, _) => Watch();
         DetachedFromVisualTree += (_, _) => { _watcher?.Dispose(); _watcher = null; };
     }
@@ -340,9 +341,8 @@ public sealed class DesktopIconsView : Canvas
 
     // ───────── menus ─────────
 
-    protected override void OnContextRequested(ContextRequestedEventArgs e)
+    private void OnMenu(object? sender, ContextRequestedEventArgs e)
     {
-        base.OnContextRequested(e);
         var hit = e.TryGetPosition(this, out var p) ? ItemAt(p) : null;
         ContextMenu? menu;
         if (hit != null)
