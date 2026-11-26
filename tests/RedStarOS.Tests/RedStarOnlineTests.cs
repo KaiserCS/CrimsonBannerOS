@@ -54,15 +54,23 @@ public class RedStarOnlineTests
     [Fact]
     public void The_shell_sees_what_the_browser_saved()
     {
-        BrowserData.FlushNow();
-        _ = BrowserData.Store;                                     // loaded
         var path = AppPaths.ConfigFile("browser-data.json");
-        // Crimson Online (another process) writes a bookmark, in the same format
-        File.WriteAllText(path, "{\"Bookmarks\":[{\"Title\":\"From the browser\",\"Url\":\"https://online.test/\",\"Added\":1}],"
-            + "\"History\":[],\"Settings\":{\"SearchEngine\":\"Brave\"},\"Session\":[]}");
-        File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddSeconds(5));
-        // the shell looks at most once a second: wait for it (a busy machine can take longer than one look)
-        for (int i = 0; i < 50 && !BrowserData.Store.Bookmarks.Any(b => b.Url == "https://online.test/"); i++) Thread.Sleep(100);
+        const string saved = "{\"Bookmarks\":[{\"Title\":\"From the browser\",\"Url\":\"https://online.test/\",\"Added\":1}],"
+            + "\"History\":[],\"Settings\":{\"SearchEngine\":\"Brave\"},\"Session\":[]}";
+        // the shell looks at most once a second, and never over changes of its own not yet written; other tests
+        // (windows opened in parallel) may leave some, and write them over the browser's file: write those first,
+        // and the browser's file again if it was overwritten, until the shell has looked
+        for (int i = 0; i < 80 && !BrowserData.Store.Bookmarks.Any(b => b.Url == "https://online.test/"); i++)
+        {
+            if (BrowserData.HasUnsavedChanges) BrowserData.FlushNow();
+            if (!File.Exists(path) || !File.ReadAllText(path).Contains("online.test"))
+            {
+                // Crimson Online (another process) writes a bookmark, in the same format
+                File.WriteAllText(path, saved);
+                File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddSeconds(5 + i));
+            }
+            Thread.Sleep(100);
+        }
         Assert.Contains(BrowserData.Store.Bookmarks, b => b.Url == "https://online.test/");
         Assert.Equal("Brave", BrowserData.Settings.SearchEngine);
     }

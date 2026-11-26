@@ -123,6 +123,9 @@ public static class BrowserData
         FlushNow();
     }
 
+    /// <summary>Whether the shell has changes of its own not yet written (it won't read the browser's over them).</summary>
+    public static bool HasUnsavedChanges => _dirty;
+
     public static void FlushNow()
     {
         if (!_dirty) return;
