@@ -197,7 +197,7 @@ public static class Engine
 
     /// <summary>
     /// The most of the need that capacity and labour allow. A product over its capacity has its own final demand cut
-    /// by the excess (which lowers its output at least as much), as often as needed; if what's left is other sectors'
+    /// by the excess, divided by how much its demand raises its own output, as often as needed; if what's left is other sectors'
     /// use of it, the whole plan is scaled to fit. Then, if labour falls short, the whole plan is scaled to it.
     /// Returns the gross outputs that fit, and what limited them.
     /// </summary>
@@ -207,6 +207,14 @@ public static class Engine
         var d = (double[])final.Clone();
         var limits = new List<string>();
         var x = Solve(ia, d)!;
+        // how much one more unit of each product's own demand raises its own output (the Leontief inverse's
+        // diagonal, at least 1): its demand is cut by the excess over this, so its output lands on its capacity
+        var self = new double[n];
+        for (int i = 0; i < n; i++)
+        {
+            var e = new double[n]; e[i] = 1;
+            self[i] = Math.Max(1, Solve(ia, e)![i]);
+        }
         for (int round = 0; round < 100; round++)
         {
             bool over = false;
@@ -216,7 +224,7 @@ public static class Engine
                 over = true;
                 var name = plan.Products[i].Name + " capacity";
                 if (!limits.Contains(name)) limits.Add(name);
-                if (d[i] > 1e-9) d[i] = Math.Max(0, d[i] - (x[i] - cap));
+                if (d[i] > 1e-9) d[i] = Math.Max(0, d[i] - (x[i] - cap) / self[i]);
                 else
                 {
                     // its own demand is gone: what's left is the other sectors' use of it, so everything shrinks

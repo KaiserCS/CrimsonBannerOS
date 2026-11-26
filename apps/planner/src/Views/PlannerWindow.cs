@@ -82,7 +82,8 @@ public sealed partial class PlannerWindow : Window
             _nav.Children.Add(b);
         }
 
-        var scroll = new ScrollViewer { Content = _content, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto };
+        // pages fit the window's width (their panels wrap); only wide tables scroll sideways, each in its own panel
+        var scroll = new ScrollViewer { Content = _content, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled };
         var root = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
         root.Children.Add(side);
         Grid.SetColumn(scroll, 1);
@@ -527,7 +528,7 @@ public sealed partial class PlannerWindow : Window
                 Cell(Engine.Fmt(p.ExpectedDemand), right: true),
                 Cell(Engine.Fmt(p.FinalDemand), right: true),
                 Cell(Engine.Fmt(p.GrossOutput), right: true),
-                Cell(Engine.Fmt(p.Proposed) + (p.GrossOutput - p.Proposed > p.GrossOutput * 1e-6 ? $"\nshort {Engine.Fmt(p.GrossOutput - p.Proposed)}" : ""), right: true, bold: true),
+                Cell(Engine.Fmt(p.Proposed) + (Limited(r, p) && p.GrossOutput - p.Proposed > p.GrossOutput * 1e-6 ? $"\nshort {Engine.Fmt(p.GrossOutput - p.Proposed)}" : ""), right: true, bold: true),
                 bar,
                 Cell(Engine.Fmt(p.LabourValue), right: true),
                 Cell((p.Change is double c ? c.ToString("+0.#%;-0.#%;0%", CultureInfo.InvariantCulture) : "first") + (p.Major ? "\nMAJOR" : ""), right: true),
@@ -552,6 +553,9 @@ public sealed partial class PlannerWindow : Window
         }
         return col;
     }
+
+    /// <summary>Held back itself (at its capacity, or by labour), rather than moved a little by another product's trim.</summary>
+    private static bool Limited(PlanResult r, ProductResult p) => r.Limits.Contains(p.Product.Name + " capacity") || r.Limits.Contains("labour");
 
     private Control DecisionCell(ProductResult p, QuotaDecision? d)
     {
