@@ -2,6 +2,22 @@
 
 Versions are YY.MM.N (README, "Versions"). `tools/release.sh` adds each release's section here.
 
+## 26.11.5 (2026-11-26)
+
+- Snap Assist: an app's picture when its window's class names a Crimson Banner app
+- Desktop icons: tooltip is the file's name
+- Desktop icons: the menu through the ContextRequested event (no override on Canvas)
+- Desktop and taskbar, the Windows way: real desktop icons, snap previews in the accent, Snap Assist, Show desktop
+- Blocks: Space drops the piece instead of pressing New game
+- Gems: cut stones instead of flat shapes
+- Screenshots: the Start menu at its own width (750), so its app list is pictured
+- Icons: the plate's rim as an immutable brush made the usual way
+- Icons redrawn for the deck look: every app a drawn picture on the graphite tile, the line icons on one grid
+- Atlas: its screenshot for Software
+- Atlas: tiles placed on whole pixels (no seams between them), and a map opens whole
+- Atlas: ways summed in whole micro-degrees, so a closed ring (the island's coast) reads back closed
+- Atlas: maps of the world that work offline, from the Mapsforge project's maps of OpenStreetMap
+
 ## 26.11.4 (2026-11-25)
 
 - Start menu: our own apps (Planner, People's Archive…) with the shell's apps, not under Linux Apps
