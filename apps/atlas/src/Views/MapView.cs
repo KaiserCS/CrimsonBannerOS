@@ -57,8 +57,9 @@ public sealed class MapView : Control
         Clear();
         _pin = null; _pinName = null;
         if (map == null) { InvalidateVisual(); return; }
-        var c = at ?? map.Start ?? ((map.MinLat + map.MaxLat) / 2, (map.MinLon + map.MaxLon) / 2);
-        GoTo(c.Item1, c.Item2, zoom ?? map.StartZoom ?? FitZoom(map));
+        // a map opens whole (its middle, at the zoom that fits it); a place asked for, where it is
+        var c = at ?? ((map.MinLat + map.MaxLat) / 2, (map.MinLon + map.MaxLon) / 2);
+        GoTo(c.Item1, c.Item2, zoom ?? FitZoom(map));
     }
 
     /// <summary>The zoom at which the whole map fits the view.</summary>
@@ -285,7 +286,8 @@ public sealed class MapView : Control
         var bounds = new Rect(Bounds.Size);
         ctx.FillRectangle(new SolidColorBrush(Color.FromUInt32((uint)_theme.Outside)), bounds);
         if (_map == null || Bounds.Width < 2) return;
-        double left = _cx - Bounds.Width / 2, top = _cy - Bounds.Height / 2;
+        // whole pixels, so neighbouring tiles meet without a seam
+        double left = Math.Round(_cx - Bounds.Width / 2), top = Math.Round(_cy - Bounds.Height / 2);
         var (x0, y0, x1, y1) = Visible();
         int n = 1 << _zoom;
         var labels = new List<MapLabel>();
