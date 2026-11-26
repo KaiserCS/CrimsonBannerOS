@@ -217,9 +217,13 @@ public partial class CalendarPanel : UserControl, IShellPanel
         var events = CalendarStore.ForDate(day).OrderBy(e => e.Time.Length == 0 ? "" : e.Time).ToList();
         if (events.Count == 0)
         {
-            var add = new Button { Classes = { "callink" }, Content = "Nothing planned. Add an event", Padding = new Thickness(0, 2) };
+            var add = new Button { Classes = { "callink" }, Content = "Add an event", Padding = new Thickness(0, 2), VerticalAlignment = VerticalAlignment.Center };
             add.Click += OnOpen;
-            _agenda.Children.Add(add);
+            _agenda.Children.Add(new StackPanel
+            {
+                Orientation = Orientation.Horizontal, Spacing = 8,
+                Children = { new TextBlock { Text = "Nothing planned.", FontSize = 13, Opacity = 0.6, VerticalAlignment = VerticalAlignment.Center }, add },
+            });
             return;
         }
         var accent = new SolidColorBrush(ThemeService.AccentColor);
