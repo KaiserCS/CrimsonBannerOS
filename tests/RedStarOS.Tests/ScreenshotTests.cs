@@ -296,7 +296,7 @@ public class ScreenshotTests
     [InlineData("StartMenu", 790, 640)]
     [InlineData("QuickSettingsPanel", 380, 560)]
     [InlineData("NotificationPanel", 380, 560)]
-    [InlineData("CalendarPanel", 380, 480)]
+    [InlineData("CalendarPanel", 380, 600)]
     public void Shell_parts(string typeName, int width, int height)
     {
         var type = typeof(App).Assembly.GetTypes().First(t => t.Name == typeName);

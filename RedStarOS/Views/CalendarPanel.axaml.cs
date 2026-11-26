@@ -178,8 +178,8 @@ public partial class CalendarPanel : UserControl, IShellPanel
             {
                 Text = d.Day.ToString(c), FontSize = 13.5, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
                 FontWeight = today ? FontWeight.Bold : FontWeight.Normal, Opacity = inMonth ? 1 : 0.32,
-                Foreground = today ? Brushes.White : null,
             };
+            if (today) number.Foreground = Brushes.White;          // otherwise the button's own colour
             var dot = new Ellipse
             {
                 Width = 4, Height = 4, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 0, 4),
