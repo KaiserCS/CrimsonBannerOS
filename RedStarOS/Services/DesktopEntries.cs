@@ -7,7 +7,7 @@ using System.Text;
 namespace RedStarOS.Services;
 
 public sealed record LinuxApp(string Name, string Exec, bool Terminal, string Categories, string FilePath,
-                             string? Icon = null, string? WmClass = null, string MimeTypes = "")
+                             string? Icon = null, string? WmClass = null, string MimeTypes = "", bool Ours = false)
 {
     /// <summary>Taskbar / pin id: "linux:" + the .desktop file.</summary>
     public string Id => "linux:" + FilePath;
@@ -72,7 +72,7 @@ public static class DesktopEntries
         try
         {
             string? name = null, exec = null, type = null, cats = "", icon = null, wmClass = null, mimes = "";
-            bool terminal = false, hidden = false, inEntry = false;
+            bool terminal = false, hidden = false, inEntry = false, ours = false;
             foreach (var raw in File.ReadLines(file))
             {
                 var line = raw.Trim();
@@ -93,6 +93,7 @@ public static class DesktopEntries
                     case "StartupWMClass": wmClass = val; break;
                     case "MimeType": mimes = val; break;
                     case "Terminal": terminal = val.Equals("true", StringComparison.OrdinalIgnoreCase); break;
+                    case "X-CrimsonBanner-App": ours = val.Equals("true", StringComparison.OrdinalIgnoreCase); break;
                     case "NoDisplay":
                     case "Hidden":
                         if (val.Equals("true", StringComparison.OrdinalIgnoreCase)) hidden = true;
@@ -100,7 +101,9 @@ public static class DesktopEntries
                 }
             }
             if (hidden || name == null || exec == null || (type != null && type != "Application")) return null;
-            return new LinuxApp(name, exec, terminal, cats, file, icon, wmClass, mimes ?? "");
+            // our own apps (apps/, from Software's Crimson Banner tab): crimson-*.desktop, or marked as ours
+            ours |= Path.GetFileName(file).StartsWith("crimson-", StringComparison.OrdinalIgnoreCase);
+            return new LinuxApp(name, exec, terminal, cats, file, icon, wmClass, mimes ?? "", ours);
         }
         catch
         {
@@ -115,7 +118,20 @@ public static class DesktopEntries
     public static LinuxApp? FromId(string id) =>
         id.StartsWith("linux:") ? All().FirstOrDefault(a => a.FilePath == id[6..]) ?? ParseFile(id[6..]) : null;
 
-    private static LinuxApp? ParseFile(string path) => File.Exists(path) ? Parse(path) : null;
+    public static LinuxApp? ParseFile(string path) => File.Exists(path) ? Parse(path) : null;
+
+    /// <summary>The Start menu's own category (Office, Media, Games, Online, Utilities, System) for one of our apps,
+    /// from its .desktop Categories.</summary>
+    public static string ShellCategory(string categories)
+    {
+        var c = categories.Split(';', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (c.Contains("Game")) return "RSGames";
+        if (c.Overlaps(new[] { "Office", "Education", "Science", "Economy", "Literature", "Viewer", "Finance" })) return "RSOffice";
+        if (c.Overlaps(new[] { "AudioVideo", "Audio", "Video", "Graphics", "Photography" })) return "RSMedia";
+        if (c.Overlaps(new[] { "Network", "WebBrowser", "Email", "Chat" })) return "RSOnline";
+        if (c.Overlaps(new[] { "System", "Settings" })) return "System";
+        return "RSUtilities";
+    }
 
     /// <summary>
     /// The installed app a window belongs to, from its WM_CLASS: StartupWMClass, then the .desktop file name

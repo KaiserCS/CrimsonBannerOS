@@ -32,6 +32,11 @@ apps/planner/
 ```
 
 - `id`: lower case letters, digits and `-`; it names the app's files on the release page.
+- The app's `.desktop` file is named after its package, `crimson-NAME.desktop` (or carries `X-CrimsonBanner-App=true`):
+  the Start menu then lists it with the shell's own apps, in the category its `Categories` suggest, rather than under
+  Linux Apps.
+- A change to an app's files needs a new `pkgver` (and the same `<Version>` in its project), or installed systems
+  won't get it.
 - `license`: an SPDX licence; it must be free software, or Software won't show the app.
 - `package`: the pacman package the PKGBUILD makes (default: the id). On Arch, Software installs it from the
   `[crimson-banner-apps]` repository, so it updates with the system.

@@ -10,3 +10,4 @@ Categories=Office;Viewer;Education;Literature;
 MimeType=application/epub+zip;
 Keywords=book;ebook;epub;library;reader;gutenberg;wikisource;marxists;public domain;
 StartupWMClass=crimson-archive
+X-CrimsonBanner-App=true

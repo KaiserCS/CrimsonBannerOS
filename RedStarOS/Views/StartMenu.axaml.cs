@@ -122,6 +122,24 @@ public partial class StartMenu : UserControl
             foreach (var linuxApp in DesktopEntries.All())
             {
                 var app = linuxApp;
+                if (app.Ours)
+                {
+                    // ours, from Software's Crimson Banner tab: with the shell's own apps, in their category
+                    var rs = DesktopEntries.ShellCategory(app.Categories);
+                    items.Add(new StartItem
+                    {
+                        Key = "rs:app:" + Path.GetFileNameWithoutExtension(app.FilePath),
+                        AppId = app.Id,
+                        Title = app.Name,
+                        Subtitle = RedStarCategoryLabels.GetValueOrDefault(rs, rs),
+                        Glyph = app.Name.Length > 0 ? app.Name[..1].ToUpperInvariant() : "?",
+                        Badge = AppIcons.Brush(AppIcons.ColorForCategory(rs)),
+                        Category = rs,
+                        Icon = LinuxIcon(app),
+                        Run = () => DesktopEntries.Launch(app)
+                    });
+                    continue;
+                }
                 var cat = LinuxCategory(app.Categories);
                 items.Add(new StartItem
                 {
