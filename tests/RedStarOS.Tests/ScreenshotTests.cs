@@ -140,6 +140,21 @@ public class ScreenshotTests
         ShowAndCapture(w, "CdPlayerWindow-disc");
     }
 
+    // ─────────── Planner (apps/planner), on its example economy ───────────
+    [AvaloniaTheory]
+    [InlineData("overview", null)]
+    [InlineData("economy", null)]
+    [InlineData("councils", null)]
+    [InlineData("reports", null)]
+    [InlineData("plan", null)]
+    [InlineData("quotas", 3)]
+    [InlineData("ledger", null)]
+    public void Planner_pages(string page, int? period)
+    {
+        var w = CrimsonPlanner.Views.PlannerWindow.Sample(page, period);
+        ShowAndCapture(w, "Planner-" + page);
+    }
+
     // ─────────── Software's pages, with sample programs (CI has no catalogue to read) ───────────
     [AvaloniaTheory]
     [InlineData("explore")]

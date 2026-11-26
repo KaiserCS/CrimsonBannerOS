@@ -42,6 +42,14 @@ Now that people can install it, a bad release reaches every installed system at 
 - [ ] **Per-app passes:** File Manager, Notes, Calendar, Clock, Task Manager.
 - [ ] **Split the largest files** while restyling them: DocView (1,600 lines), File Manager (1,400), Settings' pages (1,400).
 
+## 3b. Our own apps (Software's Crimson Banner tab)
+
+- [ ] **Planner** (`apps/planner`, in progress, 25 Nov 2026): the advisory Economic Planning Algorithm after *The
+      Economic Structure*: councils' reports, the verification ledger, turnover as shadow price, Leontief's
+      input–output model, labour time, ratification with a quorum, recounts, quotas down to every council.
+- [ ] **People's Archive:** a reading room for public-domain books, browsed and downloaded from free sources.
+- [ ] **Atlas:** maps that work without the network, from an existing OpenStreetMap download service.
+
 ## 4. Reach more people
 
 - [ ] **Translations:** every string is in English in the code. Add the plumbing now, while it's 50,000 lines and not 100,000.

@@ -1,0 +1,15 @@
+{
+  "id": "planner",
+  "name": "Planner",
+  "summary": "Economic computation for central planning",
+  "description": "Planner works out quotas from what local councils report, as an advisory economic planning algorithm: it proposes, and councils decide.\n\nEach council's report (what was made, what people took out of stock and what's left) is taken in and sealed in a verification ledger, so a report changed afterwards is caught. Turnover against each product's target works as its shadow price: products running short are planned up, overstocked ones down, with demand smoothed over the periods before.\n\nLeontief's input–output model then gives what every sector has to make to meet that demand and each other's inputs, with the labour time each product takes, directly and through its inputs. Capacity and labour are checked, and where they fall short the proposal is the most of the plan that fits.\n\nEvery quota is a proposal until a council ratifies, amends or rejects it; a major shift needs a quorum. Reports that stand out from a council's own history or from its peers are flagged for a recount. Enacted quotas are shared out region by region and council by council, and exported as one file per council.\n\nIt works on this computer alone: nothing goes over the network. An example economy is included to try it with.",
+  "license": "GPL-3.0-or-later",
+  "developer": "Crimson Banner OS",
+  "homepage": "https://github.com/KaiserCS/CrimsonBannerOS/tree/main/apps/planner",
+  "categories": [
+    "Office",
+    "Science"
+  ],
+  "icon": "icon.png",
+  "package": "crimson-planner"
+}

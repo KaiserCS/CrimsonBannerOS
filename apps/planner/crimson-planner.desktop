@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Planner
+GenericName=Economic planning
+Comment=Quotas from councils' reports: input–output planning, labour time, ratification
+Exec=crimson-planner %f
+Icon=crimson-planner
+Terminal=false
+Categories=Office;Science;Economy;
+MimeType=text/csv;
+Keywords=plan;economy;quota;input-output;Leontief;labour;council;
+StartupWMClass=crimson-planner

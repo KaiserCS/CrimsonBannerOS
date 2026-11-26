@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Planner (apps/planner): Crimson Banner OS's planning app, published to Software (tools/publish-app.sh). -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <AssemblyName>CrimsonPlanner</AssemblyName>
+    <RootNamespace>CrimsonPlanner</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <!-- its own version, not the OS's: apps are published without an OS release (the PKGBUILD's pkgver matches) -->
+    <Version>1.0.0</Version>
+    <RedStarVersionFull>$(Version)</RedStarVersionFull>
+    <RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers>
+    <!-- every package at an exact version with its hash, as the shell's (packages.lock.json) -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- the shell's own styles, shared rather than copied, so Planner looks like the rest of the system -->
+    <AvaloniaResource Include="../../../RedStarOS/Styles/Shell.axaml" Link="Styles/Shell.axaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.6" />
+  </ItemGroup>
+</Project>

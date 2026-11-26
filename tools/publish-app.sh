@@ -15,6 +15,7 @@
 # $REDSTAR_APPS_DIR changes the folder, $REDSTAR_REPO_KEY the key, $REDSTAR_GITHUB_REPO the repository.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+PWD_TREE="$PWD"
 ROOT="$PWD"
 SLUG="${REDSTAR_GITHUB_REPO:-KaiserCS/CrimsonBannerOS}"
 OUT="${REDSTAR_APPS_DIR:-/srv/crimson-banner-apps}"
@@ -78,7 +79,8 @@ if [ "$CATALOG_ONLY" = 0 ]; then
       work="$(mktemp -d)"
       cp -a "$app/." "$work/"
       SIGN=(); [ "$UNSIGNED" = 1 ] || SIGN=(--sign --key "$KEY")
-      (cd "$work" && PKGDEST="$work/out" makepkg --syncdeps --noconfirm --needed --cleanbuild "${SIGN[@]}")
+      # CRIMSON_TREE: apps that share the shell's parts (Planner, its styles) are built from the tree
+      (cd "$work" && CRIMSON_TREE="$PWD_TREE" PKGDEST="$work/out" makepkg --syncdeps --noconfirm --needed --cleanbuild "${SIGN[@]}")
       cp "$work"/out/*.pkg.tar.zst* "$OUT/$ARCH/"
       REPOARGS=(); [ "$UNSIGNED" = 1 ] || REPOARGS=(--sign --key "$KEY" --verify)
       (cd "$OUT/$ARCH" && repo-add --remove "${REPOARGS[@]}" "$NAME.db.tar.zst" $(cd "$work/out" && ls -1 ./*.pkg.tar.zst | sed 's#^\./##'))

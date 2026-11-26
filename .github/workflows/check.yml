@@ -57,6 +57,8 @@ jobs:
         run: tools/test-split-iso.sh
       - name: Build
         run: dotnet build RedStarOS/RedStarOS.csproj -c Release
+      - name: Build Planner (apps/planner)
+        run: dotnet build apps/planner/src/CrimsonPlanner.csproj -c Release
 
       - name: C# tests (with a screenshot of every window)
         env:
@@ -65,6 +67,14 @@ jobs:
           dotnet test tests/RedStarOS.Tests/RedStarOS.Tests.csproj -c Release
           --logger "console;verbosity=normal" --logger "trx;LogFilePrefix=results"
           --results-directory TestResults
+
+      - name: Planner's pages, printed (base64 PNG between "---- screen.png (NAME) ----" lines)
+        if: always()
+        run: |
+          for f in screenshots/Planner-*.png; do
+            [ -f "$f" ] || continue
+            echo "---- screen.png ($(basename "$f" .png)) ----"; base64 -w0 "$f"; echo; echo "---- end screen.png ----"
+          done
 
       - name: Summary
         if: always()
@@ -319,6 +329,14 @@ jobs:
           pacman -Sy --noconfirm ci-hello
           [ "$(ci-hello)" = "hello from ci-hello" ]
           pacman -Rns --noconfirm ci-hello
+          # Planner, the first of our own apps: built from the tree (it shares the shell's styles), signed into the
+          # same repository, listed in the catalogue, and installed as Software installs it
+          sudo -u builder -H tools/publish-app.sh --local apps/planner
+          python3 -c "import json; d=json.load(open('/srv/crimson-banner-apps/catalog/catalog.json')); a=[x for x in d['software'] if x['id']=='planner'][0]; assert a['version']=='1.0.0' and a['install']==[{'kind':'pacman','package':'crimson-planner'}] and a['license']=='GPL-3.0-or-later', a"
+          pacman -Sy --noconfirm crimson-planner
+          test -x /usr/bin/crimson-planner && test -f /usr/lib/crimson-planner/CrimsonPlanner.dll
+          test -f /usr/share/applications/crimson-planner.desktop && test -f /usr/share/icons/hicolor/256x256/apps/crimson-planner.png
+          pacman -Rns --noconfirm crimson-planner
           crimson-apps-repo disable
           # leave the tree as it was (publishing writes the shell's copy of the catalogue and the key)
           sudo -u builder git checkout -- software/catalog.json software/crimson-banner.gpg

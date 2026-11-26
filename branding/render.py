@@ -167,6 +167,9 @@ def main():
     for app, asset in (("writer", "studio-writer.png"), ("sheets", "studio-sheet.png"), ("slides", "studio-slides.png")):
         save(svg(f"app-{app}.svg", 128), "RedStarOS", "Assets", asset)
 
+    # our own apps in Software (apps/*): their icons
+    save(svg("app-planner.svg", 256), "apps", "planner", "icon.png")
+
     # the installer ISO: the boot menu and Calamares
     save(splash(640, 480), "iso", "profile", "syslinux", "splash.png")
     save(svg("mark.svg", 256), "iso", "calamares", "branding", "crimson", "logo.png")

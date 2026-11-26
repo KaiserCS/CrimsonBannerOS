@@ -1,6 +1,6 @@
 # Crimson Banner OS apps
 
-Programs published to the Crimson Banner tab of Software. They don't belong in every install (large or specialised
+Programs published to the Crimson Banner tab of Software. The first is [Planner](planner/README.md). They don't belong in every install (large or specialised
 tools), so they're installed on demand. Each app is a folder here; `tools/publish-app.sh` builds it, signs it and
 publishes it, without an OS release.
 

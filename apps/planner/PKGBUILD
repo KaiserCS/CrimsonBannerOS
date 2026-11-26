@@ -1,0 +1,55 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Planner, for Software's Crimson Banner tab (tools/publish-app.sh builds it).
+# It shares the shell's styles (RedStarOS/Styles/Shell.axaml), so it's built from the source tree:
+# tools/publish-app.sh sets $CRIMSON_TREE to it; by hand: CRIMSON_TREE=/path/to/CrimsonBannerOS makepkg
+pkgname=crimson-planner
+pkgver=1.0.0
+pkgrel=1
+pkgdesc='Planner: economic computation for central planning (Crimson Banner OS)'
+arch=(x86_64 aarch64)
+url='https://github.com/KaiserCS/CrimsonBannerOS'
+license=(GPL-3.0-or-later)
+depends=(dotnet-runtime-8.0 fontconfig freetype2 libx11 libxi libxrandr libxcursor libice libsm libxkbcommon)
+makedepends=(dotnet-sdk 'dotnet-runtime>=10' dotnet-targeting-pack-8.0)
+options=(!strip !debug)
+
+_rid() {
+  case "$CARCH" in
+    x86_64) echo linux-x64 ;;
+    aarch64) echo linux-arm64 ;;
+  esac
+}
+
+prepare() {
+  : "${CRIMSON_TREE:?Planner is built from the source tree: set CRIMSON_TREE to it (tools/publish-app.sh does)}"
+  # the parts of the tree Planner is built from, laid out as in it
+  rm -rf "$srcdir/tree"
+  mkdir -p "$srcdir/tree/RedStarOS/Styles" "$srcdir/tree/apps"
+  cp "$CRIMSON_TREE/RedStarOS/Styles/Shell.axaml" "$srcdir/tree/RedStarOS/Styles/"
+  cp -a "$CRIMSON_TREE/apps/planner" "$srcdir/tree/apps/"
+  rm -rf "$srcdir/tree/apps/planner/src/bin" "$srcdir/tree/apps/planner/src/obj"
+}
+
+build() {
+  cd "$srcdir/tree/apps/planner/src"
+  # no telemetry from the .NET tools (PRINCIPLES.md, 5)
+  export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+  export NUGET_PACKAGES="$srcdir/nuget"
+  local feed="${REDSTAR_PACKAGES:-${XDG_DATA_HOME:-$HOME/.local/share}/redstaros/packages}"
+  local source=()
+  if [ -n "$(ls -A "$feed" 2>/dev/null)" ]; then
+    echo "Packages from Crimson Banner's own feed ($feed)"
+    source=(--source "$feed" -p:NuGetAudit=false)
+  fi
+  dotnet publish CrimsonPlanner.csproj "${source[@]}" -c Release -p:RuntimeIdentifier="$(_rid)" --self-contained false \
+    -p:RestoreLockedMode=true -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o "$srcdir/out"
+}
+
+package() {
+  install -d "$pkgdir/usr/lib/crimson-planner"
+  cp -a "$srcdir/out/." "$pkgdir/usr/lib/crimson-planner/"
+  local app="$srcdir/tree/apps/planner"
+  install -Dm755 "$app/crimson-planner" "$pkgdir/usr/bin/crimson-planner"
+  install -Dm644 "$app/crimson-planner.desktop" "$pkgdir/usr/share/applications/crimson-planner.desktop"
+  install -Dm644 "$app/icon.png" "$pkgdir/usr/share/icons/hicolor/256x256/apps/crimson-planner.png"
+}
