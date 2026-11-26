@@ -187,9 +187,10 @@ internal sealed class GemsView : Control
     private DateTime _last;
     private double _cell, _ox, _oy;
 
+    // ruby, sapphire, emerald, citrine, amethyst, fire opal: stones' own colours, deep rather than bright
     private static readonly Color[] Palette =
     {
-        Color.Parse("#E53E3E"), Color.Parse("#3182CE"), Color.Parse("#38A169"), Color.Parse("#D69E2E"), Color.Parse("#805AD5"), Color.Parse("#DD6B20")
+        Color.Parse("#B3122E"), Color.Parse("#1F4FA6"), Color.Parse("#11855A"), Color.Parse("#D49A16"), Color.Parse("#7240AE"), Color.Parse("#D0561A")
     };
 
     public GemsView(Func<GemsGame> game, Action changed)
@@ -317,56 +318,103 @@ internal sealed class GemsView : Control
         }
     }
 
-    /// <summary>Each kind has its own shape as well as its own colour, so it reads without telling colours apart.</summary>
+    /// <summary>
+    /// Each kind is a cut stone with its own outline as well as its own colour, so it reads without telling colours
+    /// apart: a princess cut (a square on its point), a round brilliant, an emerald cut, a trillion, a hexagon and a
+    /// marquise. The facets between the girdle and the table are shaded by the way they face a light at the top left.
+    /// Drawn from shapes made once per kind at unit size, moved and scaled into place.
+    /// </summary>
     private static void DrawGem(DrawingContext ctx, int kind, Point c, double r)
     {
         if (r <= 0.5) return;
-        var col = Palette[kind];
-        var fill = new LinearGradientBrush
-        {
-            StartPoint = new RelativePoint(0.2, 0, RelativeUnit.Relative), EndPoint = new RelativePoint(0.8, 1, RelativeUnit.Relative),
-            GradientStops = { new GradientStop(Lighten(col, 0.35), 0), new GradientStop(col, 0.55), new GradientStop(Darken(col, 0.3), 1) }
-        };
-        var edge = new Pen(new SolidColorBrush(Darken(col, 0.45)), Math.Max(1, r * 0.08));
-        Geometry shape = kind switch
-        {
-            0 => Polygon(c, r, 4, 0),                       // diamond
-            1 => new EllipseGeometry(new Rect(c.X - r, c.Y - r, 2 * r, 2 * r)),   // round
-            2 => Polygon(c, r * 1.1, 4, Math.PI / 4),        // square
-            3 => Polygon(c, r * 1.1, 3, -Math.PI / 2),       // triangle
-            4 => Polygon(c, r, 6, 0),                       // hexagon
-            _ => Star(c, r * 1.1, r * 0.5, 5),              // star
-        };
-        ctx.DrawGeometry(fill, edge, shape);
-        ctx.DrawEllipse(new SolidColorBrush(Color.FromArgb(120, 255, 255, 255)), null, new Point(c.X - r * 0.3, c.Y - r * 0.35), r * 0.22, r * 0.14);
+        var parts = Cuts[kind] ??= Cut(kind);
+        using (ctx.PushTransform(Matrix.CreateScale(r, r) * Matrix.CreateTranslation(c.X, c.Y)))
+            foreach (var (shape, fill, pen) in parts) ctx.DrawGeometry(fill, pen, shape);
     }
 
-    private static Geometry Polygon(Point c, double r, int n, double start)
+    private static readonly List<(Geometry, IBrush?, IPen?)>?[] Cuts = new List<(Geometry, IBrush?, IPen?)>?[6];
+
+    /// <summary>The girdle (outline) of each cut, at unit size, clockwise from the top.</summary>
+    private static Point[] Girdle(int kind)
     {
-        var g = new StreamGeometry();
-        using var gc = g.Open();
+        Point[] Ring(int n, double rx, double ry, double start) =>
+            Enumerable.Range(0, n).Select(i => { double a = start + i * 2 * Math.PI / n; return new Point(rx * Math.Cos(a), ry * Math.Sin(a)); }).ToArray();
+        switch (kind)
+        {
+            case 0: return Ring(4, 1.05, 1.05, -Math.PI / 2);                          // princess, on its point
+            case 1: return Ring(16, 1, 1, -Math.PI / 2);                               // round brilliant
+            case 2:                                                                    // emerald cut: corners cut off
+                {
+                    double w = 0.82, h = 1.0, k = 0.28;
+                    return new[] { new Point(-w + k, -h), new Point(w - k, -h), new Point(w, -h + k), new Point(w, h - k), new Point(w - k, h), new Point(-w + k, h), new Point(-w, h - k), new Point(-w, -h + k) };
+                }
+            case 3: return Ring(3, 1.12, 1.12, -Math.PI / 2).Select(p => new Point(p.X, p.Y + 0.14)).ToArray();   // trillion
+            case 4: return Ring(6, 1, 1, -Math.PI / 2);                                // hexagon
+            default:                                                                   // marquise: two arcs meeting in points
+                {
+                    var pts = new List<Point>();
+                    for (int i = 0; i <= 8; i++) { double t = -Math.PI / 2 + i * Math.PI / 8; pts.Add(new Point(0.62 * Math.Cos(t) * Math.Sqrt(Math.Abs(Math.Cos(t))) , 1.08 * Math.Sin(t))); }
+                    for (int i = 1; i < 8; i++) { double t = Math.PI / 2 + i * Math.PI / 8; pts.Add(new Point(0.62 * Math.Cos(t) * Math.Sqrt(Math.Abs(Math.Cos(t))), 1.08 * Math.Sin(t))); }
+                    return pts.ToArray();
+                }
+        }
+    }
+
+    private static List<(Geometry, IBrush?, IPen?)> Cut(int kind)
+    {
+        var col = Palette[kind];
+        var girdle = Girdle(kind);
+        int n = girdle.Length;
+        double tableScale = kind switch { 1 => 0.55, 2 => 0.5, 3 => 0.42, _ => 0.52 };
+        var table = girdle.Select(p => new Point(p.X * tableScale, p.Y * tableScale - 0.04)).ToArray();
+        var light = new Vector(-0.55, -0.83);                  // from the top left
+        var parts = new List<(Geometry, IBrush?, IPen?)>();
+        IBrush Solid(Color c) => new SolidColorBrush(c).ToImmutable();
+        Geometry Poly(params Point[] pts)
+        {
+            var g = new StreamGeometry();
+            using var gc = g.Open();
+            gc.BeginFigure(pts[0], true);
+            foreach (var p in pts.Skip(1)) gc.LineTo(p);
+            gc.EndFigure(true);
+            return g;
+        }
+
+        // a soft shadow under the stone, then its body
+        parts.Add((Poly(girdle.Select(p => new Point(p.X * 1.02 + 0.05, p.Y * 1.02 + 0.08)).ToArray()), Solid(Color.FromArgb(70, 0, 0, 0)), null));
+        parts.Add((Poly(girdle), Solid(Darken(col, 0.45)), null));
+
+        // the crown's facets, one between each pair of girdle points and the table, lit by how they face the light
+        var edge = new Pen(Solid(Color.FromArgb(70, 255, 255, 255)), 0.025, lineJoin: PenLineJoin.Round);
         for (int i = 0; i < n; i++)
         {
-            double a = start + i * 2 * Math.PI / n - (n == 4 && start == 0 ? Math.PI / 2 : 0);
-            var p = new Point(c.X + r * Math.Cos(a), c.Y + r * Math.Sin(a));
-            if (i == 0) gc.BeginFigure(p, true); else gc.LineTo(p);
+            int j = (i + 1) % n;
+            var mid = new Vector((girdle[i].X + girdle[j].X) / 2, (girdle[i].Y + girdle[j].Y) / 2);
+            double len = Math.Sqrt(mid.X * mid.X + mid.Y * mid.Y);
+            double face = len > 0 ? (mid.X * light.X + mid.Y * light.Y) / len : 0;       // −1 away … 1 towards
+            double t = Math.Clamp(0.5 + 0.5 * face + (i % 2 == 0 ? 0.06 : -0.06), 0, 1);
+            var shade = t > 0.5 ? Lighten(col, (t - 0.5) * 0.9) : Darken(col, (0.5 - t) * 0.9);
+            parts.Add((Poly(girdle[i], girdle[j], table[j], table[i]), Solid(shade), edge));
         }
-        gc.EndFigure(true);
-        return g;
-    }
 
-    private static Geometry Star(Point c, double outer, double inner, int n)
-    {
-        var g = new StreamGeometry();
-        using var gc = g.Open();
-        for (int i = 0; i < n * 2; i++)
+        // the table: the flat top, brighter towards the light
+        var tableFill = new LinearGradientBrush
         {
-            double a = -Math.PI / 2 + i * Math.PI / n, r = i % 2 == 0 ? outer : inner;
-            var p = new Point(c.X + r * Math.Cos(a), c.Y + r * Math.Sin(a));
-            if (i == 0) gc.BeginFigure(p, true); else gc.LineTo(p);
-        }
-        gc.EndFigure(true);
-        return g;
+            StartPoint = new RelativePoint(0.1, 0, RelativeUnit.Relative), EndPoint = new RelativePoint(0.9, 1, RelativeUnit.Relative),
+            GradientStops = { new GradientStop(Lighten(col, 0.42), 0), new GradientStop(Lighten(col, 0.08), 0.6), new GradientStop(col, 1) },
+        }.ToImmutable();
+        parts.Add((Poly(table), tableFill, new Pen(Solid(Color.FromArgb(110, 255, 255, 255)), 0.03, lineJoin: PenLineJoin.Round)));
+        if (kind == 2)       // the emerald cut's steps: a second, smaller table inside the first
+            parts.Add((Poly(table.Select(p => new Point(p.X * 0.62, p.Y * 0.62 - 0.015)).ToArray()), null, new Pen(Solid(Color.FromArgb(80, 255, 255, 255)), 0.025)));
+
+        // the girdle's edge, and a small glint where the light strikes the table
+        parts.Add((Poly(girdle), null, new Pen(Solid(Darken(col, 0.65)), 0.045, lineJoin: PenLineJoin.Round)));
+        var g0 = new Point(table.Min(p => p.X) * 0.45 - 0.02, table.Min(p => p.Y) * 0.45 + 0.02);
+        double s = 0.12;
+        parts.Add((Poly(new Point(g0.X, g0.Y - s), new Point(g0.X + s * 0.18, g0.Y - s * 0.18), new Point(g0.X + s, g0.Y), new Point(g0.X + s * 0.18, g0.Y + s * 0.18),
+                        new Point(g0.X, g0.Y + s), new Point(g0.X - s * 0.18, g0.Y + s * 0.18), new Point(g0.X - s, g0.Y), new Point(g0.X - s * 0.18, g0.Y - s * 0.18)),
+                   Solid(Color.FromArgb(190, 255, 255, 255)), null));
+        return parts;
     }
 
     private static Color Lighten(Color c, double t) => Color.FromRgb((byte)(c.R + (255 - c.R) * t), (byte)(c.G + (255 - c.G) * t), (byte)(c.B + (255 - c.B) * t));
