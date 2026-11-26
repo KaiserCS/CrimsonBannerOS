@@ -2,6 +2,33 @@
 
 Versions are YY.MM.N (README, "Versions"). `tools/release.sh` adds each release's section here.
 
+## 26.11.4 (2026-11-25)
+
+- Start menu: our own apps (Planner, People's Archive…) with the shell's apps, not under Linux Apps
+- People's Archive: Project Gutenberg from its catalogue file and its own mirror, as it asks programs to; refusals in plain words
+- People's Archive: its screenshot for Software, and the roadmap item done
+- People's Archive: its PKGBUILD's error message without an apostrophe (it opened a quote in ${:?}); check.sh checks every app's PKGBUILD
+- People's Archive: the reading room's bar in three columns (no more overlap); the shelf's search on the left
+- People's Archive: a plain separator between table cells; the line between results follows the theme
+- People's Archive: free books from public-domain archives, a shelf and a reading room
+- Planner: its screenshot for Software, and the roadmap item done
+- Planner: the Plan table puts what to decide first (signal, need, proposal, change, decision), the working after
+- Planner: a capacity trim lands exactly on capacity; pages fit the window; only a limited product shows a shortfall
+- Planner: the first of our own apps, an advisory Economic Planning Algorithm after The Economic Structure
+- ISOs over 2 GiB go up to the release in parts, with scripts that check and join them
+- ISO 1.42 GiB (from 1.76): the roadmap item done; the live test's log line reads properly
+- ISO: UEFI through GRUB and no kms in the live initramfs, so the boot files are on it once and smaller; boot tests through the ISO's own menus
+- Roadmap: firmware and modules are about half of the live system, not two-thirds
+- ISO size report: tidy up without failing; the roadmap has what it found
+- ISO builds print what takes the room: files, boot files, the initramfs, the live system by folder and by package
+- A testing channel: builds of main for those who choose them
+- Roadmap: the upgrade test put aside
+- Roadmap: the install test is done
+- Install test: recognise the driver's verdict through the console's colour codes; Check: the update channel's version taken before publishing
+- Install test: done when Calamares's log says so; Check: restore the committed key after the apps test
+- Install test: watch for the installer's failure while it runs, print its log, picture every two minutes
+- A roadmap, and an install test: the ISO installed onto an empty disk by CI, checked, and started
+
 ## 26.11.3 (2026-11-25)
 
 The first release with an installer, updates for installed systems, and a new look throughout.
