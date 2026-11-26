@@ -7,7 +7,7 @@ in public-domain archives, keeps them on a shelf on your computer, and sets them
 
 | Source | How People's Archive uses it | Run by |
 |---|---|---|
-| **Project Gutenberg** | Its OPDS catalogue for reading apps (`gutenberg.org/ebooks/search.opds/`), browsed or searched. A book's files come from the feed of the book, never by crawling the website, which Gutenberg keeps for people. | Project Gutenberg Literary Archive Foundation (non-profit) |
+| **Project Gutenberg** | As it asks programs to: its catalogue file (`pg_catalog.csv`, public domain, updated weekly) fetched once a week and searched on your computer, and each book from Project Gutenberg's own mirror (`gutenberg.pglaf.org`): the EPUB 3 with pictures, else an older EPUB, else plain text. Its website is for people and turns programs away (503), so People's Archive never asks it. | Project Gutenberg Literary Archive Foundation (non-profit); the mirror is PGLAF's, hosted by ibiblio |
 | **Wikisource** | Searched through Wikisource's own API, in a dozen languages. A whole work is downloaded as EPUB 3 through WS Export, Wikimedia's tool that assembles a work from its pages. | Wikimedia Foundation (non-profit) |
 | **Marxists Internet Archive** | Its ebook collection's index page (`marxists.org/ebooks/`), fetched when asked, kept for a week, and searched on your computer. | volunteers |
 | **Any OPDS catalogue** | Sources → Add. Libraries and publishers offer these for reading apps. A sign-in is a user name or email (Standard Ebooks' full catalogue is for its patrons). | whoever runs it |
@@ -18,8 +18,8 @@ send, is refused with a message. The terms each book comes under go on the shelf
 
 WS Export's download address isn't documented in a form People's Archive could check while it was written. If
 Wikisource downloads stop working, `WikisourceSource.ExportUrl` in `src/Model/Sources.cs` is the one line to change.
-Project Gutenberg plans to retire its XML OPDS feeds in 2027, for a JSON one (OPDS 2); People's Archive will need to
-follow by then.
+A source that's busy or turning programs away is said so in plain words, with its status (503, 429), rather than as an
+error.
 
 ## The shelf and the reading room
 

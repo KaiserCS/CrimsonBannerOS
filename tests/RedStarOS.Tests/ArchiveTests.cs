@@ -240,13 +240,61 @@ public class ArchiveTests : IDisposable
             return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body) };
         });
         using var net = new Net(stand);
-        var pg = Sources.Gutenberg();
+        var pg = new OpdsSource("A catalogue", "https://www.gutenberg.org/ebooks/search.opds/", "https://www.gutenberg.org/ebooks/search.opds/?query={searchTerms}", "", "", "");
         var r = await pg.Search(net, "marx", null, CancellationToken.None);
         Assert.Equal("https://www.gutenberg.org/ebooks/search.opds/?query=marx", stand.Asked[0].RequestUri!.ToString());
         Assert.Equal(2, r.Books.Count);
         Assert.NotNull(r.Next);
         var file = await pg.DownloadFor(net, r.Books[0], CancellationToken.None);
         Assert.Equal("https://www.gutenberg.org/ebooks/61.epub3.images", file);
+    }
+
+    private const string Catalogue = "Text#,Type,Issued,Title,Language,Authors,Subjects,LoCC,Bookshelves\n" +
+        "61,Text,1993-01-01,The Communist Manifesto,en,\"Marx, Karl, 1818-1883; Engels, Friedrich, 1820-1895\",Communism,HX,Politics\n" +
+        "1342,Text,1998-06-01,\"Pride and Prejudice\",en,\"Austen, Jane, 1775-1817\",\"Courtship -- Fiction; England -- Fiction\",PR,Best Books Ever Listings\n" +
+        "10001,Sound,2003-11-01,An Audio Book,en,\"Reader, A\",,,\n" +
+        "6130,Text,2004-07-01,\"The Iliad\nA new translation, with \"\"notes\"\"\",en,\"Homer, 751? BCE-651? BCE; Butler, Samuel, 1835-1902 [Translator]\",Epic poetry,PA,\n";
+
+    [Fact]
+    public void Project_Gutenberg_s_catalogue_file_is_read_texts_only_with_authors_the_right_way_round()
+    {
+        var list = GutenbergSource.Parse(Catalogue, null);
+        Assert.Equal(new[] { "The Communist Manifesto", "Pride and Prejudice", "The Iliad A new translation, with \"notes\"" }, list.Select(l => l.Title));
+        Assert.Equal("Karl Marx, Friedrich Engels", list[0].Author);
+        Assert.Equal("Homer, Samuel Butler", list[2].Author);
+        Assert.Equal(("61", "https://www.gutenberg.org/ebooks/61", "en"), (list[0].Download, list[0].Page, list[0].Language));
+        Assert.Contains("Courtship", list[1].Summary);
+        var pg = new GutenbergSource(_dir);
+        Assert.Equal("https://gutenberg.pglaf.org/cache/epub/feeds/pg_catalog.csv.gz", pg.CatalogueUrl);
+        Assert.Equal("https://gutenberg.pglaf.org/cache/epub/1342/pg1342-images-3.epub", pg.FilesFor(1342).First());
+    }
+
+    [Fact]
+    public async Task Project_Gutenberg_is_searched_here_and_a_book_comes_from_the_first_file_the_mirror_has()
+    {
+        var gz = new MemoryStream();
+        using (var z = new GZipStream(gz, CompressionLevel.Fastest, leaveOpen: true)) z.Write(Encoding.UTF8.GetBytes(Catalogue));
+        var stand = new Stand(r =>
+        {
+            var u = r.RequestUri!.ToString();
+            if (u.EndsWith("pg_catalog.csv.gz")) return new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(gz.ToArray()) };
+            if (u.EndsWith("pg61-images-3.epub")) return new HttpResponseMessage(HttpStatusCode.NotFound);
+            if (u.EndsWith("pg61-images.epub")) return new HttpResponseMessage(HttpStatusCode.OK);
+            return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable) { RequestMessage = r };
+        });
+        using var net = new Net(stand);
+        var pg = new GutenbergSource(_dir);
+        var r = await pg.Search(net, "marx manifesto", null, CancellationToken.None);
+        Assert.Equal("The Communist Manifesto", Assert.Single(r.Books).Title);
+        Assert.Single(stand.Asked);                                            // the catalogue, once
+        var browse = await pg.Search(net, "", null, CancellationToken.None);
+        Assert.Equal("The Iliad A new translation, with \"notes\"", browse.Books[0].Title);   // the newest first
+        Assert.Single(stand.Asked);
+        Assert.Equal("https://gutenberg.pglaf.org/cache/epub/61/pg61-images.epub", await pg.DownloadFor(net, r.Books[0], CancellationToken.None));
+        Assert.True(File.Exists(Path.Combine(_dir, "pg_catalog.csv")));      // kept for a week
+        // a busy source is said so in plain words
+        var e = await Assert.ThrowsAsync<HttpRequestException>(() => net.Text("https://www.gutenberg.org/ebooks/search.opds/", CancellationToken.None));
+        Assert.Contains("busy, or turning programs away", e.Message);
     }
 
     [Fact]

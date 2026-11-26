@@ -69,8 +69,29 @@ public sealed class Net : IDisposable
         Auth(req, user);
         using var res = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
         if (res.StatusCode == HttpStatusCode.Unauthorized) throw new HttpRequestException("This catalogue needs you to sign in (Sources: its user name or email).");
-        res.EnsureSuccessStatusCode();
+        Check(res);
         return await res.Content.ReadAsStringAsync(ct);
+    }
+
+    /// <summary>Whether a file is there (a HEAD request; 404 and 410: no).</summary>
+    public async Task<bool> Exists(string url, CancellationToken ct)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Head, url);
+        using var res = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+        if (res.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Gone) return false;
+        Check(res);
+        return true;
+    }
+
+    /// <summary>Downloads any file (a catalogue) as it is.</summary>
+    public async Task Fetch(string url, string file, CancellationToken ct)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, url);
+        using var res = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+        Check(res);
+        await using var src = await res.Content.ReadAsStreamAsync(ct);
+        await using var dst = File.Create(file);
+        await src.CopyToAsync(dst, ct);
     }
 
     /// <summary>Downloads a book to a file; it has to be an EPUB (a zip) or plain text, not a web page.</summary>
@@ -79,7 +100,7 @@ public sealed class Net : IDisposable
         using var req = new HttpRequestMessage(HttpMethod.Get, url);
         Auth(req, user);
         using var res = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
-        res.EnsureSuccessStatusCode();
+        Check(res);
         var total = res.Content.Headers.ContentLength;
         if (total > MaxDownload) throw new InvalidDataException("The book is larger than People's Archive takes (300 MB).");
         var type = res.Content.Headers.ContentType?.MediaType ?? "";
@@ -103,6 +124,23 @@ public sealed class Net : IDisposable
             if (type.Contains("html") || head.StartsWith('<'))
                 throw new InvalidDataException("The source sent a web page, not a book. It may be busy, or no longer offer this book this way: try its page instead.");
         }
+    }
+
+    /// <summary>A refusal in plain words (the status kept, so a caller can try another file on 404).</summary>
+    private static void Check(HttpResponseMessage res)
+    {
+        if (res.IsSuccessStatusCode) return;
+        int code = (int)res.StatusCode;
+        var host = res.RequestMessage?.RequestUri?.Host ?? "The source";
+        var why = code switch
+        {
+            503 or 429 => $"{host} is busy, or turning programs away for now ({code}). Try again later.",
+            404 or 410 => $"{host} doesn't have that ({code}).",
+            401 or 403 => $"{host} refused the request ({code}).",
+            >= 500 => $"{host} had a problem ({code}). Try again later.",
+            _ => $"{host} answered {code}.",
+        };
+        throw new HttpRequestException(why, null, res.StatusCode);
     }
 
     private static void Auth(HttpRequestMessage req, string? user)
@@ -384,6 +422,160 @@ public sealed class MiaSource : Source
     }
 }
 
+// ───────── Project Gutenberg ─────────
+
+/// <summary>
+/// Project Gutenberg, as it asks programs to use it: its catalogue file (pg_catalog.csv, public domain, updated
+/// weekly) fetched once a week and searched on this computer, and each book from a mirror, never from the website,
+/// which is for people (and turns programs away). The mirror is PGLAF's own (gutenberg.pglaf.org, at ibiblio).
+/// </summary>
+public sealed class GutenbergSource : Source
+{
+    public const string DefaultMirror = "https://gutenberg.pglaf.org";
+    public string Mirror { get; }
+    private readonly string _cache;
+    private List<Listing>? _all;
+
+    public GutenbergSource(string cacheFolder, string? mirror = null)
+    {
+        _cache = Path.Combine(cacheFolder, "pg_catalog.csv");
+        Mirror = (mirror ?? DefaultMirror).TrimEnd('/');
+    }
+
+    public override string Name => "Project Gutenberg";
+    public override string About => "Over 75,000 free ebooks, the oldest digital library, run by volunteers since 1971. Its catalogue is fetched once a week and searched here; books come from Project Gutenberg's own mirror.";
+    public override string Licence => "Public domain in the USA (check your country's law), under Project Gutenberg's terms";
+    public override string RunBy => "Project Gutenberg Literary Archive Foundation (non-profit)";
+
+    public string CatalogueUrl => Mirror + "/cache/epub/feeds/pg_catalog.csv.gz";
+
+    /// <summary>The files to try for a book, best first: EPUB 3 with pictures, older EPUBs, plain text.</summary>
+    public IEnumerable<string> FilesFor(int id)
+    {
+        var dir = $"{Mirror}/cache/epub/{id}/pg{id}";
+        yield return dir + "-images-3.epub";
+        yield return dir + "-images.epub";
+        yield return dir + ".epub";
+        yield return dir + ".txt";
+    }
+
+    public override async Task<Results> Search(Net net, string query, string? next, CancellationToken ct)
+    {
+        if (_all == null)
+        {
+            string csv;
+            if (File.Exists(_cache) && DateTime.UtcNow - File.GetLastWriteTimeUtc(_cache) < TimeSpan.FromDays(7)) csv = await File.ReadAllTextAsync(_cache, ct);
+            else
+            {
+                var gz = Path.Combine(Path.GetTempPath(), "pg_catalog-" + Guid.NewGuid().ToString("N") + ".csv.gz");
+                try
+                {
+                    await net.Fetch(CatalogueUrl, gz, ct);
+                    await using (var f = File.OpenRead(gz))
+                    await using (var z = new System.IO.Compression.GZipStream(f, System.IO.Compression.CompressionMode.Decompress))
+                    using (var r = new StreamReader(z))
+                        csv = await r.ReadToEndAsync(ct);
+                }
+                finally { try { File.Delete(gz); } catch (IOException) { } }
+                Directory.CreateDirectory(Path.GetDirectoryName(_cache)!);
+                await File.WriteAllTextAsync(_cache, csv, ct);
+            }
+            _all = Parse(csv, this);
+        }
+        var words = query.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        IEnumerable<Listing> hits = words.Length == 0
+            ? _all.AsEnumerable().Reverse()                                   // the newest first, to browse
+            : _all.Where(l => words.All(w => l.Title.Contains(w, StringComparison.OrdinalIgnoreCase) || l.Author.Contains(w, StringComparison.OrdinalIgnoreCase)
+                                             || l.Summary.Contains(w, StringComparison.OrdinalIgnoreCase)))
+                  .OrderBy(l => words.All(w => l.Title.Contains(w, StringComparison.OrdinalIgnoreCase)) ? 0 : 1);
+        int skip = next != null && int.TryParse(next, out var n) ? n : 0;
+        var list = hits.Skip(skip).Take(61).ToList();
+        var res = new Results { Next = list.Count > 60 ? (skip + 60).ToString() : null };
+        res.Books.AddRange(list.Take(60));
+        if (words.Length == 0) res.Note = $"{_all.Count:N0} books in Project Gutenberg's catalogue, the newest first. Search by title, author or subject.";
+        return res;
+    }
+
+    /// <summary>The first of a book's files the mirror has.</summary>
+    public override async Task<string?> DownloadFor(Net net, Listing l, CancellationToken ct)
+    {
+        if (!int.TryParse(l.Download, out var id)) return l.Download;
+        foreach (var url in FilesFor(id))
+            if (await net.Exists(url, ct)) return url;
+        throw new InvalidDataException($"Project Gutenberg's mirror has no EPUB or text of book {id} yet; its page may say more.");
+    }
+
+    /// <summary>pg_catalog.csv: Text#, Type, Issued, Title, Language, Authors, Subjects, LoCC, Bookshelves. Texts only.</summary>
+    public static List<Listing> Parse(string csv, GutenbergSource? src)
+    {
+        var rows = Csv(csv);
+        var list = new List<Listing>();
+        if (rows.Count == 0) return list;
+        var head = rows[0].Select(h => h.Trim().ToLowerInvariant()).ToList();
+        int Col(params string[] names) => names.Select(n => head.IndexOf(n)).FirstOrDefault(i => i >= 0, -1);
+        int cId = Col("text#", "text", "id"), cType = Col("type"), cTitle = Col("title"), cLang = Col("language"),
+            cAuth = Col("authors", "author"), cSubj = Col("subjects"), cShelf = Col("bookshelves");
+        if (cId < 0 || cTitle < 0) return list;
+        string F(List<string> r, int c) => c >= 0 && c < r.Count ? r[c] : "";
+        foreach (var r in rows.Skip(1))
+        {
+            if (!int.TryParse(F(r, cId), out var id)) continue;
+            var type = F(r, cType);
+            if (type.Length > 0 && !type.Equals("Text", StringComparison.OrdinalIgnoreCase)) continue;
+            var title = Book.Clean(F(r, cTitle));
+            if (title.Length == 0) continue;
+            list.Add(new Listing
+            {
+                Title = title, Author = Authors(F(r, cAuth)), Language = F(r, cLang).Trim(),
+                Summary = Book.Clean(string.Join("; ", new[] { F(r, cShelf), F(r, cSubj) }.Where(x => x.Trim().Length > 0))),
+                Page = $"https://www.gutenberg.org/ebooks/{id}", Download = id.ToString(),
+                Licence = src?.Licence ?? "", Source = src?.Name ?? "Project Gutenberg",
+            });
+        }
+        return list;
+    }
+
+    /// <summary>"Marx, Karl, 1818-1883; Engels, Friedrich, 1820-1895" → "Karl Marx, Friedrich Engels".</summary>
+    public static string Authors(string field) => string.Join(", ", field.Split(';').Select(a =>
+    {
+        var s = Regex.Replace(a, @"\[[^\]]*\]", "");                                       // [Translator]
+        s = Regex.Replace(s, @",\s*(active |approximately )?-?\d{1,4}\??(\s*BCE)?-?(\d{1,4}\??)?(\s*BCE)?\s*$", "").Trim().Trim(',').Trim();
+        var parts = s.Split(',', 2);
+        return parts.Length == 2 && parts[1].Trim().Length > 0 && !parts[1].Contains('(') ? parts[1].Trim() + " " + parts[0].Trim() : s;
+    }).Where(a => a.Length > 0));
+
+    /// <summary>RFC 4180 CSV: quoted fields with commas, doubled quotes and line breaks in them.</summary>
+    public static List<List<string>> Csv(string text)
+    {
+        var rows = new List<List<string>>();
+        var row = new List<string>();
+        var f = new System.Text.StringBuilder();
+        bool q = false;
+        for (int i = 0; i < text.Length; i++)
+        {
+            char c = text[i];
+            if (q)
+            {
+                if (c == '"' && i + 1 < text.Length && text[i + 1] == '"') { f.Append('"'); i++; }
+                else if (c == '"') q = false;
+                else f.Append(c);
+            }
+            else if (c == '"') q = true;
+            else if (c == ',') { row.Add(f.ToString()); f.Clear(); }
+            else if (c == '\n' || c == '\r')
+            {
+                if (c == '\r' && i + 1 < text.Length && text[i + 1] == '\n') i++;
+                row.Add(f.ToString()); f.Clear();
+                if (row.Count > 1 || row[0].Length > 0) rows.Add(row);
+                row = new List<string>();
+            }
+            else f.Append(c);
+        }
+        if (f.Length > 0 || row.Count > 0) { row.Add(f.ToString()); rows.Add(row); }
+        return rows;
+    }
+}
+
 /// <summary>A catalogue a person added (Sources), kept in ~/.config/peoples-archive/catalogues.json.</summary>
 public sealed class SavedCatalogue
 {
@@ -440,10 +632,5 @@ public static class Sources
         new List<Source> { Gutenberg(), new WikisourceSource(wikisourceLanguage), new MiaSource(CacheFolder) }
             .Concat(LoadCatalogues(configFolder).Where(c => Uri.TryCreate(c.Url, UriKind.Absolute, out _)).Select(From)).ToList();
 
-    public static OpdsSource Gutenberg() => new(
-        "Project Gutenberg", "https://www.gutenberg.org/ebooks/search.opds/?sort_order=downloads",
-        "https://www.gutenberg.org/ebooks/search.opds/?query={searchTerms}",
-        "Over 75,000 free ebooks, the oldest digital library, run by volunteers since 1971. Browsed and searched through the catalogue it offers reading apps.",
-        "Public domain in the USA (check your country's law), under Project Gutenberg's terms",
-        "Project Gutenberg Literary Archive Foundation (non-profit)");
+    public static GutenbergSource Gutenberg(string? cacheFolder = null) => new(cacheFolder ?? CacheFolder);
 }
