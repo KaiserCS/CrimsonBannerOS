@@ -71,6 +71,7 @@ public sealed class SnapAssist : Window
             var foreign = WindowManager.Tasks.OfType<X11Task>().FirstOrDefault(t => t.Window == w.Id);
             Control icon = task?.AppId != null ? AppIcons.Create(task.AppId, w.Title, 48)
                 : foreign?.Icon is { } img ? new Image { Source = img, Width = 48, Height = 48 }
+                : AppIcons.Picture(w.WmClass) != null ? AppIcons.Create(w.WmClass, w.Title, 48)       // a Crimson Banner app by its class
                 : AppIcons.Tile(string.IsNullOrEmpty(w.WmClass) ? "?" : w.WmClass[..1].ToUpperInvariant(), 48);
             var card = new Button
             {
