@@ -26,7 +26,8 @@ public sealed class Way
     /// <summary>Rings or lines of (lat, lon); each way data block's coordinate blocks, all together.</summary>
     public List<(double Lat, double Lon)[]> Rings { get; } = new();
 
-    public bool Closed => Rings.Count > 0 && Rings[0].Length > 2 && Rings[0][0] == Rings[0][^1];
+    public bool Closed => Rings.Count > 0 && Rings[0].Length > 2
+        && Math.Abs(Rings[0][0].Lat - Rings[0][^1].Lat) < 1e-7 && Math.Abs(Rings[0][0].Lon - Rings[0][^1].Lon) < 1e-7;
 }
 
 public sealed class ZoomInterval
@@ -260,15 +261,16 @@ public sealed class MapFile : IDisposable
                 int nodes = (int)r.VbeU();
                 if (nodes <= 0 || nodes > 10_000_000) { r.Pos = end; return null; }
                 var pts = new (double, double)[nodes];
-                double lat = lat0 + r.VbeS() / 1e6, lon = lon0 + r.VbeS() / 1e6;
-                pts[0] = (lat, lon);
-                double dLat = 0, dLon = 0;
+                // summed in whole micro-degrees, so a ring that ends where it began comes back exactly closed
+                long lat = r.VbeS(), lon = r.VbeS();
+                pts[0] = (lat0 + lat / 1e6, lon0 + lon / 1e6);
+                long dLat = 0, dLon = 0;
                 for (int i = 1; i < nodes; i++)
                 {
-                    double a = r.VbeS() / 1e6, o = r.VbeS() / 1e6;
+                    long a = r.VbeS(), o = r.VbeS();
                     if (doubleDelta) { dLat += a; dLon += o; lat += dLat; lon += dLon; }
                     else { lat += a; lon += o; }
-                    pts[i] = (lat, lon);
+                    pts[i] = (lat0 + lat / 1e6, lon0 + lon / 1e6);
                 }
                 w.Rings.Add(pts);
             }
