@@ -67,6 +67,8 @@ public partial class Taskbar : UserControl
         };
         ClockButton.Click += (_, _) => ShowPanel(ClockButton, new CalendarPanel());
 
+        TaskPreview.Host = PreviewPopup;
+
         // Show desktop, and Peek: half a second's rest on it makes the windows see-through until the pointer leaves
         ShowDesktopButton.Click += (_, _) => { _peek.Stop(); ShowDesktop.Peek(false); ShowDesktop.Toggle(); };
         _peek.Tick += (_, _) => { _peek.Stop(); ShowDesktop.Peek(true); };

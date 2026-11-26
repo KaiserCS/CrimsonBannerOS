@@ -62,6 +62,9 @@
 
       <!-- Show desktop: a sliver in the bottom-right corner, reaching the screen's edge so a flick of the mouse finds
            it; a click hides every window (again, they come back), resting the pointer on it peeks through them -->
+      <!-- taskbar previews (TaskPreview): no light dismiss, so nothing covers the buttons while it's open -->
+      <Popup x:Name="PreviewPopup" Placement="Top" VerticalOffset="-6" IsLightDismissEnabled="False" Topmost="True" />
+
       <Button x:Name="ShowDesktopButton" Grid.Column="5" Classes="showdesktop" Width="14" Margin="6,0,-8,0"
               VerticalAlignment="Stretch" ToolTip.Tip="Show desktop" />
     </Grid>

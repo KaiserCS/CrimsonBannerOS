@@ -19,7 +19,12 @@ namespace RedStarOS.Views;
 /// </summary>
 public static class TaskPreview
 {
-    private static Flyout? _popup;
+    /// <summary>
+    /// The taskbar's popup for previews. A plain popup with no light dismiss: a flyout lays an invisible layer over the
+    /// taskbar to catch clicks outside it, which covers the button, so the button lost the pointer, the preview closed,
+    /// the layer went, the pointer came back, and the preview opened again, over and over.
+    /// </summary>
+    public static Popup? Host { get; set; }
     private static bool _showing;
     private static Button? _for;
     private static Button? _waiting;
@@ -54,8 +59,7 @@ public static class TaskPreview
 
     public static void Close()
     {
-        _popup?.Hide();
-        _popup = null;
+        if (Host != null) { Host.IsOpen = false; Host.Child = null; }
         _showing = false;
         _for = null;
     }
@@ -67,12 +71,12 @@ public static class TaskPreview
         Close();
         _for = btn;
         var card = Card(task);
-        _popup = new Flyout { Content = card, Placement = PlacementMode.Top, ShowMode = FlyoutShowMode.Transient };
-        _popup.FlyoutPresenterClasses.Add("preview");
+        if (Host == null) return;
         card.PointerEntered += (_, _) => Hide.Stop();
         card.PointerExited += (_, _) => { Hide.Stop(); Hide.Start(); };
-        _popup.Closed += (s, _) => { if (ReferenceEquals(s, _popup)) { _showing = false; _for = null; } };
-        _popup.ShowAt(btn);
+        Host.PlacementTarget = btn;
+        Host.Child = card;
+        Host.IsOpen = true;
         _showing = true;
     }
 
