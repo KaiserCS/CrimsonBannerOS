@@ -35,7 +35,7 @@ public static class AppIcons
     }.ToImmutable();
 
     /// <summary>The plate's fine light rim.</summary>
-    public static readonly IBrush Rim = new ImmutableSolidColorBrush(Color.FromArgb(0x1F, 0xFF, 0xFF, 0xFF));
+    public static readonly IBrush Rim = new SolidColorBrush(Color.FromArgb(0x1F, 0xFF, 0xFF, 0xFF)).ToImmutable();
 
     private static readonly Dictionary<string, Bitmap?> Pictures = new();
 
