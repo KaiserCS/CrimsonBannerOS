@@ -178,7 +178,7 @@ public sealed class DesktopIconsView : Canvas
             Width = w - 4, Height = h - 4, Padding = new Thickness(2, 6, 2, 2), CornerRadius = new CornerRadius(6),
             BorderThickness = new Thickness(1), Child = stack, Tag = i, Background = Brushes.Transparent,
         };
-        ToolTip.SetTip(b, i.App?.Comment is { Length: > 0 } c ? c : i.Name);
+        ToolTip.SetTip(b, i.Name);
         ToolTip.SetShowDelay(b, 900);
         b.PointerEntered += (_, _) => { if (!_selected.Contains(i)) b.Background = new SolidColorBrush(Color.FromArgb(0x26, 0xFF, 0xFF, 0xFF)); };
         b.PointerExited += (_, _) => Mark(i);
