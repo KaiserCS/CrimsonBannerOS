@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  People's Archive's icon: an open book with a crimson ribbon, on the graphite tile. branding/README.md -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <path d="M 128 84 C 108 70 78 66 46 70 L 46 186 C 78 182 108 186 128 200 Z" fill="#F2F2F5"/>
+  <path d="M 128 84 C 148 70 178 66 210 70 L 210 186 C 178 182 148 186 128 200 Z" fill="#E4E4EA"/>
+  <path d="M 128 84 L 128 200" stroke="#B4B4BC" stroke-width="3"/>
+  <g stroke="#B4B4BC" stroke-width="4" stroke-linecap="round">
+    <line x1="62" y1="100" x2="112" y2="104"/><line x1="62" y1="120" x2="112" y2="124"/><line x1="62" y1="140" x2="112" y2="144"/><line x1="62" y1="160" x2="100" y2="163"/>
+    <line x1="144" y1="104" x2="194" y2="100"/><line x1="144" y1="124" x2="194" y2="120"/><line x1="144" y1="144" x2="194" y2="140"/>
+  </g>
+  <path d="M 166 66 L 166 132 L 178 120 L 190 132 L 190 64 Z" fill="#C8102E"/>
+</svg>

@@ -23,10 +23,13 @@
   <ItemGroup>
     <ProjectReference Include="..\..\RedStarOS\RedStarOS.csproj" />
   </ItemGroup>
-  <!-- Planner (apps/planner): its engine and window, tested and pictured with the shell's (its Program and App are
-       left out: the tests run as the shell's app, with the same styles) -->
+  <!-- Our apps (apps/planner, apps/archive): their engines and windows, tested and pictured with the shell's (their
+       Program and App are left out: the tests run as the shell's app, with the same styles) -->
   <ItemGroup>
     <Compile Include="../../apps/planner/src/Model/*.cs" Link="Planner/Model/%(Filename)%(Extension)" />
     <Compile Include="../../apps/planner/src/Views/*.cs" Link="Planner/Views/%(Filename)%(Extension)" />
+    <Compile Include="../../apps/archive/src/Model/*.cs" Link="Archive/Model/%(Filename)%(Extension)" />
+    <Compile Include="../../apps/archive/src/Views/*.cs" Link="Archive/Views/%(Filename)%(Extension)" />
+    <Compile Include="../../apps/shared/Deck.cs" Link="Apps/Deck.cs" />
   </ItemGroup>
 </Project>

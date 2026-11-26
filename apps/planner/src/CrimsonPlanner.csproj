@@ -21,6 +21,8 @@
   <ItemGroup>
     <!-- the shell's own styles, shared rather than copied, so Planner looks like the rest of the system -->
     <AvaloniaResource Include="../../../RedStarOS/Styles/Shell.axaml" Link="Styles/Shell.axaml" />
+    <!-- what our apps share (apps/shared): the look, and its building blocks -->
+    <Compile Include="../../shared/*.cs" Link="Shared/%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="12.1.6" />

@@ -155,6 +155,31 @@ public class ScreenshotTests
         ShowAndCapture(w, "Planner-" + page);
     }
 
+    // ─────────── People's Archive (apps/archive), with a sample shelf ───────────
+    [AvaloniaTheory]
+    [InlineData("shelf")]
+    [InlineData("find")]
+    [InlineData("sources")]
+    public void Archive_pages(string page)
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "archive-shot-" + Guid.NewGuid().ToString("N"));
+        try { ShowAndCapture(PeoplesArchive.Views.ArchiveWindow.Sample(page, dir), "Archive-" + page); }
+        finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
+    }
+
+    [AvaloniaFact]
+    public void Archive_reading_room()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "archive-shot-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var lib = PeoplesArchive.Model.Samples.Shelf(dir);
+            var book = lib.Books.First(b => b.Title.StartsWith("Manifesto"));
+            ShowAndCapture(new PeoplesArchive.Views.ReaderWindow(lib, book, save: false), "Archive-reader");
+        }
+        finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
+    }
+
     // ─────────── Software's pages, with sample programs (CI has no catalogue to read) ───────────
     [AvaloniaTheory]
     [InlineData("explore")]

@@ -48,7 +48,9 @@ Now that people can install it, a bad release reaches every installed system at 
       councils' reports, the verification ledger, turnover as shadow price, Leontief's input–output model, labour
       time, ratification with a quorum, recounts, quotas down to every council~~ (25 Nov 2026; published with
       `tools/publish-app.sh apps/planner`). Next: optimising a plan (linear programming), encrypted plan files.
-- [ ] **People's Archive:** a reading room for public-domain books, browsed and downloaded from free sources.
+- [ ] **People's Archive** 1.0 (`apps/archive`, in CI, 25 Nov 2026): Project Gutenberg, Wikisource and the Marxists
+      Internet Archive (and any OPDS catalogue), a shelf, and a reading room for EPUB and text. Before 2027: Gutenberg's
+      OPDS 2 feed, as its XML one retires.
 - [ ] **Atlas:** maps that work without the network, from an existing OpenStreetMap download service.
 
 ## 4. Reach more people

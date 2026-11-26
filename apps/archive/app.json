@@ -1,0 +1,15 @@
+{
+  "id": "archive",
+  "name": "People's Archive",
+  "summary": "Library catalogue and reading room",
+  "description": "Free books from the world's public-domain archives, and a quiet room to read them in.\n\nSearch Project Gutenberg's 75,000 books, Wikisource's proofread texts (in a dozen languages) and the Marxists Internet Archive's ebook collection, or add any library's OPDS catalogue. Download what you'd like to read, and it goes on your shelf, with where it came from and the terms it's shared under.\n\nThe reading room sets each book in a book face, on paper, sepia or night, at the size you like, with its contents beside it, and remembers where you got to. EPUB and plain text both work, and any EPUB you have can join the shelf.\n\nPeople's Archive goes online only when you search or download, says who's asking, and fetches one book at a time. Reading happens on your computer.",
+  "license": "GPL-3.0-or-later",
+  "developer": "Crimson Banner OS",
+  "homepage": "https://github.com/KaiserCS/CrimsonBannerOS/tree/main/apps/archive",
+  "categories": [
+    "Education",
+    "Office"
+  ],
+  "icon": "icon.png",
+  "package": "crimson-archive"
+}

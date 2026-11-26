@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=People's Archive
+GenericName=Library and reading room
+Comment=Find free books in public-domain archives, and read them
+Exec=crimson-archive %f
+Icon=crimson-archive
+Terminal=false
+Categories=Office;Viewer;Education;Literature;
+MimeType=application/epub+zip;
+Keywords=book;ebook;epub;library;reader;gutenberg;wikisource;marxists;public domain;
+StartupWMClass=crimson-archive

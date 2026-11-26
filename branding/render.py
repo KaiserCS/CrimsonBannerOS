@@ -169,6 +169,7 @@ def main():
 
     # our own apps in Software (apps/*): their icons
     save(svg("app-planner.svg", 256), "apps", "planner", "icon.png")
+    save(svg("app-archive.svg", 256), "apps", "archive", "icon.png")
 
     # the installer ISO: the boot menu and Calamares
     save(splash(640, 480), "iso", "profile", "syslinux", "splash.png")

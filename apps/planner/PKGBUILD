@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Planner, for Software's Crimson Banner tab (tools/publish-app.sh builds it).
-# It shares the shell's styles (RedStarOS/Styles/Shell.axaml), so it's built from the source tree:
+# It shares the shell's styles (RedStarOS/Styles/Shell.axaml) and apps/shared, so it's built from the source tree:
 # tools/publish-app.sh sets $CRIMSON_TREE to it; by hand: CRIMSON_TREE=/path/to/CrimsonBannerOS makepkg
 pkgname=crimson-planner
 pkgver=1.0.0
@@ -26,7 +26,7 @@ prepare() {
   rm -rf "$srcdir/tree"
   mkdir -p "$srcdir/tree/RedStarOS/Styles" "$srcdir/tree/apps"
   cp "$CRIMSON_TREE/RedStarOS/Styles/Shell.axaml" "$srcdir/tree/RedStarOS/Styles/"
-  cp -a "$CRIMSON_TREE/apps/planner" "$srcdir/tree/apps/"
+  cp -a "$CRIMSON_TREE/apps/planner" "$CRIMSON_TREE/apps/shared" "$srcdir/tree/apps/"
   rm -rf "$srcdir/tree/apps/planner/src/bin" "$srcdir/tree/apps/planner/src/obj"
 }
 

@@ -1,0 +1,5 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# People's Archive, on Arch's .NET 8 runtime
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+exec /usr/bin/dotnet /usr/lib/crimson-archive/PeoplesArchive.dll "$@"
