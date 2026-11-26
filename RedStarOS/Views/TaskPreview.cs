@@ -128,17 +128,26 @@ public static class TaskPreview
         return icon;
     }
 
-    /// <summary>The window drawn at the preview's size (scaled through the bitmap's resolution).</summary>
+    /// <summary>
+    /// The window drawn at the preview's size: drawn whole at its own size first (a bitmap's resolution doesn't scale
+    /// what's drawn into it, so a window drawn straight into a small one lands in its corner), then shrunk smoothly.
+    /// </summary>
     public static RenderTargetBitmap? Thumbnail(Visual window, double maxW = ThumbWidth * 2, double maxH = ThumbHeight * 2)
     {
         try
         {
-            double k = Math.Min(maxW / window.Bounds.Width, maxH / window.Bounds.Height);
-            k = Math.Min(k, 1);
-            var size = new PixelSize(Math.Max(1, (int)(window.Bounds.Width * k)), Math.Max(1, (int)(window.Bounds.Height * k)));
-            var rtb = new RenderTargetBitmap(size, new Vector(96 * k, 96 * k));
-            rtb.Render(window);
-            return rtb;
+            int w = Math.Max(1, (int)Math.Ceiling(window.Bounds.Width)), h = Math.Max(1, (int)Math.Ceiling(window.Bounds.Height));
+            var full = new RenderTargetBitmap(new PixelSize(w, h));
+            full.Render(window);
+            double k = Math.Min(1, Math.Min(maxW / w, maxH / h));
+            if (k >= 1) return full;
+            var size = new PixelSize(Math.Max(1, (int)(w * k)), Math.Max(1, (int)(h * k)));
+            var small = new RenderTargetBitmap(size);
+            using (var ctx = small.CreateDrawingContext())
+            using (ctx.PushRenderOptions(new RenderOptions { BitmapInterpolationMode = BitmapInterpolationMode.HighQuality }))
+                ctx.DrawImage(full, new Rect(0, 0, w, h), new Rect(0, 0, size.Width, size.Height));
+            full.Dispose();
+            return small;
         }
         catch (Exception) { return null; }
     }

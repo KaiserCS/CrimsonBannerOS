@@ -101,6 +101,31 @@ public class DesktopShellTests : IDisposable
     [InlineData("maximize", null)]
     public void Snap_assist_offers_the_half_left_over(string zone, string? fill) => Assert.Equal(fill, SnapAssist.Remaining(zone));
 
+    [Avalonia.Headless.XUnit.AvaloniaFact]
+    public void A_taskbar_preview_shows_the_whole_window_not_a_corner_of_it()
+    {
+        // a big window, red to its edges: its picture must be red to its edges too
+        var w = new Avalonia.Controls.Window { Width = 1200, Height = 800, Background = Avalonia.Media.Brushes.Red };
+        w.Show();
+        try
+        {
+            var bmp = TaskPreview.Thumbnail(w);
+            Assert.NotNull(bmp);
+            Assert.True(bmp!.PixelSize.Width <= TaskPreview.ThumbWidth * 2 && bmp.PixelSize.Height <= TaskPreview.ThumbHeight * 2, $"{bmp.PixelSize}");
+            int pw = bmp.PixelSize.Width, ph = bmp.PixelSize.Height;
+            var px = new byte[pw * ph * 4];
+            var handle = System.Runtime.InteropServices.GCHandle.Alloc(px, System.Runtime.InteropServices.GCHandleType.Pinned);
+            try { bmp.CopyPixels(new Avalonia.PixelRect(0, 0, pw, ph), handle.AddrOfPinnedObject(), px.Length, pw * 4); }
+            finally { handle.Free(); }
+            foreach (var (x, y) in new[] { (2, 2), (pw - 3, 2), (2, ph - 3), (pw - 3, ph - 3), (pw / 2, ph / 2) })
+            {
+                int i = (y * pw + x) * 4;                     // BGRA
+                Assert.True(px[i + 2] > 200 && px[i + 1] < 60 && px[i] < 60 && px[i + 3] > 200, $"({x},{y}) is {px[i + 2]},{px[i + 1]},{px[i]},{px[i + 3]}");
+            }
+        }
+        finally { w.Close(); }
+    }
+
     [Fact]
     public void Jump_lists_are_the_files_each_app_opens()
     {
