@@ -511,28 +511,29 @@ public sealed partial class PlannerWindow : Window
         // what each product needs, and the proposal
         var box = new StackPanel { Spacing = 8 };
         box.Children.Add(Kicker("PER PRODUCT"));
-        var g = Table("Product,Turnover (target),Signal,Expected demand,Final demand,Need,Proposed,Capacity used,Labour per unit (h),Change,Decision");
+        // what to decide on first, then the working that led to it
+        var g = Table("Product,Signal,Need,Proposed,Change,Decision,Turnover (target),Expected demand,Final demand,Capacity used,Labour per unit (h)");
         int row = 1;
         foreach (var p in r.Products)
         {
             var u = p.Product.Unit;
             var use = p.Capacity is double cap && cap > 0 ? p.Proposed / cap : (double?)null;
             var bar = new StackPanel { Spacing = 2, Width = 110 };
-            bar.Children.Add(new ProgressBar { Minimum = 0, Maximum = 1, Value = Math.Min(use ?? 0, 1), Height = 6, MinHeight = 6 });
+            bar.Children.Add(new ProgressBar { Minimum = 0, Maximum = 1, Value = Math.Min(use ?? 0, 1), Height = 6, MinHeight = 6, MinWidth = 0, Width = 110 });
             bar.Children.Add(new TextBlock { Text = use is double x ? x.ToString("0%", CultureInfo.InvariantCulture) : "not known", FontSize = 11, Classes = { "muted" } });
             var d = Decisions.For(_plan, _period, p.Product.Id);
             Cells(g, row++,
                 Cell($"{p.Product.Name}\n{u}", bold: true),
-                Cell($"{Engine.Fmt(p.Turnover)}  ({Engine.Fmt(p.TargetTurnover)})", right: true),
                 Badge(p.Signal switch { Signal.Rapid => "RUNNING SHORT", Signal.NoStock => "NO STOCK", Signal.Low => "OVERSTOCKED", _ => "NORMAL" }, accent: p.Signal is Signal.Rapid or Signal.NoStock),
-                Cell(Engine.Fmt(p.ExpectedDemand), right: true),
-                Cell(Engine.Fmt(p.FinalDemand), right: true),
                 Cell(Engine.Fmt(p.GrossOutput), right: true),
                 Cell(Engine.Fmt(p.Proposed) + (Limited(r, p) && p.GrossOutput - p.Proposed > p.GrossOutput * 1e-6 ? $"\nshort {Engine.Fmt(p.GrossOutput - p.Proposed)}" : ""), right: true, bold: true),
-                bar,
-                Cell(Engine.Fmt(p.LabourValue), right: true),
                 Cell((p.Change is double c ? c.ToString("+0.#%;-0.#%;0%", CultureInfo.InvariantCulture) : "first") + (p.Major ? "\nMAJOR" : ""), right: true),
-                DecisionCell(p, d));
+                DecisionCell(p, d),
+                Cell($"{Engine.Fmt(p.Turnover)}  ({Engine.Fmt(p.TargetTurnover)})", right: true),
+                Cell(Engine.Fmt(p.ExpectedDemand), right: true),
+                Cell(Engine.Fmt(p.FinalDemand), right: true),
+                bar,
+                Cell(Engine.Fmt(p.LabourValue), right: true));
         }
         box.Children.Add(new ScrollViewer { Content = g, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto });
         box.Children.Add(Muted("Need: what has to be made to meet final demand and every other sector's inputs. Labour per unit counts the labour in its inputs too. A major shift, or a first quota, needs a quorum of votes."));
