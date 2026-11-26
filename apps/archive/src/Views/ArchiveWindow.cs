@@ -362,7 +362,9 @@ public sealed class ArchiveWindow : Window
         if (l.Author.Length > 0) text.Children.Add(new TextBlock { Text = l.Author, TextWrapping = TextWrapping.Wrap });
         if (l.Summary.Length > 0) text.Children.Add(new TextBlock { Text = l.Summary, Classes = { "muted" }, FontSize = 12, TextWrapping = TextWrapping.Wrap, MaxHeight = 34, TextTrimming = TextTrimming.CharacterEllipsis });
         row.Children.Add(text);
-        return new Border { Child = row, BorderThickness = new Thickness(0, 0, 0, 1), BorderBrush = (IBrush?)this.FindResource("ShellRuleBrush") ?? Brushes.Gray };
+        var line = new Border { Child = row, BorderThickness = new Thickness(0, 0, 0, 1) };
+        line.Bind(Border.BorderBrushProperty, line.GetResourceObservable("ShellRuleBrush"));   // the theme's rule, as it changes
+        return line;
     }
 
     private async Task Search(Source src, string? next)

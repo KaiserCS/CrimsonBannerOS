@@ -161,7 +161,7 @@ public static class Xhtml
                             foreach (XmlNode cell in row.ChildNodes)
                             {
                                 if (cell.LocalName is not ("td" or "th")) continue;
-                                if (!first) Text("   ·   ", s);
+                                if (!first) Text(" · ", s);
                                 first = false;
                                 Walk(cell, s with { Bold = s.Bold || cell.LocalName == "th" });
                             }

@@ -55,7 +55,7 @@ public class ArchiveTests : IDisposable
         Assert.Equal(new[] { "1. First", "2. Second strong", "• Dot" }, two.Where(x => x.Kind == BlockKind.ListItem).Select(x => x.Text));
         Assert.Contains(two.Single(x => x.Text.StartsWith("2.")).Runs, r => r.Bold && r.Text == "strong");
         Assert.Equal("  kept   as is\nline two", two.Single(x => x.Kind == BlockKind.Preformatted).Text);
-        Assert.Equal("A   ·   B", two.Last().Text);
+        Assert.Equal("A · B", two.Last().Text);
     }
 
     [Fact]
