@@ -16,7 +16,8 @@
           <Button Classes="flat" Content="⇋" Tag="fliph" Click="OnCmd" ToolTip.Tip="Flip horizontally (H)" />
           <Button Classes="flat" Content="⇵" Tag="flipv" Click="OnCmd" ToolTip.Tip="Flip vertically (V)" />
           <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
-          <Button Classes="flat" Content="Fit" Tag="fit" Click="OnCmd" ToolTip.Tip="Fit to window (F)" />
+          <Button Classes="flat" Content="Fit" Tag="fit" Click="OnCmd" ToolTip.Tip="Fit large pictures to the window; small ones stay their size (F)" />
+          <Button Classes="flat" Content="Zoom to fit" Tag="zoomfit" Click="OnCmd" ToolTip.Tip="Zoom every picture to fill the window, enlarging small ones (Shift+F)" />
           <Button Classes="flat" Content="100%" Tag="actual" Click="OnCmd" ToolTip.Tip="Actual size (0)" />
           <Button Classes="flat" Content="−" Tag="zoomout" Click="OnCmd" ToolTip.Tip="Zoom out (-)" />
           <Button Classes="flat" Content="+" Tag="zoomin" Click="OnCmd" ToolTip.Tip="Zoom in (+)" />

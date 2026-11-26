@@ -33,12 +33,12 @@ public sealed class ThumbItem : INotifyPropertyChanged
 }
 
 /// <summary>
-/// Image viewer: browses the whole folder (arrow keys, thumbnail strip), fit / actual size / wheel zoom with
-/// drag-to-pan, rotate and flip (honours EXIF orientation), slideshow, full screen, rename, trash, wallpaper, Paint.
+/// Image viewer: browses the whole folder (arrow keys, thumbnail strip), fit (large pictures shrunk to the window) or
+/// zoom to fit (every picture filling it, small ones enlarged), actual size, wheel zoom, drag or Ctrl+arrows to pan, rotate and flip (honours EXIF orientation), slideshow, full screen, rename, trash, wallpaper, Paint.
 /// </summary>
 public partial class ImageViewerWindow : Window
 {
-    private const double FitCap = 1.0;          // "fit" never enlarges small pictures
+    private const double FitCap = 1.0;          // "fit" never enlarges small pictures; "zoom to fit" does
 
     private readonly List<string> _files = new();
     private readonly ObservableCollection<ThumbItem> _thumbs = new();
@@ -49,6 +49,11 @@ public partial class ImageViewerWindow : Window
     private bool _flipH, _flipV;                // applied to the picture before rotating
     private double _zoom = 1;
     private bool _fit = true;
+    private bool _fill = SettingsStore.Current.ImageZoomToFit;   // fitting enlarges small pictures too (kept)
+
+    /// <summary>The zoom shown (1 = actual size), and where the picture is scrolled to (for the tests).</summary>
+    public double Zoom => _zoom;
+    public Vector ScrollOffset => Scroller.Offset;
     private bool _syncing;
     private int _gen;
     private DispatcherTimer? _slide;
@@ -78,7 +83,7 @@ public partial class ImageViewerWindow : Window
 
         DragDrop.SetAllowDrop(Stage, true);
         Stage.AddHandler(DragDrop.DropEvent, OnDrop);
-        KeyDown += OnKey;
+        AddHandler(KeyDownEvent, OnKey, Avalonia.Interactivity.RoutingStrategies.Tunnel);   // before the thumbnail strip or scroller take the arrows
         Closed += (_, _) => { StopSlideshow(); _gen++; _bitmap?.Dispose(); };
         UpdateStatus();
     }
@@ -222,7 +227,8 @@ public partial class ImageViewerWindow : Window
         if (_fit)
         {
             double vw = Math.Max(50, Scroller.Bounds.Width - 4), vh = Math.Max(50, Scroller.Bounds.Height - 4);
-            _zoom = Math.Min(FitCap, Math.Min(vw / ew, vh / eh));
+            _zoom = Math.Min(vw / ew, vh / eh);
+            if (!_fill) _zoom = Math.Min(FitCap, _zoom);
         }
         Picture.Width = Math.Max(1, w * _zoom);
         Picture.Height = Math.Max(1, h * _zoom);
@@ -273,6 +279,23 @@ public partial class ImageViewerWindow : Window
         if (!_panning) return;
         var p = e.GetPosition(Scroller);
         Scroller.Offset = new Vector(Math.Max(0, _panOffset.X - (p.X - _panStart.X)), Math.Max(0, _panOffset.Y - (p.Y - _panStart.Y)));
+    }
+
+    /// <summary>Moves a zoomed picture by a share of the window (Ctrl+arrows); nothing when it all fits.</summary>
+    public void Pan(double dx, double dy)
+    {
+        var max = new Vector(Math.Max(0, Scroller.Extent.Width - Scroller.Viewport.Width), Math.Max(0, Scroller.Extent.Height - Scroller.Viewport.Height));
+        var o = Scroller.Offset + new Vector(dx * Scroller.Viewport.Width, dy * Scroller.Viewport.Height);
+        Scroller.Offset = new Vector(Math.Clamp(o.X, 0, max.X), Math.Clamp(o.Y, 0, max.Y));
+    }
+
+    private void SetFit(bool fill)
+    {
+        _fit = true;
+        _fill = fill;
+        SettingsStore.Current.ImageZoomToFit = fill;
+        SettingsStore.Save();
+        ApplyView();
     }
 
     private void Rotate(int degrees)
@@ -380,7 +403,8 @@ public partial class ImageViewerWindow : Window
             case "rotr": Rotate(90); break;
             case "fliph": FlipHorizontal(); break;
             case "flipv": FlipVertical(); break;
-            case "fit": _fit = true; ApplyView(); break;
+            case "fit": SetFit(fill: false); break;
+            case "zoomfit": SetFit(fill: true); break;
             case "actual": SetZoom(1, null); break;
             case "zoomin": SetZoom(_zoom * 1.25, null); break;
             case "zoomout": SetZoom(_zoom / 1.25, null); break;
@@ -414,6 +438,14 @@ public partial class ImageViewerWindow : Window
     private async void OnKey(object? sender, KeyEventArgs e)
     {
         bool ctrl = e.KeyModifiers.HasFlag(KeyModifiers.Control), shift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+        // Ctrl+arrows scroll a zoomed picture (a fifth of the window; with Shift, most of it)
+        if (ctrl && e.Key is Key.Left or Key.Right or Key.Up or Key.Down)
+        {
+            double step = shift ? 0.8 : 0.2;
+            Pan(e.Key == Key.Left ? -step : e.Key == Key.Right ? step : 0, e.Key == Key.Up ? -step : e.Key == Key.Down ? step : 0);
+            e.Handled = true;
+            return;
+        }
         string? cmd = e.Key switch
         {
             Key.O when ctrl => "open",
@@ -424,6 +456,7 @@ public partial class ImageViewerWindow : Window
             Key.L => "rotl",
             Key.H => "fliph",
             Key.V => "flipv",
+            Key.F when shift => "zoomfit",
             Key.F or Key.D9 => "fit",
             Key.D0 or Key.NumPad0 => "actual",
             Key.OemPlus or Key.Add => "zoomin",
