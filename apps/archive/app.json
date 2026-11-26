@@ -11,5 +11,8 @@
     "Office"
   ],
   "icon": "icon.png",
+  "screenshots": [
+    "screenshot-1.png"
+  ],
   "package": "crimson-archive"
 }
