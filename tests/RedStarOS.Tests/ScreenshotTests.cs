@@ -222,7 +222,7 @@ public class ScreenshotTests
     // ─────────── the shell's own parts (the taskbar, the Start menu and the panels), each in a window of its size ───────────
     [AvaloniaTheory]
     [InlineData("Taskbar", 1280, 56)]
-    [InlineData("StartMenu", 640, 720)]
+    [InlineData("StartMenu", 790, 640)]
     [InlineData("QuickSettingsPanel", 380, 560)]
     [InlineData("NotificationPanel", 380, 560)]
     [InlineData("CalendarPanel", 380, 480)]
