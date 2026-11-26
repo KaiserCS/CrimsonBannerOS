@@ -3,14 +3,14 @@
              x:Class="RedStarOS.Views.Taskbar"
              Height="56">
   <!--
-    [Start] [pinned + running apps ............] [app tray] | [system tray] [clock]
+    [Start] [pinned + running apps ............] [app tray] | [system tray] [clock] |▌ (show desktop, in the corner)
     - Pinned launchers and running windows share one row: a pinned app that is running is the same button.
     - Native apps and other programs' windows are listed identically.
     - App tray: icons of background things (notifications, media controls of Red Star Video, ...).
     - System tray: network / volume / battery in one button that opens Quick Settings.
   -->
   <Border Classes="taskbar">
-    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="8,0">
+    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto" Margin="8,0">
 
       <Button x:Name="StartButton" Classes="task start" Width="44" Height="44" Padding="0"
               ToolTip.Tip="Start (Win key)">
@@ -59,6 +59,11 @@
           </StackPanel>
         </Button>
       </StackPanel>
+
+      <!-- Show desktop: a sliver in the bottom-right corner, reaching the screen's edge so a flick of the mouse finds
+           it; a click hides every window (again, they come back), resting the pointer on it peeks through them -->
+      <Button x:Name="ShowDesktopButton" Grid.Column="5" Classes="showdesktop" Width="14" Margin="6,0,-8,0"
+              VerticalAlignment="Stretch" ToolTip.Tip="Show desktop" />
     </Grid>
   </Border>
 </UserControl>

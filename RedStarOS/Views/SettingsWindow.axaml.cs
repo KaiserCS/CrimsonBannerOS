@@ -71,8 +71,8 @@ public partial class SettingsWindow : Window
 
         var items = new List<NavItem>
         {
-            new("Appearance", "🎨", AppIcons.Plate, BuildAppearance),
-            new("Desktop & Taskbar", "🖥", AppIcons.Plate, BuildTaskbar),
+            new("Appearance", "palette", AppIcons.Plate, BuildAppearance),
+            new("Desktop & Taskbar", "panel", AppIcons.Plate, BuildTaskbar),
             new("Wallpapers", "image", AppIcons.Plate, () => PageLauncher("Wallpapers", "Search online for full-resolution wallpapers that fit your screen, or use your own pictures and slideshows.", "Open Wallpapers", () => WallpaperPickerWindow.Open())),
             new("Wi-Fi & Network", "wifi", AppIcons.Plate, SettingsPages.Network),
             new("Sound", "volume", AppIcons.Plate, SettingsPages.Sound),
@@ -87,7 +87,7 @@ public partial class SettingsWindow : Window
             new("Region & keyboard", "keyboard", AppIcons.Plate, SettingsPages.RegionPage),
             new("Crimson Online", "globe", AppIcons.Plate, SettingsPages.OnlinePage),
             new("Accessibility", "accessibility", AppIcons.Plate, SettingsPages.Accessibility),
-            new("Account", "👤", AppIcons.Plate, () => PageLauncher("Account", "Password, profile photo and account type.", "Open Account", () => WindowManager.Open(new AccountWindow()))),
+            new("Account", "user", AppIcons.Plate, () => PageLauncher("Account", "Password, profile photo and account type.", "Open Account", () => WindowManager.Open(new AccountWindow()))),
             new("Software Updates", "refresh", AppIcons.Plate, SettingsPages.Updates),
             new("Diagnostics", "bug", AppIcons.Plate, SettingsPages.DiagnosticsPage),
             new("Games", "🏓", AppIcons.Plate, BuildGames),
@@ -318,6 +318,15 @@ public partial class SettingsWindow : Window
 
         p.Children.Add(Eyebrow("WINDOWS"));
         p.Children.Add(Check("Soft shadows under windows", s.WindowShadows, v => SettingsStore.Current.WindowShadows = v));
+        p.Children.Add(Check("When I snap a window, offer the others for the space left (Snap Assist)", s.SnapAssist, v => SettingsStore.Current.SnapAssist = v));
+        p.Children.Add(Check("Peek at the desktop when I point at Show desktop, right of the clock", s.PeekDesktop, v => SettingsStore.Current.PeekDesktop = v));
+        p.Children.Add(Check("Preview a taskbar button's windows when I point at it", s.TaskbarPreviews, v => SettingsStore.Current.TaskbarPreviews = v));
+        p.Children.Add(new TextBlock
+        {
+            Classes = { "caption" }, TextWrapping = TextWrapping.Wrap,
+            Text = "Drag a window by its title bar to the left or right edge of the screen to give it half, to a corner for a quarter, "
+                 + "or to the top to maximise it; a frame in your accent colour shows where it will go. Super and the arrow keys snap too.",
+        });
         p.Children.Add(new TextBlock
         {
             Classes = { "caption" }, TextWrapping = TextWrapping.Wrap,

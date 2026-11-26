@@ -14,7 +14,8 @@
  *   • title bars drawn by the compositor (red star, title, minimise / maximise / close; double-click maximises),
  *     3 px borders, resize from the edges, soft shadows on framed windows that aren't maximised or full screen;
  *   • click to focus and raise; the desktop window stays at the bottom and full screen; docks and notifications on top;
- *   • Alt+drag moves, Alt+right-drag resizes, dragging to the top edge maximises, to the left/right edge snaps half;
+ *   • Alt+drag moves, Alt+right-drag resizes, dragging to the top edge maximises, to the left/right edge snaps half,
+ *     to a corner a quarter, with a preview of where it will go in the shell's accent;
  *   • Alt+F4 closes; Ctrl+Alt+Backspace quits; Ctrl+Alt+F1…F12 switch consoles when running on the hardware;
  *   • for X11 apps it keeps the EWMH bits the Red Star shell reads: _NET_WORKAREA (minus the taskbar's strut),
  *     _NET_FRAME_EXTENTS, _NET_MOVERESIZE_WINDOW (snapping), _NET_CLOSE_WINDOW, and the compositing-manager selection
@@ -219,6 +220,8 @@ struct server {
 	struct wlr_box grab_box;
 	uint32_t grab_edges;
 	int grab_button_part;
+	int snap_zone;                      /* where a dragged window would snap if dropped now (ZONE_*) */
+	struct wlr_scene_buffer *snap_preview;
 	struct view *last_click_view;
 	uint32_t last_click_time;
 	struct view *hover_view;            /* the window whose title-bar buttons are lit */
@@ -266,7 +269,7 @@ static const float C_BG[4] = { 0.10f, 0.10f, 0.12f, 1.0f };
 #define HEX(r, g, b) (r) / 255.0, (g) / 255.0, (b) / 255.0
 static const double C_TITLE_ACTIVE[3] = { HEX(0x1c, 0x1c, 0x21) };
 static const double C_TITLE_INACTIVE[3] = { HEX(0x2c, 0x2c, 0x33) };
-static const double C_ACCENT[3] = { HEX(0xc8, 0x10, 0x2e) };
+static double C_ACCENT[3] = { HEX(0xc8, 0x10, 0x2e) };     /* the shell's accent ("accent\t#RRGGBB") */
 static const double C_CLOSE_HOVER[3] = { HEX(0xe8, 0x11, 0x23) };
 static const double C_BTN_HOVER[3] = { HEX(0x3d, 0x3d, 0x46) };
 static const double C_TEXT[3] = { 1, 1, 1 };
@@ -797,20 +800,101 @@ static void view_set_minimized(struct view *v, bool on)
 	shell_stack(v->server);
 }
 
-/* Half of the screen (left = -1, right = 1), the way the shell's Super+arrows snap. */
-static void view_snap(struct view *v, int dir)
+/* Where a window can snap, as on Windows: a half (left, right), the whole work area (top), or a quarter (corners). */
+enum { ZONE_NONE, ZONE_LEFT, ZONE_RIGHT, ZONE_TOP, ZONE_TL, ZONE_TR, ZONE_BL, ZONE_BR };
+static const char *ZONE_NAMES[] = { "none", "left", "right", "maximize", "top-left", "top-right", "bottom-left", "bottom-right" };
+
+/* The part of the work area a zone covers (frames included). */
+static struct wlr_box zone_box(struct wlr_box wa, int zone)
 {
-	if (v->kind == K_DESKTOP || v->fullscreen) return;
+	int hw = wa.width / 2, hh = wa.height / 2;
+	switch (zone) {
+	case ZONE_LEFT: return (struct wlr_box){ wa.x, wa.y, hw, wa.height };
+	case ZONE_RIGHT: return (struct wlr_box){ wa.x + hw, wa.y, wa.width - hw, wa.height };
+	case ZONE_TL: return (struct wlr_box){ wa.x, wa.y, hw, hh };
+	case ZONE_TR: return (struct wlr_box){ wa.x + hw, wa.y, wa.width - hw, hh };
+	case ZONE_BL: return (struct wlr_box){ wa.x, wa.y + hh, hw, wa.height - hh };
+	case ZONE_BR: return (struct wlr_box){ wa.x + hw, wa.y + hh, wa.width - hw, wa.height - hh };
+	default: return wa;
+	}
+}
+
+/* The zone under the pointer while a window is dragged: an edge of the work area, or near one of its corners. */
+static int zone_at(struct wlr_box wa, double cx, double cy)
+{
+	int corner = S(64);
+	bool left = cx <= wa.x + 1, right = cx >= wa.x + wa.width - 2, top = cy <= wa.y + 1;
+	bool high = cy < wa.y + corner, low = cy > wa.y + wa.height - corner;
+	if (left) return high ? ZONE_TL : low ? ZONE_BL : ZONE_LEFT;
+	if (right) return high ? ZONE_TR : low ? ZONE_BR : ZONE_RIGHT;
+	if (top) return cx < wa.x + corner ? ZONE_TL : cx > wa.x + wa.width - corner ? ZONE_TR : ZONE_TOP;
+	return ZONE_NONE;
+}
+
+static void ipc_send(struct server *s, struct ipc_client *only, const char *fmt, ...);
+static uint64_t view_shell_id(struct view *v);
+
+/* A half or a quarter of the screen (Super+arrows, or a window dropped at an edge or corner). The shell hears of it
+ * ("snapped\tID\tZONE"), to offer the other windows for the space left (Snap Assist). */
+static void view_snap_zone(struct view *v, int zone, bool tell)
+{
+	if (v->kind == K_DESKTOP || v->fullscreen || zone == ZONE_NONE) return;
+	if (zone == ZONE_TOP) { view_set_maximized(v, true); return; }
 	if (v->maximized) view_set_maximized(v, false);
 	if (!v->snapped) v->saved = (struct wlr_box){ v->x, v->y, v->w, v->h };
 	v->snapped = true;
-	struct wlr_box wa = workarea_for(v);
-	int half = wa.width / 2, top = deco_top(v), side = deco_side(v);
-	v->x = (dir < 0 ? wa.x : wa.x + half) + side;
-	v->y = wa.y + top;
-	v->w = half - 2 * side;
-	v->h = wa.height - top - side;
+	struct wlr_box b = zone_box(workarea_for(v), zone);
+	int top = deco_top(v), side = deco_side(v);
+	v->x = b.x + side;
+	v->y = b.y + top;
+	v->w = b.width - 2 * side;
+	v->h = b.height - top - side;
 	view_apply_geometry(v);
+	if (tell) ipc_send(v->server, NULL, "snapped\t%llu\t%s", (unsigned long long)view_shell_id(v), ZONE_NAMES[zone]);
+}
+
+static void view_snap(struct view *v, int dir) { view_snap_zone(v, dir < 0 ? ZONE_LEFT : ZONE_RIGHT, false); }
+
+/* The preview of a snap while dragging: the zone, inset a little, a soft wash of the accent with a brighter edge,
+ * under the dragged window and over the rest. */
+static void snap_preview_hide(struct server *s)
+{
+	if (s->snap_preview) { wlr_scene_node_destroy(&s->snap_preview->node); s->snap_preview = NULL; }
+	s->snap_zone = ZONE_NONE;
+}
+
+static void snap_preview_show(struct server *s, struct view *v, int zone)
+{
+	if (zone == s->snap_zone) return;
+	snap_preview_hide(s);
+	if (zone == ZONE_NONE || !v->tree) return;
+	s->snap_zone = zone;
+	struct wlr_box b = zone_box(workarea_for(v), zone);
+	int inset = S(6), w = b.width - 2 * inset, h = b.height - 2 * inset;
+	if (w <= 0 || h <= 0) return;
+	struct cairo_buffer *cb = cbuf_create(w, h);
+	if (!cb) return;
+	cairo_t *cr = cairo_create(cb->surface);
+	double r = S(10), lw = S(2), x0 = lw / 2, y0 = lw / 2, x1 = w - lw / 2, y1 = h - lw / 2;
+	cairo_new_sub_path(cr);
+	cairo_arc(cr, x1 - r, y0 + r, r, -M_PI / 2, 0);
+	cairo_arc(cr, x1 - r, y1 - r, r, 0, M_PI / 2);
+	cairo_arc(cr, x0 + r, y1 - r, r, M_PI / 2, M_PI);
+	cairo_arc(cr, x0 + r, y0 + r, r, M_PI, 3 * M_PI / 2);
+	cairo_close_path(cr);
+	cairo_set_source_rgba(cr, C_ACCENT[0], C_ACCENT[1], C_ACCENT[2], 0.24);
+	cairo_fill_preserve(cr);
+	cairo_set_line_width(cr, lw);
+	cairo_set_source_rgba(cr, C_ACCENT[0] + (1 - C_ACCENT[0]) * 0.25, C_ACCENT[1] + (1 - C_ACCENT[1]) * 0.25, C_ACCENT[2] + (1 - C_ACCENT[2]) * 0.25, 0.95);
+	cairo_stroke(cr);
+	cairo_destroy(cr);
+	cairo_surface_flush(cb->surface);
+	struct wlr_scene_tree *layer = layer_for(v);
+	s->snap_preview = wlr_scene_buffer_create(layer, &cb->base);
+	wlr_buffer_drop(&cb->base);
+	if (!s->snap_preview) return;
+	wlr_scene_node_set_position(&s->snap_preview->node, b.x + inset, b.y + inset);
+	wlr_scene_node_place_below(&s->snap_preview->node, &v->tree->node);
 }
 
 static void view_close(struct view *v)
@@ -909,7 +993,7 @@ static void view_unmap(struct view *v)
 	shell_gone(v);
 	v->mapped = false;
 	v->fading = false;
-	if (s->grab_view == v) { s->grab = G_NONE; s->grab_view = NULL; }
+	if (s->grab_view == v) { s->grab = G_NONE; s->grab_view = NULL; snap_preview_hide(s); }
 	if (s->last_click_view == v) s->last_click_view = NULL;
 	if (s->hover_view == v) s->hover_view = NULL;
 	v->hover = P_NONE;
@@ -994,14 +1078,13 @@ static void end_grab(struct server *s)
 {
 	struct view *v = s->grab_view;
 	if (v && s->grab == G_MOVE) {
-		/* dropped at a screen edge: top maximises, left/right snap to half */
-		struct wlr_box wa = workarea_for(v);
-		double cx = s->cursor->x, cy = s->cursor->y;
-		if (cy <= wa.y + 1) view_set_maximized(v, true);
-		else if (cx <= wa.x + 1) view_snap(v, -1);
-		else if (cx >= wa.x + wa.width - 2) view_snap(v, 1);
+		/* dropped at an edge or corner: top maximises, the sides take a half, the corners a quarter */
+		int zone = zone_at(workarea_for(v), s->cursor->x, s->cursor->y);
+		snap_preview_hide(s);
+		if (zone != ZONE_NONE) view_snap_zone(v, zone, zone != ZONE_TOP);
 	}
 	if (v && s->grab == G_RESIZE && !v->x11 && v->xdg) wlr_xdg_toplevel_set_resizing(v->xdg, false);
+	snap_preview_hide(s);
 	s->grab = G_NONE;
 	s->grab_view = NULL;
 }
@@ -1031,6 +1114,7 @@ static void grab_motion(struct server *s)
 		wlr_scene_node_set_position(&v->tree->node, v->x - deco_side(v), v->y - deco_top(v));
 		popups_follow(v);
 		if (v->x11 && v->xs) wlr_xwayland_surface_configure(v->xs, v->x, v->y, v->w, v->h);
+		snap_preview_show(s, v, zone_at(workarea_for(v), s->cursor->x, s->cursor->y));
 	} else if (s->grab == G_RESIZE) {
 		struct wlr_box b = s->grab_box;
 		int x = b.x, y = b.y, w = b.width, h = b.height;
@@ -1887,11 +1971,16 @@ static void xwayland_ready(struct wl_listener *l, void *data)
  *                                                    switcher-next, switcher-prev, switcher-commit, switcher-cancel,
  *                                                    snap-left, snap-right, maximize, minimize, clipboard, desktop,
  *                                                    files, lock, terminal, search
+ *     snapped <id> <zone>                            a window was dropped at an edge or corner and snapped (left,
+ *                                                    right, top-left, top-right, bottom-left, bottom-right): the
+ *                                                    shell offers the other windows for the space left
  *   shell → compositor
  *     hello                                          answered with every window, then active and stack
  *     shortcuts on|off                               take Super / Alt+Tab / Ctrl+Alt+T for the shell (whatever has
  *                                                    the keyboard, X11 or Wayland)
- *     activate|close|minimize|maximize|restore|left|right <id>
+ *     activate|close|minimize|maximize|restore|left|right|top-left|top-right|bottom-left|bottom-right <id>
+ *     accent #RRGGBB                                 the shell's accent: snap previews and the active title bar
+ *     peek on|off                                    every window nearly see-through, or solid again (Show desktop)
  *     switcher-end                                   the switcher was closed with the mouse
  *
  * Native ids are (1 << 32) + n, so they never collide with X11 window ids.
@@ -2053,6 +2142,12 @@ static void input_activity(struct server *s);
 static void keymap_set(struct server *s, const char *layout, const char *variant, const char *options);
 static void dpms_set(struct server *s, bool on);
 
+static void peek_buffer(struct wlr_scene_buffer *b, int sx, int sy, void *data)
+{
+	(void)sx; (void)sy;
+	wlr_scene_buffer_set_opacity(b, *(float *)data);
+}
+
 static void ipc_command(struct ipc_client *c, char *line)
 {
 	struct server *s = c->server;
@@ -2102,6 +2197,23 @@ static void ipc_command(struct ipc_client *c, char *line)
 		cursor_theme_set(s, theme, size ? atoi(size) : 24);
 		return;
 	}
+	if (strcmp(line, "accent") == 0) {               /* "accent\t#RRGGBB": snap previews and title bars */
+		unsigned int r, g, b;
+		if (arg && sscanf(arg, "#%02x%02x%02x", &r, &g, &b) == 3) {
+			C_ACCENT[0] = r / 255.0; C_ACCENT[1] = g / 255.0; C_ACCENT[2] = b / 255.0;
+			struct view *v;
+			wl_list_for_each(v, &s->views, link) if (v->mapped) view_apply_geometry(v);   /* redraws the title bars */
+		}
+		return;
+	}
+	if (strcmp(line, "peek") == 0) {                 /* "peek\ton|off": every window nearly see-through (Show desktop) */
+		float op = arg && strcmp(arg, "on") == 0 ? 0.08f : 1.0f;
+		struct view *v;
+		wl_list_for_each(v, &s->views, link)
+			if (v->tree && v->kind != K_DESKTOP && v->kind != K_DOCK && v->kind != K_NOTIFY)
+				wlr_scene_node_for_each_buffer(&v->tree->node, peek_buffer, &op);
+		return;
+	}
 	if (strcmp(line, "outputs") == 0) { outputs_describe(s, c); return; }
 	if (strcmp(line, "role") == 0) { if (arg) role_command(s, arg); return; }
 	if (strcmp(line, "outputs-save") == 0) { outputs_save(s); return; }
@@ -2116,6 +2228,7 @@ static void ipc_command(struct ipc_client *c, char *line)
 	else if (strcmp(line, "restore") == 0) { if (v->maximized) view_set_maximized(v, false); }
 	else if (strcmp(line, "left") == 0) view_snap(v, -1);
 	else if (strcmp(line, "right") == 0) view_snap(v, 1);
+	else for (int z = ZONE_TL; z <= ZONE_BR; z++) if (strcmp(line, ZONE_NAMES[z]) == 0) { view_snap_zone(v, z, false); break; }
 }
 
 static int ipc_readable(int fd, uint32_t mask, void *data)

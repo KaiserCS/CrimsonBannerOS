@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
@@ -66,6 +67,20 @@ public partial class Taskbar : UserControl
         };
         ClockButton.Click += (_, _) => ShowPanel(ClockButton, new CalendarPanel());
 
+        // Show desktop, and Peek: half a second's rest on it makes the windows see-through until the pointer leaves
+        ShowDesktopButton.Click += (_, _) => { _peek.Stop(); ShowDesktop.Peek(false); ShowDesktop.Toggle(); };
+        _peek.Tick += (_, _) => { _peek.Stop(); ShowDesktop.Peek(true); };
+        ShowDesktopButton.PointerEntered += (_, _) => { _peek.Stop(); _peek.Start(); };
+        ShowDesktopButton.PointerExited += (_, _) => { _peek.Stop(); ShowDesktop.Peek(false); };
+
+        // the taskbar's own menu, on its empty space
+        ContextRequested += (_, e) =>
+        {
+            if (e.Source is Visual v && v.FindAncestorOfType<Button>(includeSelf: true) is { } b && b != ShowDesktopButton) return;   // a button's own menu
+            BuildTaskbarMenu().Open(this);
+            e.Handled = true;
+        };
+
         // The notification centre is the app tray's built-in resident.
         _bell.PanelFactory = () => new NotificationPanel();
         UpdateBell();
@@ -97,8 +112,33 @@ public partial class Taskbar : UserControl
         RefreshStatus();
     }
 
+    private readonly DispatcherTimer _peek = new() { Interval = TimeSpan.FromMilliseconds(500) };
+
+    /// <summary>The taskbar's menu, as on Windows: Task Manager, Show desktop, and its settings.</summary>
+    private static ContextMenu BuildTaskbarMenu()
+    {
+        MenuItem Item(string header, string icon, Action act)
+        {
+            var mi = new MenuItem { Header = header, Icon = Icons.Glyph(icon, 16) };
+            mi.Click += (_, _) => act();
+            return mi;
+        }
+        return new ContextMenu
+        {
+            ItemsSource = new Control[]
+            {
+                Item("Task Manager", "activity", () => AppRegistry.Launch("taskmgr")),
+                new Separator(),
+                Item(ShowDesktop.Showing ? "Show open windows" : "Show desktop", "monitor", ShowDesktop.Toggle),
+                new Separator(),
+                Item("Taskbar settings", "settings", () => SettingsWindow.OpenPage("Desktop & Taskbar")),
+            },
+        };
+    }
+
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
+        _peek.Stop();
         _clock.Stop();
         _status.Stop();
         WindowManager.Changed -= RebuildTasks;
@@ -301,6 +341,7 @@ public partial class Taskbar : UserControl
             Tag = new TaskSlot()
         };
         btn.Classes.Add("task");
+        TaskPreview.Attach(btn, () => (btn.Tag as TaskSlot)?.Task);
         btn.Click += (_, _) =>
         {
             if (btn.Tag is not TaskSlot slot) return;
@@ -327,7 +368,9 @@ public partial class Taskbar : UserControl
 
         bool sameTask = ReferenceEquals(slot.Task, task) && slot.PinId == pinId;
         slot.PinId = pinId; slot.Task = task;
-        if (!Equals(ToolTip.GetTip(btn), title)) ToolTip.SetTip(btn, title);      // an open tooltip just updates its text
+        // a running window has its preview instead of a tooltip
+        object? tip = task != null && SettingsStore.Current.TaskbarPreviews ? null : title;
+        if (!Equals(ToolTip.GetTip(btn), tip)) ToolTip.SetTip(btn, tip);      // an open tooltip just updates its text
         btn.Classes.Set("active", active);
 
         var look = $"{appId}|{title}|{active}|{showLabel}|{starting}|{task != null}|{(task as X11Task)?.IconStamp}|{task?.IsMinimized}";
@@ -421,6 +464,24 @@ public partial class Taskbar : UserControl
                 else if (DesktopEntries.FromId(pinId) is { } la) DesktopEntries.Launch(la);
             }));
         }
+        // the app's recent files, as Windows' jump lists: read when the menu opens
+        if (appId != null)
+            menu.Opening += (_, _) =>
+            {
+                foreach (var old in menu.Items.OfType<Control>().Where(c => c.Tag as string == "recent").ToList()) menu.Items.Remove(old);
+                var recent = JumpList.Recent(appId);
+                if (recent.Count == 0) return;
+                int at = 0;
+                menu.Items.Insert(at++, new MenuItem { Header = "Recent", IsEnabled = false, FontSize = 11.5, Tag = "recent" });
+                foreach (var path in recent)
+                {
+                    var mi = new MenuItem { Header = Path.GetFileName(path), Icon = Icons.Glyph(FileOps.IconName(path, false), 16), Tag = "recent" };
+                    ToolTip.SetTip(mi, path);
+                    mi.Click += (_, _) => FileOpener.Open(path);
+                    menu.Items.Insert(at++, mi);
+                }
+                menu.Items.Insert(at, new Separator { Tag = "recent" });
+            };
         if (task is X11Task { App: { } la2 })
         {
             menu.Items.Insert(0, Item("New window", () => DesktopEntries.Launch(la2)));

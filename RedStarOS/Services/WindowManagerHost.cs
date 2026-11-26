@@ -93,6 +93,14 @@ public static class WindowManagerHost
     /// In the Red Star session (REDSTAR_SESSION=1): when nothing manages windows yet, start redstar-wm for the
     /// lifetime of the shell.
     /// </summary>
+    /// <summary>Tells whoever manages the windows (redstar-comp, or redstar-wm on X11) the accent, for snap previews and title bars.</summary>
+    public static void SendAccent()
+    {
+        var c = ThemeService.AccentColor;
+        if (CompIpc.Connected) CompIpc.Send("accent\t" + ThemeService.AccentHex);
+        X11Props.SetAccent(((uint)c.R << 16) | ((uint)c.G << 8) | c.B);
+    }
+
     public static void EnsureForSession()
     {
         if (Environment.GetEnvironmentVariable("REDSTAR_SESSION") != "1") return;
@@ -122,6 +130,7 @@ public static class X11Props
     [DllImport("libX11.so.6")] private static extern int XFlush(IntPtr d);
     [DllImport("libX11.so.6")] private static extern IntPtr XGetSelectionOwner(IntPtr d, IntPtr selection);
     [DllImport("libX11.so.6")] private static extern int XDefaultScreen(IntPtr d);
+    [DllImport("libX11.so.6")] private static extern IntPtr XDefaultRootWindow(IntPtr d);
 
     private const int PropModeReplace = 0;
     private static readonly IntPtr XA_ATOM = (IntPtr)4, XA_CARDINAL = (IntPtr)6;
@@ -158,6 +167,10 @@ public static class X11Props
         XChangeProperty(d, window, XInternAtom(d, "_NET_WM_WINDOW_TYPE", false), XA_ATOM, 32, PropModeReplace, new[] { (long)desktop }, 1);
         XChangeProperty(d, window, XInternAtom(d, "_NET_WM_DESKTOP", false), XA_CARDINAL, 32, PropModeReplace, new[] { 0xFFFFFFFFL }, 1);
     });
+
+    /// <summary>The accent for redstar-wm (its title bars and snap previews): _REDSTAR_ACCENT on the root, 0xRRGGBB.</summary>
+    public static void SetAccent(uint rgb) => With(d =>
+        XChangeProperty(d, XDefaultRootWindow(d), XInternAtom(d, "_REDSTAR_ACCENT", false), XA_CARDINAL, 32, PropModeReplace, new long[] { rgb & 0xFFFFFF }, 1));
 
     /// <summary>Reserves the taskbar's height at the bottom so maximised and snapped windows stop above it.</summary>
     public static void SetBottomStrut(IntPtr window, int heightPx, int screenWidthPx) => With(d =>

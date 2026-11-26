@@ -6,45 +6,12 @@
         WindowDecorations="None"
         Background="Black">
   <Grid RowDefinitions="*,Auto">
-    <Grid.ContextMenu>
-      <ContextMenu>
-        <MenuItem Header="Change Wallpaper..." Click="OnChangeWallpaper" />
-        <MenuItem Header="Wallpaper Picker..." Click="OnWallpaperPicker" />
-        <MenuItem Header="Next Wallpaper" Click="OnNextWallpaper" />
-        <MenuItem Header="Use Default Wallpaper" Click="OnDefaultWallpaper" />
-        <MenuItem Header="Find Wallpapers Online..." Click="OnMoreWallpapers" />
-        <Separator />
-        <MenuItem Header="New Folder" Click="OnNewDesktopFolder" />
-        <MenuItem Header="Open Terminal" Click="OnOpenTerminal" />
-        <MenuItem Header="Refresh" Click="OnRefreshDesktop" />
-        <Separator />
-        <MenuItem Header="System Settings" Click="OnSettings" />
-      </ContextMenu>
-    </Grid.ContextMenu>
 
     <Image x:Name="WallpaperImage" Grid.RowSpan="2" Stretch="UniformToFill" RenderOptions.BitmapInterpolationMode="HighQuality"
            Source="avares://RedStarOS/Assets/wallpaper.jpg" />
 
-    <ListBox x:Name="DesktopIcons" Classes="desktop" Margin="12" Background="Transparent"
-             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-             DoubleTapped="OnDesktopIconActivated">
-      <ListBox.ItemsPanel>
-        <ItemsPanelTemplate>
-          <WrapPanel Orientation="Horizontal" />
-        </ItemsPanelTemplate>
-      </ListBox.ItemsPanel>
-      <ListBox.ItemTemplate>
-        <DataTemplate>
-          <StackPanel Width="88" Spacing="4">
-            <TextBlock Text="{Binding Icon}" FontSize="36" HorizontalAlignment="Center" />
-            <Border Background="#66000000" CornerRadius="6" Padding="4,1" HorizontalAlignment="Center">
-              <TextBlock Text="{Binding Name}" Foreground="White" FontSize="12" TextAlignment="Center"
-                         TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" />
-            </Border>
-          </StackPanel>
-        </DataTemplate>
-      </ListBox.ItemTemplate>
-    </ListBox>
+    <!-- the icons (DesktopIconsView, made in code: it needs the Desktop folder) -->
+    <Panel x:Name="IconsHost" />
 
     <StackPanel x:Name="Toasts" Width="340" Spacing="8" Margin="12"
                 HorizontalAlignment="Right" VerticalAlignment="Bottom" />

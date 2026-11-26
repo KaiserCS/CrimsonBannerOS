@@ -32,13 +32,7 @@ public partial class DesktopWindow : Window
 
     private static bool _autostarted;
 
-    private sealed class DesktopItem
-    {
-        public string Icon { get; init; } = "";
-        public string Name { get; init; } = "";
-        public string Path { get; init; } = "";
-        public bool IsDir { get; init; }
-    }
+    private readonly DesktopIconsView _icons;
 
     private readonly DispatcherTimer _background = new() { Interval = TimeSpan.FromSeconds(30) };
     private DateTime _lastSlide = DateTime.Now;
@@ -69,7 +63,11 @@ public partial class DesktopWindow : Window
         ThemeService.Changed += OnThemeChanged;
         Notifier.PostedRecord += ShowToast;
         LoadWallpaper();
-        RefreshDesktopIcons();
+        _icons = new DesktopIconsView(() => DesktopFolder);
+        _icons.Activated += OpenIcon;
+        _icons.DesktopMenu += BuildDesktopMenu;
+        IconsHost.Children.Add(_icons);
+        _icons.Reload();
         ShowSplash();
 
         _background.Tick += (_, _) => BackgroundTick();
@@ -90,6 +88,7 @@ public partial class DesktopWindow : Window
             BackgroundTick();
             ClipboardHistory.Start(this);
             X11Desktop.Shortcut += OnGlobalShortcut;
+            X11Desktop.Snapped += SnapAssist.Offer;     // a window dropped at an edge: offer the others for the rest
             X11Desktop.Start();
             WindowManager.TrackForeignWindows();      // other programs' windows get taskbar buttons too
             PortalSetup.Run();                         // inside redstar-comp: screenshots and screen sharing for other apps
@@ -144,6 +143,7 @@ public partial class DesktopWindow : Window
         ThemeService.Changed -= OnThemeChanged;
         Notifier.PostedRecord -= ShowToast;
         X11Desktop.Shortcut -= OnGlobalShortcut;
+        X11Desktop.Snapped -= SnapAssist.Offer;
         base.OnClosed(e);
     }
 
@@ -180,9 +180,7 @@ public partial class DesktopWindow : Window
             case "volume-up": Bar.StepVolume(Taskbar.VolumeStep); break;
             case "volume-down": Bar.StepVolume(-Taskbar.VolumeStep); break;
             case "volume-mute": Bar.StepVolume(0); break;
-            case "desktop":
-                X11Desktop.ListWindows(list => { foreach (var w in list) X11Desktop.SnapWindow(w.Id, "minimize"); });
-                break;
+            case "desktop": ShowDesktop.Toggle(); break;          // Super+D, like the button: again brings them back
             case "snap-left": SnapActive(SnapMode.Left, "left"); break;
             case "snap-right": SnapActive(SnapMode.Right, "right"); break;
             case "maximize": SnapActive(SnapMode.Full, "maximize"); break;
@@ -423,50 +421,90 @@ public partial class DesktopWindow : Window
         }
     }
 
-    private void RefreshDesktopIcons()
+    private void OpenIcon(DesktopIconsView.Item item)
     {
-        var items = new List<DesktopItem>();
-        try
-        {
-            var dir = DesktopFolder;
-            if (Directory.Exists(dir))
-            {
-                var info = new DirectoryInfo(dir);
-                items.AddRange(info.EnumerateDirectories().Where(d => !d.Name.StartsWith('.'))
-                    .OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase)
-                    .Select(d => new DesktopItem { Icon = "📁", Name = d.Name, Path = d.FullName, IsDir = true }));
-                items.AddRange(info.EnumerateFiles().Where(f => !f.Name.StartsWith('.'))
-                    .OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)
-                    .Select(f => new DesktopItem { Icon = FileOps.IconFor(f.FullName, false), Name = f.Name, Path = f.FullName }));
-            }
-        }
-        catch { /* unreadable desktop folder */ }
-        DesktopIcons.ItemsSource = items;
-    }
-
-    private void OnRefreshDesktop(object? s, RoutedEventArgs e) => RefreshDesktopIcons();
-    private void OnOpenTerminal(object? s, RoutedEventArgs e) => TerminalLauncher.Launch(DesktopFolder);
-
-    private async void OnNewDesktopFolder(object? s, RoutedEventArgs e)
-    {
-        var name = await Dialogs.Prompt(this, "New Folder", "Folder name:", "New Folder");
-        if (string.IsNullOrWhiteSpace(name)) return;
-        try
-        {
-            Directory.CreateDirectory(DesktopFolder);
-            Directory.CreateDirectory(FileOps.UniquePath(DesktopFolder, name.Trim()));
-            RefreshDesktopIcons();
-        }
-        catch (Exception ex)
-        {
-            Notifier.Show("New Folder", ex.Message);
-        }
-    }
-
-    private void OnDesktopIconActivated(object? s, TappedEventArgs e)
-    {
-        if (DesktopIcons.SelectedItem is not DesktopItem item) return;
-        if (item.IsDir) WindowManager.Open(new FileManagerWindow(item.Path));
+        if (item.IsDir) WindowManager.Open(new FileManagerWindow(item.Path), "files");
+        else if (item.App != null) DesktopEntries.Launch(item.App);
         else FileOpener.Open(item.Path);
+    }
+
+    private static MenuItem Item(string header, string? icon, Action act, bool enabled = true)
+    {
+        var m = new MenuItem { Header = header, IsEnabled = enabled };
+        if (icon != null) m.Icon = Icons.Glyph(icon, 16);
+        m.Click += (_, _) => act();
+        return m;
+    }
+
+    private static MenuItem Check(string header, bool on, Action act)
+    {
+        var m = new MenuItem { Header = header, ToggleType = MenuItemToggleType.CheckBox, IsChecked = on };
+        m.Click += (_, _) => act();
+        return m;
+    }
+
+    private static MenuItem Radio(string header, bool on, Action act)
+    {
+        var m = new MenuItem { Header = header, ToggleType = MenuItemToggleType.Radio, IsChecked = on, GroupName = header };
+        m.Click += (_, _) => act();
+        return m;
+    }
+
+    /// <summary>The desktop's menu, as on Windows: View, Sort by, Refresh, Paste, New, then the display and its look.</summary>
+    private ContextMenu BuildDesktopMenu()
+    {
+        var l = _icons.Layout;
+        var view = new MenuItem { Header = "View", Icon = Icons.Glyph("grid", 16) };
+        view.ItemsSource = new Control[]
+        {
+            Radio("Large icons", l.Size == DesktopIconSize.Large, () => _icons.SetSize(DesktopIconSize.Large)),
+            Radio("Medium icons", l.Size == DesktopIconSize.Medium, () => _icons.SetSize(DesktopIconSize.Medium)),
+            Radio("Small icons", l.Size == DesktopIconSize.Small, () => _icons.SetSize(DesktopIconSize.Small)),
+            new Separator(),
+            Check("Auto arrange icons", l.AutoArrange, () => _icons.SetAutoArrange(!l.AutoArrange)),
+            Check("Show desktop icons", l.ShowIcons, () => _icons.SetShowIcons(!l.ShowIcons)),
+        };
+        var sort = new MenuItem { Header = "Sort by", Icon = Icons.Glyph("sort", 16) };
+        sort.ItemsSource = new Control[]
+        {
+            Item("Name", null, () => _icons.SetSort(DesktopSort.Name)),
+            Item("Size", null, () => _icons.SetSort(DesktopSort.Size)),
+            Item("Item type", null, () => _icons.SetSort(DesktopSort.Type)),
+            Item("Date modified", null, () => _icons.SetSort(DesktopSort.Date)),
+        };
+        var @new = new MenuItem { Header = "New", Icon = Icons.Glyph("plus", 16) };
+        @new.ItemsSource = new Control[]
+        {
+            Item("Folder", "folder", () => _icons.New("New folder", folder: true)),
+            new Separator(),
+            Item("Text document", "note", () => _icons.New("New text document.txt", folder: false)),
+        };
+        var look = new MenuItem { Header = "Personalise", Icon = Icons.Glyph("palette", 16) };
+        look.ItemsSource = new Control[]
+        {
+            Item("Wallpapers…", "image", () => WallpaperPickerWindow.Open()),
+            Item("Next wallpaper", "refresh", () => WallpaperService.Next()),
+            Item("Choose a picture…", "folder", () => OnChangeWallpaper(null, new RoutedEventArgs())),
+            Item("Find wallpapers online…", "globe", () => WallpaperPickerWindow.Open(online: true)),
+            Item("Default wallpaper", "restore", () => WallpaperService.Set(null)),
+            new Separator(),
+            Item("Appearance settings", "palette", () => SettingsWindow.OpenPage("Appearance")),
+        };
+        return new ContextMenu
+        {
+            ItemsSource = new Control[]
+            {
+                view, sort,
+                Item("Refresh", "refresh", () => _icons.Reload()),
+                new Separator(),
+                Item("Paste", "paste", () => _icons.Paste(), _icons.CanPaste),
+                new Separator(),
+                @new,
+                new Separator(),
+                Item("Open in Terminal", "terminal", () => TerminalLauncher.Launch(DesktopFolder)),
+                Item("Display settings", "monitor", () => SettingsWindow.OpenPage("Displays")),
+                look,
+            },
+        };
     }
 }

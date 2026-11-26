@@ -257,6 +257,42 @@ int main(void)
     root_geom(b, &x, &y, &w, &h);
     CHECK(x == fx + 100 && y == fy + 60, "moved with the pointer (%d,%d → %d,%d)", fx, fy, x, y);
 
+    printf("Snapping (dragged to an edge or a corner)\n");
+    {
+        long wa0 = card(root, "_NET_WORKAREA", XA_CARDINAL, 0), wa1 = card(root, "_NET_WORKAREA", XA_CARDINAL, 1);
+        long wa2 = card(root, "_NET_WORKAREA", XA_CARDINAL, 2), wa3 = card(root, "_NET_WORKAREA", XA_CARDINAL, 3);
+        long accent = 0x1E6FD9;
+        XChangeProperty(d, root, at("_REDSTAR_ACCENT"), XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&accent, 1);
+        settle();
+        msg(b, "_NET_ACTIVE_WINDOW", 2, CurrentTime, 0, 0, 0);
+        root_geom(parent_of(b), &fx, &fy, &fw, &fh);
+        /* hold the window at the left edge: a preview appears (override-redirect windows over the others) */
+        Window r0, p0, *k0; unsigned int n0 = 0, n1 = 0;
+        XQueryTree(d, root, &r0, &p0, &k0, &n0); if (k0) XFree(k0);
+        XTestFakeMotionEvent(d, -1, fx + 60, fy + 12, 0); settle();
+        XTestFakeButtonEvent(d, 1, True, 0); settle();
+        XTestFakeMotionEvent(d, -1, (int)wa0 + 200, (int)wa1 + 300, 0); settle();
+        XTestFakeMotionEvent(d, -1, (int)wa0, (int)wa1 + 300, 0); settle();
+        XQueryTree(d, root, &r0, &p0, &k0, &n1); if (k0) XFree(k0);
+        CHECK(n1 >= n0 + 4, "a preview shows while it's held at the edge (%u → %u windows)", n0, n1);
+        XTestFakeButtonEvent(d, 1, False, 0); settle();
+        XQueryTree(d, root, &r0, &p0, &k0, &n1); if (k0) XFree(k0);
+        CHECK(n1 == n0, "and goes when it's dropped (%u windows)", n1);
+        root_geom(parent_of(b), &x, &y, &w, &h);
+        CHECK(x == wa0 && y == wa1 && w == wa2 / 2 && h == wa3, "dropped at the left edge: the left half (%d,%d %dx%d)", x, y, w, h);
+        CHECK(card(root, "_REDSTAR_SNAPPED", XA_CARDINAL, 0) == (long)b && card(root, "_REDSTAR_SNAPPED", XA_CARDINAL, 1) == 1,
+              "the shell is told (for Snap Assist)");
+        /* from the half to the top right corner: a quarter */
+        click_drag(x + 80, y + 12, (int)(wa0 + wa2 - 1), (int)wa1);
+        root_geom(parent_of(b), &x, &y, &w, &h);
+        CHECK(x == wa0 + wa2 / 2 && y == wa1 && w == wa2 - wa2 / 2 && h == wa3 / 2, "dropped in the top right corner: that quarter (%d,%d %dx%d)", x, y, w, h);
+        CHECK(card(root, "_REDSTAR_SNAPPED", XA_CARDINAL, 1) == 5, "a quarter is told too");
+        /* dragged away: back to its own size */
+        click_drag(x + 80, y + 12, x - 300, y + 200);
+        root_geom(b, &x, &y, &w, &h);
+        CHECK(w == fw - 2 * 3 || w > 100, "dragged away from the corner, it has its own size again (%dx%d)", w, h);
+    }
+
     printf("Special windows\n");
     Window nd = make("Popup without decorations", 300, 300, 200, 100);
     long mot[5] = { 2, 0, 0, 0, 0 };

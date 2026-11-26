@@ -27,6 +27,9 @@ public sealed class Settings
     public string? PasswordHash { get; set; }
 
     public bool Fullscreen { get; set; } = true;       // desktop covers the whole screen
+    public bool SnapAssist { get; set; } = true;       // after snapping a window, offer the others for the space left
+    public bool PeekDesktop { get; set; } = true;      // pointing at Show desktop makes the windows see-through
+    public bool TaskbarPreviews { get; set; } = true;  // pointing at a taskbar button shows its windows
     public string Theme { get; set; } = "Dark";       // Light | Dark | System (Dark: Crimson Banner OS's own look)
     public string Accent { get; set; } = "#C8102E";   // Crimson (ThemeService.Accents)
 

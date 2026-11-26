@@ -40,6 +40,8 @@ public static class X11Desktop
     [DllImport(Lib)] private static extern int XSync(IntPtr d, bool discard);
     [DllImport(Lib)] private static extern int XConnectionNumber(IntPtr d);
     [DllImport(Lib)] private static extern int XIconifyWindow(IntPtr d, IntPtr w, int screen);
+    [DllImport(Lib)] private static extern int XChangeProperty(IntPtr d, IntPtr w, IntPtr prop, IntPtr type, int format, int mode, long[] data, int n);
+    [DllImport(Lib)] private static extern int XDeleteProperty(IntPtr d, IntPtr w, IntPtr prop);
     [DllImport(Lib)] private static extern IntPtr XSetErrorHandler(XErrorHandler handler);
     [DllImport(Lib)] private static extern int XSelectInput(IntPtr d, IntPtr w, IntPtr mask);
     [DllImport("libc", SetLastError = true)] private static extern int poll([In, Out] PollFd[] fds, nuint nfds, int timeout);
@@ -108,6 +110,13 @@ public static class X11Desktop
 
     private static void Post(Action a) => Avalonia.Threading.Dispatcher.UIThread.Post(a);
     private static void Raise(string s) => Post(() => Shortcut?.Invoke(s));
+
+    /// <summary>A window was dropped at an edge or corner and snapped there (id, zone: left, right, top-left…); on the UI thread.</summary>
+    public static event Action<long, string>? Snapped;
+
+    internal static readonly string[] ZoneNames = { "none", "left", "right", "maximize", "top-left", "top-right", "bottom-left", "bottom-right" };
+
+    internal static void RaiseSnapped(long id, string zone) => Post(() => Snapped?.Invoke(id, zone));
 
     // ═════════════════════════════════ background thread ═════════════════════════════════
     private static void Run()
@@ -283,7 +292,7 @@ public static class X11Desktop
     private static IntPtr Atom(string name) => XInternAtom(_d, name, false);
 
     // ═════════════════════════════════ other programs' windows (taskbar) ═════════════════════════════════
-    private static IntPtr _aClientList, _aActive, _aName, _aWmName, _aState, _aIcon;
+    private static IntPtr _aClientList, _aActive, _aName, _aWmName, _aState, _aIcon, _aSnapped;
 
     private static void OnProperty(long window, IntPtr atom)
     {
@@ -291,10 +300,13 @@ public static class X11Desktop
         {
             _aClientList = Atom("_NET_CLIENT_LIST"); _aActive = Atom("_NET_ACTIVE_WINDOW"); _aName = Atom("_NET_WM_NAME");
             _aWmName = Atom("WM_NAME"); _aState = Atom("_NET_WM_STATE"); _aIcon = Atom("_NET_WM_ICON");
+            _aSnapped = Atom("_REDSTAR_SNAPPED");
         }
         if (window == _root.ToInt64())
         {
             if (atom == _aClientList || atom == _aActive) _windowsDirty = true;
+            else if (atom == _aSnapped && ReadCardinals(_root, "_REDSTAR_SNAPPED") is { Length: >= 2 } snap && snap[1] > 0 && snap[1] < ZoneNames.Length)
+                RaiseSnapped(snap[0], ZoneNames[snap[1]]);      // redstar-wm: a window dropped at an edge (Snap Assist)
             return;
         }
         if (atom == _aName || atom == _aWmName || atom == _aState) _windowsDirty = true;
@@ -469,6 +481,17 @@ public static class X11Desktop
             .Select(t => t.w).ToList();
     }
 
+    /// <summary>A window's opacity (Peek), or back to solid with null: _NET_WM_WINDOW_OPACITY, which the window manager
+    /// passes to its frame and the compositor honours.</summary>
+    public static void SetOpacity(long window, double? opacity) => _jobs.Enqueue(() =>
+    {
+        if (window == 0 || CompIpc.IsNative(window)) return;
+        var prop = Atom("_NET_WM_WINDOW_OPACITY");
+        if (opacity is double o) XChangeProperty(_d, (IntPtr)window, prop, (IntPtr)6 /* CARDINAL */, 32, 0, new[] { (long)(Math.Clamp(o, 0, 1) * 0xFFFFFFFFL) }, 1);
+        else XDeleteProperty(_d, (IntPtr)window, prop);
+        XFlush(_d);
+    });
+
     public static void Activate(long window)
     {
         if (CompIpc.IsNative(window)) { CompIpc.Activate(window); return; }
@@ -506,14 +529,24 @@ public static class X11Desktop
         const int i = 0;                                      // the work area (one desktop)
         long x = wa[i], y = wa[i + 1], width = wa[i + 2], height = wa[i + 3];
         SendRoot(w, "_NET_WM_STATE", remove, maxV, maxH, 2);
-        long half = width / 2;
-        long nx = how == "left" ? x : x + half;
+        long half = width / 2, hh = height / 2;
+        (long nx, long ny, long bw, long bh) = how switch
+        {
+            "left" => (x, y, half, height),
+            "right" => (x + half, y, width - half, height),
+            "top-left" => (x, y, half, hh),
+            "top-right" => (x + half, y, width - half, hh),
+            "bottom-left" => (x, y + hh, half, height - hh),
+            "bottom-right" => (x + half, y + hh, width - half, height - hh),
+            _ => (-1L, 0L, 0L, 0L),
+        };
+        if (nx < 0) return;
         // x/y place the frame (NorthWest gravity); width/height are the window's own size, so take the
         // title bar and borders (_NET_FRAME_EXTENTS: left, right, top, bottom) off the half-screen.
         var ext = ReadCardinals(w, "_NET_FRAME_EXTENTS");
         long el = 0, er = 0, et = 0, eb = 0;
         if (ext is { Length: >= 4 }) { el = ext[0]; er = ext[1]; et = ext[2]; eb = ext[3]; }
         // gravity NorthWest, x/y/width/height given, from a pager
-        SendRoot(w, "_NET_MOVERESIZE_WINDOW", 1 | (0xF << 8) | (2 << 12), nx, y, Math.Max(100, half - el - er), Math.Max(100, height - et - eb));
+        SendRoot(w, "_NET_MOVERESIZE_WINDOW", 1 | (0xF << 8) | (2 << 12), nx, ny, Math.Max(100, bw - el - er), Math.Max(100, bh - et - eb));
     });
 }

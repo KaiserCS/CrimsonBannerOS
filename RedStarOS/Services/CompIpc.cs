@@ -76,6 +76,7 @@ public static class CompIpc
         _thread = new Thread(Read) { IsBackground = true, Name = "comp-ipc" };
         _thread.Start();
         Send("hello");
+        Send("accent\t" + ThemeService.AccentHex);     // snap previews and title bars in the shell's accent
         return true;
     }
 
@@ -277,6 +278,9 @@ public static class CompIpc
                 break;
             case "idle-end":
                 IdleChanged?.Invoke(false);
+                break;
+            case "snapped" when f.Length >= 3 && long.TryParse(f[1], out var sid):   // dropped at an edge: Snap Assist
+                X11Desktop.RaiseSnapped(sid, f[2]);
                 break;
             case "key" when f.Length >= 2:
                 Key?.Invoke(f.Length > 2 ? f[1] + "\t" + f[2] : f[1]);     // e.g. "screenshot-window\tx,y wxh"

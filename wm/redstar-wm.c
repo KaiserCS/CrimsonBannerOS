@@ -52,6 +52,7 @@ typedef struct Client {
     int sx, sy, sw, sh;             /* saved geometry before maximise / fullscreen */
     int type, decorated, desktop;   /* desktop: 0.. or -1 = all */
     int maximized, fullscreen, minimized, above, skip_taskbar, sticky;
+    int snapped;                    /* a half or a quarter (ZONE_*), 0 = none */
     int del_proto, focus_proto, input_hint;
     int min_w, min_h, max_w, max_h;
     int ignore_unmap;
@@ -68,6 +69,7 @@ static int scr, SW, SH;
 static double scale = 1.0;
 static int TH = 32, BW = 3;         /* title height, border (scaled) */
 static Client *clients, *stack, *active;
+static void snap_preview_hide(void);
 static int ndesk = 1, curdesk = 0;     /* Red Star uses a single workspace */
 static int wa_x, wa_y, wa_w, wa_h;  /* work area */
 static Cursor cur_normal, cur_move, cur_edge[8];
@@ -103,7 +105,8 @@ enum {
     NET_WM_MOVERESIZE, NET_MOVERESIZE_WINDOW, NET_CLOSE_WINDOW, NET_FRAME_EXTENTS, NET_REQUEST_FRAME_EXTENTS,
     NET_WM_STRUT, NET_WM_STRUT_PARTIAL, NET_WM_ALLOWED_ACTIONS, NET_WM_ACTION_MOVE, NET_WM_ACTION_RESIZE,
     NET_WM_ACTION_MINIMIZE, NET_WM_ACTION_MAXIMIZE_HORZ, NET_WM_ACTION_MAXIMIZE_VERT, NET_WM_ACTION_FULLSCREEN,
-    NET_WM_ACTION_CLOSE, NET_WM_ACTION_CHANGE_DESKTOP, NET_WM_PID, MOTIF_WM_HINTS, NET_SHOWING_DESKTOP, NET_WM_USER_TIME, REDSTAR_SHADOW, ATOM_COUNT
+    NET_WM_ACTION_CLOSE, NET_WM_ACTION_CHANGE_DESKTOP, NET_WM_PID, MOTIF_WM_HINTS, NET_SHOWING_DESKTOP, NET_WM_USER_TIME, REDSTAR_SHADOW,
+    REDSTAR_ACCENT, REDSTAR_SNAPPED, NET_WM_WINDOW_OPACITY, NET_WM_CM_S0, ATOM_COUNT
 };
 static const char *atom_names[ATOM_COUNT] = {
     "WM_PROTOCOLS", "WM_DELETE_WINDOW", "WM_TAKE_FOCUS", "WM_STATE", "WM_CHANGE_STATE",
@@ -119,7 +122,8 @@ static const char *atom_names[ATOM_COUNT] = {
     "_NET_WM_MOVERESIZE", "_NET_MOVERESIZE_WINDOW", "_NET_CLOSE_WINDOW", "_NET_FRAME_EXTENTS", "_NET_REQUEST_FRAME_EXTENTS",
     "_NET_WM_STRUT", "_NET_WM_STRUT_PARTIAL", "_NET_WM_ALLOWED_ACTIONS", "_NET_WM_ACTION_MOVE", "_NET_WM_ACTION_RESIZE",
     "_NET_WM_ACTION_MINIMIZE", "_NET_WM_ACTION_MAXIMIZE_HORZ", "_NET_WM_ACTION_MAXIMIZE_VERT", "_NET_WM_ACTION_FULLSCREEN",
-    "_NET_WM_ACTION_CLOSE", "_NET_WM_ACTION_CHANGE_DESKTOP", "_NET_WM_PID", "_MOTIF_WM_HINTS", "_NET_SHOWING_DESKTOP", "_NET_WM_USER_TIME", "_REDSTAR_SHADOW"
+    "_NET_WM_ACTION_CLOSE", "_NET_WM_ACTION_CHANGE_DESKTOP", "_NET_WM_PID", "_MOTIF_WM_HINTS", "_NET_SHOWING_DESKTOP", "_NET_WM_USER_TIME", "_REDSTAR_SHADOW",
+    "_REDSTAR_ACCENT", "_REDSTAR_SNAPPED", "_NET_WM_WINDOW_OPACITY", "_NET_WM_CM_S0"
 };
 static Atom A[ATOM_COUNT];
 
@@ -659,7 +663,8 @@ static void set_maximized(Client *c, int on)
 {
     if (!c || c->fullscreen || c->type == T_DESKTOP || c->type == T_DOCK) return;
     if (on && !c->maximized) {
-        c->sx = c->x; c->sy = c->y; c->sw = c->w; c->sh = c->h;
+        if (!c->snapped) { c->sx = c->x; c->sy = c->y; c->sw = c->w; c->sh = c->h; }
+        c->snapped = 0;
         c->maximized = 1;
         c->x = wa_x; c->y = wa_y + deco_top(c); c->w = wa_w; c->h = wa_h - deco_top(c);
     } else if (!on && c->maximized) {
@@ -860,7 +865,7 @@ static void manage(Window w, XWindowAttributes *wa, int already_mapped)
 
 static void unmanage(Client *c, int destroyed)
 {
-    if (drag_c == c) { drag_mode = DRAG_NONE; drag_c = NULL; XUngrabPointer(dpy, CurrentTime); }
+    if (drag_c == c) { drag_mode = DRAG_NONE; drag_c = NULL; XUngrabPointer(dpy, CurrentTime); snap_preview_hide(); }
     if (hover_c == c) hover_c = NULL;
     if (last_click_c == c) last_click_c = NULL;
     if (!destroyed) {
@@ -924,6 +929,127 @@ static int dir_to_edge(int dir)
     return dir >= 0 && dir < 8 ? map[dir] : 0;
 }
 
+/* ───────────────────────── snapping ─────────────────────────
+ * A window dragged to an edge of the work area snaps as on Windows: the top maximises, the sides take a half, near a
+ * corner a quarter. While it's dragged there, a preview in the shell's accent (_REDSTAR_ACCENT on the root, set by the
+ * shell) shows where it will go: a wash of the accent where a compositor can show it see-through, and its edge. The
+ * shell hears of a snap through _REDSTAR_SNAPPED on the root (window, zone), to offer the other windows (Snap Assist). */
+enum { ZONE_NONE, ZONE_LEFT, ZONE_RIGHT, ZONE_TOP, ZONE_TL, ZONE_TR, ZONE_BL, ZONE_BR };
+static int snap_zone;
+static Window snap_fill, snap_edge[4];
+
+static void zone_box(int zone, int *x, int *y, int *w, int *h)
+{
+    int hw = wa_w / 2, hh = wa_h / 2;
+    *x = wa_x; *y = wa_y; *w = wa_w; *h = wa_h;
+    switch (zone) {
+    case ZONE_LEFT: *w = hw; break;
+    case ZONE_RIGHT: *x = wa_x + hw; *w = wa_w - hw; break;
+    case ZONE_TL: *w = hw; *h = hh; break;
+    case ZONE_TR: *x = wa_x + hw; *w = wa_w - hw; *h = hh; break;
+    case ZONE_BL: *y = wa_y + hh; *w = hw; *h = wa_h - hh; break;
+    case ZONE_BR: *x = wa_x + hw; *y = wa_y + hh; *w = wa_w - hw; *h = wa_h - hh; break;
+    default: break;
+    }
+}
+
+static int zone_at(int px, int py)
+{
+    int corner = S(64);
+    int left = px <= wa_x + 1, right = px >= wa_x + wa_w - 2, top = py <= wa_y + 1;
+    int high = py < wa_y + corner, low = py > wa_y + wa_h - corner;
+    if (left) return high ? ZONE_TL : low ? ZONE_BL : ZONE_LEFT;
+    if (right) return high ? ZONE_TR : low ? ZONE_BR : ZONE_RIGHT;
+    if (top) return px < wa_x + corner ? ZONE_TL : px > wa_x + wa_w - corner ? ZONE_TR : ZONE_TOP;
+    return ZONE_NONE;
+}
+
+static unsigned long mix_white(unsigned long pixel, double t)
+{
+    XColor c; c.pixel = pixel;
+    XQueryColor(dpy, DefaultColormap(dpy, scr), &c);
+    c.red += (unsigned short)((65535 - c.red) * t); c.green += (unsigned short)((65535 - c.green) * t); c.blue += (unsigned short)((65535 - c.blue) * t);
+    return XAllocColor(dpy, DefaultColormap(dpy, scr), &c) ? c.pixel : pixel;
+}
+
+static Window preview_window(unsigned long colour)
+{
+    XSetWindowAttributes a;
+    a.override_redirect = True; a.background_pixel = colour; a.save_under = True;
+    return XCreateWindow(dpy, root, 0, 0, 1, 1, 0, CopyFromParent, InputOutput, CopyFromParent,
+                         CWOverrideRedirect | CWBackPixel | CWSaveUnder, &a);
+}
+
+static void snap_preview_hide(void)
+{
+    if (snap_fill) { XDestroyWindow(dpy, snap_fill); snap_fill = 0; }
+    for (int i = 0; i < 4; i++) if (snap_edge[i]) { XDestroyWindow(dpy, snap_edge[i]); snap_edge[i] = 0; }
+    snap_zone = ZONE_NONE;
+}
+
+static void snap_preview_show(Client *c, int zone)
+{
+    if (zone == snap_zone) return;
+    snap_preview_hide();
+    if (zone == ZONE_NONE) return;
+    snap_zone = zone;
+    int x, y, w, h, in = S(6), lw = S(2);
+    zone_box(zone, &x, &y, &w, &h);
+    x += in; y += in; w -= 2 * in; h -= 2 * in;
+    if (w <= 2 * lw || h <= 2 * lw) return;
+    /* the wash only where a compositor draws it see-through; without one a solid block would hide the screen */
+    if (XGetSelectionOwner(dpy, A[NET_WM_CM_S0]) != None) {
+        snap_fill = preview_window(col_accent);
+        unsigned long opacity = (unsigned long)(0.26 * 0xFFFFFFFFUL);
+        XChangeProperty(dpy, snap_fill, A[NET_WM_WINDOW_OPACITY], XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&opacity, 1);
+        XMoveResizeWindow(dpy, snap_fill, x, y, w, h);
+    }
+    unsigned long edge = mix_white(col_accent, 0.25);
+    int r[4][4] = { { x, y, w, lw }, { x, y + h - lw, w, lw }, { x, y, lw, h }, { x + w - lw, y, lw, h } };
+    for (int i = 0; i < 4; i++) {
+        snap_edge[i] = preview_window(edge);
+        XMoveResizeWindow(dpy, snap_edge[i], r[i][0], r[i][1], r[i][2], r[i][3]);
+    }
+    /* under the dragged window, over the rest */
+    Window order[6]; int n = 0;
+    order[n++] = c->frame;
+    for (int i = 0; i < 4; i++) order[n++] = snap_edge[i];
+    if (snap_fill) order[n++] = snap_fill;
+    for (int i = 1; i < n; i++) XMapWindow(dpy, order[i]);
+    XRaiseWindow(dpy, c->frame);
+    XRestackWindows(dpy, order, n);
+}
+
+static void set_maximized(Client *c, int on);
+
+static void set_snapped(Client *c, int zone)
+{
+    if (!c || c->fullscreen || c->type == T_DESKTOP || c->type == T_DOCK || zone == ZONE_NONE) return;
+    if (zone == ZONE_TOP) { set_maximized(c, 1); return; }
+    if (c->maximized) set_maximized(c, 0);
+    if (!c->snapped) { c->sx = c->x; c->sy = c->y; c->sw = c->w; c->sh = c->h; }
+    c->snapped = zone;
+    int x, y, w, h, side = deco_side(c), top = deco_top(c);
+    zone_box(zone, &x, &y, &w, &h);
+    c->x = x + side; c->y = y + top; c->w = w - 2 * side; c->h = h - top - side;
+    apply_geometry(c);
+    long v[2] = { (long)c->win, zone };
+    set_cardinals(root, A[REDSTAR_SNAPPED], XA_CARDINAL, v, 2);
+}
+
+/* the shell's accent: title bars and snap previews */
+static void read_accent(void)
+{
+    unsigned long n;
+    long *v = get_cardinals(root, A[REDSTAR_ACCENT], XA_CARDINAL, &n);
+    if (!v) return;
+    char hex[8];
+    snprintf(hex, sizeof hex, "#%06lx", (unsigned long)v[0] & 0xFFFFFF);
+    XFree(v);
+    col_accent = rgb(hex);
+    for (Client *c = clients; c; c = c->next) if (c->decorated) draw_frame(c);
+}
+
 static void start_drag(Client *c, int mode, int edge, int px, int py)
 {
     if (!c || c->fullscreen || c->type == T_DESKTOP || c->type == T_DOCK) return;
@@ -941,17 +1067,19 @@ static void drag_motion(int px, int py)
     if (!c) return;
     int dx = px - drag_px, dy = py - drag_py;
     if (drag_mode == DRAG_MOVE) {
-        if (c->maximized) {
+        if (c->maximized || c->snapped) {
             if (abs(dx) < S(8) && abs(dy) < S(8)) return;
-            /* dragging a maximised window restores it under the pointer */
+            /* dragging a maximised or snapped window restores it under the pointer */
             double rel = (double)(px - c->x) / (c->w ? c->w : 1);
-            set_maximized(c, 0);
+            if (c->maximized) set_maximized(c, 0);
+            else { c->snapped = 0; c->w = c->sw; c->h = c->sh; apply_geometry(c); }
             drag_fx = px - (int)(rel * c->w); drag_fy = py + TH / 2;
             drag_px = px; drag_py = py; dx = dy = 0;
         }
         c->x = drag_fx + dx; c->y = drag_fy + dy;
         if (c->y - deco_top(c) < wa_y) c->y = wa_y + deco_top(c);
         XMoveWindow(dpy, c->frame, c->x - deco_side(c), c->y - deco_top(c));
+        snap_preview_show(c, zone_at(px, py));
     } else if (drag_mode == DRAG_RESIZE) {
         int x = drag_fx, y = drag_fy, w = drag_fw, h = drag_fh;
         if (drag_edge & 1) { w = drag_fw - dx; x = drag_fx + dx; }
@@ -973,7 +1101,10 @@ static void drag_motion(int px, int py)
 static void end_drag(void)
 {
     XUngrabPointer(dpy, CurrentTime);
-    if (drag_c) { send_configure(drag_c); draw_frame(drag_c); }
+    int zone = drag_mode == DRAG_MOVE ? snap_zone : ZONE_NONE;
+    snap_preview_hide();
+    if (drag_c && zone != ZONE_NONE) set_snapped(drag_c, zone);
+    else if (drag_c) { send_configure(drag_c); draw_frame(drag_c); }
     drag_mode = DRAG_NONE; drag_c = NULL;
 }
 
@@ -1037,6 +1168,7 @@ static void on_destroy(XDestroyWindowEvent *e)
 
 static void on_property(XPropertyEvent *e)
 {
+    if (e->window == root && e->atom == A[REDSTAR_ACCENT]) { read_accent(); return; }
     Client *c = find_client(e->window);
     if (!c) return;
     if (e->atom == A[NET_WM_NAME] || e->atom == XA_WM_NAME) { read_title(c); draw_frame(c); }
@@ -1055,6 +1187,13 @@ static void on_property(XPropertyEvent *e)
             restack();
             if (c->type == T_DESKTOP && active == c) focus_next();
         }
+    } else if (e->atom == A[NET_WM_WINDOW_OPACITY] && e->window == c->win) {
+        /* a window's own opacity (the shell's Peek) goes on its frame, which is what the compositor draws */
+        unsigned long n;
+        long *v = get_cardinals(c->win, A[NET_WM_WINDOW_OPACITY], XA_CARDINAL, &n);
+        if (v && n) { unsigned long o = (unsigned long)v[0] & 0xFFFFFFFFUL; XChangeProperty(dpy, c->frame, A[NET_WM_WINDOW_OPACITY], XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&o, 1); }
+        else XDeleteProperty(dpy, c->frame, A[NET_WM_WINDOW_OPACITY]);
+        if (v) XFree(v);
     } else if (e->atom == A[MOTIF_WM_HINTS]) {
         int dec = (c->type == T_NORMAL || c->type == T_DIALOG || c->type == T_UTILITY) && !motif_no_decor(c->win);
         if (dec != c->decorated) { c->decorated = dec; apply_geometry(c); }
@@ -1283,6 +1422,7 @@ int main(int argc, char **argv)
     col_accent = rgb("#c8102e"); col_text = rgb("#ffffff"); col_text_dim = rgb("#b4b4ba");
     col_close_hover = rgb("#e81123"); col_btn_hover = rgb("#3d3d46");
     gc = XCreateGC(dpy, root, 0, NULL);
+    read_accent();
     load_fonts();
 
     cur_normal = XCreateFontCursor(dpy, XC_left_ptr);

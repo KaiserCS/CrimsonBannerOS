@@ -243,7 +243,7 @@ public partial class StartMenu : UserControl
     }
 
     /// <summary>A Linux program's icon from the icon theme (PNG), cached for the session.</summary>
-    private static IImage? LinuxIcon(LinuxApp app)
+    internal static IImage? LinuxIcon(LinuxApp app)
     {
         if (string.IsNullOrEmpty(app.Icon)) return null;
         if (IconCache.TryGetValue(app.Icon, out var cached)) return cached;

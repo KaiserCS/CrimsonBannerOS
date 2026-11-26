@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using RedStarOS.Services;
 using RedStarOS.Views;
 using Xunit;
 
@@ -217,6 +218,76 @@ public class ScreenshotTests
         {
             if (light) { RedStarOS.Services.SettingsStore.Current.Theme = before; RedStarOS.Services.ThemeService.Apply(); }
         }
+    }
+
+    private static Window OnWallpaper(Control content, int width, int height)
+    {
+        var w = new Window { Width = width, Height = height, Content = content };
+        try { w.Background = new Avalonia.Media.ImageBrush(new Avalonia.Media.Imaging.Bitmap(Avalonia.Platform.AssetLoader.Open(new Uri("avares://RedStarOS/Assets/wallpaper.jpg")))) { Stretch = Avalonia.Media.Stretch.UniformToFill }; }
+        catch (Exception) { }
+        return w;
+    }
+
+    // ─────────── the desktop's icons, Snap Assist and a taskbar preview ───────────
+    [AvaloniaFact]
+    public void Shell_desktop_icons()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "desk-shot-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(Path.Combine(dir, "Projects"));
+        Directory.CreateDirectory(Path.Combine(dir, "Photos from the march"));
+        File.WriteAllText(Path.Combine(dir, "Meeting notes.txt"), "notes");
+        File.WriteAllText(Path.Combine(dir, "Budget 2027.xlsx"), "");
+        File.WriteAllText(Path.Combine(dir, "Speech.docx"), "");
+        File.WriteAllText(Path.Combine(dir, "Anthem.mp3"), "");
+        // a photo, to be shown as itself
+        var bmp = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(120, 90));
+        using (var ctx = bmp.CreateDrawingContext())
+        {
+            ctx.FillRectangle(new Avalonia.Media.LinearGradientBrush
+            {
+                StartPoint = new Avalonia.RelativePoint(0, 0, Avalonia.RelativeUnit.Relative), EndPoint = new Avalonia.RelativePoint(0, 1, Avalonia.RelativeUnit.Relative),
+                GradientStops = { new Avalonia.Media.GradientStop(Avalonia.Media.Color.Parse("#E8344B"), 0), new Avalonia.Media.GradientStop(Avalonia.Media.Color.Parse("#2A1A2E"), 1) },
+            }, new Avalonia.Rect(0, 0, 120, 90));
+            ctx.FillRectangle(Avalonia.Media.Brushes.Black, new Avalonia.Rect(0, 62, 120, 28));
+        }
+        bmp.Save(Path.Combine(dir, "Sunset.png"));
+        try
+        {
+            var icons = new DesktopIconsView(() => dir, Path.Combine(dir, ".layout.json"));
+            var w = OnWallpaper(icons, 760, 460);
+            w.Opened += (_, _) =>
+            {
+                icons.Reload();
+                icons.Select(icons.Items.Where(i => i.Name is "Speech.docx" or "Sunset.png"));
+            };
+            ShowAndCapture(w, "Shell-DesktopIcons");
+        }
+        finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
+    }
+
+    [AvaloniaFact]
+    public void Shell_snap_assist()
+    {
+        var wins = new List<X11Desktop.XWin>
+        {
+            new(11, "Files — Documents", "files", 0, false), new(12, "Writer — Speech.docx", "writer", 0, false),
+            new(13, "Crimson Online — News", "online", 0, false), new(14, "Terminal", "xterm", 0, false), new(15, "Calculator", "calculator", 0, true),
+        };
+        var w = new SnapAssist(wins, "right") { Topmost = false };
+        ShowAndCapture(w, "Shell-SnapAssist");
+    }
+
+    [AvaloniaFact]
+    public void Shell_taskbar_preview()
+    {
+        var calc = new CalculatorWindow();
+        calc.Show();
+        try
+        {
+            var card = TaskPreview.Card(new NativeTask(calc, "calculator"));
+            ShowAndCapture(OnWallpaper(new Border { Padding = new Avalonia.Thickness(16), Child = card, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top }, 280, 230), "Shell-TaskbarPreview");
+        }
+        finally { calc.Close(); }
     }
 
     // ─────────── the shell's own parts (the taskbar, the Start menu and the panels), each in a window of its size ───────────

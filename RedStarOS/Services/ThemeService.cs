@@ -24,6 +24,12 @@ public static class ThemeService
             _ => false
         };
 
+    /// <summary>The chosen accent (crimson unless another is chosen).</summary>
+    public static Color AccentColor => Color.TryParse(SettingsStore.Current.Accent, out var c) ? c : Color.Parse("#C8102E");
+
+    /// <summary>The accent as #RRGGBB, for the compositor and window manager (snap previews, title bars).</summary>
+    public static string AccentHex { get { var c = AccentColor; return $"#{c.R:X2}{c.G:X2}{c.B:X2}"; } }
+
     public static void Apply()
     {
         var app = Application.Current;
@@ -56,6 +62,7 @@ public static class ThemeService
         ApplyHighContrast(app, s.HighContrast);
         ApplyNoCompositor(app);
         LookAndFeel.ApplyOtherPrograms();     // GTK and Qt programs follow light/dark (when Red Star styles them)
+        WindowManagerHost.SendAccent();       // the compositor's or window manager's snap previews and title bars
 
         Changed?.Invoke();
     }
