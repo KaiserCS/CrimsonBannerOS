@@ -28,7 +28,7 @@ public sealed class ReaderWindow : Window
     private readonly ScrollViewer _scroll = new() { HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled };
     private readonly StackPanel _page = new() { Spacing = 0, MaxWidth = 720, Margin = new Thickness(40, 36, 40, 60), HorizontalAlignment = HorizontalAlignment.Center };
     private readonly Border _paper = new();
-    private readonly ListBox _contents = new() { Width = 260 };
+    private readonly ListBox _contents = new();
     private readonly TextBlock _where = new() { Classes = { "muted" }, FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
     private readonly TextBlock _chapterTitle = new() { FontWeight = FontWeight.SemiBold, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly Button _prev, _next;
@@ -55,7 +55,7 @@ public sealed class ReaderWindow : Window
             if (t.Chapter != _chapter) Go(t.Chapter, 0);
             if (t.Fragment != null) Dispatcher.UIThread.Post(() => ScrollTo(t.Fragment), DispatcherPriority.Background);
         };
-        var side = new DockPanel { Margin = new Thickness(12, 12, 0, 12) };
+        var side = new DockPanel { Width = 270, Margin = new Thickness(12, 12, 0, 12) };
         var head = new StackPanel { Spacing = 3, Margin = new Thickness(8, 4, 8, 12) };
         head.Children.Add(Kicker("CONTENTS", accent: true));
         head.Children.Add(new TextBlock { Text = _book.Title, FontWeight = FontWeight.Bold, FontSize = 15, TextWrapping = TextWrapping.Wrap });
@@ -93,14 +93,16 @@ public sealed class ReaderWindow : Window
             Remember();
             mark.Content = "MARKED";
         };
-        var bar = new DockPanel { Margin = new Thickness(16, 10, 16, 10) };
+        // three columns: the chapter buttons, where you are (trimmed to fit), the type and the paper
+        var bar = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Margin = new Thickness(16, 10, 16, 10) };
+        var left = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        left.Children.Add(_prev); left.Children.Add(_next);
+        var middle = new StackPanel { Spacing = 0, Margin = new Thickness(14, 0, 14, 0), VerticalAlignment = VerticalAlignment.Center };
+        middle.Children.Add(_chapterTitle); middle.Children.Add(_where);
         var right = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
         right.Children.Add(smaller); right.Children.Add(larger); right.Children.Add(tones); right.Children.Add(mark);
-        DockPanel.SetDock(right, Dock.Right);
-        bar.Children.Add(right);
-        var left = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
-        left.Children.Add(_prev); left.Children.Add(_next); left.Children.Add(_chapterTitle); left.Children.Add(_where);
-        bar.Children.Add(left);
+        Grid.SetColumn(middle, 1); Grid.SetColumn(right, 2);
+        bar.Children.Add(left); bar.Children.Add(middle); bar.Children.Add(right);
 
         _scroll.Content = _page;
         _paper.Child = _scroll;

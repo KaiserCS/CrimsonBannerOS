@@ -117,7 +117,7 @@ public sealed class ArchiveWindow : Window
         col.Children.Add(Lcd(("BOOKS", _lib.Books.Count.ToString("000")), ("READING", reading.ToString("00")), ("SOURCES", _sources.Count.ToString("00"))));
 
         var bar = new DockPanel();
-        var search = new TextBox { Text = _shelfQuery, PlaceholderText = "Search your shelf: title, author or source", Width = 380 };
+        var search = new TextBox { Text = _shelfQuery, PlaceholderText = "Search your shelf: title, author or source", Width = 380, HorizontalAlignment = HorizontalAlignment.Left };
         search.KeyUp += (_, _) =>
         {
             if (search.Text == _shelfQuery) return;
