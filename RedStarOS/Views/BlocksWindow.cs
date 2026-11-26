@@ -193,9 +193,9 @@ public sealed class BlocksWindow : Window
         _view = new BlocksView(() => _game, () => _paused);
         _next = new NextView(() => _game) { Height = 80 };
 
-        var newGame = new Button { Content = "New game (F2)", HorizontalAlignment = HorizontalAlignment.Stretch };
+        var newGame = new Button { Content = "New game (F2)", HorizontalAlignment = HorizontalAlignment.Stretch, Focusable = false };
         newGame.Click += (_, _) => NewGame();
-        var pause = new Button { Content = "Pause (P)", HorizontalAlignment = HorizontalAlignment.Stretch };
+        var pause = new Button { Content = "Pause (P)", HorizontalAlignment = HorizontalAlignment.Stretch, Focusable = false };
         pause.Click += (_, _) => TogglePause();
         var side = new StackPanel
         {
@@ -217,7 +217,8 @@ public sealed class BlocksWindow : Window
         Content = root;
 
         _timer.Tick += (_, _) => Tick();
-        KeyDown += OnKey;
+        // the game's keys first (tunnelling), so a focused control can't take them: Space on a button would press it
+        AddHandler(KeyDownEvent, OnKey, Avalonia.Interactivity.RoutingStrategies.Tunnel);
         KeyUp += (_, e) => { if (e.Key == Key.Down) _down = false; };
         Deactivated += (_, _) => { if (!_paused && !_game.Over) TogglePause(); };
         Opened += (_, _) => { Focus(); _timer.Start(); Refresh(); };

@@ -61,7 +61,7 @@ public partial class PongWindow : Window
             else if (_state == State.Over) NewGame();
         };
         Playground.SizeChanged += (_, _) => RelayOut();
-        KeyDown += OnKeyDown;
+        AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);   // before any focused control (Space would press a button)
         KeyUp += (_, e) =>
         {
             if (e.Key is Key.Left or Key.A) _left = false;
