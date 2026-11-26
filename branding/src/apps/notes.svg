@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Notes' icon: a note with its corner turned, on the graphite tile. branding/README.md -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>
+    <clipPath id="top"><path d="M 58 48 L 198 48 A 10 10 0 0 1 208 58 L 208 70 L 48 70 L 48 58 A 10 10 0 0 1 58 48 Z"/></clipPath>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <path d="M 58 48 L 198 48 A 10 10 0 0 1 208 58 L 208 160 L 160 208 L 58 208 A 10 10 0 0 1 48 198 L 48 58 A 10 10 0 0 1 58 48 Z" fill="#F2F2F5"/>
+  <path d="M 208 160 L 170 160 A 10 10 0 0 0 160 170 L 160 208 Z" fill="#B4B4BC"/>
+  <rect x="48" y="48" width="160" height="22" rx="0" fill="#C8102E" clip-path="url(#top)"/>
+  <rect x="72" y="96" width="112" height="9" rx="4.5" fill="#B4B4BC"/>
+  <rect x="72" y="120" width="112" height="9" rx="4.5" fill="#B4B4BC"/>
+  <rect x="72" y="144" width="70" height="9" rx="4.5" fill="#B4B4BC"/>
+
+</svg>

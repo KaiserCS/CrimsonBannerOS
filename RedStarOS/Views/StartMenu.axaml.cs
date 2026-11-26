@@ -111,7 +111,8 @@ public partial class StartMenu : UserControl
                 Subtitle = RedStarCategoryLabels.GetValueOrDefault(captured.Category, captured.Category),
                 AppId = captured.Id,
                 Glyph = AppIcons.GlyphFor(captured.Id, captured.Name),
-                Badge = AppIcons.Brush(AppIcons.ColorForCategory(captured.Category)),
+                Badge = AppIcons.Plate,
+                Icon = AppIcons.Picture(captured.Id),
                 Category = captured.Category,
                 Run = captured.Start
             });
@@ -133,7 +134,7 @@ public partial class StartMenu : UserControl
                         Title = app.Name,
                         Subtitle = RedStarCategoryLabels.GetValueOrDefault(rs, rs),
                         Glyph = app.Name.Length > 0 ? app.Name[..1].ToUpperInvariant() : "?",
-                        Badge = AppIcons.Brush(AppIcons.ColorForCategory(rs)),
+                        Badge = AppIcons.Plate,
                         Category = rs,
                         Icon = LinuxIcon(app),
                         Run = () => DesktopEntries.Launch(app)
@@ -148,7 +149,7 @@ public partial class StartMenu : UserControl
                     Title = app.Name,
                     Subtitle = cat,
                     Glyph = app.Name.Length > 0 ? app.Name[..1].ToUpperInvariant() : "?",
-                    Badge = AppIcons.Brush(AppIcons.ColorForName(app.Name)),
+                    Badge = AppIcons.Plate,
                     Category = LinuxPrefix + cat,
                     Icon = LinuxIcon(app),
                     Run = () => DesktopEntries.Launch(app)
@@ -307,7 +308,7 @@ public partial class StartMenu : UserControl
             StartItem ToItem(SearchIndex.Hit h) => new()
             {
                 Key = "search:" + h.Kind + ":" + h.Title, Title = h.Title, Subtitle = h.Subtitle, Glyph = h.Icon,
-                Badge = AppIcons.Brush(h.Kind switch { "web" => "#6B46C1", "setting" => "#4A5568", "calc" => "#DD6B20", _ => "#2B6CB0" }),
+                Badge = AppIcons.Plate,
                 Run = h.Run
             };
             static StartItem Header(string text) => new() { Key = "header:" + text, Title = text, IsHeader = true };

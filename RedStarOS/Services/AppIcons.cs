@@ -4,12 +4,15 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 
 namespace RedStarOS.Services;
 
 /// <summary>
-/// One place that decides what an app looks like (glyph + colour). The taskbar, Start menu,
-/// notification centre, Settings hub and toasts all use it, so an app has the same icon everywhere.
+/// One place that decides what an app looks like. The taskbar, Start menu, switcher, notification centre, Settings
+/// and toasts all use it, so an app has the same icon everywhere: its picture (Assets/apps/{id}.png, drawn from
+/// branding/src/apps), else its line glyph or initial on the graphite plate the pictures are drawn on.
 /// </summary>
 public static class AppIcons
 {
@@ -23,16 +26,32 @@ public static class AppIcons
         ["blocks"] = "blocks", ["mahjongg"] = "tiles", ["gems"] = "gem", ["screenshot"] = "screenshot", ["recorder"] = "record", ["voicememos"] = "mic", ["disks"] = "drive", ["software"] = "bag"
     };
 
-    private static readonly Dictionary<string, string> CategoryColors = new()
+    /// <summary>The graphite of the app pictures' tiles, top to bottom, for plates drawn in code.</summary>
+    public static readonly IBrush Plate = new LinearGradientBrush
     {
-        ["RSOffice"] = "#2B6CB0", ["RSMedia"] = "#C8102E", ["RSGames"] = "#2F855A",
-        ["RSOnline"] = "#6B46C1", ["RSUtilities"] = "#DD6B20", ["System"] = "#4A5568"
-    };
+        StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+        EndPoint = new RelativePoint(0, 1, RelativeUnit.Relative),
+        GradientStops = { new GradientStop(Color.Parse("#2A2A2F"), 0), new GradientStop(Color.Parse("#0C0C0E"), 1) },
+    }.ToImmutable();
 
-    private static readonly string[] LinuxColors =
-        { "#3182CE", "#38A169", "#D69E2E", "#DD6B20", "#805AD5", "#319795", "#D53F8C", "#5A67D8" };
+    /// <summary>The plate's fine light rim.</summary>
+    public static readonly IBrush Rim = new ImmutableSolidColorBrush(Color.FromArgb(0x1F, 0xFF, 0xFF, 0xFF));
 
-    public const string NeutralColor = "#4A5568";
+    private static readonly Dictionary<string, Bitmap?> Pictures = new();
+
+    /// <summary>An app's picture, or null for an app without one.</summary>
+    public static Bitmap? Picture(string? appId)
+    {
+        if (string.IsNullOrEmpty(appId)) return null;
+        lock (Pictures)
+        {
+            if (Pictures.TryGetValue(appId, out var b)) return b;
+            var uri = new System.Uri($"avares://RedStarOS/Assets/apps/{appId}.png");
+            try { b = AssetLoader.Exists(uri) ? new Bitmap(AssetLoader.Open(uri)) : null; }
+            catch (System.Exception e) when (e is System.IO.IOException or System.InvalidOperationException) { b = null; }
+            return Pictures[appId] = b;
+        }
+    }
 
     public static string GlyphFor(string? appId, string fallbackName)
     {
@@ -40,33 +59,35 @@ public static class AppIcons
         return string.IsNullOrEmpty(fallbackName) ? "•" : fallbackName[..1].ToUpperInvariant();
     }
 
-    public static string ColorFor(string? appId)
-    {
-        if (appId == "terminal") return CategoryColors["RSUtilities"];
-        var cat = appId == null ? null : AppRegistry.Find(appId)?.Category;
-        return cat != null && CategoryColors.TryGetValue(cat, out var c) ? c : NeutralColor;
-    }
-
-    public static string ColorForCategory(string category) =>
-        CategoryColors.TryGetValue(category, out var c) ? c : NeutralColor;
-
-    public static string ColorForName(string name) =>
-        LinuxColors[name.Sum(ch => (int)ch) % LinuxColors.Length];
-
     public static IBrush Brush(string hex) => new SolidColorBrush(Color.Parse(hex));
 
-    /// <summary>A rounded coloured tile with the app's glyph.</summary>
-    public static Control Create(string? appId, string name, double size = 28) =>
-        Tile(GlyphFor(appId, name), Brush(ColorFor(appId)), size);
-
-    public static Control Tile(string glyph, IBrush background, double size = 28) =>
-        new Border
+    /// <summary>An app's icon at a size: its picture, else its glyph on the plate.</summary>
+    public static Control Create(string? appId, string name, double size = 28)
+    {
+        if (Picture(appId) is { } bmp)
         {
-            Width = size,
-            Height = size,
-            CornerRadius = new CornerRadius(size * 0.28),
-            Background = background,
-            VerticalAlignment = VerticalAlignment.Center,
-            Child = Icons.Glyph(glyph, size * 0.58, Brushes.White)
+            var image = new Image { Source = bmp, Width = size, Height = size, VerticalAlignment = VerticalAlignment.Center };
+            RenderOptions.SetBitmapInterpolationMode(image, BitmapInterpolationMode.HighQuality);
+            return image;
+        }
+        return Tile(GlyphFor(appId, name), size);
+    }
+
+    /// <summary>A glyph or an initial, white on the graphite plate (as the pictures are drawn: a 240/256 tile).</summary>
+    public static Control Tile(string glyph, double size = 28)
+    {
+        double inner = size * 240 / 256;
+        return new Border
+        {
+            Width = size, Height = size, VerticalAlignment = VerticalAlignment.Center,
+            Child = new Border
+            {
+                Width = inner, Height = inner,
+                CornerRadius = new CornerRadius(inner * 0.225),
+                Background = Plate, BorderBrush = Rim, BorderThickness = new Thickness(1),
+                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+                Child = Icons.Glyph(glyph, size * 0.5, Brushes.White),
+            },
         };
+    }
 }

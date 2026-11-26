@@ -390,7 +390,7 @@ public partial class Taskbar : UserControl
             return image;
         }
         if (app == null && (linux != null || task is X11Task))
-            return AppIcons.Tile(title.Length > 0 ? title[..1].ToUpperInvariant() : "?", AppIcons.Brush(AppIcons.ColorForName(linux?.Name ?? title)), size);
+            return AppIcons.Tile(title.Length > 0 ? title[..1].ToUpperInvariant() : "?", size);
         return AppIcons.Create(appId, title, size);
     }
 

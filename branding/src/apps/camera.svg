@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Camera's icon: a camera with a crimson light, on the graphite tile. branding/README.md -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <path d="M 50 82 L 92 82 L 106 62 L 150 62 L 164 82 L 206 82 A 12 12 0 0 1 218 94 L 218 186 A 12 12 0 0 1 206 198 L 50 198 A 12 12 0 0 1 38 186 L 38 94 A 12 12 0 0 1 50 82 Z" fill="#F2F2F5"/>
+  <circle cx="128" cy="138" r="44" fill="#0C0C0E"/>
+  <circle cx="128" cy="138" r="30" fill="#6E6E78"/>
+  <circle cx="128" cy="138" r="16" fill="#0C0C0E"/>
+  <circle cx="116" cy="126" r="6" fill="#DCDCE3"/>
+  <circle cx="190" cy="104" r="8" fill="#C8102E"/>
+
+</svg>

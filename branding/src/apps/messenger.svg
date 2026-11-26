@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Messenger's icon: two speech bubbles, on the graphite tile. branding/README.md -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <path d="M 52 60 L 156 60 A 14 14 0 0 1 170 74 L 170 128 A 14 14 0 0 1 156 142 L 92 142 L 64 166 L 68 142 L 52 142 A 14 14 0 0 1 38 128 L 38 74 A 14 14 0 0 1 52 60 Z" fill="#DCDCE3"/>
+  <path d="M 104 102 L 204 102 A 14 14 0 0 1 218 116 L 218 168 A 14 14 0 0 1 204 182 L 196 182 L 198 206 L 170 182 L 104 182 A 14 14 0 0 1 90 168 L 90 116 A 14 14 0 0 1 104 102 Z" fill="#F2F2F5"/>
+  <circle cx="124" cy="142" r="9" fill="#6E6E78"/>
+  <circle cx="154" cy="142" r="9" fill="#6E6E78"/>
+  <circle cx="184" cy="142" r="9" fill="#C8102E"/>
+
+</svg>

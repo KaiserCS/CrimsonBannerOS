@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Video's icon: a screen, a play mark and its timeline, on the graphite tile. branding/README.md -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <rect x="40" y="62" width="176" height="116" rx="14" fill="#F2F2F5"/>
+  <path d="M 112 94 L 152 120 L 112 146 Z" fill="#C8102E" stroke="#C8102E" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="40" y="192" width="176" height="10" rx="5" fill="#6E6E78"/>
+  <rect x="40" y="192" width="96" height="10" rx="5" fill="#C8102E"/>
+  <circle cx="136" cy="197" r="11" fill="#F2F2F5"/>
+
+</svg>

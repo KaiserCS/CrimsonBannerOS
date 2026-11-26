@@ -19,9 +19,12 @@
         <ListBox.ItemTemplate>
           <DataTemplate>
             <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,4">
-              <Border Width="32" Height="32" CornerRadius="9" Background="{Binding Badge}" VerticalAlignment="Top">
-                <ContentControl Content="{Binding Glyph, Converter={x:Static svc:IconConverter.White}, ConverterParameter=18}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              <Panel Width="32" Height="32" VerticalAlignment="Top">
+              <Image Source="{Binding Picture}" IsVisible="{Binding HasPicture}" RenderOptions.BitmapInterpolationMode="HighQuality" />
+              <Border Width="30" Height="30" CornerRadius="7" Background="{Binding Badge}" BorderBrush="#1FFFFFFF" BorderThickness="1" IsVisible="{Binding !HasPicture}">
+                <ContentControl Content="{Binding Glyph, Converter={x:Static svc:IconConverter.White}, ConverterParameter=17}" HorizontalAlignment="Center" VerticalAlignment="Center" />
               </Border>
+              </Panel>
               <StackPanel Grid.Column="1" Margin="10,0">
                 <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                 <TextBlock Text="{Binding Message}" FontSize="12" Opacity="0.8" TextWrapping="Wrap" MaxLines="3" />

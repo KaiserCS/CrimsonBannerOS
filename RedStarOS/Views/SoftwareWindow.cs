@@ -1026,7 +1026,7 @@ public sealed class SoftwareWindow : Window
     {
         var holder = new Border { Width = size, Height = size, CornerRadius = new CornerRadius(size / 5), ClipToBounds = true, VerticalAlignment = VerticalAlignment.Center };
         if (Load(item.IconPath, 128) is { } bmp) { holder.Child = new Image { Source = bmp, Stretch = Stretch.Uniform }; return holder; }
-        holder.Background = new SolidColorBrush(Color.Parse(item.Source == SoftwareSource.CrimsonBanner ? "#C8102E" : AppIcons.NeutralColor));
+        holder.Background = AppIcons.Plate;
         holder.Child = new TextBlock { Text = item.Name.Length > 0 ? item.Name[..1].ToUpperInvariant() : "?", FontSize = size * 0.45, FontWeight = FontWeight.SemiBold, Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
         if (item.IconUrl is { } url && url.StartsWith("https://", StringComparison.Ordinal))
             _ = Fetch(url).ContinueWith(t =>

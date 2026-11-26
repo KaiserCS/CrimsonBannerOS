@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Image Viewer's icon: a photograph of hills under a crimson sun, on the graphite tile. branding/README.md -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <rect x="40" y="56" width="176" height="144" rx="14" fill="#F2F2F5"/>
+  <rect x="54" y="70" width="148" height="116" rx="6" fill="#DCDCE3"/>
+  <path d="M 54 186 L 54 160 L 100 118 L 138 152 L 162 132 L 202 168 L 202 186 Z" fill="#6E6E78"/>
+  <path d="M 54 186 L 54 172 L 100 140 L 150 186 Z" fill="#B4B4BC"/>
+  <circle cx="168" cy="98" r="14" fill="#C8102E"/>
+
+</svg>

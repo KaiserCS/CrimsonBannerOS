@@ -165,7 +165,12 @@ def main():
 
     # Studio's three programs (Studio's window, and their entries in the Start menu where they use these)
     for app, asset in (("writer", "studio-writer.png"), ("sheets", "studio-sheet.png"), ("slides", "studio-slides.png")):
-        save(svg(f"app-{app}.svg", 128), "RedStarOS", "Assets", asset)
+        save(svg(f"apps/{app}.svg", 128), "RedStarOS", "Assets", asset)
+
+    # every app's icon (AppIcons): the Start menu, taskbar, switcher, notifications, Settings and the desktop
+    for f in sorted(os.listdir(os.path.join(SRC, "apps"))):
+        if f.endswith(".svg"):
+            save(svg(f"apps/{f}", 128), "RedStarOS", "Assets", "apps", f[:-4] + ".png")
 
     # our own apps in Software (apps/*): their icons
     save(svg("app-planner.svg", 256), "apps", "planner", "icon.png")

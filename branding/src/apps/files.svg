@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  File Manager's icon: a folder with a crimson tab, on the graphite tile. branding/README.md -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <path d="M 54 66 L 100 66 L 116 82 L 202 82 A 12 12 0 0 1 214 94 L 214 186 A 12 12 0 0 1 202 198 L 54 198 A 12 12 0 0 1 42 186 L 42 78 A 12 12 0 0 1 54 66 Z" fill="#DCDCE3"/>
+  <path d="M 54 104 L 202 104 A 12 12 0 0 1 214 116 L 214 186 A 12 12 0 0 1 202 198 L 54 198 A 12 12 0 0 1 42 186 L 42 116 A 12 12 0 0 1 54 104 Z" fill="#F2F2F5"/>
+  <rect x="64" y="124" width="48" height="10" rx="5" fill="#C8102E"/>
+
+</svg>

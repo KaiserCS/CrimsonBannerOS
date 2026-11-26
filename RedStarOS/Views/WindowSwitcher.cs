@@ -46,7 +46,7 @@ public sealed class WindowSwitcher : Window
             var foreign = WindowManager.Tasks.OfType<X11Task>().FirstOrDefault(t => t.Window == w.Id);
             Control icon = task?.AppId != null ? AppIcons.Create(task.AppId, w.Title, 52)
                 : foreign?.Icon is { } img ? new Image { Source = img, Width = 52, Height = 52 }          // the program's own icon
-                : AppIcons.Tile(string.IsNullOrEmpty(w.WmClass) ? "?" : w.WmClass[..1].ToUpperInvariant(), AppIcons.Brush(AppIcons.ColorForName(w.WmClass)), 52);
+                : AppIcons.Tile(string.IsNullOrEmpty(w.WmClass) ? "?" : w.WmClass[..1].ToUpperInvariant(), 52);
             var tile = new Border
             {
                 Width = 150, Height = 120, Margin = new Thickness(6), CornerRadius = new CornerRadius(10), Padding = new Thickness(8),

@@ -217,7 +217,7 @@ public partial class DesktopWindow : Window
 
         var icon = appId != null && AppRegistry.Find(appId) != null
             ? AppIcons.Create(appId, title, 32)
-            : AppIcons.Tile("bell", AppIcons.Brush(AppIcons.NeutralColor), 32);
+            : AppIcons.Tile("bell", 32);
         icon.VerticalAlignment = VerticalAlignment.Top;
 
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };

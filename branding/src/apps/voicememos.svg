@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Voice Memos' icon: a microphone between two waves, on the graphite tile. branding/README.md -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <rect x="106" y="44" width="44" height="98" rx="22" fill="#F2F2F5"/>
+  <path d="M 98 122 C 98 150 110 164 128 164 C 146 164 158 150 158 122" fill="none" stroke="#B4B4BC" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 128 164 L 128 196 M 106 202 L 150 202" fill="none" stroke="#B4B4BC" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="166" y="111.0" width="10" height="34" rx="5" fill="#C8102E"/>
+  <rect x="184" y="93.0" width="10" height="70" rx="5" fill="#C8102E"/>
+  <rect x="202" y="106.0" width="10" height="44" rx="5" fill="#C8102E"/>
+  <rect x="44" y="106.0" width="10" height="44" rx="5" fill="#C8102E"/>
+  <rect x="62" y="93.0" width="10" height="70" rx="5" fill="#C8102E"/>
+  <rect x="80" y="111.0" width="10" height="34" rx="5" fill="#C8102E"/>
+
+</svg>

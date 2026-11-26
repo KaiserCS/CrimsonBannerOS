@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Terminal's icon: a window with a prompt and a crimson cursor, on the graphite tile. branding/README.md -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <rect x="38" y="56" width="180" height="144" rx="14" fill="#F2F2F5"/>
+  <path d="M 38 70 A 14 14 0 0 1 52 56 L 204 56 A 14 14 0 0 1 218 70 L 218 84 L 38 84 Z" fill="#DCDCE3"/>
+  <circle cx="58" cy="70" r="5" fill="#C8102E"/>
+  <circle cx="74" cy="70" r="5" fill="#B4B4BC"/>
+  <circle cx="90" cy="70" r="5" fill="#B4B4BC"/>
+  <path d="M 66 112 L 94 134 L 66 156" fill="none" stroke="#0C0C0E" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="110" y="148" width="44" height="11" rx="5.5" fill="#C8102E"/>
+
+</svg>

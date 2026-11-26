@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Gems' icon: a cut ruby, on the graphite tile. branding/README.md -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <path d="M 76 62 L 180 62 L 218 108 L 128 210 L 38 108 Z" fill="#9E0C24"/>
+  <path d="M 38 108 L 218 108 L 128 210 Z" fill="#C8102E"/>
+  <path d="M 76 62 L 104 108 L 128 62 Z" fill="#E0283F"/>
+  <path d="M 128 62 L 152 108 L 180 62 Z" fill="#E0283F"/>
+  <path d="M 104 108 L 128 210 L 152 108 Z" fill="#E8475B"/>
+  <path d="M 86 76 L 104 76 L 96 92 Z" fill="#F2F2F5" opacity="0.85"/>
+
+</svg>

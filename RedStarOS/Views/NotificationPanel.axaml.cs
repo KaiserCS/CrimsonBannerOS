@@ -16,7 +16,9 @@ public partial class NotificationPanel : UserControl, IShellPanel
     public sealed class Row
     {
         public string Glyph { get; init; } = "";
-        public IBrush Badge { get; init; } = Brushes.Gray;
+        public IBrush Badge { get; init; } = AppIcons.Plate;
+        public IImage? Picture { get; init; }
+        public bool HasPicture => Picture != null;
         public string Title { get; init; } = "";
         public string Message { get; init; } = "";
         public string Time { get; init; } = "";
@@ -40,7 +42,8 @@ public partial class NotificationPanel : UserControl, IShellPanel
             return new Row
             {
                 Glyph = AppIcons.GlyphFor(n.AppId, n.Title),
-                Badge = AppIcons.Brush(n.AppId != null ? AppIcons.ColorFor(n.AppId) : AppIcons.ColorForName(n.Title)),
+                Badge = AppIcons.Plate,
+                Picture = AppIcons.Picture(n.AppId),
                 Title = app != null && app.Name != n.Title ? $"{app.Name} · {n.Title}" : n.Title,
                 Message = n.Message,
                 Time = n.When.Date == today ? n.When.ToString("HH:mm") : n.When.ToString("ddd d MMM")
