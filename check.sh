@@ -44,6 +44,7 @@ echo "==> Publishing apps, updates and ISOs (tools/publish-app.sh, tools/publish
 bash -n tools/publish-app.sh && bash -n tools/publish-os.sh && bash -n tools/lib/gh-release.sh && bash -n packaging/crimson-repo && sh -n packaging/crimson-apps-repo
 tools/test-publish-app.sh >/dev/null 2>&1 || { tools/test-publish-app.sh; exit 1; }
 bash -n tools/split-iso.sh && sh -n tools/merge-iso.sh
+for f in apps/*/PKGBUILD; do bash -n "$f" || exit 1; done
 tools/test-split-iso.sh >/dev/null 2>&1 || { tools/test-split-iso.sh; exit 1; }
 ok "the catalogue, its signature, the apps repository, and ISOs split and joined"
 

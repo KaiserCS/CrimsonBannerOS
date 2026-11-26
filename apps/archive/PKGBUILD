@@ -21,7 +21,7 @@ _rid() {
 }
 
 prepare() {
-  : "${CRIMSON_TREE:?People's Archive is built from the source tree: set CRIMSON_TREE to it (tools/publish-app.sh does)}"
+  : "${CRIMSON_TREE:?the archive is built from the source tree: set CRIMSON_TREE to it (tools/publish-app.sh does)}"
   # the parts of the tree People's Archive is built from, laid out as in it
   rm -rf "$srcdir/tree"
   mkdir -p "$srcdir/tree/RedStarOS/Styles" "$srcdir/tree/apps"
