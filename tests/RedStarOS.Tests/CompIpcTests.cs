@@ -116,7 +116,8 @@ public class CompIpcTests
                 if (n <= 0) break;
                 got.Append(Encoding.UTF8.GetString(buf, 0, n));
             }
-            var lines = got.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            // the accent goes to the compositor whenever it changes, which another test running alongside may do at any time
+            var lines = got.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries).Where(l => !l.StartsWith("accent\t")).ToArray();
             Assert.Equal("hello", lines[0]);
             Assert.Contains($"activate\t{N1}", lines);
             Assert.Contains($"left\t{N1}", lines);
