@@ -362,6 +362,8 @@ public class ScreenshotTests
         // pictures only: a part that needs something this machine hasn't got is skipped, and says why
         try { part = (Control)Activator.CreateInstance(type)!; }
         catch (Exception e) { Console.WriteLine($"Shell-{typeName}: not drawn ({(e.InnerException ?? e).Message})"); return; }
+        // the Start menu fills itself when it opens; draw it as it's seen
+        if (part is StartMenu start) start.Refresh();
         // on the desktop's wallpaper, as they're seen; the panels in the flyout that holds them in the shell
         Control content = part;
         if (typeName != "Taskbar")

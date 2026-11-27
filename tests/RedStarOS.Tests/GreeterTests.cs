@@ -159,6 +159,15 @@ public class GreeterFlowTests
 
 public class GreeterDataTests
 {
+    [Fact]
+    public void Shown_name_comes_from_the_passwd_comment()
+    {
+        const string passwd = "root:x:0:0:root:/root:/bin/bash\nkaiser:x:1000:1000:Steven Kaiser,,,:/home/kaiser:/bin/bash\nbare:x:1001:1001::/home/bare:/bin/bash\n";
+        Assert.Equal("Steven Kaiser", GreeterData.ShownName("kaiser", passwd));
+        Assert.Equal("bare", GreeterData.ShownName("bare", passwd));
+        Assert.Equal("nobody-here", GreeterData.ShownName("nobody-here", passwd));
+    }
+
     private const string Passwd = """
         root:x:0:0:root:/root:/bin/bash
         greeter:x:964:964:greetd greeter user:/var/lib/greetd:/bin/bash

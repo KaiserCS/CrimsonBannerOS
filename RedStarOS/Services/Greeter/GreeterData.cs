@@ -35,6 +35,26 @@ public static class GreeterData
     private static readonly string[] NoLoginShells = { "nologin", "false", "sync", "shutdown", "halt", "git-shell" };
 
     /// <summary>/etc/passwd's ordinary accounts (UID_MIN to UID_MAX from login.defs), ordered by name.</summary>
+    /// <summary>The name a person goes by: the first part of their /etc/passwd comment (GECOS), else their login.</summary>
+    public static string ShownName(string login, string? passwd = null)
+    {
+        try
+        {
+            passwd ??= File.ReadAllText("/etc/passwd");
+            foreach (var line in passwd.Split('\n'))
+            {
+                var f = line.Split(':');
+                if (f.Length >= 5 && f[0] == login)
+                {
+                    var real = f[4].Split(',')[0].Trim();
+                    return real.Length > 0 ? real : login;
+                }
+            }
+        }
+        catch { }
+        return login;
+    }
+
     public static List<LoginUser> Users(string passwd, int uidMin = 1000, int uidMax = 60000) =>
         passwd.Split('\n')
             .Select(l => l.Split(':'))

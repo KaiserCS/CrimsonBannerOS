@@ -74,7 +74,7 @@ public partial class StartMenu : UserControl
 
         RsCats.SelectionChanged += (_, _) => OnCategoryPicked(RsCats, LinuxCats);
         LinuxCats.SelectionChanged += (_, _) => OnCategoryPicked(LinuxCats, RsCats);
-        LinuxTabIcon.Content = LinuxLogo(22);
+        LinuxTabIcon.Content = LinuxLogo(18);
         RsTab.Click += (_, _) => ShowSection(false);
         LinuxTab.Click += (_, _) => ShowSection(true);
         _linuxSection = SettingsStore.Current.StartSection == "linux";
@@ -162,7 +162,7 @@ public partial class StartMenu : UserControl
 
         var avatar = ShellUi.LoadAvatar();
         if (avatar != null) AvatarImage.Source = avatar;
-        UserLabel.Text = Environment.UserName;
+        UserLabel.Text = RedStarOS.Services.Greeter.GreeterData.ShownName(Environment.UserName);
 
         _categoryKey = KeyAll;
         if (!_items.Any(i => i.IsLinux)) _linuxSection = false;
@@ -176,7 +176,7 @@ public partial class StartMenu : UserControl
     private void BuildCategories()
     {
         var rsItems = _items.Where(i => !i.IsLinux).ToList();
-        var rs = new List<CategoryRow> { Row(KeyAll, "All Crimson Banner apps", rsItems.Count) };
+        var rs = new List<CategoryRow> { Row(KeyAll, "All our apps", rsItems.Count) };
         var rsRecent = RecentItems(false);
         if (rsRecent.Count > 0) rs.Add(Row(KeyRecent, "Recent", rsRecent.Count));
         foreach (var key in RedStarCategoryOrder)
@@ -235,7 +235,7 @@ public partial class StartMenu : UserControl
     private void UpdateTabs()
     {
         // the Red Star tab is the red star itself: red on the plain tab, white on the red selected one
-        RsTabIcon.Content = Icons.Create("star-filled", 20, _linuxSection ? AppIcons.Brush("#C8102E") : Brushes.White);
+        RsTabIcon.Content = Icons.Create("star-filled", 17, _linuxSection ? AppIcons.Brush("#C8102E") : Brushes.White);
         RsTab.IsChecked = !_linuxSection;
         LinuxTab.IsChecked = _linuxSection;
         RsCats.IsVisible = !_linuxSection;
@@ -314,7 +314,7 @@ public partial class StartMenu : UserControl
             static StartItem Header(string text) => new() { Key = "header:" + text, Title = text, IsHeader = true };
             list = calc.Select(ToItem).ToList();
             // the section you're in comes first
-            var groups = new[] { (Linux: false, Label: "RED STAR APPS"), (Linux: true, Label: "LINUX APPS") };
+            var groups = new[] { (Linux: false, Label: "OUR APPS"), (Linux: true, Label: "LINUX APPS") };
             if (_linuxSection) Array.Reverse(groups);
             foreach (var (linux, label) in groups)
             {
@@ -334,7 +334,7 @@ public partial class StartMenu : UserControl
         else if (_categoryKey == KeyRecent)
         {
             list = RecentItems(_linuxSection);
-            heading = "RECENT " + (_linuxSection ? "LINUX APPS" : "RED STAR APPS");
+            heading = _linuxSection ? "RECENT LINUX APPS" : "RECENT APPS";
             HighlightCategory();
         }
         else
@@ -342,14 +342,15 @@ public partial class StartMenu : UserControl
             var section = _items.Where(i => i.IsLinux == _linuxSection);
             var src = _categoryKey == KeyAll ? section : section.Where(i => i.Category == _categoryKey);
             list = src.OrderBy(i => i.Title, StringComparer.OrdinalIgnoreCase).ToList();
-            heading = (_categoryKey == KeyAll ? (_linuxSection ? "All Linux apps" : "All Crimson Banner apps") : CategoryLabel(_categoryKey)).ToUpperInvariant();
+            heading = (_categoryKey == KeyAll ? (_linuxSection ? "All Linux apps" : "All our apps") : CategoryLabel(_categoryKey)).ToUpperInvariant();
             HighlightCategory();
         }
 
         AppList.ItemsSource = list;
         int count = list.Count(i => !i.IsHeader);
         EmptyLabel.IsVisible = count == 0;
-        HeaderLabel.Text = $"{heading}  ·  {count}";
+        EmptyLabel.Text = q.Length > 0 ? $"Nothing called “{q}”." : "No apps here yet.";
+        HeaderLabel.Text = heading;          // the count is beside the category on the left
     }
 
     private string CategoryLabel(string key) =>
@@ -428,6 +429,7 @@ public partial class StartMenu : UserControl
 
     // ------------------------------------------------------------ footer
 
+    private void OnAccount(object? s, RoutedEventArgs e) { CloseRequested?.Invoke(); SettingsWindow.OpenPage("Account"); }
     private void OnSettings(object? s, RoutedEventArgs e) { CloseRequested?.Invoke(); PowerRequested?.Invoke("settings"); }
     private void OnLock(object? s, RoutedEventArgs e) { CloseRequested?.Invoke(); PowerRequested?.Invoke("lock"); }
     private void OnLogOff(object? s, RoutedEventArgs e) { CloseRequested?.Invoke(); PowerRequested?.Invoke("logoff"); }

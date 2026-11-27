@@ -45,18 +45,24 @@
 
     <Grid Grid.Row="1" ColumnDefinitions="270,Auto,*">
 
-      <!-- Category rail: Red Star apps and installed Linux apps are kept apart, one tab each -->
+      <!-- Category rail: our apps and installed Linux apps are kept apart, one tab each -->
       <Grid RowDefinitions="Auto,*">
         <Border x:Name="SectionTabs" CornerRadius="10" Padding="4" Margin="0,0,16,12"
                 Background="{DynamicResource ShellCardBrush}">
           <Grid ColumnDefinitions="*,*">
             <ToggleButton x:Name="RsTab" Classes="section" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                          Padding="4,6" CornerRadius="6" ToolTip.Tip="Crimson Banner apps" AutomationProperties.Name="Crimson Banner apps">
-              <ContentControl x:Name="RsTabIcon" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                          Padding="4,6" CornerRadius="6" ToolTip.Tip="Crimson Banner's own apps" AutomationProperties.Name="Our apps">
+              <StackPanel Orientation="Horizontal" Spacing="7" HorizontalAlignment="Center">
+                <ContentControl x:Name="RsTabIcon" VerticalAlignment="Center" />
+                <TextBlock Text="Our apps" FontSize="13" VerticalAlignment="Center" />
+              </StackPanel>
             </ToggleButton>
             <ToggleButton x:Name="LinuxTab" Grid.Column="1" Classes="section" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                           Padding="4,6" CornerRadius="6" ToolTip.Tip="Linux apps installed on this computer" AutomationProperties.Name="Linux apps">
-              <ContentControl x:Name="LinuxTabIcon" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              <StackPanel Orientation="Horizontal" Spacing="7" HorizontalAlignment="Center">
+                <ContentControl x:Name="LinuxTabIcon" VerticalAlignment="Center" />
+                <TextBlock Text="Linux apps" FontSize="13" VerticalAlignment="Center" />
+              </StackPanel>
             </ToggleButton>
           </Grid>
         </Border>
@@ -69,7 +75,7 @@
                 <DataTemplate>
                   <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Text="{Binding Label}" FontSize="14" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="1" Text="{Binding Count}" FontSize="11" Opacity="0.5"
+                    <TextBlock Grid.Column="1" Text="{Binding Count}" Classes="caption"
                                Margin="8,0,0,0" VerticalAlignment="Center" />
                   </Grid>
                 </DataTemplate>
@@ -82,7 +88,7 @@
                 <DataTemplate>
                   <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Text="{Binding Label}" FontSize="14" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="1" Text="{Binding Count}" FontSize="11" Opacity="0.5"
+                    <TextBlock Grid.Column="1" Text="{Binding Count}" Classes="caption"
                                Margin="8,0,0,0" VerticalAlignment="Center" />
                   </Grid>
                 </DataTemplate>
@@ -96,16 +102,14 @@
 
       <!-- App list -->
       <Grid Grid.Column="2" RowDefinitions="Auto,*" Margin="16,0,0,0">
-        <TextBlock x:Name="HeaderLabel" FontSize="12" FontWeight="SemiBold" Opacity="0.6"
-                   Margin="10,6,0,12" />
+        <TextBlock x:Name="HeaderLabel" Classes="kicker" Margin="10,6,0,12" />
         <ListBox x:Name="AppList" Grid.Row="1" Classes="apps" Background="Transparent" BorderThickness="0"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
           <ListBox.ItemTemplate>
             <DataTemplate>
               <Panel>
-                <!-- group heading in search results ("RED STAR APPS", "LINUX APPS", …) -->
-                <TextBlock Text="{Binding Title}" IsVisible="{Binding IsHeader}" FontSize="10" FontWeight="SemiBold"
-                           Opacity="0.55" Margin="0,12,0,4" />
+                <!-- group heading in search results ("OUR APPS", "LINUX APPS", …) -->
+                <TextBlock Text="{Binding Title}" IsVisible="{Binding IsHeader}" Classes="kicker" Margin="0,12,0,4" />
                 <Grid ColumnDefinitions="Auto,*" MinHeight="48" IsVisible="{Binding IsApp}">
                   <Panel Width="40" Height="40" VerticalAlignment="Center">
                     <Border Width="36" Height="36" CornerRadius="8" Background="{Binding Badge}" BorderBrush="#1FFFFFFF" BorderThickness="1" IsVisible="{Binding ShowBadge}">
@@ -116,14 +120,14 @@
                   </Panel>
                   <StackPanel Grid.Column="1" Margin="14,0,0,0" Spacing="2" VerticalAlignment="Center">
                     <TextBlock Text="{Binding Title}" FontSize="14" TextTrimming="CharacterEllipsis" />
-                    <TextBlock Text="{Binding Subtitle}" FontSize="11" Opacity="0.6" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Subtitle}" Classes="caption" TextTrimming="CharacterEllipsis" />
                   </StackPanel>
                 </Grid>
               </Panel>
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>
-        <TextBlock x:Name="EmptyLabel" Grid.Row="1" Text="No apps found" IsVisible="False" Opacity="0.6"
+        <TextBlock x:Name="EmptyLabel" Grid.Row="1" Text="No apps found" IsVisible="False" Classes="caption"
                    HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Grid>
     </Grid>
@@ -131,11 +135,16 @@
     <!-- Footer -->
     <Border Grid.Row="2" Margin="0,16,0,0" Padding="0,16,0,0" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource ShellBorderBrush}">
       <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-        <Border Width="36" Height="36" CornerRadius="18" ClipToBounds="True">
-          <Image x:Name="AvatarImage" Source="avares://RedStarOS/Assets/avatar.png" Stretch="UniformToFill" />
-        </Border>
-        <TextBlock x:Name="UserLabel" Grid.Column="1" Margin="12,0,0,0" FontSize="14"
-                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+        <!-- you: your photo and name, which open your account in Settings -->
+        <Button x:Name="AccountButton" Classes="flat" Padding="4,4,12,4" Click="OnAccount" MaxWidth="360"
+                ToolTip.Tip="Your account: photo, password and account type" AutomationProperties.Name="Your account">
+          <StackPanel Orientation="Horizontal" Spacing="12">
+            <Border Width="36" Height="36" CornerRadius="18" ClipToBounds="True">
+              <Image x:Name="AvatarImage" Source="avares://RedStarOS/Assets/avatar.png" Stretch="UniformToFill" />
+            </Border>
+            <TextBlock x:Name="UserLabel" FontSize="14" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+          </StackPanel>
+        </Button>
         <Button Grid.Column="2" Classes="flat footer" Click="OnSettings">
           <StackPanel Orientation="Horizontal" Spacing="6"><v:IconView Kind="settings" Size="16" /><TextBlock Text="Settings" VerticalAlignment="Center" /></StackPanel>
         </Button>
