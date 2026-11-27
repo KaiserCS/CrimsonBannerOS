@@ -64,7 +64,7 @@ public static class AppRegistry
     {
         ["BlocksWindow"] = "blocks", ["MahjonggWindow"] = "mahjongg", ["GemsWindow"] = "gems", ["ScreenshotWindow"] = "screenshot", ["AreaPickerWindow"] = "screenshot",
         ["ScreenRecorderWindow"] = "recorder", ["DisksWindow"] = "disks", ["SoftwareWindow"] = "software", ["VoiceMemosWindow"] = "voicememos",
-        ["StudioWindow"] = "studio", ["VideoWindow"] = "video", ["CdPlayerWindow"] = "cdplayer", ["WriterWindow"] = "writer", ["RichWriterWindow"] = "writer", ["TerminalWindow"] = "terminal", ["SpreadsheetWindow"] = "sheets", ["SlidesWindow"] = "slides", ["SlideShowWindow"] = "slides", ["SheetChartWindow"] = "sheets",
+        ["StudioWindow"] = "studio", ["VideoWindow"] = "video", ["CdPlayerWindow"] = "cdplayer", ["RichWriterWindow"] = "writer", ["TerminalWindow"] = "terminal", ["SpreadsheetWindow"] = "sheets", ["SlidesWindow"] = "slides", ["SlideShowWindow"] = "slides", ["SheetChartWindow"] = "sheets",
         ["PongWindow"] = "pong", ["MessengerWindow"] = "messenger", ["FileManagerWindow"] = "files",
         ["CalculatorWindow"] = "calculator", ["NotesWindow"] = "notes", ["ImageViewerWindow"] = "imageviewer",
         ["CameraWindow"] = "camera", ["PaintWindow"] = "paint", ["ClockWindow"] = "clock", ["TaskManagerWindow"] = "taskmgr", ["CalendarWindow"] = "calendar", ["SettingsWindow"] = "settings",

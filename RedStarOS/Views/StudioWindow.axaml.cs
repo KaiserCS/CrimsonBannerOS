@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,13 +11,13 @@ using RedStarOS.Services;
 
 namespace RedStarOS.Views;
 
-/// <summary>Office-suite launcher: start a new document, spreadsheet or presentation, or reopen something recent.</summary>
+/// <summary>The office suite's front door: start a new document, spreadsheet or presentation, or open something recent.</summary>
 public partial class StudioWindow : Window
 {
     private sealed class RecentItem
     {
         public string Path { get; init; } = "";
-        public string Icon { get; init; } = "📄";
+        public Avalonia.Controls.Control? Glyph { get; init; }
         public string Name { get; init; } = "";
         public string Folder { get; init; } = "";
         public string Kind { get; init; } = "";
@@ -25,6 +26,9 @@ public partial class StudioWindow : Window
     public StudioWindow()
     {
         InitializeComponent();
+        WriterIcon.Content = AppIcons.Create("writer", "Writer", 44);
+        SheetsIcon.Content = AppIcons.Create("sheets", "Sheets", 44);
+        SlidesIcon.Content = AppIcons.Create("slides", "Slides", 44);
         Activated += (_, _) => RefreshRecent();
         RefreshRecent();
     }
@@ -34,13 +38,15 @@ public partial class StudioWindow : Window
         var items = RecentDocs.List(20).Select(p => new RecentItem
         {
             Path = p,
-            Icon = FileOps.IconFor(p, false),
+            Glyph = Icons.Create(FileOps.IconName(p, false), 20),
             Name = System.IO.Path.GetFileName(p),
             Folder = System.IO.Path.GetDirectoryName(p) ?? "",
-            Kind = RecentDocs.Describe(p) + "  ·  " + File.GetLastWriteTime(p).ToString("d MMM yyyy")
+            Kind = RecentDocs.Describe(p) + ", " + File.GetLastWriteTime(p).ToString("d MMM yyyy")
         }).ToList();
         RecentList.ItemsSource = items;
-        EmptyText.IsVisible = items.Count == 0;
+        EmptyState.IsVisible = items.Count == 0;
+        RecentList.IsVisible = items.Count > 0;
+        ClearButton.IsVisible = items.Count > 0;
     }
 
     private void OnWriter(object? s, RoutedEventArgs e) => AppRegistry.Launch("writer");

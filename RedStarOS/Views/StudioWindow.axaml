@@ -1,57 +1,81 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="using:RedStarOS.Views"
         x:Class="RedStarOS.Views.StudioWindow"
         Title="Studio"
-        Width="780" Height="520" CanResize="False"
+        Width="860" Height="580" MinWidth="620" MinHeight="460"
         WindowStartupLocation="CenterOwner">
-  <Grid RowDefinitions="Auto,*,Auto" Margin="20">
-    <Grid ColumnDefinitions="*,Auto">
-      <StackPanel VerticalAlignment="Top" Spacing="4">
-        <TextBlock Text="Studio" FontSize="40" FontWeight="Light" />
-        <TextBlock Text="Office Software" FontSize="22" Classes="brand" FontWeight="Light" />
-        <TextBlock Text="Version  1.1" Classes="caption" Margin="0,12,0,0" />
-      </StackPanel>
-      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
-        <StackPanel Width="132" Spacing="6">
-          <Image Source="avares://RedStarOS/Assets/studio-writer.png" Width="119" HorizontalAlignment="Center" Height="105" />
-          <Button Content="New document" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="6,5" Click="OnWriter" />
-        </StackPanel>
-        <StackPanel Width="132" Spacing="6">
-          <Image Source="avares://RedStarOS/Assets/studio-sheet.png" Width="119" HorizontalAlignment="Center" Height="105" />
-          <Button Content="New spreadsheet" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="6,5" Click="OnSheets" />
-        </StackPanel>
-        <StackPanel Width="132" Spacing="6">
-          <Image Source="avares://RedStarOS/Assets/studio-slides.png" Width="119" HorizontalAlignment="Center" Height="105" />
-          <Button Content="New presentation" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="6,5" Click="OnSlides" />
-        </StackPanel>
-      </StackPanel>
-    </Grid>
+  <!-- The office suite's front door: start something new in Writer, Sheets or Slides, or carry on with something recent. -->
+  <Grid RowDefinitions="Auto,Auto,Auto,*" Margin="28,24,28,22">
+    <StackPanel Spacing="2">
+      <TextBlock Text="Studio" Classes="display" />
+      <TextBlock Text="Writer, Sheets and Slides: documents, spreadsheets and presentations." Classes="caption" />
+    </StackPanel>
 
-    <Border Grid.Row="1" Classes="card" Padding="0" Margin="0,14,0,14">
-      <Grid RowDefinitions="Auto,*">
-        <TextBlock Text="Recent documents" FontWeight="SemiBold" Margin="14,10,14,6" />
-        <ListBox Grid.Row="1" x:Name="RecentList" Background="Transparent" DoubleTapped="OnRecentOpen" KeyDown="OnRecentKey">
+    <!-- the three ways to start -->
+    <UniformGrid Grid.Row="1" Columns="3" Margin="-6,18,-6,0">
+      <Button x:Name="WriterCard" Classes="launchcard" Click="OnWriter" Margin="6">
+        <DockPanel>
+          <ContentControl x:Name="WriterIcon" DockPanel.Dock="Left" Margin="0,0,14,0" />
+          <StackPanel VerticalAlignment="Center" Spacing="2">
+            <TextBlock Text="New document" FontSize="14" FontWeight="SemiBold" />
+            <TextBlock Text="Writer" Classes="caption" />
+          </StackPanel>
+        </DockPanel>
+      </Button>
+      <Button x:Name="SheetsCard" Classes="launchcard" Click="OnSheets" Margin="6">
+        <DockPanel>
+          <ContentControl x:Name="SheetsIcon" DockPanel.Dock="Left" Margin="0,0,14,0" />
+          <StackPanel VerticalAlignment="Center" Spacing="2">
+            <TextBlock Text="New spreadsheet" FontSize="14" FontWeight="SemiBold" />
+            <TextBlock Text="Sheets" Classes="caption" />
+          </StackPanel>
+        </DockPanel>
+      </Button>
+      <Button x:Name="SlidesCard" Classes="launchcard" Click="OnSlides" Margin="6">
+        <DockPanel>
+          <ContentControl x:Name="SlidesIcon" DockPanel.Dock="Left" Margin="0,0,14,0" />
+          <StackPanel VerticalAlignment="Center" Spacing="2">
+            <TextBlock Text="New presentation" FontSize="14" FontWeight="SemiBold" />
+            <TextBlock Text="Slides" Classes="caption" />
+          </StackPanel>
+        </DockPanel>
+      </Button>
+    </UniformGrid>
+
+    <DockPanel Grid.Row="2" Margin="0,22,0,8">
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
+        <Button x:Name="ClearButton" Classes="flat" Content="Clear the list" Click="OnClearRecent" />
+        <Button Classes="primary" Click="OnOpenFile">
+          <StackPanel Orientation="Horizontal" Spacing="6"><v:IconView Kind="folder" Size="16" /><TextBlock Text="Open a file…" VerticalAlignment="Center" /></StackPanel>
+        </Button>
+      </StackPanel>
+      <TextBlock Text="RECENT" Classes="kicker" VerticalAlignment="Center" />
+    </DockPanel>
+
+    <Border Grid.Row="3" Classes="panel" Padding="6">
+      <Panel>
+        <ListBox x:Name="RecentList" Background="Transparent" DoubleTapped="OnRecentOpen" KeyDown="OnRecentKey">
           <ListBox.ItemTemplate>
             <DataTemplate>
-              <Grid ColumnDefinitions="34,*,Auto" Margin="2,3">
-                <TextBlock Text="{Binding Icon}" FontSize="20" VerticalAlignment="Center" />
-                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                  <TextBlock Text="{Binding Name}" />
+              <Grid ColumnDefinitions="36,*,Auto" Margin="2,4">
+                <ContentControl Content="{Binding Glyph}" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                  <TextBlock Text="{Binding Name}" FontSize="13.5" TextTrimming="CharacterEllipsis" />
                   <TextBlock Text="{Binding Folder}" Classes="caption" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
-                <TextBlock Grid.Column="2" Text="{Binding Kind}" Classes="caption" VerticalAlignment="Center" Margin="12,0,6,0" />
+                <TextBlock Grid.Column="2" Text="{Binding Kind}" Classes="caption" VerticalAlignment="Center" Margin="14,0,8,0" />
               </Grid>
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>
-        <TextBlock Grid.Row="1" x:Name="EmptyText" Text="Documents you open or save in Writer, Sheets and Slides appear here."
-                   Classes="caption" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" />
-      </Grid>
+        <!-- empty: what to do next -->
+        <StackPanel x:Name="EmptyState" Spacing="6" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="360">
+          <v:IconView Kind="document" Size="28" HorizontalAlignment="Center" Opacity="0.6" />
+          <TextBlock Text="Nothing opened yet." FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center" />
+          <TextBlock Text="Start a document, spreadsheet or presentation above; whatever you open or save in Writer, Sheets and Slides is listed here."
+                     Classes="caption" TextAlignment="Center" TextWrapping="Wrap" />
+        </StackPanel>
+      </Panel>
     </Border>
-
-    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
-      <Button Classes="primary" Content="Open file…" Click="OnOpenFile" />
-      <Button Content="Open selected" Click="OnRecentOpen" />
-      <Button Classes="flat" Content="Clear list" Click="OnClearRecent" />
-    </StackPanel>
   </Grid>
 </Window>

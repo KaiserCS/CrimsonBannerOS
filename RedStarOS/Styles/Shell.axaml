@@ -334,6 +334,21 @@
     <Setter Property="VerticalContentAlignment" Value="Center" />
   </Style>
 
+  <!-- a big way in (Studio's New document, Sheets, Slides): a panel you can press -->
+  <Style Selector="Button.launchcard">
+    <Setter Property="Background" Value="{DynamicResource ShellPanelBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellPanelBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="14,12" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+  </Style>
+  <Style Selector="Button.launchcard:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ShellHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellAccentBrush}" />
+  </Style>
+
   <!-- Quick-setting tile (flyouts). ".on" = active, filled with the accent colour. -->
   <Style Selector="Button.tile">
     <Setter Property="Background" Value="{DynamicResource ShellPanelBrush}" />
