@@ -3,7 +3,7 @@
              x:Class="RedStarOS.Views.Taskbar"
              Height="56">
   <!--
-    [Start] [pinned + running apps ............] [app tray] | [system tray] [clock] |▌ (show desktop, in the corner)
+    [Start] [Task View] [pinned + running apps ...] [app tray] | [system tray] [clock] |▌ (show desktop, in the corner)
     - Pinned launchers and running windows share one row: a pinned app that is running is the same button.
     - Native apps and other programs' windows are listed identically.
     - App tray: icons of background things (notifications, media controls of Red Star Video, ...).
@@ -12,6 +12,7 @@
   <Border Classes="taskbar">
     <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto" Margin="8,0">
 
+      <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
       <Button x:Name="StartButton" Classes="task start" Width="44" Height="44" Padding="0"
               ToolTip.Tip="Start (Win key)">
         <!-- Red Star OS badge: white star on a red disc (vector, sharp at any scale) -->
@@ -31,6 +32,11 @@
           </Canvas>
         </Viewbox>
       </Button>
+      <!-- Task View: the open windows and the virtual desktops (Super+Tab) -->
+      <Button x:Name="TaskViewButton" Classes="task" Width="44" Height="44" Padding="0"
+              HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+              ToolTip.Tip="Task View (Super+Tab)" />
+      </StackPanel>
 
       <DockPanel Grid.Column="1" Margin="10,0">
         <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">

@@ -19,7 +19,7 @@
     </Grid>
 
     <!-- Quick tiles -->
-    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" Classes="spaced">
+    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" Classes="spaced">
       <Button x:Name="NetTile" Classes="tile" Click="OnNetwork">
         <StackPanel Spacing="2">
           <ContentControl x:Name="NetGlyph" />
@@ -46,6 +46,20 @@
           <v:IconView Kind="image" Size="18" />
           <TextBlock Text="Wallpaper" FontSize="13" FontWeight="SemiBold" />
           <TextBlock Text="Next picture" FontSize="12" Opacity="0.75" />
+        </StackPanel>
+      </Button>
+      <Button x:Name="NightTile" Grid.Row="2" Classes="tile" Click="OnNightLight">
+        <StackPanel Spacing="2">
+          <v:IconView Kind="nightlight" Size="18" />
+          <TextBlock Text="Night light" FontSize="13" FontWeight="SemiBold" />
+          <TextBlock x:Name="NightSub" FontSize="12" Opacity="0.75" TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+      </Button>
+      <Button x:Name="DesksTile" Grid.Row="2" Grid.Column="1" Classes="tile" Click="OnTaskView">
+        <StackPanel Spacing="2">
+          <v:IconView Kind="task-view" Size="18" />
+          <TextBlock Text="Task View" FontSize="13" FontWeight="SemiBold" />
+          <TextBlock x:Name="DesksSub" FontSize="12" Opacity="0.75" />
         </StackPanel>
       </Button>
     </Grid>

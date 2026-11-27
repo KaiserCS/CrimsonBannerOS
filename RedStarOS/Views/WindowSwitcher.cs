@@ -116,7 +116,10 @@ public sealed class WindowSwitcher : Window
                 {
                     _listing = false;
                     long self = WindowManager.Desktop?.TryGetPlatformHandle()?.Handle.ToInt64() ?? 0;
-                    list = list.Where(w => w.Id != self).ToList();
+                    list = list.Where(w => w.Id != self && w.Title != TaskViewWindow.WindowTitle).ToList();
+                    // the desktop in use's windows, as on Windows (Settings → Desktop & Taskbar can offer every desktop's)
+                    if (!SettingsStore.Current.AltTabAllDesktops)
+                        list = list.Where(w => { int d = VirtualDesktops.DeskOf(w.Id); return d < 0 || d == VirtualDesktops.Current; }).ToList();
                     if (list.Count == 0) { X11Desktop.CancelSwitcher(); return; }
                     _open?.Close();
                     if (_pendingCancel) return;

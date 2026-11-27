@@ -92,6 +92,21 @@ public partial class QuickSettingsPanel : UserControl, IShellPanel
         ThemeSub.Text = ThemeService.IsDark ? "On" : "Off";
         ShellUi.SetClass(DndTile, "on", Notifier.DoNotDisturb);
         DndSub.Text = Notifier.DoNotDisturb ? "On" : "Off";
+        ShellUi.SetClass(NightTile, "on", NightLight.On);
+        NightSub.Text = NightLightStatus(DateTime.Now);
+        DesksSub.Text = VirtualDesktops.Count == 1 ? "1 desktop" : $"{VirtualDesktops.Count} desktops";
+    }
+
+    /// <summary>The night light tile's second line: on or off, and when the schedule changes that.</summary>
+    public static string NightLightStatus(DateTime now)
+    {
+        var s = SettingsStore.Current;
+        string clock(DateTime t) => t.ToString(s.Clock24h ? "HH:mm" : "h:mm tt", System.Globalization.CultureInfo.InvariantCulture);
+        if (s.NightLightSchedule == "hours" && TimeOnly.TryParse(s.NightLight ? s.NightLightTo : s.NightLightFrom, System.Globalization.CultureInfo.InvariantCulture, out var at))
+            return (s.NightLight ? "On until " : "Off until ") + clock(DateTime.Today.Add(at.ToTimeSpan()));
+        if (s.NightLightSchedule == "sunset" && NightLight.NextNight(now) is { } night)
+            return s.NightLight ? "On until " + clock(night.Sunrise) : "Off until " + clock(night.Sunset);
+        return s.NightLight ? "On" : "Off";
     }
 
     // ------------------------------------------------------------ handlers
@@ -101,6 +116,8 @@ public partial class QuickSettingsPanel : UserControl, IShellPanel
     private void OnTheme(object? s, RoutedEventArgs e) { ShellActions.ToggleTheme(); RefreshToggles(); }
     private void OnDnd(object? s, RoutedEventArgs e) { Notifier.SetDoNotDisturb(!Notifier.DoNotDisturb); RefreshToggles(); }
     private void OnNextWallpaper(object? s, RoutedEventArgs e) => WallpaperService.Next();
+    private void OnNightLight(object? s, RoutedEventArgs e) { NightLight.Toggle(); RefreshToggles(); }
+    private void OnTaskView(object? s, RoutedEventArgs e) { CloseRequested?.Invoke(); TaskViewWindow.Toggle(); }
 
     private async void OnMute(object? s, RoutedEventArgs e)
     {

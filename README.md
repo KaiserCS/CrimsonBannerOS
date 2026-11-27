@@ -5,9 +5,9 @@ software under the GPL:
 
 | Part | What it is |
 |---|---|
-| **The desktop shell** (`RedStarOS/`) | Taskbar, Start menu, desktop, notifications, lock screen, Settings and the apps below. C#, Avalonia 12, .NET 8 |
-| **redstar-comp** (`compositor/`) | The Wayland compositor: window frames, snapping, shadows, Xwayland. C, wlroots 0.20 |
-| **redstar-wm** (`wm/`) | The window manager for the X11 session. C, Xlib |
+| **The desktop shell** (`RedStarOS/`) | Taskbar, Start menu, desktop, Task View and virtual desktops, night light, notifications, lock screen, Settings and the apps below. C#, Avalonia 12, .NET 8 |
+| **redstar-comp** (`compositor/`) | The Wayland compositor: window frames, snapping, shadows, virtual desktops, night light, Xwayland. C, wlroots 0.20 |
+| **redstar-wm** (`wm/`) | The window manager for the X11 session: frames, snapping, virtual desktops. C, Xlib |
 | **Crimson Online** (`browser/`) | The web browser: tabs, a content blocker, reader view, Save as PDF. C, GTK 4, WebKitGTK |
 | **The login screen** | Replaces SDDM, GDM or LightDM. Runs on greetd, inside redstar-comp |
 | **Software** | Installs more programs: our own catalogue, Flatpaks from Flathub, AppImages. Free software only |

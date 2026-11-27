@@ -35,7 +35,8 @@ public sealed class SnapAssist : Window
         X11Desktop.ListWindows(list =>
         {
             long self = WindowManager.Desktop?.TryGetPlatformHandle()?.Handle.ToInt64() ?? 0;
-            var others = list.Where(w => w.Id != snapped && w.Id != self && w.Title != WindowTitle && !string.IsNullOrWhiteSpace(w.Title)).ToList();
+            var others = list.Where(w => w.Id != snapped && w.Id != self && w.Title != WindowTitle && !string.IsNullOrWhiteSpace(w.Title)
+                && VirtualDesktops.DeskOf(w.Id) is var d && (d < 0 || d == VirtualDesktops.Current)).ToList();   // this desktop's
             _open?.Close();
             if (others.Count == 0) return;
             _open = new SnapAssist(others, fill);

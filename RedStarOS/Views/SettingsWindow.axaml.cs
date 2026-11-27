@@ -48,12 +48,12 @@ public partial class SettingsWindow : Window
     private static readonly (string Name, string Keywords, string Icon)[] SearchPages =
     {
         ("Appearance", "theme dark light accent colour color font", "palette"),
-        ("Desktop & Taskbar", "taskbar pinned labels desktop icons", "monitor"),
+        ("Desktop & Taskbar", "taskbar pinned labels desktop icons virtual desktops task view", "monitor"),
         ("Wallpapers", "background picture slideshow wallpaper search download", "image"),
         ("Wi-Fi & Network", "wifi wi-fi internet ethernet wired airplane network", "wifi"),
         ("Sound", "volume speaker headphones microphone audio output input", "volume"),
         ("Bluetooth", "headphones pair device mouse keyboard", "bluetooth"),
-        ("Displays", "screen monitor resolution rotate mirror projector", "monitor"),
+        ("Displays", "screen monitor resolution rotate mirror projector night light warm blue light", "monitor"),
         ("Printers", "print printer cups queue", "printer"),
         ("Default apps", "open with browser default program", "apps"),
         ("Accessibility", "size scale bigger text zoom contrast motion animation cursor pointer sounds keyboard screen reader", "accessibility"),
@@ -333,6 +333,23 @@ public partial class SettingsWindow : Window
             Text = (InputIsolation.InRedStarComp ? "Drawn by redstar-comp. " : "Drawn by the picom compositor (install picom if it's missing). ")
                  + "Windows that are maximised or full screen, menus and tooltips have none. Takes effect the next time Crimson Banner OS starts."
                  + (X11Props.CompositorRunning() ? "" : "\nNow: no compositor is running, so there are no shadows.")
+        });
+
+        p.Children.Add(Eyebrow("VIRTUAL DESKTOPS"));
+        p.Children.Add(Check("Show the Task View button next to Start", s.TaskViewButton, v => SettingsStore.Current.TaskViewButton = v));
+        p.Children.Add(Check("On the taskbar, show windows from every desktop", s.TaskbarAllDesktops, v => SettingsStore.Current.TaskbarAllDesktops = v));
+        p.Children.Add(Check("Alt+Tab offers windows from every desktop", s.AltTabAllDesktops, v => SettingsStore.Current.AltTabAllDesktops = v));
+        var openTaskView = new Button { Content = "Open Task View", Padding = new Avalonia.Thickness(14, 6), HorizontalAlignment = HorizontalAlignment.Left };
+        openTaskView.Click += (_, _) => TaskViewWindow.Toggle();
+        p.Children.Add(openTaskView);
+        p.Children.Add(new TextBlock
+        {
+            Classes = { "caption" }, TextWrapping = TextWrapping.Wrap,
+            Text = "Task View (Super+Tab) shows your windows and desktops: add a desktop, drag a window onto one, right-click to rename "
+                 + "or close it. Super+Ctrl+D adds a desktop, Super+Ctrl+Left and Right switch, with Shift the active window comes along, "
+                 + "and Super+Ctrl+F4 closes the one in use (its windows move to the desktop on its left)."
+                 + (VirtualDesktops.Count > 1 ? $"
+Now: {VirtualDesktops.Count} desktops, {VirtualDesktops.Name(VirtualDesktops.Current)} in use." : ""),
         });
 
         p.Children.Add(Eyebrow("WAYLAND (EXPERIMENTAL)"));

@@ -27,8 +27,20 @@ public sealed class Settings
     public string? PasswordHash { get; set; }
 
     public bool Fullscreen { get; set; } = true;       // desktop covers the whole screen
-    public bool SnapAssist { get; set; } = true;
-    public bool ImageZoomToFit { get; set; }           // Image Viewer: fitting enlarges small pictures too       // after snapping a window, offer the others for the space left
+    public bool SnapAssist { get; set; } = true;       // after snapping a window, offer the others for the space left
+    public bool ImageZoomToFit { get; set; }           // Image Viewer: fitting enlarges small pictures too
+    // virtual desktops (Task View)
+    public int DesktopCount { get; set; } = 1;
+    public List<string> DesktopNames { get; set; } = new();   // "" or missing: "Desktop n"
+    public bool TaskViewButton { get; set; } = true;          // the Task View button next to Start
+    public bool TaskbarAllDesktops { get; set; }              // the taskbar lists windows of every desktop
+    public bool AltTabAllDesktops { get; set; }               // Alt+Tab offers windows of every desktop
+    // night light: a warmer screen in the evening
+    public bool NightLight { get; set; }                      // on now (by hand, or the schedule turned it on)
+    public int NightLightKelvin { get; set; } = 3400;         // how warm: 6500 K is no change
+    public string NightLightSchedule { get; set; } = "off";   // off | sunset (sunset to sunrise) | hours
+    public string NightLightFrom { get; set; } = "21:00";
+    public string NightLightTo { get; set; } = "07:00";
     public bool PeekDesktop { get; set; } = true;      // pointing at Show desktop makes the windows see-through
     public bool TaskbarPreviews { get; set; } = true;  // pointing at a taskbar button shows its windows
     public string Theme { get; set; } = "Dark";       // Light | Dark | System (Dark: Crimson Banner OS's own look)

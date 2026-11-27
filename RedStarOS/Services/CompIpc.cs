@@ -195,6 +195,27 @@ public static class CompIpc
     public static void Activate(long id) => Send($"activate\t{id}");
     public static void Close(long id) => Send($"close\t{id}");
 
+    // ─────────── virtual desktops ───────────
+    public static void SetDesktopCount(int n) => Send("desktops\t" + n.ToString(CultureInfo.InvariantCulture));
+    public static void SwitchDesktop(int n) => Send("desktop\t" + n.ToString(CultureInfo.InvariantCulture));
+    /// <summary>Moves a window (native or X11 id) to desktop n; -1: every desktop.</summary>
+    public static void MoveToDesktop(long id, int n) => Send($"to-desktop\t{n.ToString(CultureInfo.InvariantCulture)}\t{id}");
+
+    // ─────────── night light ───────────
+    /// <summary>The line that tints every screen (public for the tests): red, green, blue multipliers, all 1 for off.</summary>
+    public static string NightLightLine(double r, double g, double b) =>
+        string.Join('\t', "nightlight", r.ToString("0.####", CultureInfo.InvariantCulture), g.ToString("0.####", CultureInfo.InvariantCulture),
+            b.ToString("0.####", CultureInfo.InvariantCulture));
+
+    /// <summary>Tints every screen; the answer is how many screens took it and how many can't (null: no answer).</summary>
+    public static async Task<(int Applied, int Failed)?> NightLight(double r, double g, double b)
+    {
+        var lines = await Query(NightLightLine(r, g, b), l => l.StartsWith("nightlight\t"), l => l.StartsWith("nightlight\t")).ConfigureAwait(false);
+        if (lines is not { Count: > 0 }) return null;
+        var f = lines[^1].Split('\t');
+        return f.Length >= 3 && int.TryParse(f[1], out var ok) && int.TryParse(f[2], out var bad) ? (ok, bad) : null;
+    }
+
     /// <summary>"left", "right", "maximize", "restore", "minimize" — as <see cref="X11Desktop.SnapWindow"/>.</summary>
     public static void Snap(long id, string how) => Send($"{how}\t{id}");
 
@@ -278,6 +299,12 @@ public static class CompIpc
                 break;
             case "idle-end":
                 IdleChanged?.Invoke(false);
+                break;
+            case "desktops" when f.Length >= 3 && int.TryParse(f[1], out var count) && int.TryParse(f[2], out var shown):
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => VirtualDesktops.FromWindowManager(count, shown, null));
+                break;
+            case "on-desktop" when f.Length >= 3 && long.TryParse(f[1], out var did) && int.TryParse(f[2], out var desk):
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => VirtualDesktops.FromWindowManager(null, null, new Dictionary<long, int> { [did] = desk }, merge: true));
                 break;
             case "snapped" when f.Length >= 3 && long.TryParse(f[1], out var sid):   // dropped at an edge: Snap Assist
                 X11Desktop.RaiseSnapped(sid, f[2]);

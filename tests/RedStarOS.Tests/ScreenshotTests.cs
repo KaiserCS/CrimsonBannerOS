@@ -278,6 +278,47 @@ public class ScreenshotTests
     }
 
     [AvaloniaFact]
+    public void Shell_task_view()
+    {
+        var calc = WindowManager.Open(new CalculatorWindow(), "calculator");
+        var notes = WindowManager.Open(new NotesWindow(), "notes");
+        var names = SettingsStore.Current.DesktopNames;
+        var saved = new List<string>(names);
+        try
+        {
+            names.Clear(); names.AddRange(new[] { "", "Writing" });
+            VirtualDesktops.FromWindowManager(3, 0, null);
+            Dispatcher.UIThread.RunJobs();
+            var w = new TaskViewWindow { Width = 1280, Height = 720, Topmost = false };
+            ShowAndCapture(w, "Shell-TaskView");
+        }
+        finally
+        {
+            calc.Close(); notes.Close();
+            names.Clear(); names.AddRange(saved);
+            VirtualDesktops.Reset();
+        }
+    }
+
+    [AvaloniaFact]
+    public void Shell_desktop_sign()
+    {
+        VirtualDesktops.FromWindowManager(4, 1, null);
+        try { ShowAndCapture(OnWallpaper(new Border { Padding = new Avalonia.Thickness(24), Child = DesktopWindow.DesktopSign(1) }, 320, 170), "Shell-DesktopSign"); }
+        finally { VirtualDesktops.Reset(); }
+    }
+
+    [AvaloniaFact]
+    public void Settings_night_light()
+    {
+        var p = new StackPanel { Spacing = 10, Margin = new Avalonia.Thickness(24) };
+        SettingsPages.NightLightSection(p);
+        var w = new Window { Width = 720, Height = 360, Content = p };
+        w.Bind(Window.BackgroundProperty, w.GetResourceObservable("ShellBackdropBrush"));
+        ShowAndCapture(w, "Shell-NightLight");
+    }
+
+    [AvaloniaFact]
     public void Shell_taskbar_preview()
     {
         var calc = new CalculatorWindow();

@@ -66,6 +66,9 @@ public partial class Taskbar : UserControl
             StepVolume(e.Delta.Y > 0 ? VolumeStep : -VolumeStep);
         };
         ClockButton.Click += (_, _) => ShowPanel(ClockButton, new CalendarPanel());
+        TaskViewButton.Content = Icons.Create("task-view", 20);
+        TaskViewButton.Click += (_, _) => TaskViewWindow.Toggle();
+        Avalonia.Automation.AutomationProperties.SetName(TaskViewButton, "Task View");
 
         TaskPreview.Host = PreviewPopup;
 
@@ -100,6 +103,7 @@ public partial class Taskbar : UserControl
         _pressGuard.Tick += (_, _) => { _pressGuard.Stop(); FinishPress(); };      // safety net: never wait forever
 
         WindowManager.Changed += RebuildTasks;
+        VirtualDesktops.Changed += RebuildTasks;
         TrayService.Changed += RebuildAppTray;
         Notifier.Changed += UpdateBell;
 
@@ -144,6 +148,7 @@ public partial class Taskbar : UserControl
         _clock.Stop();
         _status.Stop();
         WindowManager.Changed -= RebuildTasks;
+        VirtualDesktops.Changed -= RebuildTasks;
         TrayService.Changed -= RebuildAppTray;
         Notifier.Changed -= UpdateBell;
         base.OnDetachedFromVisualTree(e);
@@ -281,7 +286,10 @@ public partial class Taskbar : UserControl
         if (_pointerDown) { _tasksPending = true; return; }
 
         bool child = SettingsStore.Current.AccountType == "Child";
-        var tasks = WindowManager.Tasks.ToList();
+        TaskViewButton.IsVisible = SettingsStore.Current.TaskViewButton;
+        // the desktop in use's windows (Settings → Desktop & Taskbar can list every desktop's)
+        bool all = SettingsStore.Current.TaskbarAllDesktops;
+        var tasks = WindowManager.Tasks.Where(t => all || VirtualDesktops.OnCurrent(t)).ToList();
         var used = new HashSet<TaskItem>();
         var entries = new List<(string? PinId, TaskItem? Task)>();
 
@@ -457,6 +465,19 @@ public partial class Taskbar : UserControl
             menu.Items.Add(Item("Snap Left", () => task.Snap(SnapMode.Left)));
             menu.Items.Add(Item("Snap Right", () => task.Snap(SnapMode.Right)));
             menu.Items.Add(Item("Fill Screen", () => task.Snap(SnapMode.Full)));
+            // virtual desktops: built when the menu opens (the desktops may have changed since)
+            var deskSep = new Separator { Tag = "desks" };
+            menu.Items.Add(deskSep);
+            menu.Opening += (_, _) =>
+            {
+                foreach (var old in menu.Items.OfType<Control>().Where(c => c.Tag as string == "desk-item").ToList()) menu.Items.Remove(old);
+                int at = menu.Items.IndexOf(deskSep) + 1;
+                foreach (var item in TaskViewWindow.MoveItems(task, () => { }))
+                {
+                    item.Tag = "desk-item";
+                    menu.Items.Insert(at++, item);
+                }
+            };
         }
         else if (pinId != null)
         {

@@ -317,6 +317,76 @@
     <Setter Property="Padding" Value="12" />
   </Style>
 
+  <!-- ===== Task View (TaskViewWindow) and the desktop switch's sign =====
+       Task View is always dark, like the taskbar: the dark theme's card and hover values, whatever the theme -->
+  <Style Selector="Button.viewcard">
+    <Setter Property="Background" Value="#12FFFFFF" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+  <Style Selector="Button.viewcard:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#1AFFFFFF" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellAccentBrush}" />
+  </Style>
+  <Style Selector="Button.viewcard:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellAccentBrush}" />
+  </Style>
+  <Style Selector="Button.deskcard">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="CornerRadius" Value="10" />
+  </Style>
+  <Style Selector="Button.deskcard:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#1AFFFFFF" />
+  </Style>
+  <Style Selector="Button.deskcard.shown /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#12FFFFFF" />
+  </Style>
+  <Style Selector="Button.deskcard.current /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellAccentBrush}" />
+  </Style>
+  <Style Selector="Button.deskcard.drop /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ShellAccentSoftBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellAccentBrush}" />
+  </Style>
+  <Style Selector="Button.deskcard:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellAccentTextBrush}" />
+  </Style>
+  <Style Selector="Button.cardclose">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="CornerRadius" Value="8" />
+  </Style>
+  <Style Selector="Button.cardclose:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ShellDangerBrush}" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+  <!-- a desktop's close button shows when the pointer is on its card (or it has the keyboard) -->
+  <Style Selector="Panel > Button.cardclose.ondesk">
+    <Setter Property="Opacity" Value="0" />
+    <Setter Property="Background" Value="#CC1C1C20" />
+  </Style>
+  <Style Selector="Panel:pointerover > Button.cardclose.ondesk, Button.cardclose.ondesk:focus-visible">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+  <Style Selector="Border.desksign">
+    <Setter Property="Background" Value="{DynamicResource ShellToastBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="14" />
+    <Setter Property="Padding" Value="28,18" />
+    <Setter Property="MinWidth" Value="200" />
+  </Style>
+  <Style Selector="Border.deskdot">
+    <Setter Property="Background" Value="{DynamicResource ShellBorderBrush}" />
+  </Style>
+  <Style Selector="Border.deskdot-on">
+    <Setter Property="Background" Value="{DynamicResource ShellAccentBrush}" />
+  </Style>
+
   <!-- ===== Show desktop: the taskbar's corner sliver ===== -->
   <Style Selector="Button.showdesktop">
     <Setter Property="Background" Value="Transparent" />

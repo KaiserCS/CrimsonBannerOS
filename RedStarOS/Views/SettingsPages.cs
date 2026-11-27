@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -368,10 +369,121 @@ public static class SettingsPages
         return outs;
     }
 
+    // ───────────────────────── night light (on both Displays pages) ─────────────────────────
+    public static void NightLightSection(StackPanel p)
+    {
+        var s = SettingsStore.Current;
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        p.Children.Add(Eyebrow("NIGHT LIGHT"));
+        var body = new StackPanel { Spacing = 12 };
+
+        var on = new ToggleSwitch { IsChecked = NightLight.On, OnContent = "On", OffContent = "Off", VerticalAlignment = VerticalAlignment.Center };
+        var head = new DockPanel();
+        DockPanel.SetDock(on, Dock.Right);
+        head.Children.Add(on);
+        head.Children.Add(new StackPanel
+        {
+            Spacing = 2, VerticalAlignment = VerticalAlignment.Center,
+            Children =
+            {
+                new TextBlock { Text = "Night light", FontSize = 14, FontWeight = FontWeight.SemiBold },
+                new TextBlock { Text = "Warmer colours in the evening, so the screen is easier on your eyes and your sleep.", Classes = { "caption" }, TextWrapping = TextWrapping.Wrap },
+            },
+        });
+        on.IsCheckedChanged += (_, _) => { if ((on.IsChecked == true) != NightLight.On) NightLight.Set(on.IsChecked == true); };
+        body.Children.Add(head);
+
+        // warmth: right is warmer (a lower colour temperature)
+        var warmth = new Slider { Minimum = NightLight.Warmest, Maximum = NightLight.Coolest, IsDirectionReversed = true, Value = s.NightLightKelvin, SmallChange = 100, LargeChange = 500 };
+        Avalonia.Automation.AutomationProperties.SetName(warmth, "Warmth");
+        var kelvin = new TextBlock { Classes = { "caption" }, Width = 60, TextAlignment = TextAlignment.Right, VerticalAlignment = VerticalAlignment.Center };
+        void ShowKelvin() => kelvin.Text = $"{(int)Math.Round(warmth.Value / 100) * 100} K";
+        ShowKelvin();
+        var throttle = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(120) };
+        throttle.Tick += (_, _) => { throttle.Stop(); NightLight.SetKelvin((int)Math.Round(warmth.Value / 100) * 100); };
+        warmth.PropertyChanged += (_, e) => { if (e.Property == RangeBase.ValueProperty) { ShowKelvin(); throttle.Stop(); throttle.Start(); } };
+        var warmRow = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto") };
+        warmRow.Children.Add(new TextBlock { Text = "Strength", Width = 90, VerticalAlignment = VerticalAlignment.Center });
+        Grid.SetColumn(warmth, 1); warmRow.Children.Add(warmth);
+        var hint = new TextBlock { Text = "warmer →", Classes = { "caption" }, Margin = new Thickness(8, 0), VerticalAlignment = VerticalAlignment.Center };
+        Grid.SetColumn(hint, 2); warmRow.Children.Add(hint);
+        Grid.SetColumn(kelvin, 3); warmRow.Children.Add(kelvin);
+        body.Children.Add(warmRow);
+
+        // schedule
+        var night = NightLight.NextNight(DateTime.Now);
+        string clock(DateTime t) => t.ToString(s.Clock24h ? "HH:mm" : "h:mm tt", inv);
+        var schedule = new ComboBox { MinWidth = 280 };
+        schedule.Items.Add(new ComboBoxItem { Content = "Only when I turn it on", Tag = "off" });
+        schedule.Items.Add(new ComboBoxItem
+        {
+            Content = night is { } n ? $"Sunset to sunrise ({clock(n.Sunset)}–{clock(n.Sunrise)})" : "Sunset to sunrise (your time zone's place isn't known)",
+            Tag = "sunset", IsEnabled = night != null,
+        });
+        schedule.Items.Add(new ComboBoxItem { Content = "Set hours", Tag = "hours" });
+        schedule.SelectedItem = schedule.Items.OfType<ComboBoxItem>().FirstOrDefault(i => i.Tag as string == s.NightLightSchedule) ?? schedule.Items[0];
+        var from = new TextBox { Text = s.NightLightFrom, Width = 80 };
+        var to = new TextBox { Text = s.NightLightTo, Width = 80 };
+        Avalonia.Automation.AutomationProperties.SetName(from, "Turn on at");
+        Avalonia.Automation.AutomationProperties.SetName(to, "Turn off at");
+        var hours = Row(new TextBlock { Text = "Turn on at", VerticalAlignment = VerticalAlignment.Center }, from,
+            new TextBlock { Text = "and off at", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(6, 0, 0, 0) }, to);
+        hours.IsVisible = s.NightLightSchedule == "hours";
+        var hoursNote = Note("");
+        hoursNote.IsVisible = false;
+        void SaveHours()
+        {
+            bool okF = TimeOnly.TryParse(from.Text, inv, out var f), okT = TimeOnly.TryParse(to.Text, inv, out var t);
+            hoursNote.IsVisible = !okF || !okT;
+            hoursNote.Text = "Write the times as hours and minutes, like 21:00 and 07:00.";
+            if (!okF || !okT) return;
+            SettingsStore.Current.NightLightFrom = f.ToString("HH:mm", inv);
+            SettingsStore.Current.NightLightTo = t.ToString("HH:mm", inv);
+            SettingsStore.Save();
+            NightLight.Evaluate();
+        }
+        from.LostFocus += (_, _) => SaveHours();
+        to.LostFocus += (_, _) => SaveHours();
+        from.KeyDown += (_, e) => { if (e.Key == Key.Enter) SaveHours(); };
+        to.KeyDown += (_, e) => { if (e.Key == Key.Enter) SaveHours(); };
+        schedule.SelectionChanged += (_, _) =>
+        {
+            if (schedule.SelectedItem is not ComboBoxItem { Tag: string tag }) return;
+            SettingsStore.Current.NightLightSchedule = tag;
+            SettingsStore.Save();
+            hours.IsVisible = tag == "hours";
+            NightLight.Evaluate();
+        };
+        var schedRow = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
+        schedRow.Children.Add(new TextBlock { Text = "Schedule", Width = 90, VerticalAlignment = VerticalAlignment.Center });
+        Grid.SetColumn(schedule, 1); schedule.HorizontalAlignment = HorizontalAlignment.Left;
+        schedRow.Children.Add(schedule);
+        body.Children.Add(schedRow);
+        body.Children.Add(hours);
+        body.Children.Add(hoursNote);
+
+        var support = Note("");
+        void ShowSupport()
+        {
+            support.IsVisible = NightLight.Supported == false;
+            support.Text = InputIsolation.IsNested || InputIsolation.InRedStarComp
+                ? "This screen can't change its colours here: Crimson Banner OS is running in a window on another desktop, or the screen's driver has no gamma ramp. Use your other desktop's night light instead."
+                : "These screens can't change their colours: their driver has no gamma ramp (XRandR).";
+        }
+        ShowSupport();
+        body.Children.Add(support);
+        void OnChanged() { on.IsChecked = NightLight.On; ShowSupport(); }
+        body.AttachedToVisualTree += (_, _) => NightLight.Changed += OnChanged;
+        body.DetachedFromVisualTree += (_, _) => NightLight.Changed -= OnChanged;
+        p.Children.Add(Card(body));
+    }
+
     public static Control Displays()
     {
         if (InputIsolation.InRedStarComp) return DisplaysComp();
-        var p = Page("Displays", "Resolution, rotation and arrangement of your screens (xrandr). Changes are undone after 15 seconds unless you keep them.");
+        var p = Page("Displays", "Resolution, rotation and arrangement of your screens (xrandr), and night light. Changes are undone after 15 seconds unless you keep them.");
+        NightLightSection(p);
+        p.Children.Add(Eyebrow("SCREENS"));
         if (ProcessUtil.Which("xrandr") == null || Environment.GetEnvironmentVariable("WAYLAND_DISPLAY") is { Length: > 0 } && Environment.GetEnvironmentVariable("XDG_SESSION_TYPE") == "wayland")
         {
             p.Children.Add(Missing("Display settings", "xrandr (an X11 session)"));
@@ -486,7 +598,9 @@ public static class SettingsPages
 
     private static Control DisplaysComp()
     {
-        var p = Page("Displays", "Resolution, refresh rate, scale, rotation and arrangement of your screens. Changes are undone after 15 seconds unless you keep them.");
+        var p = Page("Displays", "Resolution, refresh rate, scale, rotation and arrangement of your screens, and night light. Changes are undone after 15 seconds unless you keep them.");
+        NightLightSection(p);
+        p.Children.Add(Eyebrow("SCREENS"));
         var host = new StackPanel { Spacing = 10 };
         p.Children.Add(host);
         p.Children.Add(Eyebrow("TEXT AND APP SIZE"));

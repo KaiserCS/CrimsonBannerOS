@@ -91,6 +91,9 @@ public partial class DesktopWindow : Window
             X11Desktop.Snapped += SnapAssist.Offer;     // a window dropped at an edge: offer the others for the rest
             X11Desktop.Start();
             WindowManager.TrackForeignWindows();      // other programs' windows get taskbar buttons too
+            VirtualDesktops.Switched += ShowDesktopSign;
+            // night light, once the window manager or compositor is there to take it
+            DispatcherTimer.RunOnce(NightLight.Start, TimeSpan.FromSeconds(1.5));
             PortalSetup.Run();                         // inside redstar-comp: screenshots and screen sharing for other apps
             SystemTray.Start();                        // other programs' tray icons (Discord, Steam…) on the taskbar
             OtherAppsNotifications.Start();            // other programs' notifications (org.freedesktop.Notifications)
@@ -144,6 +147,8 @@ public partial class DesktopWindow : Window
         Notifier.PostedRecord -= ShowToast;
         X11Desktop.Shortcut -= OnGlobalShortcut;
         X11Desktop.Snapped -= SnapAssist.Offer;
+        VirtualDesktops.Switched -= ShowDesktopSign;
+        NightLight.Stop();
         base.OnClosed(e);
     }
 
@@ -185,8 +190,79 @@ public partial class DesktopWindow : Window
             case "snap-right": SnapActive(SnapMode.Right, "right"); break;
             case "maximize": SnapActive(SnapMode.Full, "maximize"); break;
             case "minimize": SnapActive(null, "minimize"); break;
+            // virtual desktops
+            case "task-view": TaskViewWindow.Toggle(); break;
+            case "desktop-next": VirtualDesktops.Next(); break;
+            case "desktop-prev": VirtualDesktops.Previous(); break;
+            case "desktop-move-next": MoveActiveToDesktop(+1); break;
+            case "desktop-move-prev": MoveActiveToDesktop(-1); break;
+            case "desktop-new": { int d = VirtualDesktops.Add(); if (d >= 0) VirtualDesktops.Switch(d); break; }
+            case "desktop-close": VirtualDesktops.Close(VirtualDesktops.Current); break;
             default: break;
         }
+    }
+
+    /// <summary>Super+Ctrl+Shift+Left/Right: the active window goes to the next desktop, and so do you.</summary>
+    private static void MoveActiveToDesktop(int step)
+    {
+        X11Desktop.ActiveWindow(xid =>
+        {
+            int to = VirtualDesktops.Current + step;
+            if (xid == 0 || to < 0 || to >= VirtualDesktops.Count) return;
+            if (WindowManager.Desktop?.TryGetPlatformHandle()?.Handle.ToInt64() == xid) return;   // the desktop itself stays
+            VirtualDesktops.Move(xid, to);
+            VirtualDesktops.Switch(to);
+            X11Desktop.Activate(xid);
+        });
+    }
+
+    // ------------------------------------------------------------ The switch's sign ("Desktop 2", for a moment)
+
+    // a popup: above every window (an override-redirect window on X11; redstar-comp draws the desktop's popups on top)
+    private Avalonia.Controls.Primitives.Popup? _deskSign;
+    private readonly DispatcherTimer _deskSignTimer = new() { Interval = TimeSpan.FromMilliseconds(900) };
+
+    private void ShowDesktopSign(int desk)
+    {
+        if (TaskViewWindow.IsOpen) return;
+        if (_deskSign == null)
+        {
+            _deskSign = new Avalonia.Controls.Primitives.Popup
+            {
+                PlacementTarget = this, Placement = PlacementMode.Center, IsLightDismissEnabled = false, Topmost = true,
+                IsHitTestVisible = false,
+            };
+            if (Content is Panel root) root.Children.Add(_deskSign);     // in the tree (it draws nothing in place)
+            _deskSignTimer.Tick += (_, _) => { _deskSignTimer.Stop(); if (_deskSign != null) _deskSign.IsOpen = false; };
+        }
+        _deskSign.Child = DesktopSign(desk);
+        _deskSign.IsOpen = true;
+        _deskSignTimer.Stop(); _deskSignTimer.Start();
+    }
+
+    /// <summary>The sign shown for a moment after switching: the desktop's name, and a dot for each desktop.</summary>
+    public static Control DesktopSign(int desk)
+    {
+        var dots = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, HorizontalAlignment = HorizontalAlignment.Center };
+        for (int i = 0; i < VirtualDesktops.Count && VirtualDesktops.Count <= 12; i++)
+        {
+            var dot = new Border { Width = i == desk ? 18 : 7, Height = 7, CornerRadius = new Avalonia.CornerRadius(4) };
+            dot.Classes.Add(i == desk ? "deskdot-on" : "deskdot");
+            dots.Children.Add(dot);
+        }
+        return new Border
+        {
+            Classes = { "desksign" },
+            Child = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new TextBlock { Text = VirtualDesktops.Name(desk), FontSize = 18, FontWeight = FontWeight.SemiBold, HorizontalAlignment = HorizontalAlignment.Center },
+                    dots,
+                },
+            },
+        };
     }
 
     /// <summary>Super+arrows: Red Star windows use the shell's own snapping, other programs the window manager's.</summary>
@@ -333,6 +409,9 @@ public partial class DesktopWindow : Window
     {
         if (string.IsNullOrEmpty(SettingsStore.Current.WallpaperPath)) LoadWallpaper();
     }
+
+    /// <summary>The wallpaper as drawn (Task View's little desktops).</summary>
+    public IImage? Wallpaper => WallpaperImage.Source;
 
     private void LoadWallpaper()
     {

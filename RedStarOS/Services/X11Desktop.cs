@@ -41,7 +41,16 @@ public static class X11Desktop
     [DllImport(Lib)] private static extern int XConnectionNumber(IntPtr d);
     [DllImport(Lib)] private static extern int XIconifyWindow(IntPtr d, IntPtr w, int screen);
     [DllImport(Lib)] private static extern int XChangeProperty(IntPtr d, IntPtr w, IntPtr prop, IntPtr type, int format, int mode, long[] data, int n);
+    [DllImport(Lib, EntryPoint = "XChangeProperty")] private static extern int XChangePropertyBytes(IntPtr d, IntPtr w, IntPtr prop, IntPtr type, int format, int mode, byte[] data, int n);
     [DllImport(Lib)] private static extern int XDeleteProperty(IntPtr d, IntPtr w, IntPtr prop);
+    // XRandR: each screen's gamma ramp (night light)
+    private const string Xrandr = "libXrandr.so.2";
+    [DllImport(Xrandr)] private static extern IntPtr XRRGetScreenResourcesCurrent(IntPtr d, IntPtr w);
+    [DllImport(Xrandr)] private static extern void XRRFreeScreenResources(IntPtr resources);
+    [DllImport(Xrandr)] private static extern int XRRGetCrtcGammaSize(IntPtr d, IntPtr crtc);
+    [DllImport(Xrandr)] private static extern IntPtr XRRAllocGamma(int size);
+    [DllImport(Xrandr)] private static extern void XRRSetCrtcGamma(IntPtr d, IntPtr crtc, IntPtr gamma);
+    [DllImport(Xrandr)] private static extern void XRRFreeGamma(IntPtr gamma);
     [DllImport(Lib)] private static extern IntPtr XSetErrorHandler(XErrorHandler handler);
     [DllImport(Lib)] private static extern int XSelectInput(IntPtr d, IntPtr w, IntPtr mask);
     [DllImport("libc", SetLastError = true)] private static extern int poll([In, Out] PollFd[] fds, nuint nfds, int timeout);
@@ -81,7 +90,8 @@ public static class X11Desktop
 
     /// <summary>Raised (on the UI thread) for global shortcuts: "start", "switcher-next", "switcher-prev",
     /// "switcher-commit", "switcher-cancel", "clipboard", "desktop", "files", "terminal", "lock", "snap-left",
-    /// "snap-right", "maximize", "minimize", "search", "screenshot", "screenshot-window" (inside redstar-comp followed by
+    /// "snap-right", "maximize", "minimize", "search", "task-view", "desktop-next", "desktop-prev", "desktop-move-next",
+    /// "desktop-move-prev", "desktop-new", "desktop-close", "screenshot", "screenshot-window" (inside redstar-comp followed by
     /// a tab and the window's geometry), "power-menu" (Ctrl+Alt+Delete), "volume-up", "volume-down", "volume-mute".</summary>
     public static event Action<string>? Shortcut;
 
@@ -138,6 +148,7 @@ public static class X11Desktop
             }
             else GrabKeys();
             XSelectInput(_d, _root, PropertyChangeMask);     // client list / active window changes → taskbar
+            if (!CompIpc.Connected) ReadDesktops();
             int fd = XConnectionNumber(_d);
             var pfd = new PollFd[1];
             IntPtr ev = Marshal.AllocHGlobal(256);
@@ -184,7 +195,7 @@ public static class X11Desktop
         _kcSuperL = Kc("Super_L"); _kcSuperR = Kc("Super_R");
         _kcAltL = Kc("Alt_L"); _kcAltR = Kc("Alt_R");
         _kcTab = Kc("Tab"); _kcEsc = Kc("Escape");
-        foreach (var name in new[] { "Left", "Right", "Up", "Down", "v", "d", "e", "l", "t", "space", "s", "1", "2", "3", "4", "5", "6", "7", "8", "9" })
+        foreach (var name in new[] { "Left", "Right", "Up", "Down", "v", "d", "e", "l", "t", "space", "s", "F4", "1", "2", "3", "4", "5", "6", "7", "8", "9" })
         {
             int kc = Kc(name);
             if (kc != 0) _keyNames[kc] = name;
@@ -192,6 +203,8 @@ public static class X11Desktop
         // Super alone (Start menu) — holding Super then grabs the keyboard, so Super+key combos arrive here too
         Grab(_kcSuperL, 0); Grab(_kcSuperR, 0);
         Grab(_kcSuperL, ShiftMask); Grab(_kcSuperR, ShiftMask);
+        // …and with Ctrl (and Shift) already held: Super+Ctrl+Left/Right, Super+Ctrl+D and F4 (virtual desktops)
+        foreach (var m in new[] { ControlMask, ControlMask | ShiftMask }) { Grab(_kcSuperL, m); Grab(_kcSuperR, m); }
         // Alt+Tab / Alt+Shift+Tab
         Grab(_kcTab, Mod1Mask); Grab(_kcTab, Mod1Mask | ShiftMask);
         // Ctrl+Alt+T: terminal
@@ -245,6 +258,16 @@ public static class X11Desktop
         if (press && ((state & Mod4Mask) != 0 || _superDown))
         {
             _superUsed = true;
+            // virtual desktops, as on Windows
+            if (keycode == _kcTab) { Raise("task-view"); return; }
+            if (ctrl && name is "Left" or "Right")
+            {
+                bool next = name == "Right";
+                Raise(shift ? (next ? "desktop-move-next" : "desktop-move-prev") : (next ? "desktop-next" : "desktop-prev"));
+                return;
+            }
+            if (ctrl && name == "d") { Raise("desktop-new"); return; }
+            if (ctrl && name == "F4") { Raise("desktop-close"); return; }
             switch (name)
             {
                 case "Left": Raise("snap-left"); return;
@@ -292,7 +315,7 @@ public static class X11Desktop
     private static IntPtr Atom(string name) => XInternAtom(_d, name, false);
 
     // ═════════════════════════════════ other programs' windows (taskbar) ═════════════════════════════════
-    private static IntPtr _aClientList, _aActive, _aName, _aWmName, _aState, _aIcon, _aSnapped;
+    private static IntPtr _aClientList, _aActive, _aName, _aWmName, _aState, _aIcon, _aSnapped, _aDesks, _aCurDesk, _aDeskNames, _aWmDesk;
 
     private static void OnProperty(long window, IntPtr atom)
     {
@@ -301,15 +324,18 @@ public static class X11Desktop
             _aClientList = Atom("_NET_CLIENT_LIST"); _aActive = Atom("_NET_ACTIVE_WINDOW"); _aName = Atom("_NET_WM_NAME");
             _aWmName = Atom("WM_NAME"); _aState = Atom("_NET_WM_STATE"); _aIcon = Atom("_NET_WM_ICON");
             _aSnapped = Atom("_REDSTAR_SNAPPED");
+            _aDesks = Atom("_NET_NUMBER_OF_DESKTOPS"); _aCurDesk = Atom("_NET_CURRENT_DESKTOP");
+            _aDeskNames = Atom("_NET_DESKTOP_NAMES"); _aWmDesk = Atom("_NET_WM_DESKTOP");
         }
         if (window == _root.ToInt64())
         {
             if (atom == _aClientList || atom == _aActive) _windowsDirty = true;
+            else if ((atom == _aDesks || atom == _aCurDesk) && !CompIpc.Connected) ReadDesktops();
             else if (atom == _aSnapped && ReadCardinals(_root, "_REDSTAR_SNAPPED") is { Length: >= 2 } snap && snap[1] > 0 && snap[1] < ZoneNames.Length)
                 RaiseSnapped(snap[0], ZoneNames[snap[1]]);      // redstar-wm: a window dropped at an edge (Snap Assist)
             return;
         }
-        if (atom == _aName || atom == _aWmName || atom == _aState) _windowsDirty = true;
+        if (atom == _aName || atom == _aWmName || atom == _aState || atom == _aWmDesk) _windowsDirty = true;
         else if (atom == _aIcon) { _iconVersion.Remove(window); _windowsDirty = true; }   // re-read the icon
     }
 
@@ -330,11 +356,13 @@ public static class X11Desktop
         long skipTaskbar = Atom("_NET_WM_STATE_SKIP_TASKBAR").ToInt64(), hidden = Atom("_NET_WM_STATE_HIDDEN").ToInt64();
         var list = new List<ForeignWindow>();
         var seen = new HashSet<long>();
+        var desks = new Dictionary<long, int>();
         foreach (var id in ids)
         {
             var w = (IntPtr)id;
             seen.Add(id);
             if (_watched.Add(id)) XSelectInput(_d, w, PropertyChangeMask | StructureNotifyMask);   // titles, state, icon, closing
+            if (ReadCardinals(w, "_NET_WM_DESKTOP") is { Length: > 0 } dk) desks[id] = DeskNumber(dk[0]);   // the shell's own windows too
             int pid = (int)(ReadCardinals(w, "_NET_WM_PID")?[0] ?? 0);
             if (pid == OwnPid) continue;                                            // Red Star's own windows have their own entries
             var types = ReadCardinals(w, "_NET_WM_WINDOW_TYPE");
@@ -358,7 +386,85 @@ public static class X11Desktop
         }
         var handler = WindowsChanged;
         if (handler != null) Post(() => handler(list, active));
+        if (!CompIpc.Connected) Post(() => VirtualDesktops.FromWindowManager(null, null, desks));
     }
+
+    // ═════════════════════════════════ virtual desktops (EWMH; inside redstar-comp see CompIpc) ═════════════════════════════════
+    /// <summary>_NET_WM_DESKTOP's number: from 0, or -1 for "every desktop" (0xFFFFFFFF).</summary>
+    public static int DeskNumber(long v) => v < 0 || v >= 0xFFFFFFFFL ? -1 : (int)v;
+
+    private static void ReadDesktops()
+    {
+        int count = (int)(ReadCardinals(_root, "_NET_NUMBER_OF_DESKTOPS")?[0] ?? 1);
+        int cur = (int)(ReadCardinals(_root, "_NET_CURRENT_DESKTOP")?[0] ?? 0);
+        Post(() => VirtualDesktops.FromWindowManager(Math.Max(1, count), Math.Max(0, cur), null));
+    }
+
+    /// <summary>Asks the window manager for this many desktops.</summary>
+    public static void SetDesktopCount(int n) => _jobs.Enqueue(() => SendRoot(_root, "_NET_NUMBER_OF_DESKTOPS", n));
+
+    /// <summary>Shows desktop n (from 0).</summary>
+    public static void SwitchDesktop(int n) => _jobs.Enqueue(() => SendRoot(_root, "_NET_CURRENT_DESKTOP", n, 0));
+
+    /// <summary>Moves a window to desktop n (-1: every desktop).</summary>
+    public static void MoveToDesktop(long window, int n) => _jobs.Enqueue(() =>
+    {
+        if (window != 0) SendRoot((IntPtr)window, "_NET_WM_DESKTOP", n < 0 ? 0xFFFFFFFFL : n, 2);
+    });
+
+    /// <summary>The desktops' names, for pagers and other programs (_NET_DESKTOP_NAMES).</summary>
+    public static void SetDesktopNames(IReadOnlyList<string> names) => _jobs.Enqueue(() =>
+    {
+        var bytes = new List<byte>();
+        foreach (var n in names) { bytes.AddRange(Encoding.UTF8.GetBytes(n)); bytes.Add(0); }
+        var data = bytes.ToArray();
+        XChangePropertyBytes(_d, _root, Atom("_NET_DESKTOP_NAMES"), Atom("UTF8_STRING"), 8, 0, data, data.Length);
+        XFlush(_d);
+    });
+
+    // ═════════════════════════════════ night light (XRandR gamma ramps) ═════════════════════════════════
+    /// <summary>
+    /// Multiplies every screen's colours (red, green, blue: 0–1; all 1 is no change) through its gamma ramp. Calls back
+    /// on the UI thread with how many screens took it and how many couldn't (no XRandR, or no gamma ramp).
+    /// </summary>
+    public static void SetGamma(double r, double g, double b, Action<int, int>? done = null) => _jobs.Enqueue(() =>
+    {
+        int ok = 0, failed = 0;
+        try
+        {
+            var res = XRRGetScreenResourcesCurrent(_d, _root);
+            if (res == IntPtr.Zero) failed++;
+            else
+            {
+                try
+                {
+                    // XRRScreenResources: Time timestamp, configTimestamp; int ncrtc; RRCrtc *crtcs; …
+                    int n = Marshal.ReadInt32(res, 16);
+                    IntPtr crtcs = Marshal.ReadIntPtr(res, 24);
+                    for (int i = 0; i < n; i++)
+                    {
+                        var crtc = Marshal.ReadIntPtr(crtcs, i * IntPtr.Size);
+                        int size = XRRGetCrtcGammaSize(_d, crtc);
+                        if (size <= 1) { failed++; continue; }
+                        var gamma = XRRAllocGamma(size);
+                        if (gamma == IntPtr.Zero) { failed++; continue; }
+                        // XRRCrtcGamma: int size; unsigned short *red, *green, *blue
+                        IntPtr pr = Marshal.ReadIntPtr(gamma, 8), pg = Marshal.ReadIntPtr(gamma, 16), pb = Marshal.ReadIntPtr(gamma, 24);
+                        foreach (var (ptr, m) in new[] { (pr, r), (pg, g), (pb, b) })
+                            for (int k = 0; k < size; k++)
+                                Marshal.WriteInt16(ptr, k * 2, unchecked((short)NightLight.RampValue(k, size, m)));
+                        XRRSetCrtcGamma(_d, crtc, gamma);
+                        XRRFreeGamma(gamma);
+                        ok++;
+                    }
+                }
+                finally { XRRFreeScreenResources(res); }
+            }
+            XFlush(_d);
+        }
+        catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException) { failed++; }
+        if (done != null) Post(() => done(ok, failed));
+    });
 
     /// <summary>_NET_WM_ICON: several sizes of ARGB cardinals; keeps the one closest to 48 px (≥ 32 preferred).</summary>
     private static void ReadIcon(IntPtr w, long id)
