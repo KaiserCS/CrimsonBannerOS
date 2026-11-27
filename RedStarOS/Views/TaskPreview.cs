@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -39,13 +41,18 @@ public static class TaskPreview
         Hide.Tick += (_, _) => { Hide.Stop(); Close(); };
     }
 
-    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Button, Func<TaskItem?>> Tasks = new();
-    private static TaskItem? TaskOf(Button b) => Tasks.TryGetValue(b, out var f) ? f() : null;
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Button, Func<IReadOnlyList<TaskItem>>> Tasks = new();
+    private static IReadOnlyList<TaskItem> TasksOf(Button b) => Tasks.TryGetValue(b, out var f) ? f() : Array.Empty<TaskItem>();
+    private static TaskItem? TaskOf(Button b) => TasksOf(b).FirstOrDefault();
 
     /// <summary>Gives a taskbar button its preview (of whatever window it stands for at the time).</summary>
-    public static void Attach(Button btn, Func<TaskItem?> task)
+    public static void Attach(Button btn, Func<TaskItem?> task) =>
+        AttachGroup(btn, () => task() is { } t ? new[] { t } : Array.Empty<TaskItem>());
+
+    /// <summary>Gives a taskbar button the previews of every window it stands for (an app's windows, grouped), side by side.</summary>
+    public static void AttachGroup(Button btn, Func<IReadOnlyList<TaskItem>> tasks)
     {
-        Tasks.AddOrUpdate(btn, task);
+        Tasks.AddOrUpdate(btn, tasks);
         btn.PointerEntered += (_, _) =>
         {
             Hide.Stop();
@@ -67,11 +74,13 @@ public static class TaskPreview
 
     private static void Open(Button btn)
     {
-        var task = TaskOf(btn);
-        if (task == null) { Close(); return; }
+        var tasks = TasksOf(btn);
+        if (tasks.Count == 0) { Close(); return; }
         Close();
         _for = btn;
-        var card = Card(task);
+        Control card = tasks.Count == 1 ? Card(tasks[0])
+            : new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Background = Brushes.Transparent, Children = { } };
+        if (card is StackPanel row) foreach (var t in tasks) row.Children.Add(Card(t));
         if (Host == null) return;
         card.PointerEntered += (_, _) => Hide.Stop();
         card.PointerExited += (_, _) => { Hide.Stop(); Hide.Start(); };

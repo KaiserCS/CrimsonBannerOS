@@ -31,4 +31,13 @@ public class TaskbarLabelTests
         Assert.Equal(0, Taskbar.LabelWidth(0, 3, 3));
         Assert.Equal(0, Taskbar.LabelWidth(900, 3, 0));
     }
+
+    [Fact]
+    public void Clicking_a_group_walks_through_its_windows()
+    {
+        Assert.Equal(0, Taskbar.NextInGroup(new[] { false, false, false }));   // none in front: the first
+        Assert.Equal(1, Taskbar.NextInGroup(new[] { true, false, false }));
+        Assert.Equal(2, Taskbar.NextInGroup(new[] { false, true, false }));
+        Assert.Equal(0, Taskbar.NextInGroup(new[] { false, false, true }));    // the last: round to the first
+    }
 }

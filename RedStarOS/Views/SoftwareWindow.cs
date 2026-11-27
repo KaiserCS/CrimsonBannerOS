@@ -69,6 +69,9 @@ public sealed class SoftwareWindow : Window
         ("Game", "Games", "game"), ("Network", "Internet", "globe"), ("Utility", "Utilities", "settings"), ("System", "System", "drive"),
     };
 
+    /// <summary>Opens on a search (the Start menu's "Find … in Software").</summary>
+    public void SearchFor(string q) => _search.Text = q;
+
     public SoftwareWindow()
     {
         Title = "Software";

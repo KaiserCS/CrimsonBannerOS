@@ -6,7 +6,8 @@
     [Start] [Task View] [pinned + running apps ...] [app tray] | [system tray] [clock] |▌ (show desktop, in the corner)
     - Pinned launchers and running windows share one row: a pinned app that is running is the same button.
     - Native apps and other programs' windows are listed identically.
-    - App tray: icons of background things (notifications, media controls of Red Star Video, ...).
+    - App tray: icons of background things (media controls of Video, other programs' tray icons, ...).
+    - Notifications: the bell beside the clock, with the number of unread ones.
     - System tray: network / volume / battery in one button that opens Quick Settings.
   -->
   <Border Classes="taskbar">
@@ -67,6 +68,8 @@
             <TextBlock x:Name="DateLabel" FontSize="11" Opacity="0.75" HorizontalAlignment="Right" />
           </StackPanel>
         </Button>
+        <!-- notifications, by the clock: the number of unread ones on the bell -->
+        <Panel x:Name="BellHost" VerticalAlignment="Center" />
       </StackPanel>
 
       <!-- Show desktop: a sliver in the bottom-right corner, reaching the screen's edge so a flick of the mouse finds

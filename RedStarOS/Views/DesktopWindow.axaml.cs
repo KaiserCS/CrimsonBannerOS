@@ -173,6 +173,9 @@ public partial class DesktopWindow : Window
     {
         if (cmd.StartsWith("switcher-")) { WindowSwitcher.Handle(cmd); return; }
         if (cmd.StartsWith("screenshot")) { _ = Screenshots.Take(cmd); return; }
+        if (cmd.StartsWith("taskbar-") && int.TryParse(cmd["taskbar-".Length..], out var nth)) { Bar.OpenNth(nth); return; }
+        if (cmd == "super-down") { Bar.SuperHeld(true); return; }
+        if (cmd == "super-up") { Bar.SuperHeld(false); return; }
         switch (cmd)
         {
             case "start": case "search": Bar.ToggleStart(); break;

@@ -45,7 +45,6 @@ public partial class Taskbar : UserControl
     private readonly DispatcherTimer _clock = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly DispatcherTimer _status = new() { Interval = TimeSpan.FromSeconds(8) };
     private readonly TrayEntry _bell = new() { Key = "shell:notifications", Glyph = "bell", Tooltip = "Notifications" };
-    private readonly TrayEntry _clip = new() { Key = "shell:clipboard", Glyph = "clipboard", Tooltip = "Clipboard history (Super+V)" };
 
     private Flyout _startFlyout = null!;
     private StartMenu _startMenu = null!;
@@ -99,12 +98,9 @@ public partial class Taskbar : UserControl
             e.Handled = true;
         };
 
-        // The notification centre is the app tray's built-in resident.
+        // The notification centre: its own button beside the clock (clipboard history is in Quick Settings and Super+V).
         _bell.PanelFactory = () => new NotificationPanel();
         UpdateBell();
-        TrayService.Upsert(_bell);
-        _clip.PanelFactory = () => new ClipboardPanel();
-        TrayService.Upsert(_clip);
 
         // A click on a taskbar button moves focus to the desktop on press, which changes the task list. Rebuilding
         // the buttons between press and release would throw away the pressed button and its click, so while a
@@ -124,6 +120,8 @@ public partial class Taskbar : UserControl
         _clock.Start();
         _status.Tick += (_, _) => RefreshStatus();
         _status.Start();
+
+        _numbersAfter.Tick += (_, _) => { _numbersAfter.Stop(); ShowNumbers(true); };
 
         // the titles' width follows the room the row has
         TaskScroll.SizeChanged += (_, e) =>
@@ -189,7 +187,16 @@ public partial class Taskbar : UserControl
         _startFlyout.Closed += (_, _) => StartButton.Classes.Set("open", false);
         // the same gap above the taskbar as from the screen's left edge, wherever the Start button sits inside it
         StartButton.LayoutUpdated += (_, _) => PlaceAbove(_startFlyout, StartButton, alignLeft: true);
-        _startFlyout.Opening += (_, _) => PlaceAbove(_startFlyout, StartButton, alignLeft: true);
+        _startFlyout.Opening += (_, _) => { FitStart(); PlaceAbove(_startFlyout, StartButton, alignLeft: true); };
+    }
+
+    /// <summary>The Start menu at most 750 × 600, smaller on a small screen (the gaps and the taskbar left clear).</summary>
+    private void FitStart()
+    {
+        var screen = TopLevel.GetTopLevel(this)?.Screens?.ScreenFromVisual(this);
+        if (screen == null) return;
+        double scale = screen.Scaling <= 0 ? 1 : screen.Scaling;
+        _startMenu.FitTo(screen.Bounds.Width / scale - 2 * PanelGap, screen.Bounds.Height / scale - Bounds.Height - 2 * PanelGap);
     }
 
     /// <summary>Gap between the taskbar and the menus and panels that open from it, and from the screen's edge.</summary>
@@ -311,8 +318,10 @@ public partial class Taskbar : UserControl
         // the desktop in use's windows (Settings → Desktop & Taskbar can list every desktop's)
         bool all = SettingsStore.Current.TaskbarAllDesktops;
         var tasks = WindowManager.Tasks.Where(t => all || VirtualDesktops.OnCurrent(t)).ToList();
+        // one button per app: a pinned app's windows join its button, and an app's windows share one, in the
+        // order they opened; windows that don't say which app they are keep a button each
         var used = new HashSet<TaskItem>();
-        var entries = new List<(string? PinId, TaskItem? Task)>();
+        var entries = new List<(string? PinId, List<TaskItem> Tasks)>();
 
         foreach (var id in SettingsStore.Current.PinnedApps.ToList())
         {
@@ -323,25 +332,33 @@ public partial class Taskbar : UserControl
                 if (child || DesktopEntries.FromId(id) == null) continue;
             }
             else if (child && app.RestrictedForChild) continue;
-            var running = tasks.FirstOrDefault(t => t.AppId == id && !used.Contains(t));
-            if (running != null) used.Add(running);
+            var running = tasks.Where(t => t.AppId == id && !used.Contains(t)).ToList();
+            used.UnionWith(running);
             entries.Add((id, running));
         }
-        foreach (var t in tasks.Where(t => !used.Contains(t))) entries.Add((null, t));
+        foreach (var t in tasks.Where(t => !used.Contains(t)))
+        {
+            if (used.Contains(t)) continue;
+            var group = t.AppId == null ? new List<TaskItem> { t } : tasks.Where(o => o.AppId == t.AppId && !used.Contains(o)).ToList();
+            used.UnionWith(group);
+            entries.Add((null, group));
+        }
 
         double labels = SettingsStore.Current.TaskbarLabels
-            ? LabelWidth(TaskScroll.Bounds.Width, entries.Count, entries.Count(e => e.Task != null)) : 0;
+            ? LabelWidth(TaskScroll.Bounds.Width, entries.Count, entries.Count(e => e.Tasks.Count > 0)) : 0;
 
         // Buttons are kept and updated in place (keyed by pinned app or window): replacing a button under the
         // pointer would leave its tooltip open but empty, and lose a click in progress.
         var keep = new HashSet<string>();
         var ordered = new List<Control>();
-        foreach (var (pin, task) in entries)
+        foreach (var (pin, group) in entries)
         {
-            var key = pin != null ? "pin:" + pin : "task:" + System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(task!);
+            var key = pin != null ? "pin:" + pin
+                : group[0].AppId is { } gid ? "app:" + gid
+                : "task:" + System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(group[0]);
             keep.Add(key);
             if (!_taskButtons.TryGetValue(key, out var btn)) _taskButtons[key] = btn = NewTaskButton();
-            FillTaskButton(btn, pin, task, labels);
+            FillTaskButton(btn, pin, group, labels);
             ordered.Add(btn);
         }
         foreach (var gone in _taskButtons.Keys.Where(k => !keep.Contains(k)).ToList()) _taskButtons.Remove(gone);
@@ -358,8 +375,20 @@ public partial class Taskbar : UserControl
     private sealed class TaskSlot
     {
         public string? PinId;
-        public TaskItem? Task;
+        public List<TaskItem> Tasks = new();
+        public TaskItem? Task => Tasks.FirstOrDefault(t => t.IsActive) ?? Tasks.FirstOrDefault();
         public string Look = "";
+    }
+
+    /// <summary>
+    /// A click on a button of several windows: the next one after the window in front, so clicking again walks
+    /// through them; when none of them is in front, the first. Public for the tests.
+    /// </summary>
+    public static int NextInGroup(IReadOnlyList<bool> active)
+    {
+        int front = -1;
+        for (int i = 0; i < active.Count; i++) if (active[i]) { front = i; break; }
+        return front < 0 ? 0 : (front + 1) % active.Count;
     }
 
     private Button NewTaskButton()
@@ -373,23 +402,72 @@ public partial class Taskbar : UserControl
             Tag = new TaskSlot()
         };
         btn.Classes.Add("task");
-        TaskPreview.Attach(btn, () => (btn.Tag as TaskSlot)?.Task);
-        btn.Click += (_, _) =>
-        {
-            if (btn.Tag is not TaskSlot slot) return;
-            if (slot.Task != null) slot.Task.ToggleFromTaskbar();
-            else if (slot.PinId is { } pinId)
-            {
-                if (AppRegistry.Find(pinId) != null) AppRegistry.Launch(pinId);
-                else if (DesktopEntries.FromId(pinId) is { } la) DesktopEntries.Launch(la);
-            }
-        };
+        TaskPreview.AttachGroup(btn, () => (btn.Tag as TaskSlot)?.Tasks ?? new List<TaskItem>());
+        btn.Click += (_, _) => Press(btn);
         return btn;
     }
 
-    private void FillTaskButton(Button btn, string? pinId, TaskItem? task, double labels)
+    /// <summary>What a click on a taskbar button does (and Super+1…9): open the app, bring its window forward or
+    /// put it away, or with several windows walk through them.</summary>
+    private static void Press(Button btn)
+    {
+        if (btn.Tag is not TaskSlot slot) return;
+        if (slot.Tasks.Count > 1) slot.Tasks[NextInGroup(slot.Tasks.Select(t => t.IsActive).ToList())].Activate();
+        else if (slot.Task != null) slot.Task.ToggleFromTaskbar();
+        else if (slot.PinId is { } pinId)
+        {
+            if (AppRegistry.Find(pinId) != null) AppRegistry.Launch(pinId);
+            else if (DesktopEntries.FromId(pinId) is { } la) DesktopEntries.Launch(la);
+        }
+    }
+
+    /// <summary>Super+1…9: the n-th button on the taskbar, counted from the left.</summary>
+    public void OpenNth(int n)
+    {
+        SuperHeld(false);
+        var buttons = TaskList.Children.OfType<Button>().ToList();
+        if (n >= 1 && n <= buttons.Count) Press(buttons[n - 1]);
+    }
+
+    private readonly DispatcherTimer _numbersAfter = new() { Interval = TimeSpan.FromMilliseconds(600) };
+    private const string NumberTag = "super-number";
+
+    /// <summary>Super held down a moment: each of the first nine buttons shows the number that opens it; let go, they go.</summary>
+    public void SuperHeld(bool down)
+    {
+        _numbersAfter.Stop();
+        if (down) { _numbersAfter.Start(); return; }
+        ShowNumbers(false);
+    }
+
+    private void ShowNumbers(bool on)
+    {
+        int n = 0;
+        foreach (var btn in TaskList.Children.OfType<Button>())
+        {
+            if (btn.Content is not Grid g) continue;
+            foreach (var old in g.Children.OfType<Control>().Where(c => c.Tag as string == NumberTag).ToList()) g.Children.Remove(old);
+            if (!on || ++n > 9) continue;
+            g.Children.Add(new Border
+            {
+                Tag = NumberTag, IsHitTestVisible = false,
+                MinWidth = 16, Height = 16, CornerRadius = new CornerRadius(4), Padding = new Thickness(4, 0),
+                Background = new SolidColorBrush(Color.Parse("#F2F4F4F6")),
+                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 0, -2),
+                Child = new TextBlock
+                {
+                    Text = n.ToString(), FontSize = 10.5, FontWeight = FontWeight.Bold, Foreground = new SolidColorBrush(Color.Parse("#16161A")),
+                    HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+                },
+            });
+        }
+    }
+
+    private void FillTaskButton(Button btn, string? pinId, List<TaskItem> tasks, double labels)
     {
         var slot = (TaskSlot)btn.Tag!;
+        var task = tasks.FirstOrDefault(t => t.IsActive) ?? tasks.FirstOrDefault();
+        int windows = tasks.Count;
         var appId = task?.AppId ?? pinId;
         var app = appId != null ? AppRegistry.Find(appId) : null;
         var linux = app == null && appId != null ? DesktopEntries.FromId(appId) : null;
@@ -398,14 +476,14 @@ public partial class Taskbar : UserControl
         var showLabel = labels > 0 && task != null;
         var starting = false;
 
-        bool sameTask = ReferenceEquals(slot.Task, task) && slot.PinId == pinId;
-        slot.PinId = pinId; slot.Task = task;
+        bool sameTask = ReferenceEquals(slot.Task, task) && slot.PinId == pinId && slot.Tasks.SequenceEqual(tasks);
+        slot.PinId = pinId; slot.Tasks = tasks;
         // a running window has its preview instead of a tooltip
         object? tip = task != null && SettingsStore.Current.TaskbarPreviews ? null : title;
         if (!Equals(ToolTip.GetTip(btn), tip)) ToolTip.SetTip(btn, tip);      // an open tooltip just updates its text
         btn.Classes.Set("active", active);
 
-        var look = $"{appId}|{title}|{active}|{(showLabel ? labels : 0)}|{starting}|{task != null}|{(task as X11Task)?.IconStamp}|{task?.IsMinimized}";
+        var look = $"{appId}|{title}|{active}|{windows}|{(showLabel ? labels : 0)}|{starting}|{task != null}|{(task as X11Task)?.IconStamp}|{task?.IsMinimized}";
         if (look == slot.Look && sameTask) return;
         slot.Look = look;
 
@@ -446,8 +524,18 @@ public partial class Taskbar : UserControl
         var content = new Grid();
         content.Children.Add(row);
         content.Children.Add(indicator);
+        // several windows of one app: how many, small, at the icon's corner
+        if (windows > 1)
+            content.Children.Add(new Border
+            {
+                MinWidth = 14, Height = 14, CornerRadius = new CornerRadius(7), Padding = new Thickness(3, 0),
+                Background = new SolidColorBrush(Color.Parse("#E62A2A30")), BorderBrush = new SolidColorBrush(Color.Parse("#40FFFFFF")), BorderThickness = new Thickness(1),
+                HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
+                Margin = new Thickness(26, 3, 0, 0), IsHitTestVisible = false,
+                Child = new TextBlock { Text = windows.ToString(), FontSize = 9, FontWeight = FontWeight.Bold, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center },
+            });
         btn.Content = content;
-        btn.ContextMenu = BuildTaskMenu(pinId, task, appId);
+        btn.ContextMenu = BuildTaskMenu(pinId, task, appId, tasks);
     }
 
     /// <summary>
@@ -470,7 +558,7 @@ public partial class Taskbar : UserControl
         return AppIcons.Create(appId, title, size);
     }
 
-    private static ContextMenu BuildTaskMenu(string? pinId, TaskItem? task, string? appId)
+    private static ContextMenu BuildTaskMenu(string? pinId, TaskItem? task, string? appId, List<TaskItem> tasks)
     {
         var menu = new ContextMenu();
         MenuItem Item(string header, Action act)
@@ -544,7 +632,9 @@ public partial class Taskbar : UserControl
         if (task != null)
         {
             menu.Items.Add(new Separator());
-            menu.Items.Add(Item("Close", task.Close));
+            menu.Items.Add(Item(tasks.Count > 1 ? "Close this window" : "Close", task.Close));
+            if (tasks.Count > 1)
+                menu.Items.Add(Item($"Close all {tasks.Count} windows", () => { foreach (var t in tasks.ToList()) t.Close(); }));
         }
         return menu;
     }
@@ -558,7 +648,8 @@ public partial class Taskbar : UserControl
         _bell.Tooltip = Notifier.DoNotDisturb
             ? "Notifications (Do not disturb)"
             : Notifier.Unread > 0 ? $"Notifications ({Notifier.Unread} new)" : "Notifications";
-        if (TrayService.Find(_bell.Key) != null) TrayService.Upsert(_bell);
+        BellHost.Children.Clear();
+        BellHost.Children.Add(MakeTrayButton(_bell, onTaskbar: true));
     }
 
     private void RebuildAppTray()
@@ -610,15 +701,22 @@ public partial class Taskbar : UserControl
         holder.Children.Add(face);
         if (entry.Badge > 0)
         {
+            // how many: a small red count at the icon's corner (9+ past nine)
             holder.Children.Add(new Border
             {
-                Width = 9,
-                Height = 9,
-                CornerRadius = new CornerRadius(5),
+                MinWidth = 14,
+                Height = 14,
+                Padding = new Thickness(3, 0),
+                CornerRadius = new CornerRadius(7),
                 Background = new SolidColorBrush(Color.Parse("#E81123")),
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Top,
-                Margin = new Thickness(0, -1, -3, 0)
+                Margin = new Thickness(0, -4, -7, 0),
+                Child = new TextBlock
+                {
+                    Text = entry.Badge > 9 ? "9+" : entry.Badge.ToString(), FontSize = 9, FontWeight = FontWeight.Bold, Foreground = Brushes.White,
+                    HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+                },
             });
         }
 

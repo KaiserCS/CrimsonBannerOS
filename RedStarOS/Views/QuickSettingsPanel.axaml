@@ -19,7 +19,7 @@
     </Grid>
 
     <!-- Quick tiles -->
-    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" Classes="spaced">
+    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" Classes="spaced">
       <Button x:Name="NetTile" Classes="tile" Click="OnNetwork">
         <StackPanel Spacing="2">
           <ContentControl x:Name="NetGlyph" />
@@ -60,6 +60,20 @@
           <v:IconView Kind="task-view" Size="18" />
           <TextBlock Text="Task View" FontSize="13" FontWeight="SemiBold" />
           <TextBlock x:Name="DesksSub" FontSize="12" Opacity="0.75" />
+        </StackPanel>
+      </Button>
+      <Button x:Name="ClipTile" Grid.Row="3" Classes="tile" Click="OnClipboard">
+        <StackPanel Spacing="2">
+          <v:IconView Kind="clipboard" Size="18" />
+          <TextBlock Text="Clipboard" FontSize="13" FontWeight="SemiBold" />
+          <TextBlock Text="History (Super+V)" FontSize="12" Opacity="0.75" />
+        </StackPanel>
+      </Button>
+      <Button x:Name="ShotTile" Grid.Row="3" Grid.Column="1" Classes="tile" Click="OnScreenshot">
+        <StackPanel Spacing="2">
+          <v:IconView Kind="screenshot" Size="18" />
+          <TextBlock Text="Screenshot" FontSize="13" FontWeight="SemiBold" />
+          <TextBlock Text="Print" FontSize="12" Opacity="0.75" />
         </StackPanel>
       </Button>
     </Grid>

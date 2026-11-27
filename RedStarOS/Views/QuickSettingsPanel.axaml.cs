@@ -117,6 +117,13 @@ public partial class QuickSettingsPanel : UserControl, IShellPanel
     private void OnDnd(object? s, RoutedEventArgs e) { Notifier.SetDoNotDisturb(!Notifier.DoNotDisturb); RefreshToggles(); }
     private void OnNextWallpaper(object? s, RoutedEventArgs e) => WallpaperService.Next();
     private void OnNightLight(object? s, RoutedEventArgs e) { NightLight.Toggle(); RefreshToggles(); }
+    private void OnClipboard(object? s, RoutedEventArgs e)
+    {
+        CloseRequested?.Invoke();
+        // after this panel has gone: the history opens from the same corner
+        Avalonia.Threading.Dispatcher.UIThread.Post(() => (WindowManager.Desktop as DesktopWindow)?.Bar.ShowClipboard());
+    }
+    private void OnScreenshot(object? s, RoutedEventArgs e) { CloseRequested?.Invoke(); WindowManager.Open(new ScreenshotWindow(), "screenshot"); }
     private void OnTaskView(object? s, RoutedEventArgs e) { CloseRequested?.Invoke(); TaskViewWindow.Toggle(); }
 
     private async void OnMute(object? s, RoutedEventArgs e)

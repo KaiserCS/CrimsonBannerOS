@@ -2570,8 +2570,10 @@ static bool shell_shortcut(struct server *s, xkb_keysym_t sym, bool pressed, uin
 		return true;
 	}
 	if (sym == XKB_KEY_Super_L || sym == XKB_KEY_Super_R) {
-		if (pressed) { s->super_down = true; s->super_used = false; }
+		/* super-down / super-up: held a moment, the taskbar shows its Super+1…9 numbers */
+		if (pressed) { if (!s->super_down) shell_key(s, "super-down"); s->super_down = true; s->super_used = false; }
 		else {
+			shell_key(s, "super-up");
 			if (s->super_down && !s->super_used) shell_key(s, "start");
 			s->super_down = false;
 		}
@@ -2590,6 +2592,13 @@ static bool shell_shortcut(struct server *s, xkb_keysym_t sym, bool pressed, uin
 		if (ctrl && lower == XKB_KEY_d) { shell_key(s, "desktop-new"); return true; }
 		if (ctrl && sym == XKB_KEY_F4) { shell_key(s, "desktop-close"); return true; }
 		if (sym == XKB_KEY_Tab || sym == XKB_KEY_ISO_Left_Tab) { shell_key(s, "task-view"); return true; }
+		/* Super+1…9: the taskbar's n-th app (opens it, or brings its window forward), as on Windows */
+		if (!ctrl && !alt && lower >= XKB_KEY_1 && lower <= XKB_KEY_9) {
+			char key[16];
+			snprintf(key, sizeof key, "taskbar-%d", (int)(lower - XKB_KEY_0));
+			shell_key(s, key);
+			return true;
+		}
 		switch (lower) {
 		case XKB_KEY_Left: name = "snap-left"; break;
 		case XKB_KEY_Right: name = "snap-right"; break;

@@ -89,7 +89,7 @@ public static class X11Desktop
     public static bool Available { get; private set; }
 
     /// <summary>Raised (on the UI thread) for global shortcuts: "start", "switcher-next", "switcher-prev",
-    /// "switcher-commit", "switcher-cancel", "clipboard", "desktop", "files", "terminal", "lock", "snap-left",
+    /// "switcher-commit", "switcher-cancel", "super-down", "super-up", "taskbar-1"…"taskbar-9", "clipboard", "desktop", "files", "terminal", "lock", "snap-left",
     /// "snap-right", "maximize", "minimize", "search", "task-view", "desktop-next", "desktop-prev", "desktop-move-next",
     /// "desktop-move-prev", "desktop-new", "desktop-close", "screenshot", "screenshot-window" (inside redstar-comp followed by
     /// a tab and the window's geometry), "power-menu" (Ctrl+Alt+Delete), "volume-up", "volume-down", "volume-mute".</summary>
@@ -247,9 +247,11 @@ public static class X11Desktop
         // ── Super ──
         if (keycode == _kcSuperL || keycode == _kcSuperR)
         {
-            if (press) { _superDown = true; _superUsed = false; }
+            // super-down / super-up: held a moment, the taskbar shows its Super+1…9 numbers
+            if (press) { if (!_superDown) Raise("super-down"); _superDown = true; _superUsed = false; }
             else
             {
+                Raise("super-up");
                 if (_superDown && !_superUsed) Raise("start");
                 _superDown = false;
             }
@@ -268,6 +270,8 @@ public static class X11Desktop
             }
             if (ctrl && name == "d") { Raise("desktop-new"); return; }
             if (ctrl && name == "F4") { Raise("desktop-close"); return; }
+            // Super+1…9: the taskbar's n-th app
+            if (!ctrl && !alt && name is { Length: 1 } && name[0] is >= '1' and <= '9') { Raise("taskbar-" + name); return; }
             switch (name)
             {
                 case "Left": Raise("snap-left"); return;

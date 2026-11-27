@@ -35,6 +35,13 @@ public partial class StartMenu : UserControl
         public bool HasIcon => Icon != null && !IsHeader;
         public bool ShowBadge => Icon == null && !IsHeader;
         public bool IsLinux => Category.StartsWith(LinuxPrefix);
+        public bool IsTop { get; init; }                // search's best match, drawn as a card; Enter opens it
+
+        public StartItem AsTop() => new()
+        {
+            Key = Key, AppId = AppId, Title = Title, Subtitle = Subtitle, Glyph = Glyph, Badge = Badge,
+            Category = Category, Run = Run, Icon = Icon, IsTop = true,
+        };
     }
 
     public sealed class CategoryRow
@@ -45,7 +52,8 @@ public partial class StartMenu : UserControl
     }
 
     private const string KeyAll = "__all";
-    private const string KeyRecent = "__recent";
+    private const string KeyHome = "__home";            // pinned tiles and recent apps: where Start opens
+    private const int MaxPins = 8;
     private const string LinuxPrefix = "linux:";
     private const int MaxRecent = 8;
 
@@ -164,7 +172,7 @@ public partial class StartMenu : UserControl
         if (avatar != null) AvatarImage.Source = avatar;
         UserLabel.Text = RedStarOS.Services.Greeter.GreeterData.ShownName(Environment.UserName);
 
-        _categoryKey = KeyAll;
+        _categoryKey = KeyHome;
         if (!_items.Any(i => i.IsLinux)) _linuxSection = false;
         UpdateTabs();
         SearchIndex.Warm();
@@ -176,9 +184,7 @@ public partial class StartMenu : UserControl
     private void BuildCategories()
     {
         var rsItems = _items.Where(i => !i.IsLinux).ToList();
-        var rs = new List<CategoryRow> { Row(KeyAll, "All our apps", rsItems.Count) };
-        var rsRecent = RecentItems(false);
-        if (rsRecent.Count > 0) rs.Add(Row(KeyRecent, "Recent", rsRecent.Count));
+        var rs = new List<CategoryRow> { Row(KeyHome, "Home", null), Row(KeyAll, "All our apps", rsItems.Count) };
         foreach (var key in RedStarCategoryOrder)
         {
             int n = rsItems.Count(i => i.Category == key);
@@ -189,9 +195,8 @@ public partial class StartMenu : UserControl
         var linux = new List<CategoryRow>();
         if (lxItems.Count > 0)
         {
+            linux.Add(Row(KeyHome, "Home", null));
             linux.Add(Row(KeyAll, "All Linux apps", lxItems.Count));
-            var lxRecent = RecentItems(true);
-            if (lxRecent.Count > 0) linux.Add(Row(KeyRecent, "Recent", lxRecent.Count));
             linux.AddRange(lxItems
                 .GroupBy(i => i.Category)
                 .OrderBy(g => g.Key == LinuxPrefix + "Other" ? 1 : 0)              // "Other" last
@@ -260,8 +265,8 @@ public partial class StartMenu : UserControl
         return IconCache[app.Icon] = img;
     }
 
-    private static CategoryRow Row(string key, string label, int count) =>
-        new() { Key = key, Label = label, Count = count.ToString() };
+    private static CategoryRow Row(string key, string label, int? count) =>
+        new() { Key = key, Label = label, Count = count?.ToString() ?? "" };
 
     /// <summary>Maps a .desktop file's Categories= list to one friendly label.</summary>
     private static string LinuxCategory(string desktopCategories)
@@ -281,10 +286,68 @@ public partial class StartMenu : UserControl
 
     // ------------------------------------------------------------ filtering
 
-    private List<StartItem> RecentItems(bool linux)
+    private List<StartItem> RecentItems() =>
+        SettingsStore.Current.RecentApps.Select(k => _items.FirstOrDefault(i => i.Key == k)).OfType<StartItem>().ToList();
+
+    private List<StartItem> PinnedItems() =>
+        SettingsStore.Current.StartPins.Select(k => _items.FirstOrDefault(i => i.Key == k)).OfType<StartItem>().Take(MaxPins).ToList();
+
+    private static bool IsPinnedToStart(string key) => SettingsStore.Current.StartPins.Contains(key);
+
+    private void TogglePinToStart(StartItem item)
     {
-        var keys = SettingsStore.Current.RecentApps;
-        return keys.Select(k => _items.FirstOrDefault(i => i.Key == k)).Where(i => i != null && i.IsLinux == linux).Cast<StartItem>().ToList();
+        var pins = SettingsStore.Current.StartPins;
+        if (!pins.Remove(item.Key)) pins.Add(item.Key);
+        SettingsStore.Save();
+        if (_categoryKey == KeyHome && string.IsNullOrEmpty(SearchBox.Text)) Refilter();
+    }
+
+    /// <summary>Home's tiles: each pinned app as its picture over its name.</summary>
+    private void BuildPins()
+    {
+        PinGrid.Children.Clear();
+        var pins = PinnedItems();
+        foreach (var it in pins)
+        {
+            var item = it;
+            Control pic = item.Icon is { } img
+                ? new Avalonia.Controls.Image { Source = img, Width = 36, Height = 36 }
+                : AppIcons.Create(item.AppId, item.Title, 36);
+            pic.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center;
+            var tile = new Button
+            {
+                Classes = { "flat", "pintile" },
+                Content = new StackPanel
+                {
+                    Spacing = 7,
+                    Children =
+                    {
+                        pic,
+                        new TextBlock { Text = item.Title, FontSize = 12, TextAlignment = TextAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 86 },
+                    },
+                },
+            };
+            ToolTip.SetTip(tile, item.Title);
+            tile.Click += (_, _) => Launch(item);
+            tile.ContextRequested += (_, e) => { OpenAppMenu(item, tile); e.Handled = true; };
+            PinGrid.Children.Add(tile);
+        }
+        PinGrid.IsVisible = pins.Count > 0;
+        PinHint.IsVisible = pins.Count == 0;
+    }
+
+    /// <summary>
+    /// Fits the menu to the screen it opens on (logical pixels, the taskbar excluded): at most 750 × 600, smaller on
+    /// a small screen, and without the category rail when it would leave the list too narrow.
+    /// </summary>
+    public void FitTo(double width, double height)
+    {
+        Width = Math.Clamp(width, MinWidth, 750);
+        Height = Math.Clamp(height, MinHeight, 600);
+        bool rail = Width >= 640;
+        Rail.IsVisible = RailRule.IsVisible = rail;
+        Body.ColumnDefinitions[0].Width = new GridLength(rail ? 270 : 0);
+        AppColumn.Margin = new Avalonia.Thickness(rail ? 16 : 0, 0, 0, 0);
     }
 
     private void Refilter()
@@ -313,6 +376,10 @@ public partial class StartMenu : UserControl
             };
             static StartItem Header(string text) => new() { Key = "header:" + text, Title = text, IsHeader = true };
             list = calc.Select(ToItem).ToList();
+            // nothing installed by that name: offer to look for it in Software
+            if (matches.Count == 0 && SettingsStore.Current.AccountType != "Child")
+                rest.Insert(0, new SearchIndex.Hit("software", "Find “" + q + "” in Software", "Apps you can install", "bag",
+                    () => { var w = new SoftwareWindow(); WindowManager.Open(w, "software"); w.SearchFor(q); }));
             // the section you're in comes first
             var groups = new[] { (Linux: false, Label: "OUR APPS"), (Linux: true, Label: "LINUX APPS") };
             if (_linuxSection) Array.Reverse(groups);
@@ -329,12 +396,19 @@ public partial class StartMenu : UserControl
                 list.AddRange(rest.Select(ToItem));
             }
             heading = "SEARCH RESULTS";
+            // the first result is what Enter opens: drawn as a card so that's visible
+            int first = list.FindIndex(i => !i.IsHeader);
+            if (first >= 0) list[first] = list[first].AsTop();
             ClearCategorySelection();
         }
-        else if (_categoryKey == KeyRecent)
+        else if (_categoryKey == KeyHome)
         {
-            list = RecentItems(_linuxSection);
-            heading = _linuxSection ? "RECENT LINUX APPS" : "RECENT APPS";
+            var recent = RecentItems();
+            list = recent.Count > 0
+                ? new[] { new StartItem { Key = "header:recent", Title = "RECENT", IsHeader = true } }.Concat(recent).ToList()
+                : new List<StartItem>();
+            heading = "PINNED";
+            BuildPins();
             HighlightCategory();
         }
         else
@@ -346,9 +420,11 @@ public partial class StartMenu : UserControl
             HighlightCategory();
         }
 
+        bool home = q.Length == 0 && _categoryKey == KeyHome;
+        HomePanel.IsVisible = home;
         AppList.ItemsSource = list;
         int count = list.Count(i => !i.IsHeader);
-        EmptyLabel.IsVisible = count == 0;
+        EmptyLabel.IsVisible = count == 0 && !home;
         EmptyLabel.Text = q.Length > 0 ? $"Nothing called “{q}”." : "No apps here yet.";
         HeaderLabel.Text = heading;          // the count is beside the category on the left
     }
@@ -417,14 +493,25 @@ public partial class StartMenu : UserControl
 
     private void OnAppContextRequested(object? sender, ContextRequestedEventArgs e)
     {
-        if ((e.Source as Control)?.DataContext is not StartItem { AppId: { } appId } || e.Source is not Control target) return;
-
-        var item = new MenuItem { Header = WindowManager.IsPinned(appId) ? "Unpin from taskbar" : "Pin to taskbar" };
-        item.Click += (_, _) => WindowManager.TogglePin(appId);
-        var menu = new ContextMenu();
-        menu.Items.Add(item);
-        menu.Open(target);
+        if ((e.Source as Control)?.DataContext is not StartItem { IsHeader: false } item || e.Source is not Control target) return;
+        if (item.Key.StartsWith("search:")) return;
+        OpenAppMenu(item, target);
         e.Handled = true;
+    }
+
+    private void OpenAppMenu(StartItem item, Control target)
+    {
+        var menu = new ContextMenu();
+        var start = new MenuItem { Header = IsPinnedToStart(item.Key) ? "Unpin from Start" : "Pin to Start" };
+        start.Click += (_, _) => TogglePinToStart(item);
+        menu.Items.Add(start);
+        if (item.AppId is { } appId)
+        {
+            var bar = new MenuItem { Header = WindowManager.IsPinned(appId) ? "Unpin from taskbar" : "Pin to taskbar" };
+            bar.Click += (_, _) => WindowManager.TogglePin(appId);
+            menu.Items.Add(bar);
+        }
+        menu.Open(target);
     }
 
     // ------------------------------------------------------------ footer

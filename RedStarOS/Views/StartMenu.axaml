@@ -2,7 +2,7 @@
              xmlns:svc="using:RedStarOS.Services" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:v="using:RedStarOS.Views"
              x:Class="RedStarOS.Views.StartMenu"
-             Width="750" Height="600">
+             Width="750" Height="600" MinWidth="360" MinHeight="380">
   <UserControl.Styles>
     <!-- spacing follows a 4/8 px grid -->
     <Style Selector="ListBox.rail ListBoxItem">
@@ -19,6 +19,24 @@
     <!-- group headings in the list can't be selected or launched -->
     <Style Selector="ListBox.apps ListBoxItem">
       <Setter Property="IsEnabled" Value="{Binding IsApp}" />
+    </Style>
+    <!-- search's best match, which Enter opens -->
+    <Style Selector="Border.tophit">
+      <Setter Property="Background" Value="{DynamicResource ShellAccentSoftBrush}" />
+    </Style>
+    <Style Selector="Border.keycap">
+      <Setter Property="BorderBrush" Value="{DynamicResource ShellBorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="5" />
+      <Setter Property="Padding" Value="6,1" />
+    </Style>
+    <Style Selector="Button.pintile">
+      <Setter Property="Width" Value="96" />
+      <Setter Property="Height" Value="86" />
+      <Setter Property="Padding" Value="4,8,4,4" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Top" />
     </Style>
     <Style Selector="ToggleButton.section">
       <Setter Property="Background" Value="Transparent" />
@@ -43,10 +61,10 @@
       </TextBox.InnerLeftContent>
     </TextBox>
 
-    <Grid Grid.Row="1" ColumnDefinitions="270,Auto,*">
+    <Grid x:Name="Body" Grid.Row="1" ColumnDefinitions="270,Auto,*">
 
       <!-- Category rail: our apps and installed Linux apps are kept apart, one tab each -->
-      <Grid RowDefinitions="Auto,*">
+      <Grid x:Name="Rail" RowDefinitions="Auto,*">
         <Border x:Name="SectionTabs" CornerRadius="10" Padding="4" Margin="0,0,16,12"
                 Background="{DynamicResource ShellCardBrush}">
           <Grid ColumnDefinitions="*,*">
@@ -98,19 +116,26 @@
         </ScrollViewer>
       </Grid>
 
-      <Border Grid.Column="1" Width="1" Background="{DynamicResource ShellBorderBrush}" Margin="0,4" />
+      <Border x:Name="RailRule" Grid.Column="1" Width="1" Background="{DynamicResource ShellBorderBrush}" Margin="0,4" />
 
       <!-- App list -->
-      <Grid Grid.Column="2" RowDefinitions="Auto,*" Margin="16,0,0,0">
+      <Grid x:Name="AppColumn" Grid.Column="2" RowDefinitions="Auto,Auto,*" Margin="16,0,0,0">
         <TextBlock x:Name="HeaderLabel" Classes="kicker" Margin="10,6,0,12" />
-        <ListBox x:Name="AppList" Grid.Row="1" Classes="apps" Background="Transparent" BorderThickness="0"
+        <!-- Home: the apps you pinned to Start, as tiles; your recent apps follow in the list below -->
+        <StackPanel x:Name="HomePanel" Grid.Row="1" IsVisible="False" Margin="0,0,0,6">
+          <WrapPanel x:Name="PinGrid" />
+          <TextBlock x:Name="PinHint" Classes="caption" Margin="10,2,0,8" TextWrapping="Wrap"
+                     Text="Right-click any app and choose Pin to Start to keep it here." />
+        </StackPanel>
+        <ListBox x:Name="AppList" Grid.Row="2" Classes="apps" Background="Transparent" BorderThickness="0"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
           <ListBox.ItemTemplate>
             <DataTemplate>
               <Panel>
                 <!-- group heading in search results ("OUR APPS", "LINUX APPS", …) -->
                 <TextBlock Text="{Binding Title}" IsVisible="{Binding IsHeader}" Classes="kicker" Margin="0,12,0,4" />
-                <Grid ColumnDefinitions="Auto,*" MinHeight="48" IsVisible="{Binding IsApp}">
+                <Border Classes.tophit="{Binding IsTop}" CornerRadius="10" Margin="-6,0,0,0" Padding="6,0,8,0" IsVisible="{Binding IsApp}">
+                <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="48">
                   <Panel Width="40" Height="40" VerticalAlignment="Center">
                     <Border Width="36" Height="36" CornerRadius="8" Background="{Binding Badge}" BorderBrush="#1FFFFFFF" BorderThickness="1" IsVisible="{Binding ShowBadge}">
                       <ContentControl Content="{Binding Glyph, Converter={x:Static svc:IconConverter.White}, ConverterParameter=20}" HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -122,12 +147,17 @@
                     <TextBlock Text="{Binding Title}" FontSize="14" TextTrimming="CharacterEllipsis" />
                     <TextBlock Text="{Binding Subtitle}" Classes="caption" TextTrimming="CharacterEllipsis" />
                   </StackPanel>
+                  <!-- the best match: Enter opens it -->
+                  <Border Grid.Column="2" IsVisible="{Binding IsTop}" Classes="keycap" VerticalAlignment="Center" Margin="10,0,0,0">
+                    <TextBlock Text="Enter" FontSize="11" />
+                  </Border>
                 </Grid>
+                </Border>
               </Panel>
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>
-        <TextBlock x:Name="EmptyLabel" Grid.Row="1" Text="No apps found" IsVisible="False" Classes="caption"
+        <TextBlock x:Name="EmptyLabel" Grid.Row="2" Text="No apps found" IsVisible="False" Classes="caption"
                    HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Grid>
     </Grid>

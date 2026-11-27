@@ -54,6 +54,8 @@ public sealed class Settings
     public string? WriterColor { get; set; }
     public List<string> RecentFiles { get; set; } = new();
     public List<string> RecentApps { get; set; } = new();     // Start menu "Recent" list
+    public List<string> StartPins { get; set; } = new()      // Start menu's pinned tiles (StartMenu item keys)
+        { "rs:files", "rs:online", "rs:studio", "rs:software", "rs:settings", "rs:terminal", "rs:calculator", "rs:notes" };
     public string StartSection { get; set; } = "redstar";      // Start menu tab: "redstar" or "linux"
     public string FilesView { get; set; } = "list";            // File Manager: "list" or "grid"
     public bool FilesShowHidden { get; set; }                   // File Manager: show dot-files
