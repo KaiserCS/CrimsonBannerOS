@@ -254,7 +254,8 @@ public static class NightLight
     private static void Report(int applied, int failed)
     {
         bool? was = Supported;
-        Supported = applied > 0 || (failed == 0 ? Supported : false);
+        if (applied > 0) Supported = true;
+        else if (failed > 0) Supported = false;           // no screens at all: still unknown
         if (was != Supported) Changed?.Invoke();
     }
 }
