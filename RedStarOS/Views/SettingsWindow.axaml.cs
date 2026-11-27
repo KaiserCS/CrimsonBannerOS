@@ -348,8 +348,7 @@ public partial class SettingsWindow : Window
             Text = "Task View (Super+Tab) shows your windows and desktops: add a desktop, drag a window onto one, right-click to rename "
                  + "or close it. Super+Ctrl+D adds a desktop, Super+Ctrl+Left and Right switch, with Shift the active window comes along, "
                  + "and Super+Ctrl+F4 closes the one in use (its windows move to the desktop on its left)."
-                 + (VirtualDesktops.Count > 1 ? $"
-Now: {VirtualDesktops.Count} desktops, {VirtualDesktops.Name(VirtualDesktops.Current)} in use." : ""),
+                 + (VirtualDesktops.Count > 1 ? $"\nNow: {VirtualDesktops.Count} desktops, {VirtualDesktops.Name(VirtualDesktops.Current)} in use." : ""),
         });
 
         p.Children.Add(Eyebrow("WAYLAND (EXPERIMENTAL)"));
