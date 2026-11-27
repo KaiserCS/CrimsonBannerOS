@@ -41,14 +41,6 @@ public sealed class SlideThumb : INotifyPropertyChanged
 public partial class SlidesWindow : Window
 {
     private static readonly int[] Sizes = { 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 44, 48, 54, 60, 66, 72, 88, 96, 120 };
-    private static readonly string[] Presets =
-    {
-        "#FFFFFF", "#F2F2F2", "#D9D9D9", "#A6A6A6", "#7F7F7F", "#595959", "#262626", "#000000",
-        "#C8102E", "#ED1C24", "#FF7F27", "#FFC90E", "#FFF200", "#B5E61D", "#22B14C", "#2F855A",
-        "#00A2E8", "#1E6FD9", "#3F48CC", "#0B2545", "#6B46C1", "#A349A4", "#FFAEC9", "#B97A57",
-        "#FDE2E4", "#FFE8CC", "#FFF3BF", "#D8F5A2", "#C5F6FA", "#D0EBFF", "#E5DBFF", "#F1F3F5"
-    };
-
     private Deck _deck = new();
     private int _cur;
     private SlideItem? _sel;
@@ -91,10 +83,15 @@ public partial class SlidesWindow : Window
         TransitionBox.ItemsSource = new[] { "None", "Fade", "Push" };
         TransitionBox.SelectedIndex = 0;
 
-        TextColorHost.Content = MakeColorButton("Text colour", () => _sel?.Color ?? DeckTheme.Text, h => ApplyToSel(i => i.Color = h), false);
-        FillHost.Content = MakeColorButton("Fill colour", () => _sel?.Fill ?? "", h => ApplyToSel(i => i.Fill = h), true);
-        LineHost.Content = MakeColorButton("Outline colour", () => _sel?.Stroke ?? "", h => ApplyToSel(i => { i.Stroke = h; if (h != "" && i.StrokeW <= 0) i.StrokeW = 2; }), true);
-        BgHost.Content = MakeColorButton("Slide background", () => CurSlide.Background, h => Edit(() => CurSlide.Background = h), false);
+        // the suite's colour buttons, tab row and zoom (OfficeChrome)
+        OfficeChrome.Fit(TextColorBtn, "text-color", "Text colour", null, h => { if (h != null) ApplyToSel(i => i.Color = h); }, null, this, () => _sel?.Color ?? DeckTheme.Text);
+        OfficeChrome.Fit(FillBtn, "fill", "Fill colour", null, h => ApplyToSel(i => i.Fill = h ?? ""), "No colour", this, () => _sel?.Fill);
+        OfficeChrome.Fit(LineBtn, "outline", "Outline colour", null, h => ApplyToSel(i => { i.Stroke = h ?? ""; if (h != null && i.StrokeW <= 0) i.StrokeW = 2; }), "No outline", this, () => _sel?.Stroke);
+        OfficeChrome.Fit(BgBtn, "palette", "Slide background", null, h => { if (h != null) Edit(() => CurSlide.Background = h); }, null, this, () => CurSlide.Background);
+        OfficeChrome.SingleTab(this, TabsPanel, "slides", " - Slides", Close);
+        Zoom.Minimum = 50; Zoom.Maximum = 300;
+        Zoom.Changed += _ => SizeStage();
+        StageScroll.SizeChanged += (_, _) => SizeStage();
 
         FontBox.SelectionChanged += (_, _) => { if (FontBox.SelectedItem is string f) { _font = f; ApplyToSel(i => i.Font = f); } };
         SizeBox.SelectionChanged += (_, _) => { if (SizeBox.SelectedItem is int n) ApplyToSel(i => i.Size = n); };
@@ -138,50 +135,18 @@ public partial class SlidesWindow : Window
         NewDeck();
     }
 
-    // ------------------------------------------------------------ colour buttons
+    // ------------------------------------------------------------ zoom
 
-    private Button MakeColorButton(string tip, Func<string> get, Action<string> set, bool allowNone)
+    /// <summary>The stage the slide is fitted to: the window's size at 100%, larger to zoom in (it scrolls), smaller to zoom out.</summary>
+    private void SizeStage()
     {
-        var swatch = new Border { Width = 28, Height = 18, CornerRadius = new CornerRadius(3), BorderThickness = new Thickness(1), BorderBrush = new SolidColorBrush(Color.Parse("#88808080")) };
-        var btn = new Button { Content = swatch, Padding = new Thickness(4) };
-        ToolTip.SetTip(btn, tip);
-        var flyout = new Flyout { Placement = PlacementMode.Bottom };
-
-        void Refresh()
-        {
-            var h = get();
-            if (string.IsNullOrEmpty(h)) { swatch.Background = Brushes.Transparent; swatch.Child = new TextBlock { Text = "∅", FontSize = 11, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center }; }
-            else { swatch.Child = null; swatch.Background = new SolidColorBrush(Color.Parse(h)); }
-        }
-
-        var grid = new UniformGrid { Columns = 8 };
-        foreach (var hex in Presets)
-        {
-            var h = hex;
-            var b = new Button { Width = 24, Height = 24, Padding = new Thickness(0), Margin = new Thickness(1), Background = new SolidColorBrush(Color.Parse(h)) };
-            b.Click += (_, _) => { flyout.Hide(); set(h); Refresh(); };
-            grid.Children.Add(b);
-        }
-        var stack = new StackPanel { Spacing = 6, Children = { grid } };
-        if (allowNone)
-        {
-            var none = new Button { Content = "No colour", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch };
-            none.Click += (_, _) => { flyout.Hide(); set(""); Refresh(); };
-            stack.Children.Add(none);
-        }
-        var more = new Button { Content = "More colours…", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch };
-        more.Click += async (_, _) =>
-        {
-            flyout.Hide();
-            var c = await PaintDialogs.EditColor(this, SlideRenderer.Parse(get(), SKColors.Black));
-            if (c is SKColor k) { set(SlideRenderer.ToHex(k)); Refresh(); }
-        };
-        stack.Children.Add(more);
-        flyout.Content = stack;
-        btn.Flyout = flyout;
-        _refreshers.Add(Refresh);
-        Refresh();
-        return btn;
+        var size = StageScroll.Bounds.Size;
+        if (size.Width <= 0 || size.Height <= 0) return;
+        double z = Zoom.Percent / 100.0;
+        Stage.Width = Math.Max(40, size.Width * z);
+        Stage.Height = Math.Max(40, size.Height * z);
+        Stage.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center;
+        Stage.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center;
     }
 
     // ------------------------------------------------------------ deck + slide navigation

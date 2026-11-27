@@ -26,12 +26,6 @@ public partial class RichWriterWindow : Window
 
     private static readonly double[] Sizes = { 8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72 };
     private static readonly double[] Spacings = { 1.0, 1.15, 1.5, 2.0, 2.5 };
-    private static readonly string[] Palette =
-    {
-        "#000000", "#434343", "#666666", "#999999", "#CCCCCC", "#FFFFFF",
-        "#D93025", "#E8710A", "#F9AB00", "#188038", "#1A73E8", "#9334E6",
-        "#F6AEA9", "#FDD6A8", "#FFF0A6", "#A8DAB5", "#AECBFA", "#D7AEFB"
-    };
     private static string RecoveryDir => Path.Combine(AppPaths.ConfigDir, "writer-recovery");
     private static bool _recoveryChecked;
 
@@ -59,8 +53,9 @@ public partial class RichWriterWindow : Window
         FontBox.SelectedIndex = 0; SizeBox.SelectedIndex = Array.IndexOf(Sizes, 11.0); SpacingBox.SelectedIndex = 0;
         StyleBox.SelectedIndex = 0; PaperBox.SelectedIndex = 0;
 
-        ColorBtn.Flyout = BuildSwatches(false);
-        HiBtn.Flyout = BuildSwatches(true);
+        // the suite's colour buttons (OfficeChrome): icon over the colour, the shared swatches and Custom…
+        OfficeChrome.Fit(ColorBtn, "text-color", "Text colour", "#C8102E", h => Pick(false, h), "Automatic", this);
+        OfficeChrome.Fit(HiBtn, "highlight", "Highlight colour", "#FFF200", h => Pick(true, h), "No highlight", this);
 
         StyleBox.SelectionChanged += (_, _) => { if (_syncing || StyleBox.SelectedIndex < 0) return; Doc.SetParaStyle((PStyle)StyleBox.SelectedIndex); Doc.Focus(); };
         FontBox.SelectionChanged += (_, _) =>
@@ -72,18 +67,19 @@ public partial class RichWriterWindow : Window
         SpacingBox.SelectionChanged += (_, _) => { if (_syncing || SpacingBox.SelectedIndex < 0) return; Doc.SetSpacing(Spacings[SpacingBox.SelectedIndex]); Doc.Focus(); };
         PaperBox.SelectionChanged += (_, _) => { if (_syncing) return; _letter = PaperBox.SelectedIndex == 1; Doc.SetPageMode(_pageView, _letter); };
         PageNumChk.IsCheckedChanged += (_, _) => { Doc.PageNumbers = PageNumChk.IsChecked == true; Doc.InvalidateVisual(); };
-        ZoomSlider.PropertyChanged += (_, e) => { if (e.Property == Slider.ValueProperty && !_syncing) Doc.Zoom = ZoomSlider.Value / 100.0; };
-        Doc.ZoomChanged += () => { _syncing = true; ZoomSlider.Value = Doc.Zoom * 100; ZoomText.Text = (int)Math.Round(Doc.Zoom * 100) + "%"; _syncing = false; };
+        Zoom.Changed += p => Doc.Zoom = p / 100.0;
+        Doc.ZoomChanged += () => Zoom.Percent = Doc.Zoom * 100;
         Doc.Changed += OnDocChanged;
         Doc.SelectionChanged += SyncRibbon;
         Doc.OpenLinkRequested += OpenLink;
-        ZoomText.Text = "100%";
 
         FindBox.TextChanged += (_, _) => RunFind(false);
         CaseChk.IsCheckedChanged += (_, _) => RunFind(false);
         FindBox.KeyDown += (_, e) => { if (e.Key == Key.Enter) { StepFind(!e.KeyModifiers.HasFlag(KeyModifiers.Shift)); e.Handled = true; } else if (e.Key == Key.Escape) { CloseFind(); e.Handled = true; } };
         ReplaceBox.KeyDown += (_, e) => { if (e.Key == Key.Enter) { DoReplace(); e.Handled = true; } else if (e.Key == Key.Escape) { CloseFind(); e.Handled = true; } };
-        if (FileBtn.Flyout is MenuFlyout fm) { _recentMenu = fm.Items.OfType<MenuItem>().First(m => (m.Header as string) == "Open recent"); fm.Opening += (_, _) => FillRecent(); }
+        _recentMenu = RecentMenu;
+        FileMenu.SubmenuOpened += (_, e) => { if (ReferenceEquals(e.Source, FileMenu)) FillRecent(); };
+        FillRecent();
 
         DragDrop.SetAllowDrop(this, true);
         AddHandler(DragDrop.DropEvent, OnDrop);
@@ -187,14 +183,14 @@ public partial class RichWriterWindow : Window
         try
         {
             var f = Doc.CurrentFormat();
-            BoldBtn.Classes.Set("primary", f.Bold); ItalicBtn.Classes.Set("primary", f.Italic);
-            UnderBtn.Classes.Set("primary", f.Underline); StrikeBtn.Classes.Set("primary", f.Strike);
-            SupBtn.Classes.Set("primary", f.Sup); SubBtn.Classes.Set("primary", f.Sub);
+            BoldBtn.Classes.Set("on", f.Bold); ItalicBtn.Classes.Set("on", f.Italic);
+            UnderBtn.Classes.Set("on", f.Underline); StrikeBtn.Classes.Set("on", f.Strike);
+            SupBtn.Classes.Set("on", f.Sup); SubBtn.Classes.Set("on", f.Sub);
             var p = Doc.CaretPara;
             StyleBox.SelectedIndex = (int)p.Style;
-            AlLBtn.Classes.Set("primary", p.Align == Align.Left); AlCBtn.Classes.Set("primary", p.Align == Align.Center);
-            AlRBtn.Classes.Set("primary", p.Align == Align.Right); AlJBtn.Classes.Set("primary", p.Align == Align.Justify);
-            BulletBtn.Classes.Set("primary", p.List == ListKind.Bullet); NumBtn.Classes.Set("primary", p.List == ListKind.Number);
+            AlLBtn.Classes.Set("on", p.Align == Align.Left); AlCBtn.Classes.Set("on", p.Align == Align.Center);
+            AlRBtn.Classes.Set("on", p.Align == Align.Right); AlJBtn.Classes.Set("on", p.Align == Align.Justify);
+            BulletBtn.Classes.Set("on", p.List == ListKind.Bullet); NumBtn.Classes.Set("on", p.List == ListKind.Number);
             var fi = f.Font == null ? 0 : FontBox.Items.IndexOf(f.Font);
             FontBox.SelectedIndex = fi < 0 ? 0 : fi;
             var si = Array.IndexOf(Sizes, f.Size);
@@ -204,36 +200,6 @@ public partial class RichWriterWindow : Window
             TableOpsBtn.IsEnabled = Doc.CaretInTable;
         }
         finally { _syncing = false; }
-    }
-
-    private Flyout BuildSwatches(bool highlight)
-    {
-        var fly = new Flyout();
-        var wrap = new WrapPanel { Width = 214 };
-        foreach (var hex in Palette)
-        {
-            var h = hex;
-            var b = new Button
-            {
-                Width = 28, Height = 28, Margin = new Thickness(2), Padding = new Thickness(0),
-                Background = new SolidColorBrush(Color.Parse(h)),
-                BorderBrush = new SolidColorBrush(Color.Parse("#888888")), BorderThickness = new Thickness(1)
-            };
-            b.Click += (_, _) => { Pick(highlight, h); fly.Hide(); };
-            wrap.Children.Add(b);
-        }
-        var none = new Button { Content = highlight ? "No highlight" : "Automatic" };
-        none.Click += (_, _) => { Pick(highlight, null); fly.Hide(); };
-        var custom = new Button { Content = "Custom…" };
-        custom.Click += async (_, _) =>
-        {
-            fly.Hide();
-            var v = await Dialogs.Prompt(this, highlight ? "Highlight colour" : "Text colour", "Colour (hex, e.g. #1A73E8)", "#");
-            var c = DocTextIO.ParseColor(v);
-            if (c != null) Pick(highlight, c);
-        };
-        fly.Content = new StackPanel { Spacing = 6, Children = { wrap, new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, Children = { none, custom } } } };
-        return fly;
     }
 
     private void Pick(bool highlight, string? hex)
@@ -297,7 +263,8 @@ public partial class RichWriterWindow : Window
             case "findclose": CloseFind(); break;
             case "pageview":
                 _pageView = !_pageView;
-                PageBtn.Content = _pageView ? "Page view" : "Web view";
+                PageBtn.Classes.Set("on", _pageView);
+                ToolTip.SetTip(PageBtn, _pageView ? "Page view (off: web view)" : "Web view (on: page view)");
                 PaperBox.IsEnabled = _pageView;
                 Doc.SetPageMode(_pageView, _letter);
                 break;

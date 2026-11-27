@@ -236,6 +236,104 @@
     <Setter Property="Background" Value="{DynamicResource ShellHoverBrush}" />
   </Style>
 
+  <!-- ===== The office apps (OfficeChrome): Writer, Sheets and Slides share these ===== -->
+  <!-- the rows above the document: tabs, menus, tools; and the status bar below it -->
+  <Style Selector="Border.officetabs">
+    <Setter Property="Background" Value="{DynamicResource ShellPanelBrush}" />
+    <Setter Property="Padding" Value="8,6,8,0" />
+  </Style>
+  <Style Selector="Border.officebar">
+    <Setter Property="Background" Value="{DynamicResource ShellPanelBrush}" />
+    <Setter Property="Padding" Value="4,0" />
+  </Style>
+  <Style Selector="Border.officetools">
+    <Setter Property="Background" Value="{DynamicResource ShellPanelBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellBorderBrush}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="Padding" Value="8,4" />
+  </Style>
+  <Style Selector="Border.officestatus">
+    <Setter Property="Background" Value="{DynamicResource ShellPanelBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellBorderBrush}" />
+    <Setter Property="BorderThickness" Value="0,1,0,0" />
+    <Setter Property="Padding" Value="12,3,8,3" />
+    <Setter Property="MinHeight" Value="30" />
+  </Style>
+  <Style Selector="Border.officeside">
+    <Setter Property="Background" Value="{DynamicResource ShellPanelBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellBorderBrush}" />
+    <Setter Property="BorderThickness" Value="0,0,1,0" />
+  </Style>
+  <!-- Sheets' cell name (A1), sunk like a field -->
+  <Style Selector="Border.namebox">
+    <Setter Property="Background" Value="{DynamicResource ShellFieldBrush}" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Height" Value="28" />
+  </Style>
+  <Style Selector="Border.officebar Menu">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <!-- a tool: a line icon (18) in a 32-point square; .on = set (bold here, centred here), as a selected thing is -->
+  <Style Selector="Button.tool, ToggleButton.tool">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="MinWidth" Value="32" />
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Padding" Value="7,0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.tool.small">
+    <Setter Property="MinWidth" Value="26" />
+    <Setter Property="Height" Value="26" />
+    <Setter Property="Padding" Value="5,0" />
+  </Style>
+  <Style Selector="Button.tool:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.tool:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ShellHoverBrush}" />
+  </Style>
+  <Style Selector="Button.tool.on /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.tool:checked /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ShellAccentSoftBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellAccentBrush}" />
+  </Style>
+  <Style Selector="Button.tool:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="Button.tool:disabled">
+    <Setter Property="Opacity" Value="0.45" />
+  </Style>
+  <!-- a labelled tool (New slide, Present): icon and word -->
+  <Style Selector="Button.tool.label">
+    <Setter Property="Padding" Value="9,0,11,0" />
+  </Style>
+  <Style Selector="Border.tbsep">
+    <Setter Property="Width" Value="1" />
+    <Setter Property="Height" Value="20" />
+    <Setter Property="Margin" Value="5,0" />
+    <Setter Property="Background" Value="{DynamicResource ShellBorderBrush}" />
+  </Style>
+  <Style Selector="Button.swatch">
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellBorderBrush}" />
+  </Style>
+  <Style Selector="Button.swatch:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource ShellAccentBrush}" />
+  </Style>
+  <!-- toolbar drop-downs sit at the tools' height (a class, not the type: our other apps load these styles too) -->
+  <Style Selector="Panel.officetoolbar ComboBox">
+    <Setter Property="Height" Value="32" />
+    <Setter Property="MinHeight" Value="32" />
+    <Setter Property="Padding" Value="10,0,6,0" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Panel.officetoolbar TextBox">
+    <Setter Property="Height" Value="32" />
+    <Setter Property="MinHeight" Value="32" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+
   <!-- Quick-setting tile (flyouts). ".on" = active, filled with the accent colour. -->
   <Style Selector="Button.tile">
     <Setter Property="Background" Value="{DynamicResource ShellPanelBrush}" />

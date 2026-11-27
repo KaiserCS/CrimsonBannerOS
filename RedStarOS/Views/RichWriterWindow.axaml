@@ -4,139 +4,163 @@
         Title="Writer"
         Width="1120" Height="800" MinWidth="720" MinHeight="480"
         WindowStartupLocation="CenterScreen">
+  <!-- The office apps' one construction (OfficeChrome): tabs, menus, one row of tools, the document, the status bar. -->
   <DockPanel>
-    <!-- Tabs -->
-    <Border DockPanel.Dock="Top" Classes="card" CornerRadius="0" BorderThickness="0,0,0,1" Padding="6,4,6,0">
+    <Border DockPanel.Dock="Top" Classes="officetabs">
       <DockPanel>
-        <Button DockPanel.Dock="Right" Classes="flat" Tag="newtab" Click="OnCmd" ToolTip.Tip="New document (Ctrl+N)" ><v:IconView Kind="plus" Size="16" /></Button>
+        <Button DockPanel.Dock="Right" Classes="tool" Tag="newtab" Click="OnCmd" ToolTip.Tip="New document (Ctrl+N)"><v:IconView Kind="plus" Size="16" /></Button>
         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
           <StackPanel x:Name="TabsPanel" Orientation="Horizontal" Spacing="2" />
         </ScrollViewer>
       </DockPanel>
     </Border>
 
-    <!-- Ribbon -->
-    <Border DockPanel.Dock="Top" Classes="card" CornerRadius="0" BorderThickness="0,0,0,1" Padding="8,4">
-      <StackPanel>
-        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-          <StackPanel Orientation="Horizontal" Spacing="3">
-            <Button x:Name="FileBtn" Classes="flat" Content="📄 File ▾">
-              <Button.Flyout>
-                <MenuFlyout>
-                  <MenuItem Header="New" InputGesture="Ctrl+N" Tag="newtab" Click="OnCmd" />
-                  <MenuItem Header="Open…" InputGesture="Ctrl+O" Tag="open" Click="OnCmd" />
-                  <MenuItem Header="Open recent" />
-                  <Separator />
-                  <MenuItem Header="Save" InputGesture="Ctrl+S" Tag="save" Click="OnCmd" />
-                  <MenuItem Header="Save as…" InputGesture="Ctrl+Shift+S" Tag="saveas" Click="OnCmd" />
-                  <MenuItem Header="Export as PDF…" Tag="pdf" Click="OnCmd" />
-                  <MenuItem Header="Print…" InputGesture="Ctrl+P" Tag="print" Click="OnCmd" />
-                  <Separator />
-                  <MenuItem Header="Close document" InputGesture="Ctrl+W" Tag="closetab" Click="OnCmd" />
-                </MenuFlyout>
-              </Button.Flyout>
-            </Button>
-            <Button Classes="flat" Content="↶" Tag="undo" Click="OnCmd" ToolTip.Tip="Undo (Ctrl+Z)" />
-            <Button Classes="flat" Content="↷" Tag="redo" Click="OnCmd" ToolTip.Tip="Redo (Ctrl+Y)" />
-            <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
-            <ComboBox x:Name="StyleBox" Width="130" ToolTip.Tip="Paragraph style">
-              <ComboBoxItem Content="Normal" />
-              <ComboBoxItem Content="Heading 1" />
-              <ComboBoxItem Content="Heading 2" />
-              <ComboBoxItem Content="Heading 3" />
-              <ComboBoxItem Content="Quote" />
-              <ComboBoxItem Content="Code" />
-            </ComboBox>
-            <ComboBox x:Name="FontBox" Width="170" ToolTip.Tip="Font" />
-            <ComboBox x:Name="SizeBox" Width="76" ToolTip.Tip="Font size (pt)" />
-            <Button Classes="flat" Content="A▲" Tag="sizeup" Click="OnCmd" ToolTip.Tip="Bigger text" />
-            <Button Classes="flat" Content="A▼" Tag="sizedown" Click="OnCmd" ToolTip.Tip="Smaller text" />
-            <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
-            <Button x:Name="BoldBtn" Classes="flat" Content="B" FontWeight="Bold" Width="34" Tag="bold" Click="OnCmd" ToolTip.Tip="Bold (Ctrl+B)" />
-            <Button x:Name="ItalicBtn" Classes="flat" Content="I" FontStyle="Italic" Width="34" Tag="italic" Click="OnCmd" ToolTip.Tip="Italic (Ctrl+I)" />
-            <Button x:Name="UnderBtn" Classes="flat" Width="34" Tag="underline" Click="OnCmd" ToolTip.Tip="Underline (Ctrl+U)">
-              <TextBlock Text="U" TextDecorations="Underline" />
-            </Button>
-            <Button x:Name="StrikeBtn" Classes="flat" Width="34" Tag="strike" Click="OnCmd" ToolTip.Tip="Strikethrough">
-              <TextBlock Text="S" TextDecorations="Strikethrough" />
-            </Button>
-            <Button x:Name="SupBtn" Classes="flat" Content="x²" Width="34" Tag="sup" Click="OnCmd" ToolTip.Tip="Superscript" />
-            <Button x:Name="SubBtn" Classes="flat" Content="x₂" Width="34" Tag="sub" Click="OnCmd" ToolTip.Tip="Subscript" />
-            <Button x:Name="ColorBtn" Classes="flat" Content="A ▾" ToolTip.Tip="Text colour" />
-            <Button x:Name="HiBtn" Classes="flat" Content="🖍 ▾" ToolTip.Tip="Highlight colour" />
-            <Button Classes="flat" Content="Clear format" Tag="clearfmt" Click="OnCmd" ToolTip.Tip="Remove formatting" />
-          </StackPanel>
-        </ScrollViewer>
-        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0,4,0,0">
-          <StackPanel Orientation="Horizontal" Spacing="3">
-            <Button x:Name="AlLBtn" Classes="flat" Content="⯇" Tag="alleft" Click="OnCmd" ToolTip.Tip="Align left (Ctrl+L)" />
-            <Button x:Name="AlCBtn" Classes="flat" Content="≡" Tag="alcenter" Click="OnCmd" ToolTip.Tip="Centre (Ctrl+E)" />
-            <Button x:Name="AlRBtn" Classes="flat" Content="⯈" Tag="alright" Click="OnCmd" ToolTip.Tip="Align right (Ctrl+R)" />
-            <Button x:Name="AlJBtn" Classes="flat" Content="☰" Tag="aljust" Click="OnCmd" ToolTip.Tip="Justify (Ctrl+J)" />
-            <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
-            <Button x:Name="BulletBtn" Classes="flat" Content="• List" Tag="bullets" Click="OnCmd" ToolTip.Tip="Bulleted list" />
-            <Button x:Name="NumBtn" Classes="flat" Content="1. List" Tag="numbers" Click="OnCmd" ToolTip.Tip="Numbered list" />
-            <Button Classes="flat" Content="⇤" Tag="outdent" Click="OnCmd" ToolTip.Tip="Decrease indent (Shift+Tab)" />
-            <Button Classes="flat" Content="⇥" Tag="indent" Click="OnCmd" ToolTip.Tip="Increase indent (Tab in a list)" />
-            <ComboBox x:Name="SpacingBox" Width="82" ToolTip.Tip="Line spacing" />
-            <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
-            <Button Classes="flat" Content="🔗 Link" Tag="link" Click="OnCmd" ToolTip.Tip="Insert or edit a link (Ctrl+K)" />
-            <Button Classes="flat" Content="🖼 Picture" Tag="picture" Click="OnCmd" />
-            <Button Classes="flat" Content="▦ Table" Tag="table" Click="OnCmd" />
-            <Button x:Name="TableOpsBtn" Classes="flat" Content="Table ▾">
-              <Button.Flyout>
-                <MenuFlyout>
-                  <MenuItem Header="Add row below" Tag="rowadd" Click="OnCmd" />
-                  <MenuItem Header="Add column" Tag="coladd" Click="OnCmd" />
-                  <MenuItem Header="Delete row" Tag="rowdel" Click="OnCmd" />
-                  <MenuItem Header="Delete column" Tag="coldel" Click="OnCmd" />
-                </MenuFlyout>
-              </Button.Flyout>
-            </Button>
-            <Button Classes="flat" Content="― Line" Tag="rule" Click="OnCmd" ToolTip.Tip="Horizontal line" />
-            <Button Classes="flat" Content="⤓ Page break" Tag="pagebreak" Click="OnCmd" />
-            <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
-            <Button Classes="flat" Content="🔍 Find" Tag="find" Click="OnCmd" ToolTip.Tip="Find and replace (Ctrl+F / Ctrl+H)" />
-            <Button x:Name="PageBtn" Classes="flat" Content="Page view" Tag="pageview" Click="OnCmd" ToolTip.Tip="Switch between page view and web view" />
-            <ComboBox x:Name="PaperBox" Width="92" ToolTip.Tip="Paper size">
-              <ComboBoxItem Content="A4" />
-              <ComboBoxItem Content="Letter" />
-            </ComboBox>
-            <CheckBox x:Name="PageNumChk" Content="Page numbers" IsChecked="True" VerticalAlignment="Center" />
-          </StackPanel>
-        </ScrollViewer>
-      </StackPanel>
+    <Border DockPanel.Dock="Top" Classes="officebar">
+      <Menu>
+        <MenuItem x:Name="FileMenu" Header="_File">
+          <MenuItem Header="_New" InputGesture="Ctrl+N" Tag="newtab" Click="OnCmd" />
+          <MenuItem Header="_Open…" InputGesture="Ctrl+O" Tag="open" Click="OnCmd" />
+          <MenuItem x:Name="RecentMenu" Header="Open _recent" />
+          <Separator />
+          <MenuItem Header="_Save" InputGesture="Ctrl+S" Tag="save" Click="OnCmd" />
+          <MenuItem Header="Save _as…" InputGesture="Ctrl+Shift+S" Tag="saveas" Click="OnCmd" />
+          <MenuItem Header="Export as _PDF…" Tag="pdf" Click="OnCmd" />
+          <MenuItem Header="_Print…" InputGesture="Ctrl+P" Tag="print" Click="OnCmd" />
+          <Separator />
+          <MenuItem Header="_Close document" InputGesture="Ctrl+W" Tag="closetab" Click="OnCmd" />
+        </MenuItem>
+        <MenuItem Header="_Edit">
+          <MenuItem Header="_Undo" InputGesture="Ctrl+Z" Tag="undo" Click="OnCmd" />
+          <MenuItem Header="_Redo" InputGesture="Ctrl+Y" Tag="redo" Click="OnCmd" />
+          <Separator />
+          <MenuItem Header="_Find and replace…" InputGesture="Ctrl+H" Tag="find" Click="OnCmd" />
+        </MenuItem>
+        <MenuItem Header="_Insert">
+          <MenuItem Header="_Link…" InputGesture="Ctrl+K" Tag="link" Click="OnCmd" />
+          <MenuItem Header="_Picture…" Tag="picture" Click="OnCmd" />
+          <MenuItem Header="_Table" Tag="table" Click="OnCmd" />
+          <MenuItem Header="Horizontal _line" Tag="rule" Click="OnCmd" />
+          <MenuItem Header="Page _break" Tag="pagebreak" Click="OnCmd" />
+        </MenuItem>
+        <MenuItem Header="F_ormat">
+          <MenuItem Header="_Bold" InputGesture="Ctrl+B" Tag="bold" Click="OnCmd" />
+          <MenuItem Header="_Italic" InputGesture="Ctrl+I" Tag="italic" Click="OnCmd" />
+          <MenuItem Header="_Underline" InputGesture="Ctrl+U" Tag="underline" Click="OnCmd" />
+          <MenuItem Header="_Strikethrough" Tag="strike" Click="OnCmd" />
+          <MenuItem Header="Su_perscript" Tag="sup" Click="OnCmd" />
+          <MenuItem Header="Subs_cript" Tag="sub" Click="OnCmd" />
+          <Separator />
+          <MenuItem Header="Bigger text" Tag="sizeup" Click="OnCmd" />
+          <MenuItem Header="Smaller text" Tag="sizedown" Click="OnCmd" />
+          <Separator />
+          <MenuItem Header="Clear _formatting" Tag="clearfmt" Click="OnCmd" />
+        </MenuItem>
+        <MenuItem Header="_Table">
+          <MenuItem Header="_Insert a table" Tag="table" Click="OnCmd" />
+          <Separator />
+          <MenuItem Header="Add row below" Tag="rowadd" Click="OnCmd" />
+          <MenuItem Header="Add column" Tag="coladd" Click="OnCmd" />
+          <MenuItem Header="Delete row" Tag="rowdel" Click="OnCmd" />
+          <MenuItem Header="Delete column" Tag="coldel" Click="OnCmd" />
+        </MenuItem>
+        <MenuItem Header="_View">
+          <MenuItem Header="_Page view or web view" Tag="pageview" Click="OnCmd" />
+          <Separator />
+          <MenuItem Header="Zoom _in" Tag="zoomin" Click="OnCmd" />
+          <MenuItem Header="Zoom _out" Tag="zoomout" Click="OnCmd" />
+        </MenuItem>
+      </Menu>
+    </Border>
+
+    <Border DockPanel.Dock="Top" Classes="officetools">
+      <v:OfficeToolbar>
+        <Button Classes="tool" Tag="undo" Click="OnCmd" ToolTip.Tip="Undo (Ctrl+Z)"><v:IconView Kind="undo" Size="18" /></Button>
+        <Button Classes="tool" Tag="redo" Click="OnCmd" ToolTip.Tip="Redo (Ctrl+Y)"><v:IconView Kind="redo" Size="18" /></Button>
+        <Border Classes="tbsep" />
+        <ComboBox x:Name="StyleBox" Width="128" ToolTip.Tip="Paragraph style">
+          <ComboBoxItem Content="Normal" />
+          <ComboBoxItem Content="Heading 1" />
+          <ComboBoxItem Content="Heading 2" />
+          <ComboBoxItem Content="Heading 3" />
+          <ComboBoxItem Content="Quote" />
+          <ComboBoxItem Content="Code" />
+        </ComboBox>
+        <ComboBox x:Name="FontBox" Width="160" ToolTip.Tip="Font" Margin="4,0,0,0" />
+        <ComboBox x:Name="SizeBox" Width="72" ToolTip.Tip="Font size (pt)" Margin="4,0,0,0" />
+        <Button Classes="tool" Tag="sizeup" Click="OnCmd" ToolTip.Tip="Bigger text"><v:IconView Kind="text-bigger" Size="18" /></Button>
+        <Button Classes="tool" Tag="sizedown" Click="OnCmd" ToolTip.Tip="Smaller text"><v:IconView Kind="text-smaller" Size="18" /></Button>
+        <Border Classes="tbsep" />
+        <Button x:Name="BoldBtn" Classes="tool" Tag="bold" Click="OnCmd" ToolTip.Tip="Bold (Ctrl+B)"><v:IconView Kind="bold" Size="18" /></Button>
+        <Button x:Name="ItalicBtn" Classes="tool" Tag="italic" Click="OnCmd" ToolTip.Tip="Italic (Ctrl+I)"><v:IconView Kind="italic" Size="18" /></Button>
+        <Button x:Name="UnderBtn" Classes="tool" Tag="underline" Click="OnCmd" ToolTip.Tip="Underline (Ctrl+U)"><v:IconView Kind="underline" Size="18" /></Button>
+        <Button x:Name="StrikeBtn" Classes="tool" Tag="strike" Click="OnCmd" ToolTip.Tip="Strikethrough"><v:IconView Kind="strikethrough" Size="18" /></Button>
+        <Button x:Name="SupBtn" Classes="tool" Tag="sup" Click="OnCmd" ToolTip.Tip="Superscript"><v:IconView Kind="superscript" Size="18" /></Button>
+        <Button x:Name="SubBtn" Classes="tool" Tag="sub" Click="OnCmd" ToolTip.Tip="Subscript"><v:IconView Kind="subscript" Size="18" /></Button>
+        <Button x:Name="ColorBtn" Classes="tool" ToolTip.Tip="Text colour" />
+        <Button x:Name="HiBtn" Classes="tool" ToolTip.Tip="Highlight colour" />
+        <Button Classes="tool" Tag="clearfmt" Click="OnCmd" ToolTip.Tip="Clear formatting"><v:IconView Kind="clear-format" Size="18" /></Button>
+        <Border Classes="tbsep" />
+        <Button x:Name="AlLBtn" Classes="tool" Tag="alleft" Click="OnCmd" ToolTip.Tip="Align left (Ctrl+L)"><v:IconView Kind="align-left" Size="18" /></Button>
+        <Button x:Name="AlCBtn" Classes="tool" Tag="alcenter" Click="OnCmd" ToolTip.Tip="Centre (Ctrl+E)"><v:IconView Kind="align-center" Size="18" /></Button>
+        <Button x:Name="AlRBtn" Classes="tool" Tag="alright" Click="OnCmd" ToolTip.Tip="Align right (Ctrl+R)"><v:IconView Kind="align-right" Size="18" /></Button>
+        <Button x:Name="AlJBtn" Classes="tool" Tag="aljust" Click="OnCmd" ToolTip.Tip="Justify (Ctrl+J)"><v:IconView Kind="align-justify" Size="18" /></Button>
+        <Border Classes="tbsep" />
+        <Button x:Name="BulletBtn" Classes="tool" Tag="bullets" Click="OnCmd" ToolTip.Tip="Bulleted list"><v:IconView Kind="list-bullet" Size="18" /></Button>
+        <Button x:Name="NumBtn" Classes="tool" Tag="numbers" Click="OnCmd" ToolTip.Tip="Numbered list"><v:IconView Kind="list-number" Size="18" /></Button>
+        <Button Classes="tool" Tag="outdent" Click="OnCmd" ToolTip.Tip="Decrease indent (Shift+Tab)"><v:IconView Kind="outdent" Size="18" /></Button>
+        <Button Classes="tool" Tag="indent" Click="OnCmd" ToolTip.Tip="Increase indent (Tab in a list)"><v:IconView Kind="indent" Size="18" /></Button>
+        <ComboBox x:Name="SpacingBox" Width="76" ToolTip.Tip="Line spacing" Margin="4,0,0,0" />
+        <Border Classes="tbsep" />
+        <Button Classes="tool" Tag="link" Click="OnCmd" ToolTip.Tip="Link (Ctrl+K)"><v:IconView Kind="link" Size="18" /></Button>
+        <Button Classes="tool" Tag="picture" Click="OnCmd" ToolTip.Tip="Picture"><v:IconView Kind="image" Size="18" /></Button>
+        <Button Classes="tool" Tag="table" Click="OnCmd" ToolTip.Tip="Table"><v:IconView Kind="table" Size="18" /></Button>
+        <Button x:Name="TableOpsBtn" Classes="tool" ToolTip.Tip="Rows and columns" v:OfficeToolbar.MenuHeader="Rows and columns">
+          <StackPanel Orientation="Horizontal" Spacing="2"><v:IconView Kind="borders" Size="18" /><v:IconView Kind="chevron-down" Size="12" /></StackPanel>
+          <Button.Flyout>
+            <MenuFlyout>
+              <MenuItem Header="Add row below" Tag="rowadd" Click="OnCmd" />
+              <MenuItem Header="Add column" Tag="coladd" Click="OnCmd" />
+              <MenuItem Header="Delete row" Tag="rowdel" Click="OnCmd" />
+              <MenuItem Header="Delete column" Tag="coldel" Click="OnCmd" />
+            </MenuFlyout>
+          </Button.Flyout>
+        </Button>
+        <Button Classes="tool" Tag="rule" Click="OnCmd" ToolTip.Tip="Horizontal line"><v:IconView Kind="rule" Size="18" /></Button>
+        <Button Classes="tool" Tag="pagebreak" Click="OnCmd" ToolTip.Tip="Page break"><v:IconView Kind="page-break" Size="18" /></Button>
+        <Border Classes="tbsep" />
+        <Button Classes="tool" Tag="find" Click="OnCmd" ToolTip.Tip="Find and replace (Ctrl+F)"><v:IconView Kind="search" Size="18" /></Button>
+        <Button x:Name="PageBtn" Classes="tool on" Tag="pageview" Click="OnCmd" ToolTip.Tip="Page view (off: web view)"><v:IconView Kind="page" Size="18" /></Button>
+        <ComboBox x:Name="PaperBox" Width="84" ToolTip.Tip="Paper size" Margin="4,0,0,0">
+          <ComboBoxItem Content="A4" />
+          <ComboBoxItem Content="Letter" />
+        </ComboBox>
+        <CheckBox x:Name="PageNumChk" Content="Page numbers" IsChecked="True" VerticalAlignment="Center" Margin="8,0,0,0" />
+      </v:OfficeToolbar>
     </Border>
 
     <!-- Find / replace -->
-    <Border x:Name="FindBar" DockPanel.Dock="Top" Classes="card" CornerRadius="0" BorderThickness="0,0,0,1" Padding="8,6" IsVisible="False">
+    <Border x:Name="FindBar" DockPanel.Dock="Top" Classes="officetools" IsVisible="False">
       <StackPanel Orientation="Horizontal" Spacing="6">
         <TextBox x:Name="FindBox" Width="200" PlaceholderText="Find" />
         <TextBox x:Name="ReplaceBox" Width="200" PlaceholderText="Replace with" />
         <CheckBox x:Name="CaseChk" Content="Match case" VerticalAlignment="Center" />
-        <Button Classes="flat" Content="▲" Tag="findprev" Click="OnCmd" ToolTip.Tip="Previous (Shift+Enter)" />
-        <Button Classes="flat" Content="▼" Tag="findnext" Click="OnCmd" ToolTip.Tip="Next (Enter)" />
+        <Button Classes="tool" Tag="findprev" Click="OnCmd" ToolTip.Tip="Previous (Shift+Enter)"><v:IconView Kind="chevron-up" Size="16" /></Button>
+        <Button Classes="tool" Tag="findnext" Click="OnCmd" ToolTip.Tip="Next (Enter)"><v:IconView Kind="chevron-down" Size="16" /></Button>
         <Button Classes="flat" Content="Replace" Tag="replace" Click="OnCmd" />
         <Button Classes="flat" Content="Replace all" Tag="replaceall" Click="OnCmd" />
         <TextBlock x:Name="FindInfo" Classes="caption" VerticalAlignment="Center" />
-        <Button Classes="flat" Content="✕" Tag="findclose" Click="OnCmd" />
+        <Button Classes="tool" Tag="findclose" Click="OnCmd" ToolTip.Tip="Close find"><v:IconView Kind="close" Size="14" /></Button>
       </StackPanel>
     </Border>
 
-    <!-- Status -->
-    <Border DockPanel.Dock="Bottom" Classes="card" CornerRadius="0" BorderThickness="0,1,0,0" Padding="10,4">
-      <Grid ColumnDefinitions="*,Auto">
+    <Border DockPanel.Dock="Bottom" Classes="officestatus">
+      <DockPanel>
+        <v:OfficeZoom x:Name="Zoom" DockPanel.Dock="Right" />
         <TextBlock x:Name="CountText" Classes="caption" VerticalAlignment="Center" />
-        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-          <Button Classes="flat" Content="−" Tag="zoomout" Click="OnCmd" Padding="8,0" />
-          <Slider x:Name="ZoomSlider" Minimum="50" Maximum="250" Value="100" Width="140" VerticalAlignment="Center" />
-          <Button Classes="flat" Content="+" Tag="zoomin" Click="OnCmd" Padding="8,0" />
-          <TextBlock x:Name="ZoomText" Classes="caption" Width="44" VerticalAlignment="Center" />
-        </StackPanel>
-      </Grid>
+      </DockPanel>
     </Border>
 
-    <ScrollViewer x:Name="Scroller" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="#E6E6E6">
+    <ScrollViewer x:Name="Scroller" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="{DynamicResource ShellFieldBrush}">
       <v:DocView x:Name="Doc" HorizontalAlignment="Stretch" />
     </ScrollViewer>
   </DockPanel>

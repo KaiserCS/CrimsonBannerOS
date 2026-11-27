@@ -4,8 +4,20 @@
         Title="Untitled - Slides"
         Width="1320" Height="820" MinWidth="860" MinHeight="560"
         WindowStartupLocation="CenterOwner">
+  <!-- The office apps' one construction (OfficeChrome): tabs, menus, one row of tools, the slides, the status bar. -->
   <DockPanel>
-    <Menu DockPanel.Dock="Top">
+    <Border DockPanel.Dock="Top" Classes="officetabs">
+      <DockPanel>
+        <Button DockPanel.Dock="Right" Classes="tool" Tag="new" Click="OnMenu" ToolTip.Tip="New presentation (Ctrl+N)"><v:IconView Kind="plus" Size="16" /></Button>
+        <!-- the one main action: present -->
+        <Button DockPanel.Dock="Right" Classes="primary" Tag="present" Click="OnMenu" ToolTip.Tip="Present from the beginning (F5)" Margin="0,0,8,4" Padding="12,5">
+          <StackPanel Orientation="Horizontal" Spacing="6"><v:IconView Kind="play" Size="14" /><TextBlock Text="Present" VerticalAlignment="Center" /></StackPanel>
+        </Button>
+        <StackPanel x:Name="TabsPanel" Orientation="Horizontal" Spacing="2" />
+      </DockPanel>
+    </Border>
+    <Border DockPanel.Dock="Top" Classes="officebar">
+    <Menu>
       <MenuItem Header="_File">
         <MenuItem Header="_New presentation" Tag="new" InputGesture="Ctrl+N" Click="OnMenu" />
         <MenuItem Header="_Open…" Tag="open" InputGesture="Ctrl+O" Click="OnMenu" />
@@ -49,102 +61,60 @@
         <MenuItem x:Name="NotesItem" Header="_Speaker notes" Tag="notes" ToggleType="CheckBox" IsChecked="True" Click="OnMenu" />
       </MenuItem>
     </Menu>
-
-    <Border DockPanel.Dock="Top" Classes="card" CornerRadius="0" BorderThickness="0,0,0,1" Padding="8,6">
-      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-        <StackPanel Orientation="Horizontal" Spacing="12">
-
-          <StackPanel Spacing="3">
-            <StackPanel Orientation="Horizontal" Spacing="4">
-              <Button Classes="primary" Content="＋ New slide" Tag="newslide" Click="OnMenu" />
-              <ComboBox x:Name="LayoutBox" Width="150" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Spacing="4">
-              <Button Classes="flat" Content="Duplicate" Tag="dupslide" Click="OnMenu" />
-              <Button Classes="flat" Content="Delete" Tag="delslide" Click="OnMenu" />
-              <Button Classes="flat" Content="▲" Tag="slideup" Click="OnMenu" />
-              <Button Classes="flat" Content="▼" Tag="slidedown" Click="OnMenu" />
-            </StackPanel>
-            <TextBlock Text="Slides" Classes="caption" HorizontalAlignment="Center" />
-          </StackPanel>
-          <Border Width="1" Background="{DynamicResource ShellBorderBrush}" />
-
-          <StackPanel Spacing="3">
-            <StackPanel Orientation="Horizontal" Spacing="4">
-              <Button Classes="flat" Content="Text box" Tag="addtext" Click="OnMenu" />
-              <Button Classes="flat" Content="Picture…" Tag="addimage" Click="OnMenu" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Spacing="4">
-              <ComboBox x:Name="ShapeBox" Width="150" />
-              <Button Classes="flat" Content="Add" Tag="addshape" Click="OnMenu" />
-            </StackPanel>
-            <TextBlock Text="Insert" Classes="caption" HorizontalAlignment="Center" />
-          </StackPanel>
-          <Border Width="1" Background="{DynamicResource ShellBorderBrush}" />
-
-          <StackPanel Spacing="3">
-            <StackPanel Orientation="Horizontal" Spacing="4">
-              <ComboBox x:Name="FontBox" Width="170" />
-              <ComboBox x:Name="SizeBox" Width="72" />
-              <ToggleButton x:Name="BoldBtn" Content="B" FontWeight="Bold" Width="32" />
-              <ToggleButton x:Name="ItalicBtn" Content="I" FontStyle="Italic" Width="32" />
-              <ToggleButton x:Name="UnderBtn" Content="U" Width="32" />
-              <ContentControl x:Name="TextColorHost" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Spacing="4">
-              <ToggleButton x:Name="AlignL" Content="≡ Left" />
-              <ToggleButton x:Name="AlignC" Content="≡ Centre" />
-              <ToggleButton x:Name="AlignR" Content="≡ Right" />
-              <ToggleButton x:Name="BulletBtn" Content="• List" />
-              <ComboBox x:Name="VAlignBox" Width="96" />
-            </StackPanel>
-            <TextBlock Text="Text" Classes="caption" HorizontalAlignment="Center" />
-          </StackPanel>
-          <Border Width="1" Background="{DynamicResource ShellBorderBrush}" />
-
-          <StackPanel Spacing="3">
-            <StackPanel Orientation="Horizontal" Spacing="6">
-              <TextBlock Text="Fill" VerticalAlignment="Center" Classes="caption" />
-              <ContentControl x:Name="FillHost" />
-              <TextBlock Text="Outline" VerticalAlignment="Center" Classes="caption" />
-              <ContentControl x:Name="LineHost" />
-              <ComboBox x:Name="LineWBox" Width="70" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Spacing="6">
-              <TextBlock Text="Rotation" VerticalAlignment="Center" Classes="caption" />
-              <TextBox x:Name="RotBox" Width="64" Text="0" />
-              <Button Classes="flat" Content="Front" Tag="front" Click="OnMenu" />
-              <Button Classes="flat" Content="Forward" Tag="forward" Click="OnMenu" />
-              <Button Classes="flat" Content="Backward" Tag="backward" Click="OnMenu" />
-              <Button Classes="flat" Content="Back" Tag="back" Click="OnMenu" />
-            </StackPanel>
-            <TextBlock Text="Shape and arrange" Classes="caption" HorizontalAlignment="Center" />
-          </StackPanel>
-          <Border Width="1" Background="{DynamicResource ShellBorderBrush}" />
-
-          <StackPanel Spacing="3">
-            <StackPanel Orientation="Horizontal" Spacing="6">
-              <ComboBox x:Name="ThemeBox" Width="120" />
-              <TextBlock Text="Background" VerticalAlignment="Center" Classes="caption" />
-              <ContentControl x:Name="BgHost" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Spacing="6">
-              <TextBlock Text="Transition" VerticalAlignment="Center" Classes="caption" />
-              <ComboBox x:Name="TransitionBox" Width="100" />
-              <Button Classes="primary" Content="▶ Present" Tag="present" Click="OnMenu" />
-            </StackPanel>
-            <TextBlock Text="Design and show" Classes="caption" HorizontalAlignment="Center" />
-          </StackPanel>
-
-        </StackPanel>
-      </ScrollViewer>
     </Border>
 
-    <Border DockPanel.Dock="Bottom" Classes="card" CornerRadius="0" BorderThickness="0,1,0,0" Padding="12,4">
-      <TextBlock x:Name="StatusText" Classes="caption" />
+    <Border DockPanel.Dock="Top" Classes="officetools">
+      <v:OfficeToolbar>
+        <Button Classes="tool label" Tag="newslide" Click="OnMenu" ToolTip.Tip="New slide (Ctrl+M)" v:OfficeToolbar.MenuHeader="New slide">
+          <StackPanel Orientation="Horizontal" Spacing="6"><v:IconView Kind="plus" Size="16" /><TextBlock Text="New slide" VerticalAlignment="Center" /></StackPanel>
+        </Button>
+        <ComboBox x:Name="LayoutBox" Width="140" ToolTip.Tip="Layout of new slides" />
+        <Button Classes="tool" Tag="dupslide" Click="OnMenu" ToolTip.Tip="Duplicate slide"><v:IconView Kind="copy" Size="18" /></Button>
+        <Button Classes="tool" Tag="delslide" Click="OnMenu" ToolTip.Tip="Delete slide"><v:IconView Kind="trash" Size="18" /></Button>
+        <Button Classes="tool" Tag="slideup" Click="OnMenu" ToolTip.Tip="Move slide up"><v:IconView Kind="arrow-up" Size="18" /></Button>
+        <Button Classes="tool" Tag="slidedown" Click="OnMenu" ToolTip.Tip="Move slide down"><v:IconView Kind="arrow-down" Size="18" /></Button>
+        <Border Classes="tbsep" />
+        <Button Classes="tool" Tag="addtext" Click="OnMenu" ToolTip.Tip="Text box"><v:IconView Kind="text-box" Size="18" /></Button>
+        <Button Classes="tool" Tag="addimage" Click="OnMenu" ToolTip.Tip="Picture"><v:IconView Kind="image" Size="18" /></Button>
+        <ComboBox x:Name="ShapeBox" Width="128" ToolTip.Tip="Shape to add" />
+        <Button Classes="tool" Tag="addshape" Click="OnMenu" ToolTip.Tip="Add the shape"><v:IconView Kind="shape" Size="18" /></Button>
+        <Border Classes="tbsep" />
+        <ComboBox x:Name="FontBox" Width="150" ToolTip.Tip="Font" />
+        <ComboBox x:Name="SizeBox" Width="68" ToolTip.Tip="Font size" Margin="4,0,0,0" />
+        <ToggleButton x:Name="BoldBtn" Classes="tool" ToolTip.Tip="Bold"><v:IconView Kind="bold" Size="18" /></ToggleButton>
+        <ToggleButton x:Name="ItalicBtn" Classes="tool" ToolTip.Tip="Italic"><v:IconView Kind="italic" Size="18" /></ToggleButton>
+        <ToggleButton x:Name="UnderBtn" Classes="tool" ToolTip.Tip="Underline"><v:IconView Kind="underline" Size="18" /></ToggleButton>
+        <Button x:Name="TextColorBtn" Classes="tool" />
+        <Border Classes="tbsep" />
+        <ToggleButton x:Name="AlignL" Classes="tool" ToolTip.Tip="Align left"><v:IconView Kind="align-left" Size="18" /></ToggleButton>
+        <ToggleButton x:Name="AlignC" Classes="tool" ToolTip.Tip="Centre"><v:IconView Kind="align-center" Size="18" /></ToggleButton>
+        <ToggleButton x:Name="AlignR" Classes="tool" ToolTip.Tip="Align right"><v:IconView Kind="align-right" Size="18" /></ToggleButton>
+        <ToggleButton x:Name="BulletBtn" Classes="tool" ToolTip.Tip="Bulleted list"><v:IconView Kind="list-bullet" Size="18" /></ToggleButton>
+        <ComboBox x:Name="VAlignBox" Width="96" ToolTip.Tip="Text position in the box" />
+        <Border Classes="tbsep" />
+        <Button x:Name="FillBtn" Classes="tool" />
+        <Button x:Name="LineBtn" Classes="tool" />
+        <ComboBox x:Name="LineWBox" Width="66" ToolTip.Tip="Outline width" />
+        <Button Classes="tool" Tag="front" Click="OnMenu" ToolTip.Tip="Bring to front"><v:IconView Kind="bring-front" Size="18" /></Button>
+        <Button Classes="tool" Tag="forward" Click="OnMenu" ToolTip.Tip="Bring forward"><v:IconView Kind="arrow-up" Size="18" /></Button>
+        <Button Classes="tool" Tag="backward" Click="OnMenu" ToolTip.Tip="Send backward"><v:IconView Kind="arrow-down" Size="18" /></Button>
+        <Button Classes="tool" Tag="back" Click="OnMenu" ToolTip.Tip="Send to back"><v:IconView Kind="send-back" Size="18" /></Button>
+        <TextBox x:Name="RotBox" Width="64" Text="0" ToolTip.Tip="Rotation (degrees)" Margin="4,0,0,0" />
+        <Border Classes="tbsep" />
+        <ComboBox x:Name="ThemeBox" Width="120" ToolTip.Tip="Theme" />
+        <Button x:Name="BgBtn" Classes="tool" />
+        <ComboBox x:Name="TransitionBox" Width="96" ToolTip.Tip="Transition to this slide" Margin="4,0,0,0" />
+      </v:OfficeToolbar>
     </Border>
 
-    <Border DockPanel.Dock="Left" Width="200" Classes="card" CornerRadius="0" BorderThickness="0,0,1,0">
+    <Border DockPanel.Dock="Bottom" Classes="officestatus">
+      <DockPanel>
+        <v:OfficeZoom x:Name="Zoom" DockPanel.Dock="Right" />
+        <TextBlock x:Name="StatusText" Classes="caption" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+      </DockPanel>
+    </Border>
+
+    <Border DockPanel.Dock="Left" Width="200" Classes="officeside">
       <ListBox x:Name="ThumbList" Background="Transparent" Padding="6">
         <ListBox.ItemTemplate>
           <DataTemplate>
@@ -160,15 +130,16 @@
     </Border>
 
     <Grid x:Name="Centre" RowDefinitions="*,Auto">
-      <Border Background="#33808080">
-        <Grid>
+      <!-- zoom: 100% fits the slide to the window; larger makes the stage bigger and it scrolls -->
+      <ScrollViewer x:Name="StageScroll" Background="{DynamicResource ShellFieldBrush}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <Grid x:Name="Stage">
           <v:SlideCanvas x:Name="Surface" />
           <Canvas x:Name="Overlay" />
         </Grid>
-      </Border>
-      <Border x:Name="NotesHost" Grid.Row="1" Classes="card" CornerRadius="0" BorderThickness="0,1,0,0" Padding="10,6">
+      </ScrollViewer>
+      <Border x:Name="NotesHost" Grid.Row="1" Classes="officetools" BorderThickness="0,1,0,0" Padding="10,6">
         <StackPanel Spacing="2">
-          <TextBlock Text="Speaker notes" Classes="caption" />
+          <TextBlock Text="Speaker notes" Classes="caption" Margin="2,0,0,2" />
           <TextBox x:Name="NotesBox" Height="70" AcceptsReturn="True" TextWrapping="Wrap" PlaceholderText="Click to add notes for this slide" />
         </StackPanel>
       </Border>

@@ -24,14 +24,6 @@ public partial class SpreadsheetWindow : Window
     private bool _modified, _forceClose, _syncing, _editing, _csvWarned;
     private int _er, _ec;
 
-    private static readonly string[] Presets =
-    {
-        "#FFFFFF", "#F2F2F2", "#D9D9D9", "#A6A6A6", "#7F7F7F", "#595959", "#262626", "#000000",
-        "#C8102E", "#ED1C24", "#FF7F27", "#FFC90E", "#FFF200", "#B5E61D", "#22B14C", "#2F855A",
-        "#00A2E8", "#1E6FD9", "#3F48CC", "#0B2545", "#6B46C1", "#A349A4", "#FFAEC9", "#B97A57",
-        "#FDE2E4", "#FFE8CC", "#FFF3BF", "#D8F5A2", "#C5F6FA", "#D0EBFF", "#E5DBFF", "#F1F3F5"
-    };
-
     private static readonly string[] NumNames = { "General", "Number", "Thousands", "Currency", "Percent", "Date", "Text" };
     private static readonly string[] FilterOps = { "contains", "equals", "not equal", ">", "<", "blank", "not blank" };
 
@@ -74,8 +66,13 @@ public partial class SpreadsheetWindow : Window
         FilterOp.ItemsSource = FilterOps;
         FilterOp.SelectedIndex = 0;
 
-        TextColorHost.Content = MakeColorButton("A", "Text colour", argb => ApplyFormat(f => f.Color = argb), "#C8102E");
-        FillColorHost.Content = MakeColorButton("▮", "Fill colour", argb => ApplyFormat(f => f.Fill = argb), "#FFF200");
+        // the suite's colour buttons, tab row and zoom (OfficeChrome)
+        static uint Argb(string? hex) => hex == null ? 0u : 0xFF000000u | Convert.ToUInt32(hex.TrimStart('#'), 16);
+        OfficeChrome.Fit(TextColorBtn, "text-color", "Text colour", "#C8102E", h => ApplyFormat(f => f.Color = Argb(h)), "Automatic", this);
+        OfficeChrome.Fit(FillColorBtn, "fill", "Fill colour", "#FFF200", h => ApplyFormat(f => f.Fill = Argb(h)), "No colour", this);
+        OfficeChrome.SingleTab(this, TabsPanel, "sheet", " - Sheets", Close);
+        Zoom.Minimum = 50; Zoom.Maximum = 200;
+        Zoom.Changed += p => ZoomHost.LayoutTransform = new ScaleTransform(p / 100.0, p / 100.0);
 
         KeyDown += OnWindowKey;
         Closing += OnClosing;
@@ -146,7 +143,10 @@ public partial class SpreadsheetWindow : Window
             : "";
 
         _syncing = true;
-        var kind = (_m.GetFmt(Sheet.AncR, Sheet.AncC)?.Num ?? NumFmt.General).ToString();
+        var fmt = _m.GetFmt(Sheet.AncR, Sheet.AncC);
+        BoldBtn.Classes.Set("on", fmt?.Bold == true); ItalicBtn.Classes.Set("on", fmt?.Italic == true); UnderBtn.Classes.Set("on", fmt?.Underline == true);
+        AlLBtn.Classes.Set("on", fmt?.Align == 1); AlCBtn.Classes.Set("on", fmt?.Align == 2); AlRBtn.Classes.Set("on", fmt?.Align == 3);
+        var kind = (fmt?.Num ?? NumFmt.General).ToString();
         NumBox.SelectedItem = NumNames.Contains(kind) ? kind : "General";
         _syncing = false;
     }
@@ -293,35 +293,6 @@ public partial class SpreadsheetWindow : Window
     {
         int next = Math.Clamp(EffectiveDecimals(Sheet.AncR, Sheet.AncC) + delta, 0, 10);
         ApplyFormat(f => f.Dec = next);
-    }
-
-    private Button MakeColorButton(string glyph, string tip, Action<uint> apply, string initial)
-    {
-        var bar = new Border { Height = 3, Margin = new Thickness(0, 1, 0, 0), Background = new SolidColorBrush(Color.Parse(initial)) };
-        var label = new TextBlock { Text = glyph, FontWeight = FontWeight.Bold, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center };
-        var btn = new Button { Content = new StackPanel { Children = { label, bar } }, Padding = new Thickness(8, 3) };
-        btn.Classes.Add("flat");
-        ToolTip.SetTip(btn, tip);
-        var flyout = new Flyout { Placement = PlacementMode.Bottom };
-
-        var grid = new UniformGrid { Columns = 8 };
-        foreach (var hex in Presets)
-        {
-            var h = hex;
-            var b = new Button { Width = 24, Height = 24, Padding = new Thickness(0), Margin = new Thickness(1), Background = new SolidColorBrush(Color.Parse(h)) };
-            b.Click += (_, _) =>
-            {
-                flyout.Hide();
-                bar.Background = new SolidColorBrush(Color.Parse(h));
-                apply(0xFF000000u | Convert.ToUInt32(h.Substring(1), 16));
-            };
-            grid.Children.Add(b);
-        }
-        var none = new Button { Content = "No colour", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch };
-        none.Click += (_, _) => { flyout.Hide(); apply(0); };
-        flyout.Content = new StackPanel { Spacing = 6, Children = { grid, none } };
-        btn.Flyout = flyout;
-        return btn;
     }
 
     // ------------------------------------------------------------ data tools
