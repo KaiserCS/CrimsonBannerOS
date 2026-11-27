@@ -27,7 +27,7 @@ public sealed class ScreenRecorderWindow : Window
     private readonly ComboBox _mode = new() { ItemsSource = new[] { "The whole screen", "An area I select" }, SelectedIndex = 0, MinWidth = 200 };
     private readonly CheckBox _mic = new() { Content = "Record the microphone too" };
     private readonly Button _go = new() { Content = "Start recording", Classes = { "primary" } };
-    private readonly TextBlock _time = new() { FontSize = 28, FontWeight = Avalonia.Media.FontWeight.SemiBold, Text = "0:00" };
+    private readonly TextBlock _time = new() { Classes = { "lcd-digits" }, Text = "0:00", HorizontalAlignment = HorizontalAlignment.Right };
     private readonly TextBlock _status = new() { Classes = { "caption" }, TextWrapping = TextWrapping.Wrap };
     private readonly StackPanel _after = new() { Orientation = Orientation.Horizontal, Spacing = 8, IsVisible = false };
     private readonly DispatcherTimer _tick = new() { Interval = TimeSpan.FromMilliseconds(250) };
@@ -37,16 +37,27 @@ public sealed class ScreenRecorderWindow : Window
     public ScreenRecorderWindow()
     {
         Title = "Screen Recorder";
-        Width = 480; Height = 380; MinWidth = 420; MinHeight = 320;
+        Width = 500; Height = 420; MinWidth = 440; MinHeight = 380;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Button B(string text, Action act) { var b = new Button { Content = text }; b.Click += (_, _) => act(); return b; }
         _after.Children.Add(B("Play", () => { if (_last != null) FileOpener.Open(_last); }));
-        _after.Children.Add(B("Show in Files", () => WindowManager.Open(new FileManagerWindow(Folder), "files")));
         _go.Click += (_, _) => { if (_rec?.Running == true) Stop(); else _ = Start(); };
+        GoLook(false);
+        _go.Padding = new Thickness(14, 8);
+        var header = new AppHeader { AppId = "recorder", Heading = "Screen Recorder" };
+        header.Children.Add(B("Show in Files", () => WindowManager.Open(new FileManagerWindow(Folder), "files")));
+        var modeRow = new Grid { ColumnDefinitions = new ColumnDefinitions("110,*") };
+        modeRow.Children.Add(new TextBlock { Text = "Record", VerticalAlignment = VerticalAlignment.Center });
+        Grid.SetColumn(_mode, 1); _mode.HorizontalAlignment = HorizontalAlignment.Left;
+        modeRow.Children.Add(_mode);
+        // the big key and the running time on the deck's display, as in Voice Memos
+        var deck = new DockPanel { Children = { _go } };
+        DockPanel.SetDock(_go, Dock.Left);
+        deck.Children.Add(new Border { Classes = { "lcd" }, Margin = new Thickness(12, 0, 0, 0), Child = _time });
         Content = new StackPanel
         {
-            Spacing = 12, Margin = new Thickness(18),
-            Children = { _mode, _mic, _time, _go, _status, _after }
+            Spacing = 12, Margin = new Thickness(18, 16, 18, 18),
+            Children = { header, modeRow, _mic, deck, _status, _after }
         };
         _tick.Tick += (_, _) => { if (_rec is { Running: true } r) _time.Text = Recorder.Format(r.Elapsed); };
         Closing += (_, _) => _rec?.Stop();
@@ -55,11 +66,13 @@ public sealed class ScreenRecorderWindow : Window
         _go.IsEnabled = tool != null;
     }
 
+    private void GoLook(bool recording) => _go.Content = recording ? Icons.Label("stop", "Stop recording") : Icons.Label("record", "Start recording");
+
     private static string? Tool() => InputIsolation.InRedStarComp ? ProcessUtil.Which("wf-recorder") : ProcessUtil.Which("ffmpeg");
 
     private static string MissingText() => InputIsolation.InRedStarComp
-        ? "Recording inside redstar-comp needs wf-recorder (Arch/CachyOS: pacman -S wf-recorder · Debian/Ubuntu: apt install wf-recorder)."
-        : "Recording on X11 needs FFmpeg (pacman -S ffmpeg · apt install ffmpeg).";
+        ? "Recording needs wf-recorder. Install it from Software (or with 'sudo pacman -S wf-recorder'), then open Screen Recorder again."
+        : "Recording needs ffmpeg. Install it from Software (or with 'sudo pacman -S ffmpeg'), then open Screen Recorder again.";
 
     /// <summary>The program and its arguments (public for the tests). <paramref name="area"/>: x, y, width, height in
     /// screen coordinates; null for everything.</summary>
@@ -120,7 +133,7 @@ public sealed class ScreenRecorderWindow : Window
         rec.Ended += code => Dispatcher.UIThread.Post(() => Finished(rec, code));
         if (!rec.Start(cmd, args)) { _status.Text = "Couldn't start " + Path.GetFileName(cmd) + "."; return; }
         _rec = rec;
-        _go.Content = "Stop recording";
+        GoLook(true);
         _status.Text = "Recording… this window can be minimised; open it again from the taskbar to stop.";
         _after.IsVisible = false;
         _mode.IsEnabled = _mic.IsEnabled = false;
@@ -143,7 +156,7 @@ public sealed class ScreenRecorderWindow : Window
     private void Finished(Recorder rec, int code)
     {
         _tick.Stop();
-        _go.Content = "Start recording";
+        GoLook(false);
         _mode.IsEnabled = _mic.IsEnabled = true;
         var ok = File.Exists(rec.File) && new FileInfo(rec.File).Length > 0;
         if (ok)

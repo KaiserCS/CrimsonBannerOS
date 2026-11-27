@@ -3,16 +3,22 @@
         Title="Camera"
         Width="720" Height="720" MinWidth="520" MinHeight="520"
         WindowStartupLocation="CenterOwner">
-  <Grid RowDefinitions="Auto,*,Auto,Auto,Auto" Margin="16">
-    <Grid ColumnDefinitions="*,Auto,Auto">
-      <ComboBox x:Name="DeviceBox" HorizontalAlignment="Stretch" />
-      <TextBlock Grid.Column="1" Text="Timer" Classes="caption" VerticalAlignment="Center" Margin="12,0,6,0" />
-      <ComboBox x:Name="TimerBox" Grid.Column="2" Width="90" />
-    </Grid>
+  <Grid RowDefinitions="Auto,*,Auto,Auto,Auto" Margin="18,16,18,18">
+    <v:AppHeader AppId="camera" Heading="Camera" Margin="0,0,0,4">
+      <ComboBox x:Name="DeviceBox" MinWidth="170" ToolTip.Tip="Camera" />
+      <TextBlock Text="Timer" Classes="caption" VerticalAlignment="Center" Margin="6,0,0,0" />
+      <ComboBox x:Name="TimerBox" Width="90" />
+    </v:AppHeader>
 
     <Border Grid.Row="1" Background="Black" CornerRadius="12" ClipToBounds="True" Margin="0,10">
       <Grid>
-        <Image x:Name="Preview" Source="avares://RedStarOS/Assets/no-camera.png" Stretch="Uniform" />
+        <Image x:Name="Preview" Stretch="Uniform" />
+        <!-- no camera, or no ffmpeg: what's wrong and what to do, in place of a picture -->
+        <StackPanel x:Name="Unavailable" Spacing="6" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="380" IsVisible="False">
+          <v:IconView Kind="camera" Size="40" HorizontalAlignment="Center" Brush="#99FFFFFF" />
+          <TextBlock x:Name="UnavailableTitle" FontSize="17" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" TextAlignment="Center" />
+          <TextBlock x:Name="UnavailableText" Foreground="#B3FFFFFF" TextWrapping="Wrap" TextAlignment="Center" />
+        </StackPanel>
         <TextBlock x:Name="CountdownLabel" FontSize="120" FontWeight="Light" Foreground="White"
                    HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="False" />
         <Border x:Name="RecBadge" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12" CornerRadius="12"
@@ -27,16 +33,20 @@
 
     <StackPanel Grid.Row="2" Spacing="8">
       <StackPanel Orientation="Horizontal" Spacing="8">
-        <Button x:Name="PictureButton" Classes="primary" Content="Take Picture" MinWidth="130" Height="38" Click="OnPicture" />
-        <ToggleButton x:Name="PreviewToggle" Content="Live Preview" MinWidth="120" Height="38" Click="OnPreviewToggle" />
-        <ToggleButton x:Name="RecordToggle" Content="Record Video" MinWidth="120" Height="38" Click="OnRecordToggle" />
+        <Button x:Name="PictureButton" Classes="primary" Content="Take a picture" MinWidth="130" Height="38" Click="OnPicture" />
+        <ToggleButton x:Name="PreviewToggle" Content="Live preview" MinWidth="120" Height="38" Click="OnPreviewToggle" />
+        <ToggleButton x:Name="RecordToggle" Content="Record video" MinWidth="120" Height="38" Click="OnRecordToggle" />
       </StackPanel>
       <TextBlock x:Name="StatusLabel" Classes="caption" TextWrapping="Wrap" />
     </StackPanel>
 
-    <TextBlock Grid.Row="3" Text="RECENT PHOTOS" Classes="eyebrow" Margin="2,14,0,6" />
+    <TextBlock Grid.Row="3" Text="RECENT PHOTOS" Classes="kicker" Margin="2,14,0,6" />
     <ScrollViewer Grid.Row="4" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Height="96">
-      <StackPanel x:Name="Strip" Orientation="Horizontal" Spacing="8" />
+      <Panel>
+        <StackPanel x:Name="Strip" Orientation="Horizontal" Spacing="8" />
+        <TextBlock x:Name="StripEmpty" Classes="caption" VerticalAlignment="Center" Margin="2,0"
+                   Text="Pictures you take are saved in Pictures and shown here." />
+      </Panel>
     </ScrollViewer>
   </Grid>
 </Window>

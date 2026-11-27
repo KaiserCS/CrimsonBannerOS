@@ -29,15 +29,18 @@ public sealed class DisksWindow : Window
         Width = 900; Height = 600; MinWidth = 640; MinHeight = 420;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         _drives.SelectionChanged += (_, _) => { _part = null; ShowDisk(); };
-        var refresh = new Button { Content = "Refresh", Margin = new Thickness(8) };
+        var refresh = new Button { Content = Icons.Label("refresh", "Refresh", 15) };
+        ToolTip.SetTip(refresh, "Look for drives again");
         refresh.Click += (_, _) => _ = Reload();
-        var left = new DockPanel();
-        DockPanel.SetDock(refresh, Dock.Bottom);
-        left.Children.Add(refresh);
-        left.Children.Add(_drives);
-        var root = new DockPanel();
+        var header = new AppHeader { AppId = "disks", Heading = "Disks", Children = { refresh } };
+        _drives.Background = Brushes.Transparent;
+        var left = new Border { Classes = { "panel" }, Padding = new Thickness(4), Child = _drives };
+        var root = new DockPanel { Margin = new Thickness(18, 16, 18, 18) };
+        DockPanel.SetDock(header, Dock.Top);
+        root.Children.Add(header);
         DockPanel.SetDock(left, Dock.Left);
         root.Children.Add(left);
+        _detail.Margin = new Thickness(18, 0, 0, 0);
         root.Children.Add(new ScrollViewer { Content = _detail });
         Content = root;
         RemovableDrives.Changed += OnChanged;
@@ -54,7 +57,9 @@ public sealed class DisksWindow : Window
         catch (Exception ex)
         {
             _detail.Children.Clear();
-            _detail.Children.Add(new TextBlock { Text = "UDisks2 isn't available: " + ex.Message + "\nInstall udisks2 (Arch/CachyOS: pacman -S udisks2).", TextWrapping = TextWrapping.Wrap });
+            _drives.ItemsSource = null;
+            _detail.Children.Add(Empty("drive", "Disks can't see the drives",
+                "Disks needs udisks2. Install it from Software (or with 'sudo pacman -S udisks2'), then press Refresh. (" + ex.Message + ")"));
             return;
         }
         var items = _disks.Select(d => new ListBoxItem
@@ -62,18 +67,37 @@ public sealed class DisksWindow : Window
             Tag = d.Path,
             Content = new StackPanel
             {
-                Margin = new Thickness(4),
+                Margin = new Thickness(4), Orientation = Orientation.Horizontal, Spacing = 10,
                 Children =
                 {
-                    new TextBlock { Text = (d.Removable ? "🔌 " : "💽 ") + d.Name, FontWeight = FontWeight.SemiBold },
-                    new TextBlock { Text = $"{FileOps.FormatSize((long)d.Size)} · {d.Device}", Classes = { "caption" } },
+                    new IconView { Kind = d.Removable ? "usb" : "drive", Size = 22, VerticalAlignment = VerticalAlignment.Center },
+                    new StackPanel { Children =
+                    {
+                        new TextBlock { Text = d.Name, FontWeight = FontWeight.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 190 },
+                        new TextBlock { Text = $"{FileOps.FormatSize((long)d.Size)}, {d.Device}", Classes = { "caption" } },
+                    } },
                 },
             },
         }).ToList();
         _drives.ItemsSource = items;
         _drives.SelectedItem = items.FirstOrDefault(i => i.Tag as string == selected) ?? items.FirstOrDefault();
-        if (items.Count == 0) { _detail.Children.Clear(); _detail.Children.Add(new TextBlock { Text = "No disks were found." }); }
+        if (items.Count == 0)
+        {
+            _detail.Children.Clear();
+            _detail.Children.Add(Empty("drive", "No drives found", "Plug in a USB stick or a disk; it appears here by itself. Press Refresh if it doesn't."));
+        }
     }
+
+    private static Control Empty(string icon, string title, string text) => new StackPanel
+    {
+        Spacing = 4, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(16, 60, 16, 16), MaxWidth = 360,
+        Children =
+        {
+            new IconView { Kind = icon, Size = 26, HorizontalAlignment = HorizontalAlignment.Center, Opacity = 0.55 },
+            new TextBlock { Text = title, FontWeight = FontWeight.SemiBold, HorizontalAlignment = HorizontalAlignment.Center },
+            new TextBlock { Text = text, Classes = { "caption" }, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap },
+        },
+    };
 
     private Disk? Selected => _disks.FirstOrDefault(d => d.Path == (_drives.SelectedItem as ListBoxItem)?.Tag as string);
 
@@ -154,7 +178,7 @@ public sealed class DisksWindow : Window
         void AddD(Control c) { c.Margin = new Thickness(0, 0, 8, 8); diskRow.Children.Add(c); }
         AddD(B("Format the whole drive…", () => Format(d, null, status), !d.InUseBySystem));
         if (d.Removable) AddD(B("Eject", async () => { var err = await DiskManager.EjectAsync(d); status.Text = err ?? "It can be unplugged now."; await Reload(); }));
-        _detail.Children.Add(new TextBlock { Text = "DRIVE", Classes = { "eyebrow" }, Margin = new Thickness(0, 8, 0, 0) });
+        _detail.Children.Add(new TextBlock { Text = "DRIVE", Classes = { "kicker" }, Margin = new Thickness(0, 8, 0, 6) });
         _detail.Children.Add(diskRow);
         _detail.Children.Add(status);
     }

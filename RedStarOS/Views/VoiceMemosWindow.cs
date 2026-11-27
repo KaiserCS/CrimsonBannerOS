@@ -21,32 +21,52 @@ public sealed class VoiceMemosWindow : Window
 {
     public static string Folder => Path.Combine(AppPaths.UserFolder("Music"), "Voice Memos");
 
-    private readonly ListBox _list = new();
-    private readonly Button _record = new() { Content = "● Record", Classes = { "primary" }, MinWidth = 120 };
-    private readonly Button _play = new() { Content = "▶ Play", MinWidth = 90 };
-    private readonly TextBlock _time = new() { FontSize = 26, FontWeight = FontWeight.SemiBold, Text = "0:00", VerticalAlignment = VerticalAlignment.Center };
+    private readonly ListBox _list = new() { Background = Brushes.Transparent };
+    private readonly Button _record = new() { Classes = { "primary" }, MinWidth = 120, Padding = new Thickness(14, 8) };
+    private readonly Button _play = new() { MinWidth = 90 };
+    private readonly TextBlock _time = new() { Classes = { "lcd-digits" }, Text = "0:00", HorizontalAlignment = HorizontalAlignment.Right };
     private readonly TextBlock _status = new() { Classes = { "caption" }, TextWrapping = TextWrapping.Wrap };
+    private readonly StackPanel _empty = new()
+    {
+        Spacing = 4, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(16), MaxWidth = 300,
+        Children =
+        {
+            new IconView { Kind = "mic", Size = 24, HorizontalAlignment = HorizontalAlignment.Center, Opacity = 0.55 },
+            new TextBlock { Text = "No memos yet", FontWeight = FontWeight.SemiBold, HorizontalAlignment = HorizontalAlignment.Center },
+            new TextBlock { Text = "Press Record and speak; press Stop when you're done. Each memo is saved here.", Classes = { "caption" }, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap },
+        },
+    };
     private readonly DispatcherTimer _tick = new() { Interval = TimeSpan.FromMilliseconds(250) };
     private Recorder? _rec, _player;
+
+    private void RecordLook(bool recording) => _record.Content = recording ? Icons.Label("stop", "Stop") : Icons.Label("record", "Record");
+    private void PlayLook(bool playing) => _play.Content = playing ? Icons.Label("stop", "Stop") : Icons.Label("play", "Play");
 
     public VoiceMemosWindow()
     {
         Title = "Voice Memos";
-        Width = 520; Height = 560; MinWidth = 420; MinHeight = 400;
+        Width = 520; Height = 580; MinWidth = 440; MinHeight = 440;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        Button B(string text, Action act) { var b = new Button { Content = text }; b.Click += (_, _) => act(); return b; }
+        Button B(string icon, string text, Action act) { var b = new Button { Content = Icons.Label(icon, text, 15) }; b.Click += (_, _) => act(); return b; }
+        RecordLook(false);
+        PlayLook(false);
         _record.Click += (_, _) => { if (_rec?.Running == true) StopRecording(); else StartRecording(); };
         _play.Click += (_, _) => { if (_player?.Running == true) _player.Stop(500); else Play(); };
-        var top = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { _record, _time } };
-        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8,
-            Children = { _play, B("Rename…", () => _ = Rename()), B("Delete", Delete), B("Show in Files", () => WindowManager.Open(new FileManagerWindow(Folder), "files")) } };
-        var root = new DockPanel { Margin = new Thickness(16) };
-        var head = new StackPanel { Spacing = 10, Children = { top, _status } };
+        var header = new AppHeader { AppId = "voicememos", Heading = "Voice Memos" };
+        header.Children.Add(B("folder", "Show in Files", () => WindowManager.Open(new FileManagerWindow(Folder), "files")));
+        // the recorder: the big key and the time on the deck's display
+        var deck = new DockPanel { Children = { _record } };
+        DockPanel.SetDock(_record, Dock.Left);
+        deck.Children.Add(new Border { Classes = { "lcd" }, Margin = new Thickness(12, 0, 0, 0), Child = _time });
+        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(0, 10, 0, 0),
+            Children = { _play, B("rename", "Rename…", () => _ = Rename()), B("trash", "Delete", Delete) } };
+        var root = new DockPanel { Margin = new Thickness(18, 16, 18, 18) };
+        var head = new StackPanel { Spacing = 10, Children = { header, deck, _status } };
         DockPanel.SetDock(head, Dock.Top);
         DockPanel.SetDock(actions, Dock.Bottom);
         root.Children.Add(head);
         root.Children.Add(actions);
-        root.Children.Add(new Border { Margin = new Thickness(0, 12), Child = _list });
+        root.Children.Add(new Border { Classes = { "panel" }, Padding = new Thickness(4), Margin = new Thickness(0, 12, 0, 0), Child = new Panel { Children = { _list, _empty } } });
         Content = root;
         _list.DoubleTapped += (_, _) => Play();
         _tick.Tick += (_, _) => { if (_rec is { Running: true } r) _time.Text = Recorder.Format(r.Elapsed); };
@@ -56,7 +76,7 @@ public sealed class VoiceMemosWindow : Window
         else _status.Text = "Memos are kept in Music/Voice Memos.";
     }
 
-    private const string Missing = "Voice Memos needs GStreamer's command-line tool (Arch/CachyOS: pacman -S gstreamer gst-plugins-base gst-plugins-good · Debian/Ubuntu: apt install gstreamer1.0-tools gstreamer1.0-plugins-good).";
+    private const string Missing = "Voice Memos needs GStreamer. Install gstreamer, gst-plugins-base and gst-plugins-good from Software (or with pacman), then open Voice Memos again.";
 
     private static string? Gst() => ProcessUtil.Which("gst-launch-1.0");
 
@@ -72,7 +92,7 @@ public sealed class VoiceMemosWindow : Window
         public override string ToString()
         {
             var fi = new FileInfo(Path);
-            return $"{System.IO.Path.GetFileNameWithoutExtension(Path)}    ·  {fi.LastWriteTime:d MMM, HH:mm}  ·  {Math.Max(1, fi.Length / 1024)} KB";
+            return $"{System.IO.Path.GetFileNameWithoutExtension(Path)}    {fi.LastWriteTime:d MMM, HH:mm}, {Math.Max(1, fi.Length / 1024)} KB";
         }
     }
 
@@ -87,6 +107,7 @@ public sealed class VoiceMemosWindow : Window
         }
         catch { }
         _list.ItemsSource = memos;
+        _empty.IsVisible = memos.Count == 0;
         _list.SelectedItem = memos.FirstOrDefault(m => m.Path == select) ?? memos.FirstOrDefault();
     }
 
@@ -101,7 +122,7 @@ public sealed class VoiceMemosWindow : Window
         rec.Ended += code => Dispatcher.UIThread.Post(() =>
         {
             _tick.Stop();
-            _record.Content = "● Record";
+            RecordLook(false);
             _time.Text = "0:00";
             bool ok = File.Exists(file) && new FileInfo(file).Length > 200;
             if (!ok)
@@ -114,7 +135,7 @@ public sealed class VoiceMemosWindow : Window
         });
         if (!rec.Start(gst, RecordArgs(file))) { _status.Text = "Couldn't start GStreamer."; return; }
         _rec = rec;
-        _record.Content = "■ Stop";
+        RecordLook(true);
         _status.Text = "Recording…";
         _tick.Start();
     }
@@ -126,10 +147,10 @@ public sealed class VoiceMemosWindow : Window
         if (Selected is not { } m || Gst() is not { } gst || _rec?.Running == true) return;
         _player?.Stop(300);
         var p = new Recorder(m.Path, "voice-memos.log");
-        p.Ended += _ => Dispatcher.UIThread.Post(() => { if (ReferenceEquals(_player, p)) _play.Content = "▶ Play"; });
+        p.Ended += _ => Dispatcher.UIThread.Post(() => { if (ReferenceEquals(_player, p)) PlayLook(false); });
         if (!p.Start(gst, new[] { "-q", "playbin", "uri=" + new Uri(m.Path).AbsoluteUri })) return;
         _player = p;
-        _play.Content = "■ Stop";
+        PlayLook(true);
     }
 
     private async Task Rename()

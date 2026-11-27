@@ -1,22 +1,47 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="using:RedStarOS.Views"
         x:Class="RedStarOS.Views.CalendarWindow"
         Title="Calendar"
-        Width="640" Height="420"
+        Width="700" Height="480" MinWidth="620" MinHeight="420"
         WindowStartupLocation="CenterOwner">
-  <Grid ColumnDefinitions="Auto,*" Margin="16">
-    <Calendar x:Name="MonthCalendar" VerticalAlignment="Top" />
-    <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto,Auto" Margin="16,0,0,0">
-      <TextBlock x:Name="DateLabel" Classes="h1" TextWrapping="Wrap" />
-      <ListBox x:Name="EventList" Grid.Row="1" Margin="0,8" />
-      <Grid Grid.Row="2" Classes="spaced" ColumnDefinitions="*,80,Auto">
-        <TextBox x:Name="TitleBox" PlaceholderText="New event" />
-        <TextBox x:Name="TimeBox" Grid.Column="1" PlaceholderText="HH:mm" />
-        <Button Grid.Column="2" Content="Add" Classes="primary" Padding="14,6" Click="OnAdd" />
+  <Window.Styles>
+    <!-- round days, as in the taskbar's calendar flyout -->
+    <Style Selector="CalendarDayButton">
+      <Setter Property="CornerRadius" Value="999" />
+    </Style>
+  </Window.Styles>
+  <DockPanel Margin="18,16,18,18">
+    <v:AppHeader DockPanel.Dock="Top" AppId="calendar" Heading="Calendar">
+      <Button Content="Today" Click="OnToday" ToolTip.Tip="Go to today" />
+    </v:AppHeader>
+    <Grid ColumnDefinitions="Auto,*">
+      <Border Classes="panel" Padding="6" VerticalAlignment="Top">
+        <Calendar x:Name="MonthCalendar" BorderThickness="0" Background="Transparent" />
+      </Border>
+      <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto,Auto" Margin="18,0,0,0">
+        <TextBlock x:Name="DateLabel" Classes="h1" TextWrapping="Wrap" />
+        <Border Grid.Row="1" Classes="panel" Padding="4" Margin="0,10">
+          <Panel>
+            <ListBox x:Name="EventList" Background="Transparent" />
+            <StackPanel x:Name="EventsEmpty" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16">
+              <v:IconView Kind="calendar" Size="22" HorizontalAlignment="Center" Opacity="0.55" />
+              <TextBlock Text="Nothing on this day" FontWeight="SemiBold" HorizontalAlignment="Center" />
+              <TextBlock Text="Type a title below, with a time if it has one, and press Add." Classes="caption" TextAlignment="Center" TextWrapping="Wrap" />
+            </StackPanel>
+          </Panel>
+        </Border>
+        <Grid Grid.Row="2" ColumnDefinitions="*,8,84,8,Auto">
+          <TextBox x:Name="TitleBox" PlaceholderText="New event" />
+          <TextBox x:Name="TimeBox" Grid.Column="2" PlaceholderText="14:30" ToolTip.Tip="Time (optional), as hours:minutes" />
+          <Button Grid.Column="4" Content="Add" Classes="primary" Padding="16,6" Click="OnAdd" />
+        </Grid>
+        <DockPanel Grid.Row="3" Margin="0,8,0,0">
+          <Button x:Name="DeleteBtn" DockPanel.Dock="Right" Classes="flat" Click="OnDelete" IsEnabled="False">
+            <StackPanel Orientation="Horizontal" Spacing="6"><v:IconView Kind="trash" Size="15" /><TextBlock Text="Delete event" VerticalAlignment="Center" /></StackPanel>
+          </Button>
+          <TextBlock x:Name="StatusLabel" VerticalAlignment="Center" Classes="caption" Foreground="{DynamicResource ShellDangerBrush}" TextWrapping="Wrap" />
+        </DockPanel>
       </Grid>
-      <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-        <Button Content="Delete selected" Click="OnDelete" />
-        <TextBlock x:Name="StatusLabel" VerticalAlignment="Center" Classes="caption" />
-      </StackPanel>
     </Grid>
-  </Grid>
+  </DockPanel>
 </Window>

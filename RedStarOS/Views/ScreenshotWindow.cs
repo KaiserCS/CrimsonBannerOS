@@ -125,6 +125,16 @@ public sealed class ScreenshotWindow : Window
     private readonly Image _preview = new() { Stretch = Stretch.Uniform };
     private readonly TextBlock _status = new() { Classes = { "caption" }, TextWrapping = TextWrapping.Wrap };
     private readonly StackPanel _after = new() { Orientation = Orientation.Horizontal, Spacing = 8, IsVisible = false };
+    private readonly StackPanel _empty = new()
+    {
+        Spacing = 4, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(16), MaxWidth = 320,
+        Children =
+        {
+            new IconView { Kind = "screenshot", Size = 26, HorizontalAlignment = HorizontalAlignment.Center, Opacity = 0.55 },
+            new TextBlock { Text = "No screenshot yet", FontWeight = FontWeight.SemiBold, HorizontalAlignment = HorizontalAlignment.Center },
+            new TextBlock { Text = "Choose what to take and when, then press Take screenshot. It's saved in Pictures/Screenshots.", Classes = { "caption" }, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap },
+        },
+    };
     private string? _file;
 
     public ScreenshotWindow()
@@ -143,7 +153,6 @@ public sealed class ScreenshotWindow : Window
         _after.Children.Add(B("Copy", Copy));
         _after.Children.Add(B("Save as…", () => _ = SaveAs()));
         _after.Children.Add(B("Open", () => { if (_file != null) FileOpener.Open(_file); }));
-        _after.Children.Add(B("Show in Files", () => WindowManager.Open(new FileManagerWindow(Screenshots.Folder), "files")));
         static Grid Row(string label, Control c)
         {
             var g = new Grid { ColumnDefinitions = new ColumnDefinitions("110,*") };
@@ -152,17 +161,23 @@ public sealed class ScreenshotWindow : Window
             g.Children.Add(c);
             return g;
         }
+        take.Content = Icons.Label("screenshot", "Take screenshot");
+        var header = new AppHeader { AppId = "screenshot", Heading = "Screenshot" };
+        header.Children.Add(B("Show in Files", () => WindowManager.Open(new FileManagerWindow(Screenshots.Folder), "files")));
         var top = new StackPanel
         {
-            Spacing = 10, Margin = new Thickness(16),
-            Children = { Row("Take", _mode), Row("When", _delay), take, _status, _after,
-                         new TextBlock { Classes = { "caption" }, Text = "Print takes the whole screen at once, Shift+Print the active window." } }
+            Spacing = 10,
+            Children = { header, Row("Take", _mode), Row("When", _delay), take, _status, _after }
         };
-        var root = new DockPanel();
+        var root = new DockPanel { Margin = new Thickness(18, 16, 18, 18) };
         DockPanel.SetDock(top, Dock.Top);
         root.Children.Add(top);
-        root.Children.Add(new Border { Margin = new Thickness(16, 0, 16, 16), CornerRadius = new CornerRadius(8), ClipToBounds = true,
-            Background = new SolidColorBrush(Color.FromArgb(20, 128, 128, 128)), Child = _preview });
+        var hint = new TextBlock { Classes = { "caption" }, Margin = new Thickness(0, 10, 0, 0),
+            Text = "Print takes the whole screen at once, Shift+Print the active window." };
+        DockPanel.SetDock(hint, Dock.Bottom);
+        root.Children.Add(hint);
+        root.Children.Add(new Border { Classes = { "panel" }, Margin = new Thickness(0, 14, 0, 0), ClipToBounds = true,
+            Child = new Panel { Children = { _preview, _empty } } });
         Content = root;
     }
 
@@ -194,6 +209,7 @@ public sealed class ScreenshotWindow : Window
         try { using var s = File.OpenRead(file); _preview.Source = new Bitmap(s); } catch { }
         _status.Text = "Saved as " + Path.GetFileName(file) + " in Pictures/Screenshots.";
         _after.IsVisible = true;
+        _empty.IsVisible = false;
     }
 
     private void Copy()

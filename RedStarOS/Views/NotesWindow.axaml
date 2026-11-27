@@ -3,22 +3,32 @@
         Title="Notes"
         Width="780" Height="520" MinWidth="520" MinHeight="320"
         WindowStartupLocation="CenterOwner">
-  <Grid ColumnDefinitions="270,*">
+  <DockPanel Margin="18,16,18,16">
+  <v:AppHeader DockPanel.Dock="Top" AppId="notes" Heading="Notes">
+    <Button Classes="primary" ToolTip.Tip="New note (Ctrl+N)" Click="OnNew">
+      <StackPanel Orientation="Horizontal" Spacing="6"><v:IconView Kind="plus" Size="15" /><TextBlock Text="New note" VerticalAlignment="Center" /></StackPanel>
+    </Button>
+  </v:AppHeader>
+  <Grid ColumnDefinitions="260,*">
 
-    <Grid RowDefinitions="Auto,Auto,*" Margin="16,16,8,16">
-      <Grid ColumnDefinitions="*,Auto">
-        <TextBox x:Name="SearchBox" PlaceholderText="Search notes" MinHeight="36" CornerRadius="10"
-                 VerticalContentAlignment="Center" />
-        <Button Grid.Column="1" Classes="primary" Content="＋" FontSize="18" Width="40" Height="36" Padding="0"
-                Margin="8,0,0,0" ToolTip.Tip="New note (Ctrl+N)" Click="OnNew" />
-      </Grid>
-      <TextBlock x:Name="CountLabel" Grid.Row="1" Classes="eyebrow" Margin="4,12,0,6" />
-      <ListBox x:Name="NoteList" Grid.Row="2" Background="Transparent" BorderThickness="0"
+    <Grid RowDefinitions="Auto,Auto,*" Margin="0,0,10,0">
+      <TextBox x:Name="SearchBox" PlaceholderText="Search notes" MinHeight="36" VerticalContentAlignment="Center" />
+      <TextBlock x:Name="CountLabel" Grid.Row="1" Classes="kicker" Margin="4,12,0,6" />
+      <Panel Grid.Row="2">
+      <StackPanel x:Name="ListEmpty" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12" IsVisible="False">
+        <v:IconView Kind="note" Size="22" HorizontalAlignment="Center" Opacity="0.55" />
+        <TextBlock x:Name="ListEmptyTitle" FontWeight="SemiBold" HorizontalAlignment="Center" />
+        <TextBlock x:Name="ListEmptyText" Classes="caption" TextAlignment="Center" TextWrapping="Wrap" />
+      </StackPanel>
+      <ListBox x:Name="NoteList" Background="Transparent" BorderThickness="0"
                ScrollViewer.HorizontalScrollBarVisibility="Disabled">
         <ListBox.ItemTemplate>
           <DataTemplate>
             <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" Margin="2,4">
-              <TextBlock Text="{Binding Heading}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+              <StackPanel Orientation="Horizontal" Spacing="5">
+                <v:IconView Kind="pin" Size="13" IsVisible="{Binding Pinned}" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Heading}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+              </StackPanel>
               <TextBlock Grid.Column="1" Text="{Binding DateText}" Classes="caption" Margin="8,0,0,0" />
               <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Preview}" Classes="caption"
                          TextTrimming="CharacterEllipsis" />
@@ -26,17 +36,20 @@
           </DataTemplate>
         </ListBox.ItemTemplate>
       </ListBox>
+      </Panel>
     </Grid>
 
-    <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto,Auto" Margin="8,16,16,12">
+    <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto,Auto" Margin="10,0,0,0">
       <Grid ColumnDefinitions="Auto,Auto,*,Auto">
-        <Button x:Name="PinButton" Classes="flat" Content="📌 Pin" Click="OnPin" />
-        <Button Grid.Column="1" Classes="flat" Content="🗑 Delete" Click="OnDelete" />
+        <Button x:Name="PinButton" Classes="flat" Click="OnPin" />
+        <Button Grid.Column="1" Classes="flat" Click="OnDelete">
+          <StackPanel Orientation="Horizontal" Spacing="6"><v:IconView Kind="trash" Size="15" /><TextBlock Text="Delete" VerticalAlignment="Center" /></StackPanel>
+        </Button>
         <TextBlock x:Name="StatusLabel" Grid.Column="3" Classes="caption" VerticalAlignment="Center" />
       </Grid>
 
       <TextBox x:Name="Editor" Grid.Row="1" Margin="0,8,0,0" AcceptsReturn="True" TextWrapping="Wrap"
-               FontSize="15" VerticalContentAlignment="Top" CornerRadius="10" Padding="14" />
+               FontSize="15" VerticalContentAlignment="Top" Padding="14" />
 
       <Border x:Name="UndoBar" Grid.Row="2" Classes="card" Margin="0,8,0,0" Padding="12,6" IsVisible="False">
         <Grid ColumnDefinitions="*,Auto">
@@ -48,4 +61,5 @@
       <TextBlock x:Name="WordLabel" Grid.Row="3" Classes="caption" Margin="4,8,0,0" />
     </Grid>
   </Grid>
+  </DockPanel>
 </Window>

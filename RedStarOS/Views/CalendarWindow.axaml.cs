@@ -19,13 +19,23 @@ public partial class CalendarWindow : Window
         MonthCalendar.SelectedDate = DateTime.Today;
         MonthCalendar.SelectedDatesChanged += (_, _) => RefreshEvents();
         TitleBox.KeyDown += (_, e) => { if (e.Key == Key.Enter) { OnAdd(null, new RoutedEventArgs()); e.Handled = true; } };
+        EventList.SelectionChanged += (_, _) => DeleteBtn.IsEnabled = EventList.SelectedItem is CalEvent;
         RefreshEvents();
+    }
+
+    private void OnToday(object? s, RoutedEventArgs e)
+    {
+        MonthCalendar.DisplayDate = DateTime.Today;
+        MonthCalendar.SelectedDate = DateTime.Today;
     }
 
     private void RefreshEvents()
     {
         DateLabel.Text = Selected.ToString("dddd, d MMMM yyyy", CultureInfo.CurrentCulture);
-        EventList.ItemsSource = CalendarStore.ForDate(Selected).ToList();
+        var events = CalendarStore.ForDate(Selected).ToList();
+        EventList.ItemsSource = events;
+        EventsEmpty.IsVisible = events.Count == 0;
+        DeleteBtn.IsEnabled = false;
     }
 
     private void OnAdd(object? s, RoutedEventArgs e)

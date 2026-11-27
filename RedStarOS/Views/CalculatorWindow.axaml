@@ -1,32 +1,62 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="using:RedStarOS.Views"
         x:Class="RedStarOS.Views.CalculatorWindow"
         Title="Calculator"
-        Width="300" Height="300" CanResize="False"
+        Width="340" Height="500" MinWidth="300" MinHeight="440"
         WindowStartupLocation="CenterOwner">
-  <Grid Classes="spaced" RowDefinitions="Auto,*" Margin="16">
-    <TextBox x:Name="Display" Text="0" IsReadOnly="True" TextAlignment="Right" FontSize="20" />
-    <Grid Classes="spaced" Grid.Row="1" RowDefinitions="*,*,*,*" ColumnDefinitions="*,*,*,*,*">
-      <Button Grid.Row="0" Grid.Column="0" Content="7" Tag="7" Click="OnDigit" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-      <Button Grid.Row="0" Grid.Column="1" Content="8" Tag="8" Click="OnDigit" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-      <Button Grid.Row="0" Grid.Column="2" Content="9" Tag="9" Click="OnDigit" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-      <Button Grid.Row="0" Grid.Column="3" Content="/" Tag="/" Click="OnOperator" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-      <Button Grid.Row="0" Grid.Column="4" Content="CE" Click="OnClearEntry" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+  <!-- The deck's LCD for the figure, a keypad below: digits plain, operators soft accent, equals the one main key. -->
+  <DockPanel Margin="18,16,18,18">
+    <v:AppHeader DockPanel.Dock="Top" AppId="calculator" Heading="Calculator" />
+    <Border DockPanel.Dock="Top" Classes="lcd" Padding="16,12" Margin="0,0,0,14">
+      <StackPanel Spacing="2">
+        <TextBlock x:Name="Pending" Classes="lcd-label" HorizontalAlignment="Right" Text=" " />
+        <TextBlock x:Name="Display" Classes="lcd-digits" Text="0" FontSize="34" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
+      </StackPanel>
+    </Border>
+    <Grid x:Name="Keys" RowDefinitions="*,*,*,*,*" ColumnDefinitions="*,*,*,*">
+      <Grid.Styles>
+        <Style Selector="Button">
+          <Setter Property="Margin" Value="3" />
+          <Setter Property="HorizontalAlignment" Value="Stretch" />
+          <Setter Property="VerticalAlignment" Value="Stretch" />
+          <Setter Property="HorizontalContentAlignment" Value="Center" />
+          <Setter Property="VerticalContentAlignment" Value="Center" />
+          <Setter Property="FontSize" Value="18" />
+          <Setter Property="CornerRadius" Value="10" />
+        </Style>
+        <!-- functions quiet, operators in the accent; equals is the one primary key -->
+        <Style Selector="Button.calcfn">
+          <Setter Property="Background" Value="{DynamicResource ShellHoverBrush}" />
+          <Setter Property="FontSize" Value="15" />
+        </Style>
+        <Style Selector="Button.calcop">
+          <Setter Property="Foreground" Value="{DynamicResource ShellAccentTextBrush}" />
+          <Setter Property="FontSize" Value="21" />
+        </Style>
+      </Grid.Styles>
+      <Button Grid.Row="0" Grid.Column="0" Content="C" Classes="calcfn" Click="OnClearAll" ToolTip.Tip="Clear all (Esc)" />
+      <Button Grid.Row="0" Grid.Column="1" Content="CE" Classes="calcfn" Click="OnClearEntry" ToolTip.Tip="Clear this number (Delete)" />
+      <Button Grid.Row="0" Grid.Column="2" Classes="calcfn" Click="OnBackspace" ToolTip.Tip="Remove the last digit (Backspace)"><v:IconView Kind="arrow-left" Size="18" /></Button>
+      <Button Grid.Row="0" Grid.Column="3" Content="÷" Tag="/" Classes="calcop" Click="OnOperator" ToolTip.Tip="Divide (/)" />
 
-      <Button Grid.Row="1" Grid.Column="0" Content="4" Tag="4" Click="OnDigit" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-      <Button Grid.Row="1" Grid.Column="1" Content="5" Tag="5" Click="OnDigit" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-      <Button Grid.Row="1" Grid.Column="2" Content="6" Tag="6" Click="OnDigit" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-      <Button Grid.Row="1" Grid.Column="3" Content="*" Tag="*" Click="OnOperator" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-      <Button Grid.Row="1" Grid.Column="4" Content="C" Click="OnClearAll" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+      <Button Grid.Row="1" Grid.Column="0" Content="7" Tag="7" Click="OnDigit" />
+      <Button Grid.Row="1" Grid.Column="1" Content="8" Tag="8" Click="OnDigit" />
+      <Button Grid.Row="1" Grid.Column="2" Content="9" Tag="9" Click="OnDigit" />
+      <Button Grid.Row="1" Grid.Column="3" Content="×" Tag="*" Classes="calcop" Click="OnOperator" ToolTip.Tip="Multiply (*)" />
 
-      <Button Grid.Row="2" Grid.Column="0" Content="1" Tag="1" Click="OnDigit" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-      <Button Grid.Row="2" Grid.Column="1" Content="2" Tag="2" Click="OnDigit" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-      <Button Grid.Row="2" Grid.Column="2" Content="3" Tag="3" Click="OnDigit" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-      <Button Grid.Row="2" Grid.Column="3" Content="-" Tag="-" Click="OnOperator" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-      <Button Grid.Row="2" Grid.Column="4" Grid.RowSpan="2" Content="=" Click="OnEquals" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+      <Button Grid.Row="2" Grid.Column="0" Content="4" Tag="4" Click="OnDigit" />
+      <Button Grid.Row="2" Grid.Column="1" Content="5" Tag="5" Click="OnDigit" />
+      <Button Grid.Row="2" Grid.Column="2" Content="6" Tag="6" Click="OnDigit" />
+      <Button Grid.Row="2" Grid.Column="3" Content="−" Tag="-" Classes="calcop" Click="OnOperator" ToolTip.Tip="Subtract (-)" />
 
-      <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Content="0" Tag="0" Click="OnDigit" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-      <Button Grid.Row="3" Grid.Column="2" Content="." Tag="." Click="OnDigit" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-      <Button Grid.Row="3" Grid.Column="3" Content="+" Tag="+" Click="OnOperator" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+      <Button Grid.Row="3" Grid.Column="0" Content="1" Tag="1" Click="OnDigit" />
+      <Button Grid.Row="3" Grid.Column="1" Content="2" Tag="2" Click="OnDigit" />
+      <Button Grid.Row="3" Grid.Column="2" Content="3" Tag="3" Click="OnDigit" />
+      <Button Grid.Row="3" Grid.Column="3" Content="+" Tag="+" Classes="calcop" Click="OnOperator" ToolTip.Tip="Add (+)" />
+
+      <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Content="0" Tag="0" Click="OnDigit" />
+      <Button Grid.Row="4" Grid.Column="2" Content="." Tag="." Click="OnDigit" />
+      <Button Grid.Row="4" Grid.Column="3" Content="=" Classes="primary" Click="OnEquals" ToolTip.Tip="Equals (Enter)" />
     </Grid>
-  </Grid>
+  </DockPanel>
 </Window>

@@ -40,9 +40,11 @@ public partial class CameraWindow : Window
         DeviceBox.SelectedIndex = devices.Length > 0 ? 0 : -1;
 
         if (_ffmpeg == null)
-            SetUnavailable("ffmpeg is not installed. Install it (e.g. 'sudo pacman -S ffmpeg' or 'sudo apt install ffmpeg') to use the camera.");
+            SetUnavailable("The camera needs ffmpeg",
+                "Install the ffmpeg package from Software (or run 'sudo pacman -S ffmpeg'), then open Camera again.");
         else if (devices.Length == 0)
-            SetUnavailable("No camera detected (no /dev/video* device).");
+            SetUnavailable("No camera found",
+                "Plug in a webcam, or check that the built-in one is switched on, then open Camera again.");
         else
             StatusLabel.Text = "Camera ready.";
 
@@ -62,6 +64,7 @@ public partial class CameraWindow : Window
     private void RefreshStrip()
     {
         Strip.Children.Clear();
+        StripEmpty.IsVisible = true;
         try
         {
             if (!Directory.Exists(PicturesDir)) return;
@@ -77,6 +80,7 @@ public partial class CameraWindow : Window
                 ToolTip.SetTip(btn, f.Name);
                 btn.Click += (_, _) => FileOpener.Open(path);
                 Strip.Children.Add(btn);
+                StripEmpty.IsVisible = false;
             }
         }
         catch { /* the strip is optional */ }
@@ -92,9 +96,12 @@ public partial class CameraWindow : Window
         catch { return null; }
     }
 
-    private void SetUnavailable(string message)
+    private void SetUnavailable(string title, string message)
     {
-        StatusLabel.Text = message;
+        UnavailableTitle.Text = title;
+        UnavailableText.Text = message;
+        Unavailable.IsVisible = true;
+        StatusLabel.Text = "";
         PictureButton.IsEnabled = false;
         PreviewToggle.IsEnabled = false;
         RecordToggle.IsEnabled = false;
@@ -110,7 +117,7 @@ public partial class CameraWindow : Window
         var (code, output) = await ProcessUtil.RunAsync(_ffmpeg, args, 8000);
         if (code != 0)
         {
-            StatusLabel.Text = "Camera error: " + (output.Length > 0 ? output : "ffmpeg failed");
+            StatusLabel.Text = "The camera didn't take the picture: " + (output.Length > 0 ? output.Trim() : "ffmpeg stopped without saying why.");
             return false;
         }
         return File.Exists(outputPath);
@@ -226,7 +233,7 @@ public partial class CameraWindow : Window
         }
         catch (Exception ex)
         {
-            StatusLabel.Text = "Could not start recording: " + ex.Message;
+            StatusLabel.Text = "Recording didn't start: " + ex.Message;
             RecordToggle.IsChecked = false;
             _recorder = null;
         }

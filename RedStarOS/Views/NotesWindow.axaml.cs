@@ -33,7 +33,7 @@ public partial class NotesWindow : Window
             }
         }
 
-        public string Heading => (Pinned ? "📌 " : "") + Title;
+        public string Heading => Title;
 
         public string Preview
         {
@@ -132,8 +132,11 @@ public partial class NotesWindow : Window
         NoteList.SelectedItem = _current != null && list.Contains(_current) ? _current : null;
         _refreshing = false;
 
+        ListEmpty.IsVisible = list.Count == 0;
+        ListEmptyTitle.Text = q.Length > 0 ? "No matching notes" : "No notes yet";
+        ListEmptyText.Text = q.Length > 0 ? "Try other words, or clear the search." : "Press New note (Ctrl+N) and start typing; notes save as you go.";
         CountLabel.Text = q.Length > 0 ? $"{list.Count} MATCHING" : $"{_all.Count} NOTE{(_all.Count == 1 ? "" : "S")}";
-        PinButton.Content = _current?.Pinned == true ? "📌 Unpin" : "📌 Pin";
+        PinButton.Content = Icons.Label("pin", _current?.Pinned == true ? "Unpin" : "Pin", 15);
     }
 
     private void LoadEditor()
@@ -142,7 +145,7 @@ public partial class NotesWindow : Window
         Editor.Text = _current?.Text ?? "";
         _loading = false;
         Editor.IsEnabled = _current != null;
-        PinButton.Content = _current?.Pinned == true ? "📌 Unpin" : "📌 Pin";
+        PinButton.Content = Icons.Label("pin", _current?.Pinned == true ? "Unpin" : "Pin", 15);
         StatusLabel.Text = "";
         UpdateWordCount();
     }

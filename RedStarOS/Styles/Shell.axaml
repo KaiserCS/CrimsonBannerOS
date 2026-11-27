@@ -757,6 +757,28 @@
     </Setter>
   </Style>
 
+  <!-- tabs, one way everywhere (Clock, Wallpapers…): body-size names, not Fluent's headline size; the chosen one in
+       the text colour over an accent bar, the rest muted -->
+  <Style Selector="TabItem">
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="MinHeight" Value="38" />
+    <Setter Property="Padding" Value="12,0" />
+    <Setter Property="Foreground" Value="{DynamicResource ShellMutedBrush}" />
+  </Style>
+  <Style Selector="TabItem:selected">
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource TextControlForeground}" />
+  </Style>
+  <Style Selector="TabItem:pointerover /template/ Border#PART_LayoutRoot">
+    <Setter Property="Background" Value="{DynamicResource ShellHoverBrush}" />
+  </Style>
+  <Style Selector="TabItem /template/ Border#PART_SelectedPipe">
+    <Setter Property="Background" Value="{DynamicResource ShellAccentBrush}" />
+    <Setter Property="Height" Value="3" />
+    <Setter Property="CornerRadius" Value="2" />
+  </Style>
+
   <!-- a status pill: a dot and a word (READY, READING FLATHUB…) -->
   <Style Selector="Border.status">
     <Setter Property="Background" Value="{DynamicResource ShellFieldBrush}" />

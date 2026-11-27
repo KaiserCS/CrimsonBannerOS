@@ -127,6 +127,12 @@ Reach for these before making anything new; they are classes in `Shell.axaml`, a
 | Menus and flyouts | Avalonia's, restyled | graphite at 96%, hairline, radius 12, a 16 px line icon on each item | context menus, drop-downs, the shell's panels |
 | Toast | `Border.toast` | graphite card, app icon, title, one line | notifications |
 | Field | `TextBox.pill-field` and the default `TextBox` | sunk (`ShellFieldBrush`), radius 8 | text input, search |
+| Tabs | Avalonia's `TabItem`, restyled | 14 regular, muted; the chosen one semibold over a 3-point accent bar | a window's two or three views (Clock, Wallpapers) |
+| App header | `AppHeader` (`AppId`, `Heading`, `Subtitle`) | the app's picture at 30, its name 17 semibold; the app's own actions on the right | the top of a small app: Calculator, Clock, Calendar, Camera, Notes, Voice Memos, Screenshot, Screen Recorder, Disks |
+| Empty state | a centred stack: line icon at 22–28 (55%), a semibold line, a caption | quiet, inside the panel it stands for | an empty list or preview: say what goes here and how to put it there |
+| Office chrome | `OfficeToolbar`, `OfficeZoom`, `OfficeChrome.Fit` / `SingleTab`; `Border.officetabs`, `.officebar`, `.officestatus`, `.officeside`; `Button.tool` | tabs row, menu bar, one toolbar that folds into More, a status bar with zoom | Writer, Sheets and Slides, the same in all three |
+
+**Button order.** The action comes first and Cancel last, at the right of the row: `Save`, `Cancel`; `Erase and format`, `Cancel`. The main action is `Button.primary` (or `.danger` when it destroys something), Cancel is plain and answers Esc. Close-only dialogs have one button, Close.
 
 States are the same everywhere:
 

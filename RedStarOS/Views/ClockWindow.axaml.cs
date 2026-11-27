@@ -68,6 +68,7 @@ public partial class ClockWindow : Window
         var now = _sw.Elapsed;
         Laps.Items.Insert(0, $"Lap {++_lapCount}     {Fmt(now - _lastLap)}     total {Fmt(now)}");
         _lastLap = now;
+        LapsEmpty.IsVisible = false;
     }
 
     private void OnSwReset(object? s, RoutedEventArgs e)
@@ -76,6 +77,7 @@ public partial class ClockWindow : Window
         SwStart.Content = "Start";
         SwLabel.Text = "00:00.00";
         Laps.Items.Clear();
+        LapsEmpty.IsVisible = true;
         _lapCount = 0;
         _lastLap = TimeSpan.Zero;
     }
