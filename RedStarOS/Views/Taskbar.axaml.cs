@@ -126,7 +126,11 @@ public partial class Taskbar : UserControl
         _status.Start();
 
         // the titles' width follows the room the row has
-        TaskScroll.SizeChanged += (_, e) => { if (Math.Abs(e.NewSize.Width - e.PreviousSize.Width) >= 1) RebuildTasks(); };
+        TaskScroll.SizeChanged += (_, e) =>
+        {
+            if (Math.Abs(e.NewSize.Width - e.PreviousSize.Width) >= 1 && SettingsStore.Current.TaskbarLabels && WindowManager.Tasks.Any())
+                RebuildTasks();
+        };
 
         UpdateClock();
         RebuildTasks();
