@@ -269,8 +269,8 @@ public partial class SettingsWindow : Window
             + "that desktop's settings too. Light or dark follows the Theme above."));
         otherBox.Children.Add(Labelled("GTK theme", Choice(LookAndFeel.GtkThemes().Where(t => t != "Adwaita").ToList(), s.GtkTheme,
             v => { SettingsStore.Current.GtkTheme = v; LookAndFeel.ApplyOtherPrograms(); })));
-        otherBox.Children.Add(Labelled("Icon theme", Choice(LookAndFeel.IconThemes(), s.IconTheme,
-            v => { SettingsStore.Current.IconTheme = v; LookAndFeel.ApplyOtherPrograms(); })));
+        otherBox.Children.Add(Labelled("Icon theme", Choice(LookAndFeel.IconThemes(), LookAndFeel.EffectiveIconTheme(s),
+            v => { SettingsStore.Current.IconTheme = v; LookAndFeel.ApplyOtherPrograms(); DesktopEntries.Reload(); AdaptiveIcons.RefreshSoon(); })));
         var qtModes = new List<(string Key, string Label)> { ("gtk", "Follow GTK (Qt's own GTK theme support)") };
         qtModes.Add(("qt6ct", LookAndFeel.Qt6ctInstalled ? "qt6ct (its own settings program)" : "qt6ct (not installed: pacman -S qt6ct)"));
         qtModes.Add(("off", "Leave Qt programs alone"));

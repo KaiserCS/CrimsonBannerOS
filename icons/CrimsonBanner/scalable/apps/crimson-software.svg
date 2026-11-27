@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Software's icon: a parcel, and a crimson arrow into it, on the graphite tile. branding/README.md; in the icon theme by branding/icon-theme.py -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <path d="M 128 54 L 210 92 L 128 130 L 46 92 Z" fill="#F2F2F5"/>
+  <path d="M 46 92 L 128 130 L 128 214 L 46 176 Z" fill="#DCDCE3"/>
+  <path d="M 210 92 L 128 130 L 128 214 L 210 176 Z" fill="#B4B4BC"/>
+  <path d="M 128 26 L 128 92 M 104 70 L 128 94 L 152 70" fill="none" stroke="#C8102E" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+
+</svg>

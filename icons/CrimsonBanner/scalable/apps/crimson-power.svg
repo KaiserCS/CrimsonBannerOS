@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Crimson Banner icon theme: a battery filling in crimson, on the graphite tile. branding/icon-theme.py -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs><linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient></defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <rect x="44" y="80" width="152" height="96" rx="18" fill="none" stroke="#F2F2F5" stroke-width="12"/>
+  <rect x="200" y="108" width="16" height="40" rx="5" fill="#F2F2F5"/>
+  <rect x="64" y="100" width="78" height="56" rx="7" fill="#C8102E"/>
+</svg>

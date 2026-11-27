@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Calculator's icon: red digits over a block of keys, on the graphite tile. branding/README.md; in the icon theme by branding/icon-theme.py -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <rect x="58" y="40" width="140" height="176" rx="18" fill="#F2F2F5"/>
+  <rect x="74" y="58" width="108" height="44" rx="8" fill="#0C0C0E"/>
+  <rect x="140" y="72" width="8" height="16" rx="2" fill="#C8102E"/>
+  <rect x="156" y="72" width="8" height="16" rx="2" fill="#C8102E"/>
+  <rect x="124" y="72" width="8" height="16" rx="2" fill="#C8102E"/>
+  <rect x="76" y="118" width="28" height="20" rx="6" fill="#B4B4BC"/>
+  <rect x="114" y="118" width="28" height="20" rx="6" fill="#B4B4BC"/>
+  <rect x="152" y="118" width="28" height="20" rx="6" fill="#B4B4BC"/>
+  <rect x="76" y="148" width="28" height="20" rx="6" fill="#B4B4BC"/>
+  <rect x="114" y="148" width="28" height="20" rx="6" fill="#B4B4BC"/>
+  <rect x="152" y="148" width="28" height="20" rx="6" fill="#B4B4BC"/>
+  <rect x="76" y="178" width="28" height="20" rx="6" fill="#B4B4BC"/>
+  <rect x="114" y="178" width="28" height="20" rx="6" fill="#B4B4BC"/>
+  <rect x="152" y="178" width="28" height="20" rx="6" fill="#C8102E"/>
+
+</svg>

@@ -113,6 +113,9 @@ package_crimson-banner-shell() {
   install -Dm644 "$srcdir/wl.desktop" "$pkgdir/usr/share/wayland-sessions/redstaros-wayland.desktop"
   install -Dm644 packaging/redstaros.desktop "$pkgdir/usr/share/applications/redstaros.desktop"
   install -Dm644 packaging/redstaros.png "$pkgdir/usr/share/icons/hicolor/256x256/apps/redstaros.png"
+  # the Crimson Banner icon theme (branding/icon-theme.py): other programs' icons drawn like ours; aliases are links
+  install -d "$pkgdir/usr/share/icons"
+  cp -a icons/CrimsonBanner "$pkgdir/usr/share/icons/"
   install -Dm644 packaging/crimson-banner.pam "$pkgdir/etc/pam.d/crimson-banner"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
   install -Dm644 RedStarOS/Views/HiFi/NOTICE "$pkgdir/usr/share/licenses/$pkgname/NOTICE.CDPlayer"

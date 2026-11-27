@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Crimson Banner icon theme: a page with a folded corner, a crimson heading and a magnifier, on the graphite tile. branding/icon-theme.py -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs><linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient></defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <path d="M 76 40 L 156 40 L 194 78 L 194 202 A 14 14 0 0 1 180 216 L 76 216 A 14 14 0 0 1 62 202 L 62 54 A 14 14 0 0 1 76 40 Z" fill="#F2F2F5"/>
+  <path d="M 156 40 L 156 66 A 12 12 0 0 0 168 78 L 194 78 Z" fill="#B4B4BC"/>
+  <rect x="84" y="70" width="56" height="12" rx="6" fill="#C8102E"/>
+  <rect x="84" y="98" width="88" height="10" rx="5.0" fill="#B4B4BC"/><rect x="84" y="120" width="64" height="10" rx="5.0" fill="#B4B4BC"/>
+  <circle cx="148" cy="164" r="22" fill="none" stroke="#6E6E78" stroke-width="10"/>
+  <path d="M 164 180 L 182 198" stroke="#6E6E78" stroke-width="12" stroke-linecap="round"/>
+</svg>

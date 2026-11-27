@@ -34,6 +34,9 @@ public static class DesktopEntries
 
     private static string? _signature;
 
+    /// <summary>The program folders' state when the list was last read (<see cref="All"/>).</summary>
+    public static string? CurrentSignature => _signature;
+
     /// <summary>When each folder of .desktop files last changed (installing or removing a program changes it).</summary>
     private static string Signature() => string.Join("|", Dirs().Distinct().Select(d =>
     {
@@ -154,46 +157,83 @@ public static class DesktopEntries
     }
     private static readonly Dictionary<string, LinuxApp?> _byClass = new();
 
+    private static readonly string[] CommonThemes = { "hicolor", "Papirus", "Adwaita", "breeze", "Yaru", "elementary", "gnome", "oxygen" };
+
+    private static string[] IconBases()
+    {
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        return new[]
+        {
+            Path.Combine(AppPaths.DataHome, "icons"), Path.Combine(home, ".icons"), "/usr/share/icons", "/usr/local/share/icons",
+            Path.Combine(AppPaths.DataHome, "flatpak/exports/share/icons"), "/var/lib/flatpak/exports/share/icons",
+        };
+    }
+
     /// <summary>
-    /// A PNG for an icon name from the icon themes (hicolor, the common themes, pixmaps, Flatpak exports), closest to
-    /// <paramref name="size"/>; or the path itself when Icon= is an absolute PNG. SVG-only icons aren't used.
+    /// A PNG for an icon name, closest to <paramref name="size"/>: from the icon theme in use first (Crimson Banner's
+    /// own by default, with its drawn and adaptive icons), then hicolor and the common themes, pixmaps and Flatpak
+    /// exports; an SVG-only icon as the PNG <see cref="AdaptiveIcons"/> has drawn of it; or the path itself when
+    /// Icon= is an absolute PNG.
     /// </summary>
     public static string? IconPath(string? icon, int size = 48, string contexts = "apps")
     {
         if (string.IsNullOrEmpty(icon)) return null;
         if (Path.IsPathRooted(icon)) return icon.EndsWith(".png", StringComparison.OrdinalIgnoreCase) && File.Exists(icon) ? icon : null;
-        var cacheKey = icon + "|" + contexts;
+        var cacheKey = icon + "|" + contexts + "|" + size;
         if (_iconCache.TryGetValue(cacheKey, out var cached)) return cached;
-        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        var bases = new[]
-        {
-            Path.Combine(home, ".local/share/icons"), Path.Combine(home, ".icons"), "/usr/share/icons", "/usr/local/share/icons",
-            Path.Combine(home, ".local/share/flatpak/exports/share/icons"), "/var/lib/flatpak/exports/share/icons",
-        };
-        var themes = new[] { "hicolor", "Papirus", "Adwaita", "breeze", "Yaru", "elementary", "gnome", "oxygen" };
-        int[] sizes = { size, 64, 48, 128, 32, 96, 256, 24, 512 };
-        string? found = null;
-        foreach (var b in bases)
-        {
-            foreach (var t in themes)
-            {
-                foreach (var sz in sizes)
-                {
-                    foreach (var ctx in contexts.Split(','))
-                    {
-                        var p = Path.Combine(b, t, $"{sz}x{sz}", ctx, icon + ".png");
-                        if (File.Exists(p)) { found = p; break; }
-                    }
-                    if (found != null) break;
-                }
-                if (found != null) break;
-            }
-            if (found != null) break;
-        }
-        if (found == null && File.Exists($"/usr/share/pixmaps/{icon}.png")) found = $"/usr/share/pixmaps/{icon}.png";
+        var themes = CommonThemes.ToList();
+        if (LookAndFeel.EffectiveIconTheme(SettingsStore.Current) is { } chosen) { themes.Remove(chosen); themes.Insert(0, chosen); }
+        var found = FindPng(icon, size, contexts, themes)
+                    ?? (File.Exists($"/usr/share/pixmaps/{icon}.png") ? $"/usr/share/pixmaps/{icon}.png" : null)
+                    ?? (File.Exists(AdaptiveIcons.SvgPicture(icon)) ? AdaptiveIcons.SvgPicture(icon) : null);
         _iconCache[cacheKey] = found;
         return found;
     }
+
+    private static string? FindPng(string icon, int size, string contexts, IEnumerable<string> themes)
+    {
+        int[] sizes = { size, 64, 48, 128, 32, 96, 256, 24, 512 };
+        var bases = IconBases();
+        foreach (var t in themes)
+            foreach (var sz in sizes)
+                foreach (var b in bases)
+                    foreach (var ctx in contexts.Split(','))
+                    {
+                        var p = Path.Combine(b, t, $"{sz}x{sz}", ctx, icon + ".png");
+                        if (File.Exists(p)) return p;
+                    }
+        return null;
+    }
+
+    /// <summary>
+    /// A program's own app icon, leaving out Crimson Banner's theme (what <see cref="AdaptiveIcons"/> sets on the tile):
+    /// a large PNG, else an SVG, else a smaller PNG; null when it has none in the usual places.
+    /// </summary>
+    public static string? OriginalIconPath(string icon)
+    {
+        var themes = CommonThemes.ToList();
+        var bases = IconBases();
+        foreach (var t in themes)
+            foreach (var sz in new[] { 256, 128, 512 })
+                foreach (var b in bases)
+                {
+                    var p = Path.Combine(b, t, $"{sz}x{sz}", "apps", icon + ".png");
+                    if (File.Exists(p)) return p;
+                }
+        foreach (var t in themes)
+            foreach (var b in bases)
+                foreach (var dir in new[] { "scalable/apps", "256x256/apps", "128x128/apps", "64x64/apps", "48x48/apps" })
+                {
+                    var p = Path.Combine(b, t, dir, icon + ".svg");
+                    if (File.Exists(p)) return p;
+                }
+        foreach (var p in new[] { $"/usr/share/pixmaps/{icon}.svg", $"/usr/share/pixmaps/{icon}.png" })
+            if (File.Exists(p)) return p;
+        return FindPng(icon, 96, "apps", themes);
+    }
+
+    /// <summary>Forgets the icons found so far (a theme was chosen, or new icons were drawn).</summary>
+    public static void ForgetIcons() => _iconCache.Clear();
     private static readonly Dictionary<string, string?> _iconCache = new();
 
     /// <summary>

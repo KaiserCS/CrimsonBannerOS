@@ -106,6 +106,7 @@ public partial class StartMenu : UserControl
     /// <summary>Rebuild everything. Call each time the menu opens (apps may have been installed).</summary>
     public void Refresh()
     {
+        AdaptiveIcons.RefreshSoon();        // a program installed since: its picture on the tile, for next time
         bool child = SettingsStore.Current.AccountType == "Child";
         var items = new List<StartItem>();
 

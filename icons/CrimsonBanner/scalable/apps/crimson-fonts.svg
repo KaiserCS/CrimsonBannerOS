@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Crimson Banner icon theme: a letter A with a crimson a, on the graphite tile. branding/icon-theme.py -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs><linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient></defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <path fill-rule="evenodd" fill="#F2F2F5" d="M 50 200 L 98 56 L 130 56 L 178 200 L 148 200 L 137 166 L 91 166 L 80 200 Z M 99 140 L 129 140 L 114 92 Z"/>
+  <circle cx="190" cy="178" r="18" fill="none" stroke="#C8102E" stroke-width="12"/>
+  <rect x="202" y="152" width="12" height="48" rx="6" fill="#C8102E"/>
+</svg>

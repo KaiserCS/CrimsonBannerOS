@@ -55,6 +55,8 @@ jobs:
 
       - name: ISOs split for GitHub and joined again (tools/split-iso.sh, merge-iso.sh, merge-iso.ps1 in PowerShell)
         run: tools/test-split-iso.sh
+      - name: The Crimson Banner icon theme is whole (tools/test-icon-theme.sh)
+        run: tools/test-icon-theme.sh
       - name: Build
         run: dotnet build RedStarOS/RedStarOS.csproj -c Release
       - name: Build Planner (apps/planner)

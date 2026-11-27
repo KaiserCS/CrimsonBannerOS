@@ -55,6 +55,28 @@ public static class LookAndFeel
         IconRoots().SelectMany(SafeDirs).Where(d => Directory.Exists(Path.Combine(d, "cursors")))
             .Select(Path.GetFileName).OfType<string>().Distinct().OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToList();
 
+    /// <summary>Crimson Banner's own icon theme (icons/CrimsonBanner, branding/icon-theme.py).</summary>
+    public const string OurIconTheme = "CrimsonBanner";
+
+    /// <summary>The installed system copy of an icon theme (not the one in your home folder), or null.</summary>
+    public static string? SystemThemeDir(string name)
+    {
+        foreach (var root in IconRoots().Skip(2))      // ~/.icons and ~/.local/share/icons come first
+        {
+            var d = Path.Combine(root, name);
+            if (File.Exists(Path.Combine(d, "index.theme"))) return d;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// The icon theme in use: the one chosen in Settings, else Crimson Banner's own when it's installed (it is with
+    /// the system), else none (the programs' own choice).
+    /// </summary>
+    public static string? EffectiveIconTheme(Settings s) =>
+        !string.IsNullOrEmpty(s.IconTheme) ? s.IconTheme : (_ourThemeInstalled ??= SystemThemeDir(OurIconTheme) != null) ? OurIconTheme : null;
+    private static bool? _ourThemeInstalled;
+
     /// <summary>Icon themes: an index.theme that lists icon directories (pointer-only themes have none), not hidden.</summary>
     public static List<string> IconThemes()
     {
@@ -197,7 +219,7 @@ public static class LookAndFeel
             void Set(string key, string value) => _ = ProcessUtil.RunAsync(gs, new[] { "set", "org.gnome.desktop.interface", key, value }, 5000);
             Set("color-scheme", dark ? "prefer-dark" : "default");
             if (!string.IsNullOrEmpty(s.GtkTheme)) Set("gtk-theme", s.GtkTheme);
-            if (!string.IsNullOrEmpty(s.IconTheme)) Set("icon-theme", s.IconTheme);
+            if (EffectiveIconTheme(s) is { } icons) Set("icon-theme", icons);
             if (!string.IsNullOrEmpty(s.CursorTheme)) Set("cursor-theme", s.CursorTheme);
             Set("cursor-size", CursorSize().ToString(CultureInfo.InvariantCulture));
             if (!string.IsNullOrEmpty(s.UiFont)) Set("font-name", GtkFont(s));
@@ -205,7 +227,7 @@ public static class LookAndFeel
         if (s.QtStyle == "qt6ct" && Qt6ctInstalled)
         {
             var qt = new List<KeyValuePair<string, string>>();
-            if (!string.IsNullOrEmpty(s.IconTheme)) qt.Add(new("icon_theme", s.IconTheme));
+            if (EffectiveIconTheme(s) is { } icons) qt.Add(new("icon_theme", icons));
             qt.Add(new("style", "Fusion"));
             try { MergeIni(Path.Combine(cfg, "qt6ct", "qt6ct.conf"), "Appearance", qt); } catch { }
         }
@@ -223,7 +245,7 @@ public static class LookAndFeel
     {
         var k = new List<KeyValuePair<string, string>> { new("gtk-application-prefer-dark-theme", dark ? "1" : "0") };
         if (!string.IsNullOrEmpty(s.GtkTheme)) k.Add(new("gtk-theme-name", s.GtkTheme));
-        if (!string.IsNullOrEmpty(s.IconTheme)) k.Add(new("gtk-icon-theme-name", s.IconTheme));
+        if (EffectiveIconTheme(s) is { } icons) k.Add(new("gtk-icon-theme-name", icons));
         if (!string.IsNullOrEmpty(s.CursorTheme)) k.Add(new("gtk-cursor-theme-name", s.CursorTheme));
         k.Add(new("gtk-cursor-theme-size", CursorSize().ToString(CultureInfo.InvariantCulture)));
         if (!string.IsNullOrEmpty(s.UiFont)) k.Add(new("gtk-font-name", GtkFont(s)));

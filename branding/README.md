@@ -42,3 +42,28 @@ tools: run it again only after changing a source.
 - **The mark** stands on its own; keep clear space of half its width around it, and don't recolour the banner.
 
 The earlier wallpapers (the red-star collection and the galaxy picture) stay in Settings → Wallpaper.
+
+## The icon theme
+
+**Crimson Banner** (`icons/CrimsonBanner`, installed to `/usr/share/icons`) makes other programs' icons look like
+ours, as Papirus or Kora do for theirs. It's the icon theme by default; Settings → Appearance → Icon theme can choose
+another, and GTK and Qt programs follow it.
+
+- **Programs with a general job** (file managers, terminals, text editors, PDF viewers, archive managers, music and
+  video players, settings, system monitors, mail, maps, scanners...) get a drawing of that job in the house style:
+  the graphite tile, light greys, one crimson detail. Where the shell has its own app for the job they share its
+  picture (Nautilus, Dolphin and Thunar look like Files). `branding/icon-theme.py` holds the drawings and the list of
+  program icon names (about 340, from GNOME, KDE, Xfce and others); each name is a link to its picture.
+- **Programs with a brand of their own** (Firefox, Steam, LibreOffice, GIMP...) aren't redrawn: their marks are
+  theirs. The shell sets each one's own icon on the same tile instead (`RedStarOS/Services/AdaptiveIcons.cs`), into
+  your copy of the theme in `~/.local/share/icons/CrimsonBanner`, so every program in the Start menu and every
+  window matches. That happens for every installed program the theme doesn't draw, again when one is installed or
+  updated, and only while Crimson Banner is the theme in use.
+
+```bash
+python3 branding/icon-theme.py    # needs rsvg-convert; writes icons/CrimsonBanner (committed)
+tools/test-icon-theme.sh          # every listed folder, name, size and link is there (also in ./check.sh)
+```
+
+To draw another program: add its icon name (its `.desktop` file's `Icon=`) to a picture in `NAMES`, or a new picture
+to `DRAWN`, and run the script.

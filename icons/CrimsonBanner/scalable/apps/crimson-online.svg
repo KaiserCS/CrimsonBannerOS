@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Crimson Online's icon: a globe with a crimson edge, on the graphite tile. branding/README.md; in the icon theme by branding/icon-theme.py -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <circle cx="128" cy="128" r="86" fill="#F2F2F5"/>
+  <g fill="none" stroke="#B4B4BC" stroke-width="7"><ellipse cx="128" cy="128" rx="38" ry="86"/><path d="M 42 128 L 214 128 M 54 86 L 202 86 M 54 170 L 202 170"/></g>
+  <path d="M 128 42 A 86 86 0 0 1 128 214" fill="none" stroke="#C8102E" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+
+</svg>

@@ -100,6 +100,7 @@ There are two kinds, and no emoji anywhere in the interface.
 - It must still read at 20 px: no text, no thin lines, no more than four or five shapes.
 - Sources are SVG in `branding/src/apps/`; `branding/render.py` renders them to `RedStarOS/Assets/apps/{id}.png` at 128 px. Our Software apps keep theirs in `branding/src/app-*.svg`.
 - An app without a picture gets its line icon, or its initial, white on the same plate (`AppIcons.Tile`).
+- **Other programs** follow the same rules through the **Crimson Banner icon theme** (`icons/CrimsonBanner`, `branding/icon-theme.py`): a program with a general job gets a drawing of it on the tile; a program with a brand keeps its own mark, set at 64% on the tile (`AdaptiveIcons`). Never redraw another project's logo.
 
 **Line icons** label actions, menu items, settings and file kinds (`RedStarOS/Services/Icons.cs`, about 100).
 

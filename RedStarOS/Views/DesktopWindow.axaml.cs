@@ -94,6 +94,8 @@ public partial class DesktopWindow : Window
             VirtualDesktops.Switched += ShowDesktopSign;
             // night light, once the window manager or compositor is there to take it
             DispatcherTimer.RunOnce(NightLight.Start, TimeSpan.FromSeconds(1.5));
+            // the icon theme's pictures of other programs (their own icons on our tile), once things have settled
+            DispatcherTimer.RunOnce(AdaptiveIcons.RefreshSoon, TimeSpan.FromSeconds(6));
             PortalSetup.Run();                         // inside redstar-comp: screenshots and screen sharing for other apps
             SystemTray.Start();                        // other programs' tray icons (Discord, Steam…) on the taskbar
             OtherAppsNotifications.Start();            // other programs' notifications (org.freedesktop.Notifications)

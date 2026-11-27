@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Screen Recorder's icon: a screen with the record light on, on the graphite tile. branding/README.md; in the icon theme by branding/icon-theme.py -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <rect x="38" y="54" width="180" height="124" rx="14" fill="#F2F2F5"/>
+  <rect x="110" y="178" width="36" height="22" rx="0" fill="#DCDCE3"/>
+  <rect x="84" y="196" width="88" height="12" rx="6" fill="#DCDCE3"/>
+  <circle cx="128" cy="116" r="32" fill="#C8102E"/>
+  <circle cx="128" cy="116" r="46" fill="none" stroke="#C8102E" stroke-opacity="0.35" stroke-width="6"/>
+
+</svg>

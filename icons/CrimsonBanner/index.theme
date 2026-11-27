@@ -1,0 +1,33 @@
+[Icon Theme]
+Name=Crimson Banner
+Comment=Crimson Banner OS's app icons: every program on the same graphite tile
+Inherits=Adwaita,breeze,hicolor
+Example=org.gnome.Nautilus
+Directories=scalable/apps,32x32/apps,48x48/apps,64x64/apps,128x128/apps
+
+[scalable/apps]
+Size=256
+MinSize=16
+MaxSize=512
+Type=Scalable
+Context=Applications
+
+[32x32/apps]
+Size=32
+Type=Fixed
+Context=Applications
+
+[48x48/apps]
+Size=48
+Type=Fixed
+Context=Applications
+
+[64x64/apps]
+Size=64
+Type=Fixed
+Context=Applications
+
+[128x128/apps]
+Size=128
+Type=Fixed
+Context=Applications

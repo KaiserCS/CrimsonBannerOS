@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Crimson Banner icon theme: two beamed notes, the beam crimson, on the graphite tile. branding/icon-theme.py -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs><linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient></defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <circle cx="90" cy="178" r="26" fill="#F2F2F5"/>
+  <circle cx="170" cy="162" r="26" fill="#F2F2F5"/>
+  <rect x="104" y="72" width="12" height="108" rx="3" fill="#F2F2F5"/>
+  <rect x="184" y="56" width="12" height="108" rx="3" fill="#F2F2F5"/>
+  <path d="M 104 70 L 196 52 L 196 82 L 104 100 Z" fill="#C8102E"/>
+</svg>

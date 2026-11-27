@@ -50,7 +50,8 @@ make_source() {
       [ -e "$f" ] && [ "$f" != wm/redstar-wm ] && printf '%s\0' "$f"
     done > "$list"
   else
-    find . \( -path ./.git -o -name bin -o -name obj -o -name build -o -name node_modules \) -prune -o -type f \
+    # links too: the icon theme's program names are links to its pictures
+    find . \( -path ./.git -o -name bin -o -name obj -o -name build -o -name node_modules \) -prune -o \( -type f -o -type l \) \
       ! -path ./wm/redstar-wm -print0 | sed -z 's#^\./##' > "$list"
   fi
   # the full version goes into the tarball, which has no git history to work it out from (tools/version.sh)

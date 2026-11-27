@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Crimson Banner icon theme: a card with a person and a crimson name, on the graphite tile. branding/icon-theme.py -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs><linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient></defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <rect x="36" y="56" width="184" height="144" rx="16" fill="#F2F2F5"/>
+  <circle cx="90" cy="112" r="22" fill="#6E6E78"/>
+  <path d="M 56 172 A 34 30 0 0 1 124 172 Z" fill="#6E6E78"/>
+  <rect x="140" y="98" width="56" height="12" rx="6" fill="#C8102E"/>
+  <rect x="140" y="124" width="48" height="10" rx="5.0" fill="#B4B4BC"/><rect x="140" y="146" width="36" height="10" rx="5.0" fill="#B4B4BC"/>
+</svg>

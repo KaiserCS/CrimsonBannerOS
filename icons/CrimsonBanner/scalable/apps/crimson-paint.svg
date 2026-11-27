@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later  Paint's icon: a palette and a brush, on the graphite tile. branding/README.md; in the icon theme by branding/icon-theme.py -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2F"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="53.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.12"/>
+  <path d="M 122 48 C 74 48 40 84 40 130 C 40 176 76 210 120 210 C 136 210 142 198 138 186 C 134 174 140 162 156 162 L 180 162 C 202 162 216 148 216 126 C 216 80 176 48 122 48 Z" fill="#F2F2F5"/>
+  <circle cx="84" cy="116" r="13" fill="#C8102E"/>
+  <circle cx="112" cy="82" r="13" fill="#0C0C0E"/>
+  <circle cx="156" cy="86" r="13" fill="#6E6E78"/>
+  <circle cx="182" cy="122" r="13" fill="#B4B4BC"/>
+  <circle cx="98" cy="166" r="15" fill="#2A2A2F"/>
+  <path d="M 222 40 L 160 124" fill="none" stroke="#6E6E78" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 164 118 L 150 136 C 142 146 134 150 126 150 C 128 140 132 132 142 124 L 156 112 Z" fill="#C8102E"/>
+
+</svg>
