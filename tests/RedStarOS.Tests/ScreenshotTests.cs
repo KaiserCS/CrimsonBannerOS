@@ -289,6 +289,7 @@ public class ScreenshotTests
         try
         {
             names.Clear(); names.AddRange(new[] { "", "Writing" });
+            VirtualDesktops.Reset();
             VirtualDesktops.FromWindowManager(3, 0, null);
             Dispatcher.UIThread.RunJobs();
             var w = new TaskViewWindow { Width = 1280, Height = 720, Topmost = false };
@@ -306,6 +307,7 @@ public class ScreenshotTests
     [AvaloniaFact]
     public void Shell_desktop_sign()
     {
+        VirtualDesktops.Reset();
         VirtualDesktops.FromWindowManager(4, 1, null);
         try { ShowAndCapture(OnWallpaper(new Border { Padding = new Avalonia.Thickness(24), Child = DesktopWindow.DesktopSign(1) }, 320, 170), "Shell-DesktopSign"); }
         finally { VirtualDesktops.Reset(); }

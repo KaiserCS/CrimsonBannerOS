@@ -76,10 +76,10 @@ public static class VirtualDesktops
         PublishNames();
     }
 
-    /// <summary>For the tests: forget everything.</summary>
+    /// <summary>For the tests: forget everything (and don't bring back a saved count, which other tests may have left).</summary>
     public static void Reset()
     {
-        Count = 1; Current = 0; _desks = new(); _restored = false;
+        Count = 1; Current = 0; _desks = new(); _restored = true;
     }
 
     // ─────────── names ───────────
