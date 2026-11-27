@@ -2,19 +2,21 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # CI (iso.yml): installs Crimson Banner OS from the ISO onto an empty virtual disk, as a person would, then checks
 # what was installed and starts it.
-#   iso-install-test.sh ISO KERNEL
+#   iso-install-test.sh ISO KERNEL [FS]      FS: ext4 (the installer's default) or btrfs
 #  1. The ISO starts with crimson.test=install: the live session comes up and crimson-live-test drives the installer
 #     from the keyboard (user "tester", password "crimson", the whole disk), then powers off. A picture of the
 #     screen is taken at each of its steps.
 #  2. The installed disk is looked at: the system's name, the kernel and GRUB, the user, the login screen, the update
-#     repository, and nothing of the live session left behind.
+#     repository, and nothing of the live session left behind; and GRUB's own file system code (grub-fstest) reads the
+#     kernel and initramfs back exactly (on btrfs it once couldn't: "premature end of file").
 #  3. The disk starts through its own GRUB (BIOS), twice: to its login screen, and signed straight in as tester.
 #     Each must stay up two minutes with no crash and no black screen.
 # Pictures are printed as base64 between "---- screen.png (NAME) ----" lines, as iso-boot-test.sh does.
 set -uo pipefail
-ISO="$1"; KERNEL="$2"
+ISO="$1"; KERNEL="$2"; FS="${3:-ext4}"
+MODE=install; [ "$FS" = btrfs ] && MODE=installbtrfs
 T="$(mktemp -d)"
-sudo apt-get -qq update >/dev/null && sudo apt-get -qq install -y qemu-system-x86 libarchive-tools socat python3-pil >/dev/null
+sudo apt-get -qq update >/dev/null && sudo apt-get -qq install -y qemu-system-x86 libarchive-tools socat python3-pil grub-common btrfs-progs >/dev/null
 bsdtar -xf "$ISO" -C "$T" "crimson/boot/x86_64/vmlinuz-$KERNEL" "crimson/boot/x86_64/initramfs-$KERNEL.img"
 LABEL="$(blkid -o value -s LABEL "$ISO")"
 ACCEL=(-accel tcg); SLOW=3
@@ -36,11 +38,11 @@ brightness() { python3 -c "from PIL import Image, ImageStat; print(int(ImageStat
 clean() { sed 's/\x1b\[[0-9;:?]*[a-zA-Z]//g' "$1"; }
 
 # ── 1. installing ──
-echo "======== installing ($(basename "$ISO"), ${ACCEL[1]}, $(date -u +%H:%M:%S)) ========"
+echo "======== installing onto $FS ($(basename "$ISO"), ${ACCEL[1]}, $(date -u +%H:%M:%S)) ========"
 qemu-system-x86_64 "${ACCEL[@]}" -m 4096 -smp 2 -cdrom "$ISO" -no-reboot \
   -drive "file=$DISK,format=raw,if=virtio" \
   -kernel "$T/crimson/boot/x86_64/vmlinuz-$KERNEL" -initrd "$T/crimson/boot/x86_64/initramfs-$KERNEL.img" \
-  -append "archisobasedir=crimson archisolabel=$LABEL console=ttyS0,115200 cow_spacesize=50% systemd.show_status=1 systemd.journald.forward_to_console=1 crimson.test=install" \
+  -append "archisobasedir=crimson archisolabel=$LABEL console=ttyS0,115200 cow_spacesize=50% systemd.show_status=1 systemd.journald.forward_to_console=1 crimson.test=$MODE" \
   -vga std -display none -serial "file:$T/install.log" -monitor "unix:$T/install.sock,server,nowait" \
   -nic user,model=virtio-net-pci &
 qemu=$!
@@ -76,9 +78,11 @@ LOOP="$(sudo losetup -fP --show "$DISK")"
 sleep 2
 lsblk -o NAME,SIZE,FSTYPE,LABEL "$LOOP"
 ROOTPART=""; ROOTNUM=""
+MOPTS=(); GPREFIX=""                         # btrfs: the root is the @ subvolume (GRUB sees it as /@)
+[ "$FS" = btrfs ] && { MOPTS=(-o subvol=@); GPREFIX="/@"; }
 for p in "$LOOP"p*; do
-  [ "$(sudo blkid -o value -s TYPE "$p" 2>/dev/null)" = ext4 ] || continue
-  sudo mount "$p" "$MNT" 2>/dev/null || continue
+  [ "$(sudo blkid -o value -s TYPE "$p" 2>/dev/null)" = "$FS" ] || continue
+  sudo mount "${MOPTS[@]}" "$p" "$MNT" 2>/dev/null || continue
   if [ -f "$MNT/etc/os-release" ]; then ROOTPART="$p"; ROOTNUM="${p##*p}"; break; fi
   sudo umount "$MNT"
 done
@@ -101,6 +105,22 @@ else
   check "the project's key is in pacman's"    "gpg --batch --homedir etc/pacman.d/gnupg --list-keys 19E71BACDC32A511D657F1FA9EC9146D98BEECA0"
   check "no installer left"                   "[ ! -e usr/bin/calamares ] && [ ! -e usr/bin/xdotool ]"
   check "no live test service"                "[ ! -e etc/systemd/system/crimson-live-test.service ]"
+  # what GRUB will read at boot, read by GRUB's own file system code and compared with what Linux reads
+  if command -v grub-fstest >/dev/null; then
+    for f in "boot/vmlinuz-$KERNEL" "boot/initramfs-$KERNEL.img"; do
+      if out="$(sudo grub-fstest "$ROOTPART" cmp "$GPREFIX/$f" "$MNT/$f" 2>&1)"; then echo "ok   installed: GRUB reads /$f exactly"
+      else fail "installed:grub-reads-$f" "($out)"; fi
+    done
+    [ "$FS" = btrfs ] && sudo btrfs property get "$MNT/boot" compression 2>/dev/null | sed 's/^/     \/boot: /'
+    # for the record, not a test: the kernel package's own copy, which btrfs compresses (GRUB never boots it)
+    if [ "$FS" = btrfs ]; then
+      for m in "$MNT"/usr/lib/modules/*/vmlinuz; do
+        rel="${m#"$MNT"/}"
+        if sudo grub-fstest "$ROOTPART" cmp "$GPREFIX/$rel" "$m" >/dev/null 2>&1; then echo "note GRUB reads /$rel (compressed by btrfs) exactly"
+        else echo "note GRUB can't read /$rel (compressed by btrfs) back exactly: why /boot's copies are plain"; fi
+      done
+    fi
+  else echo "skip GRUB's reading of the kernel (no grub-fstest here)"; fi
   # the boots below show the journal on the serial port (GRUB's own menu is otherwise untouched)
   sudo sed -i -E '/^[[:space:]]*linux[[:space:]]/ s/$/ console=ttyS0,115200 systemd.show_status=1 systemd.journald.forward_to_console=1/; s/ quiet( |$)/\1/' "$MNT/boot/grub/grub.cfg"
   sudo umount "$MNT"
@@ -146,7 +166,7 @@ if [ -n "$ROOTPART" ]; then
   boot greeter
   # signed straight in as tester, as if from the login screen
   LOOP="$(sudo losetup -fP --show "$DISK")"; sleep 2
-  sudo mount "${LOOP}p$ROOTNUM" "$MNT"
+  sudo mount "${MOPTS[@]}" "${LOOP}p$ROOTNUM" "$MNT"
   sudo python3 - "$MNT/etc/greetd/config.toml" <<'PY'
 import sys
 p = sys.argv[1]

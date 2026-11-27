@@ -1,0 +1,15 @@
+# The kernel and initramfs as GRUB's btrfs driver can read them (/usr/local/bin/crimson-boot-files), after
+# mkinitcpio's own hook (90-mkinitcpio-install) has put a new kernel or initramfs in /boot. Does nothing off btrfs.
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Path
+Target = usr/lib/modules/*/vmlinuz
+Target = usr/lib/initcpio/*
+Target = usr/lib/firmware/*
+Target = boot/*-ucode.img
+
+[Action]
+Description = Writing the kernel and initramfs so GRUB can read them…
+When = PostTransaction
+Exec = /usr/local/bin/crimson-boot-files

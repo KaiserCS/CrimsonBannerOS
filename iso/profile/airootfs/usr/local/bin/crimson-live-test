@@ -11,6 +11,7 @@
 #   crimson.test=install   the live session as usual, then the installer driven from the keyboard (crimson-live-test
 #                          drive) onto the empty disk, as user "tester", password "crimson"; then the machine powers
 #                          off, and CI checks and boots what was installed (.github/scripts/iso-install-test.sh)
+#   crimson.test=installbtrfs  the same onto btrfs (the installer's other file system for a whole disk)
 # crimson-live-test logs (crimson-live-logs.service) prints their logs to the serial console after 100 s.
 # The installer removes this.
 set -eu
@@ -94,7 +95,8 @@ if [ "${1:-}" = drive ]; then
 fi
 case "$mode" in
   greeter) install -m644 /usr/share/crimson-banner/greetd-config.toml /etc/greetd/config.toml ;;
-  install)
+  install|installbtrfs)
+    [ "$mode" = installbtrfs ] && sed -i 's/^defaultFileSystemType:.*/defaultFileSystemType:  "btrfs"/' /etc/calamares/modules/partition.conf
     # Calamares for a test: no "are you sure?", no final page, and it closes when it's done
     sed -i -e 's/^prompt-install:.*/prompt-install: false/' -e 's/^quit-at-end:.*/quit-at-end: true/' /etc/calamares/settings.conf
     sed -i '/^  - show:$/{N;/\n      - finished$/d}' /etc/calamares/settings.conf

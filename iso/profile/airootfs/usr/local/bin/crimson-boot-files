@@ -1,0 +1,22 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# GRUB reads the kernel and initramfs from /boot itself, with its own btrfs driver, and that driver doesn't read every
+# file btrfs can write: a kernel whose data btrfs compressed, or shares with another file (the reflink that cp and
+# install make on btrfs), has come out at boot as "premature end of file /@/boot/vmlinuz-linux" (Calamares + GRUB +
+# btrfs installs, Manjaro's among them). So on btrfs /boot gets no compression, and its kernels, initramfs and
+# microcode are rewritten as plain copies of their own. Run by crimson-live-cleanup when installing, and by
+# 95-crimson-boot-files.hook after every kernel or initramfs change (after mkinitcpio's). Elsewhere it does nothing.
+set -eu
+[ "$(stat -f -c %T /boot 2>/dev/null)" = btrfs ] || exit 0
+nocompress() { btrfs property set "$1" compression none 2>/dev/null || chattr +m "$1" 2>/dev/null || true; }
+nocompress /boot                  # new files in /boot (mkinitcpio's, the next kernel's) are written uncompressed
+for f in /boot/vmlinuz-* /boot/initramfs-*.img /boot/*-ucode.img; do
+  [ -f "$f" ] || continue
+  tmp="$f.crimson-new"
+  rm -f "$tmp"
+  cp --reflink=never --sparse=never --preserve=mode,timestamps "$f" "$tmp"
+  nocompress "$tmp"
+  sync "$tmp" 2>/dev/null || sync
+  mv -f "$tmp" "$f"
+done
+sync

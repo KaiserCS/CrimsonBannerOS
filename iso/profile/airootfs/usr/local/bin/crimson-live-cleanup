@@ -25,6 +25,9 @@ for d in /usr/lib/modules/*/; do
   fi
 done
 [ -f "/boot/vmlinuz-$KERNEL" ] || { echo "crimson-live-cleanup: no kernel $KERNEL in /usr/lib/modules" >&2; exit 1; }
+# on btrfs: an uncompressed /boot and a kernel of its own, so GRUB can read it (crimson-boot-files); the initramfs
+# made later by the installer's mkinitcpio is written into the same uncompressed /boot
+/usr/local/bin/crimson-boot-files
 
 # pacman's keyring, made here (offline) instead of copied from the live session
 rm -rf /etc/pacman.d/gnupg
