@@ -45,6 +45,7 @@ public sealed class DisksWindow : Window
         Content = root;
         RemovableDrives.Changed += OnChanged;
         Closed += (_, _) => RemovableDrives.Changed -= OnChanged;
+        _detail.Children.Add(Empty("drive", "Looking for drives…", "Drives and USB sticks are listed on the left as soon as they're found."));
         Opened += (_, _) => _ = Reload();
     }
 
