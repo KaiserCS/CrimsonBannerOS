@@ -1,4 +1,5 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="using:RedStarOS.Views"
         x:Class="RedStarOS.Views.CameraWindow"
         Title="Camera"
         Width="720" Height="720" MinWidth="520" MinHeight="520"

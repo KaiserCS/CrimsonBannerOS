@@ -1,4 +1,5 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="using:RedStarOS.Views"
         x:Class="RedStarOS.Views.NotesWindow"
         Title="Notes"
         Width="780" Height="520" MinWidth="520" MinHeight="320"
