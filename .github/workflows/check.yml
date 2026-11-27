@@ -378,6 +378,11 @@ jobs:
                    /usr/share/applications/org.redstaros.Online.desktop; do
             test -e "$f" || { echo "missing: $f"; exit 1; }
           done
+          # the icon theme, its links followed: a drawn program and a picture of every size
+          test -f /usr/share/icons/CrimsonBanner/index.theme && test -f /usr/share/icons/CrimsonBanner/names.txt
+          for f in scalable/apps/org.gnome.Nautilus.svg 32x32/apps/org.kde.konsole.png 128x128/apps/gedit.png; do
+            test -L "/usr/share/icons/CrimsonBanner/$f" && test -s "/usr/share/icons/CrimsonBanner/$f" || { echo "icon theme: missing $f"; exit 1; }
+          done
           grep -q '^Exec=/usr/bin/redstaros-session' /usr/share/xsessions/redstaros.desktop
           grep -q '/usr/lib/crimson-banner/RedStarOS' /usr/bin/redstaros-session
           # every program finds all of its libraries among the installed dependencies
