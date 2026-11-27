@@ -48,6 +48,10 @@ for f in apps/*/PKGBUILD; do bash -n "$f" || exit 1; done
 tools/test-split-iso.sh >/dev/null 2>&1 || { tools/test-split-iso.sh; exit 1; }
 ok "the catalogue, its signature, the apps repository, and ISOs split and joined"
 
+echo "==> Principles (PRINCIPLES.md)"
+tools/test-principles.sh || exit 1
+ok "PRINCIPLES.md's scores match its tables, and its exceptions have review dates"
+
 echo "==> Icon theme (icons/CrimsonBanner)"
 tools/test-icon-theme.sh >/dev/null || { tools/test-icon-theme.sh; exit 1; }
 ok "the Crimson Banner icon theme is whole"

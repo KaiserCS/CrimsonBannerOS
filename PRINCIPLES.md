@@ -83,27 +83,37 @@ The target: **at least 75% of the layers below are either our own or the communi
 as *ours*, *commons* (community-governed free software) or *dependent* (controlled by one company). Update the scores
 whenever a layer changes.
 
-| Layer | What fills it | Score |
-|---|---|---|
-| Kernel, graphics drivers | Linux, Mesa | commons |
-| Compositor (Wayland) | redstar-comp, on wlroots | ours |
-| Window manager (X11) | redstar-wm | ours |
-| Shell: desktop, taskbar, apps | Crimson Banner OS | ours |
-| UI toolkit | Avalonia | dependent |
-| Runtime | .NET | dependent |
-| Web engine | Crimson Online on WebKitGTK | commons |
-| Media | libVLC | commons |
-| Tests | xUnit, our own harnesses | commons |
-| Build and release | check.sh, build-appimage.sh | ours |
-| Source hosting and CI | GitHub | dependent |
-| Package sources | our own feed (`tools/packages.sh`), locked versions and hashes | ours |
-| Distribution base | Arch Linux (pacman) | commons |
-| Packages and their repository | `packaging/arch`, `tools/repo.sh`, `tools/publish-os.sh`: our PKGBUILDs, signed with our own key, in our own pacman repository, which installed systems update from | ours |
-| Installing more software | Software: our own catalogue, Flatpak and AppImage in one app of our own, free software only | ours |
-| Login screen | Crimson Banner's own login screen (`RedStarOS --greeter` in redstar-comp), on greetd | ours |
-| Installer images | `iso/` and `tools/iso.sh` on archiso; Calamares as the installer; the libre and Mac kernels built by us | commons |
+Each layer also has a **weight**: 1 is one program or part, 2 a subsystem or the project's own way of working, 3 what
+everything else rests on. The count treats a login screen and a kernel alike, and the weighted figure doesn't, so it
+is reported beside the count. The floor is on the count, as the owner set it; the weighted figure is held to the same
+75% as a warning (`tools/test-principles.sh`). The weights were proposed on 27 Nov 2026; the owner can change them.
 
-**Now: 13 of 17 (76%).** The installer images were added on 22 Nov 2026 as a commons layer: the ISOs and their
+| Layer | What fills it | Score | Weight |
+|---|---|---|---|
+| Kernel, graphics drivers | Linux, Mesa | commons | 3 |
+| Compositor (Wayland) | redstar-comp, on wlroots | ours | 2 |
+| Window manager (X11) | redstar-wm | ours | 1 |
+| Shell: desktop, taskbar, apps | Crimson Banner OS | ours | 3 |
+| UI toolkit | Avalonia | dependent | 3 |
+| Runtime | .NET | dependent | 3 |
+| Web engine | Crimson Online on WebKitGTK | commons | 1 |
+| Media | libVLC | commons | 1 |
+| Tests | xUnit, our own harnesses | commons | 1 |
+| Build and release | check.sh, build-appimage.sh | ours | 2 |
+| Source hosting and CI | GitHub | dependent | 2 |
+| Package sources | our own feed (`tools/packages.sh`), locked versions and hashes | ours | 2 |
+| Distribution base | Arch Linux (pacman) | commons | 3 |
+| Packages and their repository | `packaging/arch`, `tools/repo.sh`, `tools/publish-os.sh`: our PKGBUILDs, signed with our own key, in our own pacman repository, which installed systems update from | ours | 2 |
+| Installing more software | Software: our own catalogue, Flatpak and AppImage in one app of our own, free software only | ours | 1 |
+| Login screen | Crimson Banner's own login screen (`RedStarOS --greeter` in redstar-comp), on greetd | ours | 1 |
+| Installer images | `iso/` and `tools/iso.sh` on archiso; Calamares as the installer; the libre and Mac kernels built by us | commons | 1 |
+
+**Weighted: 24 of 32 (75%).** The three *dependent* layers (UI toolkit, runtime, hosting and CI) carry 8 of the 32
+points, and the shell, which is ours, stands on two of them. There is no margin: one more weight-1 layer going to a
+company would take the weighted figure under 75%.
+
+**Now: 14 of 17 (82%).** (Corrected on 27 Nov 2026: the text said 13 of 17 since 22 Nov, but only three layers are
+*dependent*, so it is 14. `tools/test-principles.sh` now checks the sentence against the table.) The installer images were added on 22 Nov 2026 as a commons layer: the ISOs and their
 build are ours, but the installer program is Calamares. Before that, 13 of 16 (81%): the login screen, our own on greetd in place of SDDM, was added on 21 Nov 2026, as was
 Software, our own way to install more programs (12 of 15). Before that,
 11 of 14 (79%): the two distribution layers were added on 20 Nov 2026, when Arch Linux was chosen as the
@@ -211,13 +221,50 @@ Significant choices, especially accepting or keeping a dependency, are recorded 
 change them: in this file, the Wayland plan and the commit history. A decision can be revisited when its conditions
 change.
 
+## 7. Exceptions are reviewed
+
+An exception to these principles is kept by decision, and a decision made once shouldn't stand because nobody looked
+again. Each has a review date: on that day it is either ended, or kept with a new date and a reason. The dates were
+proposed on 27 Nov 2026 (six months on) and the owner can change them. `./check.sh` prints a warning for any that has
+passed (`tools/test-principles.sh`).
+
+| Exception | Decided | Review by | Ends when |
+|---|---|---|---|
+| Non-free firmware and microcode on the Linux and Mac ISOs | 22 Nov 2026 | 2027-05-27 | free firmware for the hardware people own; the libre ISO is the alternative meanwhile |
+| Mainline Linux in the main edition, not Linux-libre | 20 Nov 2026 | 2027-05-27 | free firmware for that hardware |
+| Arch Linux as the base, and the libre ISO updating from Arch's repositories | 20 Nov 2026 | 2027-05-27 | a Parabola-based edition, or a `your-freedom` style blacklist |
+| GitHub for hosting and CI | 19 Nov 2026 | 2027-05-27 | Codeberg's terms allow the project, or Forgejo's upkeep is affordable |
+| .NET and Avalonia under the shell | 18 Nov 2026 | 2027-05-27 | a toolkit and runtime governed by a community can carry the shell at a cost the project can pay |
+| AI-assisted development with a company's tool | from the start | 2027-05-27 | a model the project can run itself, or work done without one |
+| "Include AppImages that don't state a licence" in Software | 21 Nov 2026 | 2027-05-27 | enough of AppImageHub's list states its licence |
+
+## 8. Who decides, and who holds the keys
+
+Collective property needs a collective to hold it, and as of 27 Nov 2026 this project has one decision-maker. That is
+written here instead of left to be assumed.
+
+- **Decisions are the owner's.** The owner decides what goes in, which exceptions stand and what the project signs.
+  The AI-assisted tool writes and proposes and decides nothing. Each decision is dated in this file (6).
+- **What the owner's control doesn't reach.** Everything is GPL-3.0-or-later and there is no contributor licence
+  agreement, so what anyone gives stays theirs under the GPL: it can't be taken private, and anyone may fork. A fork
+  signs with its own key, and installed systems and Software follow it by pointing at its servers and its public key
+  (`CRIMSON_OS_SERVER`, `CRIMSON_APPS_SERVER`, `SoftwareCatalogUrl`, `CRIMSON_KEYRING`).
+- **The signing key is a single point.** It is on the owner's computer only (25 Nov 2026: no signing in CI), which is
+  safer, but if it is lost, installed systems can't take our updates until people trust a new key by hand.
+  `software/crimson-banner.gpg` is a keyring, which can hold more than one public key, but the tools sign with one
+  (`PROJECT_KEY` in `tools/publish-os.sh`), and a second signer needs a second person.
+- **Not decided, and left to the owner:** how people other than the owner come to share in decisions once there are
+  any; who a second signer would be; and where a revocation certificate for the key is kept. Until the owner records
+  an answer here, the owner's word stands. No rule has been invented for any of these.
+
 ## Applying it: checks for a change
 
-- Does it add a dependency? Then it adds a row to the table, and the change says why nothing more self-reliant works.
+- Does it add a dependency? Then it adds a row to the table, and the change says why nothing more self-reliant works, and says who pays for it (a company's staff, a foundation, volunteers), when that is known.
 - Does it need a hosted service to build, test or run? Then it doesn't go in.
 - Does it send anything off the machine without the user asking? Then it doesn't go in.
 - Is the new code GPL-3.0-or-later, with no added restrictions?
 - Does `./check.sh` cover it?
-- Does the layer score stay at or above 75%?
+- Does the layer score stay at or above 75%? Is the weighted figure updated too?
+- Does it keep an exception alive? Then its review date in section 7 is set.
 - For a dependency, licence or distribution question: what do the FSF's Free Software Directory, licence list and
   FSDG say?

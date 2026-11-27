@@ -55,6 +55,8 @@ jobs:
 
       - name: ISOs split for GitHub and joined again (tools/split-iso.sh, merge-iso.sh, merge-iso.ps1 in PowerShell)
         run: tools/test-split-iso.sh
+      - name: PRINCIPLES.md matches its tables (tools/test-principles.sh)
+        run: tools/test-principles.sh
       - name: The Crimson Banner icon theme is whole (tools/test-icon-theme.sh)
         run: tools/test-icon-theme.sh
       - name: Build

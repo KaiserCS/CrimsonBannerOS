@@ -13,6 +13,10 @@
 - When work reduces a recorded dependency, update its row and the layer scores ("The goal" in `PRINCIPLES.md`).
   The aim is at least 75% of layers ours or community commons, and once reached 75% is a floor: no change may drop
   below it. Self-sufficiency to a point, not isolation: community GPL projects are welcome.
+- The layer table also carries weights, and PRINCIPLES.md states the count and the weighted figure: keep both in step
+  with the table (`tools/test-principles.sh`, run by `./check.sh`, fails when they differ). Exceptions have review
+  dates (section 7); a passed date is a warning, so raise it with the owner. Section 8 says who decides: the owner.
+  Don't invent governance rules or sign anything on the owner's behalf; put open questions to the owner.
 - For critical calls (new dependencies, licences, hosting, distribution) check the FSF's advice (Free Software
   Directory, GNU licence list, FSDG; links in `PRINCIPLES.md`), say what it recommends, and note any difference.
 
