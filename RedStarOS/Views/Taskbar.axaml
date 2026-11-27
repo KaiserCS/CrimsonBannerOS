@@ -55,7 +55,10 @@
           <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
             <ContentControl x:Name="NetGlyph" VerticalAlignment="Center" />
             <ContentControl x:Name="VolumeGlyph" VerticalAlignment="Center" />
-            <TextBlock x:Name="BatteryText" FontSize="13" VerticalAlignment="Center" IsVisible="False" />
+            <StackPanel x:Name="BatteryRow" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" IsVisible="False">
+              <ContentControl x:Name="BatteryGlyph" VerticalAlignment="Center" />
+              <TextBlock x:Name="BatteryText" FontSize="13" VerticalAlignment="Center" />
+            </StackPanel>
           </StackPanel>
         </Button>
         <Button x:Name="ClockButton" Classes="task" Height="40" Padding="10,0">

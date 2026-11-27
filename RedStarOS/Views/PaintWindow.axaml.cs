@@ -111,15 +111,16 @@ public partial class PaintWindow : Window
     {
         var defs = new (PaintTool T, string Label, string Tip)[]
         {
-            (PaintTool.Pencil, "✎ Pencil", "Pencil (1 px)"), (PaintTool.Fill, "◩ Fill", "Fill with colour"),
-            (PaintTool.Text, "A Text", "Text"), (PaintTool.Eraser, "⌫ Erase", "Eraser"),
-            (PaintTool.Picker, "⌖ Pick", "Colour picker"), (PaintTool.Zoom, "⌕ Zoom", "Magnifier (left click in, right click out)"),
-            (PaintTool.Brush, "🖌 Brush", "Brushes"), (PaintTool.Select, "▭ Select", "Rectangle select"),
-            (PaintTool.Free, "✂ Free", "Free-form select"), (PaintTool.Shape, "△ Shape", "Shapes")
+            (PaintTool.Pencil, "edit|Pencil", "Pencil (1 px)"), (PaintTool.Fill, "fill|Fill", "Fill with colour"),
+            (PaintTool.Text, "text-box|Text", "Text"), (PaintTool.Eraser, "clear-format|Erase", "Eraser"),
+            (PaintTool.Picker, "palette|Pick", "Colour picker"), (PaintTool.Zoom, "zoom-in|Zoom", "Magnifier (left click in, right click out)"),
+            (PaintTool.Brush, "brush|Brush", "Brushes"), (PaintTool.Select, "outline|Select", "Rectangle select"),
+            (PaintTool.Free, "cut|Free", "Free-form select"), (PaintTool.Shape, "shape|Shape", "Shapes")
         };
         foreach (var d in defs)
         {
-            var b = new ToggleButton { Content = d.Label, Margin = new Thickness(1), Padding = new Thickness(6, 3), FontSize = 12, MinWidth = 66 };
+            var parts = d.Label.Split('|');
+            var b = new ToggleButton { Content = Icons.Label(parts[0], parts[1], 14), Margin = new Thickness(1), Padding = new Thickness(6, 3), FontSize = 12, MinWidth = 66 };
             ToolTip.SetTip(b, d.Tip);
             var tool = d.T;
             b.Click += (_, _) => SetTool(tool);

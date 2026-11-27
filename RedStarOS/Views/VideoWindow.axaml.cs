@@ -294,7 +294,7 @@ public partial class VideoWindow : Window
         var audio = FileOps.AudioExtensions.Contains(Path.GetExtension(item.Path).ToLowerInvariant());
         Video.IsVisible = !audio;
         _bmp = null; Video.Source = null;
-        ShowOverlay(audio ? "🎵" : "", audio ? item.Title : null);
+        ShowOverlay(audio ? "music" : "", audio ? item.Title : null);
 
         try
         {
@@ -307,7 +307,7 @@ public partial class VideoWindow : Window
     private void ShowOverlay(string icon, string? text)
     {
         Overlay.IsVisible = text != null;
-        OverlayIcon.Text = icon;
+        OverlayIcon.Content = icon == "" ? null : Icons.Create(icon, 52, OverlayIcon.Foreground);
         OverlayIcon.IsVisible = icon != "";
         OverlayText.Text = text ?? "";
     }
@@ -315,7 +315,7 @@ public partial class VideoWindow : Window
     private void ShowError(string msg)
     {
         Video.IsVisible = false;
-        ShowOverlay("⚠", msg + "\n\nTry “Open with system player” below.");
+        ShowOverlay("warning", msg + "\n\nTry “Open with system player” below.");
         _playing = false; RefreshPlayState();
     }
 
@@ -564,7 +564,7 @@ public partial class VideoWindow : Window
         _index = -1; _playing = false; _time = 0; _length = 0;
         Task.Run(() => { try { _player.Stop(); } catch { } });
         Video.IsVisible = false;
-        ShowOverlay("🎬", "Drop videos here, or press O to open");
+        ShowOverlay("film", "Drop videos here, or press O to open");
         TimeText.Text = LcdTime.Text = "0:00"; LenText.Text = "0:00";
         _updating = true; SeekSlider.Value = 0; _updating = false;
         UpdateTitle(); RefreshPlayState();
@@ -625,7 +625,7 @@ public partial class VideoWindow : Window
         TrayService.Upsert(new TrayEntry
         {
             Key = "video",
-            Glyph = _playing ? "▶" : "⏸",
+            Glyph = _playing ? "play" : "pause",
             Tooltip = (_playing ? "Playing: " : "Paused: ") + c.Title,
             Menu = new List<TrayMenuEntry>
             {

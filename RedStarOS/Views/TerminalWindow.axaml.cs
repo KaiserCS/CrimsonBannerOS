@@ -474,7 +474,7 @@ public partial class TerminalWindow : Window
     }
 
     private const string ShortcutHelp =
-        "Ctrl+Shift+T  New tab (▾ next to ＋: pick a profile)\nCtrl+PageUp / PageDown  Previous / next tab\nAlt+1 … 9  Go to tab\n" +
+        "Ctrl+Shift+T  New tab (the arrow next to + picks a profile)\nCtrl+PageUp / PageDown  Previous / next tab\nAlt+1 … 9  Go to tab\n" +
         "Ctrl+Shift+E  Split right\nCtrl+Shift+O  Split down\nAlt+Shift+arrows  Move between panes\nCtrl+Shift+Z  Maximise / restore pane\nCtrl+Shift+W  Close pane (closes the tab when it is the last one)\n" +
         "Ctrl+Shift+C / Ctrl+Insert  Copy\nCtrl+Shift+V / Shift+Insert  Paste\nCtrl+Shift+A  Select all\nCtrl+Shift+F  Find\n" +
         "Ctrl+,  Profiles and colours\nF1  This list\nCtrl+Shift+K  Clear scrollback\nShift+PageUp / PageDown  Scroll\nShift+Home / End  Top / bottom\nCtrl+= / Ctrl+- / Ctrl+0  Zoom\nF11  Full screen\n\n" +

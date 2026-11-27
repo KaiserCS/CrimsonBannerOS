@@ -68,7 +68,7 @@ public static class SettingsPages
         var cancel = new Button { Content = "Cancel", IsCancel = true };
         ok.Click += (_, _) => { result = box.Text ?? ""; win.Close(); };
         cancel.Click += (_, _) => win.Close();
-        win.Content = new StackPanel { Margin = new Thickness(20), Spacing = 10, Children = { new TextBlock { Text = label, TextWrapping = TextWrapping.Wrap }, box, Row(cancel, ok) } };
+        win.Content = new StackPanel { Margin = new Thickness(20), Spacing = 10, Children = { new TextBlock { Text = label, TextWrapping = TextWrapping.Wrap }, box, Row(ok, cancel) } };
         win.Opened += (_, _) => box.Focus();
         await win.ShowDialog(owner);
         return result;

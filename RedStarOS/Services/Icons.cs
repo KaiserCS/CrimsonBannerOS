@@ -147,6 +147,15 @@ public static class Icons
         ["zoom-out"] = "M 4,10.5 A 6.5,6.5 0 1 0 17,10.5 A 6.5,6.5 0 1 0 4,10.5 Z M 15.5,15.5 L 20.5,20.5 M 7.5,10.5 L 13.5,10.5",
         ["minus"] = "M 5,12 L 19,12",
         ["page"] = "M 6,5 A 2,2 0 0 1 8,3 L 16,3 A 2,2 0 0 1 18,5 L 18,19 A 2,2 0 0 1 16,21 L 8,21 A 2,2 0 0 1 6,19 Z M 9,7.5 L 15,7.5 M 9,11 L 15,11 M 9,14.5 L 13,14.5",
+        ["paperclip"] = "M 17,6.5 L 8.5,15 A 2.1,2.1 0 0 0 11.5,18 L 19.5,10 A 4.2,4.2 0 0 0 13.5,4 L 5.5,12 A 6.3,6.3 0 0 0 14.5,21 L 20,15.5",
+        ["stop"] = "M 7,6 L 17,6 A 1,1 0 0 1 18,7 L 18,17 A 1,1 0 0 1 17,18 L 7,18 A 1,1 0 0 1 6,17 L 6,7 A 1,1 0 0 1 7,6 Z",
+        ["flip-h"] = "M 12,3 L 12,21 M 9,6 L 3.5,18 L 9,18 Z M 15,6 L 20.5,18 L 15,18 Z",
+        ["flip-v"] = "M 3,12 L 21,12 M 6,9 L 18,3.5 L 18,9 Z M 6,15 L 18,20.5 L 18,15 Z",
+        ["fullscreen"] = "M 4,9 L 4,4 L 9,4 M 15,4 L 20,4 L 20,9 M 20,15 L 20,20 L 15,20 M 9,20 L 4,20 L 4,15",
+        ["mail"] = "M 5,5 L 19,5 A 2,2 0 0 1 21,7 L 21,17 A 2,2 0 0 1 19,19 L 5,19 A 2,2 0 0 1 3,17 L 3,7 A 2,2 0 0 1 5,5 Z M 3.5,7 L 12,13 L 20.5,7",
+        ["brush"] = "M 14.5,4 L 20,9.5 L 12,17.5 L 6.5,12 Z M 6.5,12 C 4,12.5 3.5,15.5 3.5,20.5 C 8.5,20.5 11.5,20 12,17.5",
+        ["rotate-left"] = "M 4.5,10 A 8,8 0 1 1 6.5,16.5 M 4.5,4.5 L 4.5,10 L 10,10",
+        ["rotate-right"] = "M 19.5,10 A 8,8 0 1 0 17.5,16.5 M 19.5,4.5 L 19.5,10 L 14,10",
         ["task-view"] = "M 5,8 L 15,8 A 2,2 0 0 1 17,10 L 17,19 A 2,2 0 0 1 15,21 L 5,21 A 2,2 0 0 1 3,19 L 3,10 A 2,2 0 0 1 5,8 Z M 7.5,4 L 19,4 A 2,2 0 0 1 21,6 L 21,16.5",
         ["nightlight"] = "M 3,17.5 L 21,17.5 M 7,17.5 A 5,5 0 0 1 17,17.5 M 12,4 L 12,7 M 5.6,8.6 L 7.4,10.4 M 18.4,8.6 L 16.6,10.4 M 7,21 L 17,21",
         ["moon"] = "M 20,14.5 A 8.5,8.5 0 1 1 9.5,4 A 7,7 0 0 0 20,14.5 Z",
@@ -226,6 +235,15 @@ public static class Icons
     }
 
     /// <summary>An icon for an emoji / icon name, or the text itself when there is no icon for it (letters...).</summary>
+    /// <summary>A button's content: a line icon and its word, side by side ("Pin", "Delete", "Slideshow").</summary>
+    public static Control Label(string icon, string text, double size = 16)
+    {
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        row.Children.Add(Create(icon, size));
+        row.Children.Add(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center });
+        return row;
+    }
+
     public static Control Glyph(string? glyphOrName, double size = 16, IBrush? brush = null)
     {
         var name = Resolve(glyphOrName);

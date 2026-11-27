@@ -36,8 +36,8 @@
             </MenuFlyout>
           </Button.Flyout>
         </Button>
-        <Button x:Name="ProfileBtn" DockPanel.Dock="Right" Classes="flat" Content="▾" Padding="4,0" ToolTip.Tip="New tab with a profile" Click="OnProfileMenu" />
-        <Button DockPanel.Dock="Right" Classes="flat" Tag="newtab" Click="OnCmd" ToolTip.Tip="New tab (Ctrl+Shift+T)" ><v:IconView Kind="plus" Size="16" /></Button>
+        <Button x:Name="ProfileBtn" DockPanel.Dock="Right" Classes="tool small" ToolTip.Tip="New tab with a profile" Click="OnProfileMenu"><v:IconView Kind="chevron-down" Size="14" /></Button>
+        <Button DockPanel.Dock="Right" Classes="tool" Tag="newtab" Click="OnCmd" ToolTip.Tip="New tab (Ctrl+Shift+T)" ><v:IconView Kind="plus" Size="16" /></Button>
         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
           <StackPanel x:Name="TabsPanel" Orientation="Horizontal" Spacing="2" />
         </ScrollViewer>
@@ -48,11 +48,11 @@
     <Border x:Name="FindBar" DockPanel.Dock="Bottom" Classes="card" CornerRadius="0" BorderThickness="0,1,0,0" Padding="8,6" IsVisible="False">
       <StackPanel Orientation="Horizontal" Spacing="6">
         <TextBox x:Name="FindBox" Width="260" PlaceholderText="Find in terminal" />
-        <Button Classes="flat" Content="▲" Tag="findprev" Click="OnCmd" ToolTip.Tip="Previous (Shift+Enter)" />
-        <Button Classes="flat" Content="▼" Tag="findnext" Click="OnCmd" ToolTip.Tip="Next (Enter)" />
+        <Button Classes="tool" Tag="findprev" Click="OnCmd" ToolTip.Tip="Previous (Shift+Enter)"><v:IconView Kind="chevron-up" Size="16" /></Button>
+        <Button Classes="tool" Tag="findnext" Click="OnCmd" ToolTip.Tip="Next (Enter)"><v:IconView Kind="chevron-down" Size="16" /></Button>
         <CheckBox x:Name="CaseChk" Content="Match case" VerticalAlignment="Center" />
         <TextBlock x:Name="FindInfo" Classes="caption" VerticalAlignment="Center" />
-        <Button Classes="flat" Content="✕" Tag="findclose" Click="OnCmd" />
+        <Button Classes="tool" Tag="findclose" Click="OnCmd" ToolTip.Tip="Close find"><v:IconView Kind="close" Size="14" /></Button>
       </StackPanel>
     </Border>
 

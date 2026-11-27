@@ -90,7 +90,7 @@ public partial class SettingsWindow : Window
             new("Account", "user", AppIcons.Plate, () => PageLauncher("Account", "Password, profile photo and account type.", "Open Account", () => WindowManager.Open(new AccountWindow()))),
             new("Software Updates", "refresh", AppIcons.Plate, SettingsPages.Updates),
             new("Diagnostics", "bug", AppIcons.Plate, SettingsPages.DiagnosticsPage),
-            new("Games", "🏓", AppIcons.Plate, BuildGames),
+            new("Games", "game", AppIcons.Plate, BuildGames),
         };
         Nav.ItemsSource = items;
         Nav.SelectionChanged += (_, _) =>

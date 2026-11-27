@@ -190,7 +190,7 @@ public sealed class DisksWindow : Window
                 new TextBlock { Text = part == null ? "Format the whole drive" : "Format partition", FontSize = 18, FontWeight = FontWeight.SemiBold },
                 new TextBlock { Text = $"This erases {what}. It can't be undone.", TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(Color.Parse("#E53E3E")) },
                 type, name,
-                new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Right, Children = { cancel, ok } },
+                new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Right, Children = { ok, cancel } },
             },
         };
         await dlg.ShowDialog(this);

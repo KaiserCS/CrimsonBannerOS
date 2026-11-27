@@ -297,15 +297,20 @@ public partial class PongWindow : Window
 
     private void UpdateModeMenu()
     {
-        ModeSolo.Header = (_vsAi ? "    " : "✓  ") + "_Solo - keep the rally going";
-        ModeAi.Header = (_vsAi ? "✓  " : "    ") + "_Versus the computer - first to 7";
+        ModeSolo.ToggleType = ModeAi.ToggleType = MenuItemToggleType.Radio;
+        ModeSolo.Header = "_Solo, keep the rally going"; ModeSolo.IsChecked = !_vsAi;
+        ModeAi.Header = "_Versus the computer, first to 7"; ModeAi.IsChecked = _vsAi;
     }
 
     private void UpdateLevelMenu()
     {
         var items = new[] { LevelEasy, LevelNormal, LevelHard, LevelExpert };
         for (int i = 0; i < items.Length; i++)
-            items[i].Header = (i == SettingsStore.Current.PongLevel ? "✓  " : "    ") + "_" + Levels[i].Name;
+        {
+            items[i].ToggleType = MenuItemToggleType.Radio;
+            items[i].Header = "_" + Levels[i].Name;
+            items[i].IsChecked = i == SettingsStore.Current.PongLevel;
+        }
     }
 
     private void OnLevel(object? s, RoutedEventArgs e)

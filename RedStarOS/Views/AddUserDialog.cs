@@ -40,7 +40,7 @@ public sealed class AddUserDialog : Window
             {
                 new TextBlock { Text = "Add a user", FontSize = 18, FontWeight = FontWeight.SemiBold },
                 _real, _user, _pw, _pw2, _admin, _error,
-                new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Right, Children = { cancel, _ok } },
+                new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Right, Children = { _ok, cancel } },
             },
         };
         Opened += (_, _) => _real.Focus();

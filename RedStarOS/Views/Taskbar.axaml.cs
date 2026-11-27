@@ -462,9 +462,9 @@ public partial class Taskbar : UserControl
             menu.Items.Add(Item("Restore", task.Restore));
             menu.Items.Add(Item("Minimize", task.Minimize));
             menu.Items.Add(new Separator());
-            menu.Items.Add(Item("Snap Left", () => task.Snap(SnapMode.Left)));
-            menu.Items.Add(Item("Snap Right", () => task.Snap(SnapMode.Right)));
-            menu.Items.Add(Item("Fill Screen", () => task.Snap(SnapMode.Full)));
+            menu.Items.Add(Item("Snap left", () => task.Snap(SnapMode.Left)));
+            menu.Items.Add(Item("Snap right", () => task.Snap(SnapMode.Right)));
+            menu.Items.Add(Item("Fill the screen", () => task.Snap(SnapMode.Full)));
             // virtual desktops: built when the menu opens (the desktops may have changed since)
             var deskSep = new Separator { Tag = "desks" };
             menu.Items.Add(deskSep);
@@ -686,8 +686,9 @@ public partial class Taskbar : UserControl
         NetGlyph.Content = Icons.Create(kind switch { "wifi" => "wifi", "wired" => "wired", _ => "offline" }, 17);
 
         var battery = SystemInfo.BatteryInfo();
-        BatteryText.IsVisible = battery != null;
-        BatteryText.Text = battery == null ? "" : (battery.Charging ? "⚡" : "🔋") + " " + battery.Percent + "%";
+        BatteryRow.IsVisible = battery != null;
+        BatteryText.Text = battery == null ? "" : battery.Percent + "%";
+        if (battery != null) BatteryGlyph.Content = Icons.Create(battery.Charging ? "bolt" : "battery", 16);
 
         var volume = await SystemInfo.GetVolume();
         var muted = await SystemInfo.GetMuted();

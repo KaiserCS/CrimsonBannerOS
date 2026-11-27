@@ -397,7 +397,8 @@ public sealed class DocView : Control
         if (_layoutDirty) Relayout();
         _ox = Math.Max(20, (Bounds.Width - SheetW * _zoom) / 2);
         _oy = 20;
-        ctx.FillRectangle(new SolidColorBrush(Color.Parse("#E6E6E6")), new Rect(Bounds.Size));
+        // the desk around the page, as Slides' around its slide: deep graphite in the dark theme, pale grey in the light
+        ctx.FillRectangle(new SolidColorBrush(Color.Parse(RedStarOS.Services.ThemeService.IsDark ? "#141417" : "#E6E6E6")), new Rect(Bounds.Size));
         using var tr = ctx.PushTransform(Matrix.CreateScale(_zoom, _zoom) * Matrix.CreateTranslation(_ox, _oy));
 
         var sheet = new Rect(0, 0, SheetW, _contentH);

@@ -952,7 +952,7 @@ public partial class FileManagerWindow
             {
                 var star = new ToggleButton
                 {
-                    Content = e.Starred ? "★  Starred" : "☆  Star", IsChecked = e.Starred, Padding = new Thickness(10, 4), Margin = new Thickness(0, 12, 0, 0)
+                    Content = Icons.Label(e.Starred ? "star-filled" : "star", e.Starred ? "Starred" : "Star"), IsChecked = e.Starred, Padding = new Thickness(10, 4), Margin = new Thickness(0, 12, 0, 0)
                 };
                 star.Click += (_, _) => SetStar(new[] { e }, star.IsChecked == true);
                 DetailsBody.Children.Add(star);

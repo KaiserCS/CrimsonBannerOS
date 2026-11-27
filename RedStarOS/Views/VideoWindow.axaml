@@ -109,7 +109,7 @@
     <Grid x:Name="Stage" Background="Black">
       <Image x:Name="Video" Stretch="Uniform" />
       <StackPanel x:Name="Overlay" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10" IsHitTestVisible="False">
-        <TextBlock x:Name="OverlayIcon" Text="🎬" FontSize="52" HorizontalAlignment="Center" Foreground="#8A8E94" />
+        <ContentControl x:Name="OverlayIcon" HorizontalAlignment="Center" Foreground="#969AA0" />
         <TextBlock x:Name="OverlayText" Text="Drop videos here, or press O to open" Foreground="#8A8E94" FontWeight="SemiBold"
                    HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="460" />
       </StackPanel>

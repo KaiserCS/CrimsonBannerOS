@@ -68,7 +68,7 @@
         <Button Classes="tool label" Tag="newslide" Click="OnMenu" ToolTip.Tip="New slide (Ctrl+M)" v:OfficeToolbar.MenuHeader="New slide">
           <StackPanel Orientation="Horizontal" Spacing="6"><v:IconView Kind="plus" Size="16" /><TextBlock Text="New slide" VerticalAlignment="Center" /></StackPanel>
         </Button>
-        <ComboBox x:Name="LayoutBox" Width="140" ToolTip.Tip="Layout of new slides" />
+        <ComboBox x:Name="LayoutBox" Width="168" ToolTip.Tip="Layout of new slides" />
         <Button Classes="tool" Tag="dupslide" Click="OnMenu" ToolTip.Tip="Duplicate slide"><v:IconView Kind="copy" Size="18" /></Button>
         <Button Classes="tool" Tag="delslide" Click="OnMenu" ToolTip.Tip="Delete slide"><v:IconView Kind="trash" Size="18" /></Button>
         <Button Classes="tool" Tag="slideup" Click="OnMenu" ToolTip.Tip="Move slide up"><v:IconView Kind="arrow-up" Size="18" /></Button>

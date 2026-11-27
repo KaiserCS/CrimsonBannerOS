@@ -65,7 +65,7 @@
 
           <StackPanel Spacing="3" MinWidth="120">
             <ComboBox x:Name="BrushBox" HorizontalAlignment="Stretch" />
-            <Button Classes="flat" Content="Swap colours ⇄" Click="OnSwapColors" HorizontalAlignment="Stretch" />
+            <Button Classes="flat" Content="Swap colours" Click="OnSwapColors" HorizontalAlignment="Stretch" />
             <TextBlock Text="Brush" Classes="caption" HorizontalAlignment="Center" />
           </StackPanel>
           <Border Width="1" Background="{DynamicResource ShellBorderBrush}" />
@@ -91,7 +91,7 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal" Spacing="4">
               <Button Classes="flat" Content="Rotate ⟳" Tag="rotr" Click="OnMenu" />
-              <Button Classes="flat" Content="Flip ⇋" Tag="fliph" Click="OnMenu" />
+              <Button Classes="flat" Content="Flip" Tag="fliph" Click="OnMenu" />
             </StackPanel>
             <CheckBox x:Name="TransparentBox" Content="Transparent selection" Click="OnTransparentChanged" />
             <TextBlock Text="Image" Classes="caption" HorizontalAlignment="Center" />

@@ -1,51 +1,56 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="using:RedStarOS.Views"
         x:Class="RedStarOS.Views.ImageViewerWindow"
         Title="Image Viewer"
         Width="1000" Height="700" MinWidth="560" MinHeight="400"
         WindowStartupLocation="CenterOwner">
   <DockPanel>
-    <Border x:Name="Toolbar" DockPanel.Dock="Top" Classes="card" CornerRadius="0" BorderThickness="0,0,0,1" Padding="8,6">
-      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-        <StackPanel Orientation="Horizontal" Spacing="4">
-          <Button Classes="flat" Content="Open…" Tag="open" Click="OnCmd" ToolTip.Tip="Open an image (Ctrl+O)" />
-          <Button Classes="flat" Content="◀" Tag="prev" Click="OnCmd" ToolTip.Tip="Previous image (Left)" />
-          <Button Classes="flat" Content="▶" Tag="next" Click="OnCmd" ToolTip.Tip="Next image (Right)" />
-          <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
-          <Button Classes="flat" Content="⟲" Tag="rotl" Click="OnCmd" ToolTip.Tip="Rotate left (Shift+R)" />
-          <Button Classes="flat" Content="⟳" Tag="rotr" Click="OnCmd" ToolTip.Tip="Rotate right (R)" />
-          <Button Classes="flat" Content="⇋" Tag="fliph" Click="OnCmd" ToolTip.Tip="Flip horizontally (H)" />
-          <Button Classes="flat" Content="⇵" Tag="flipv" Click="OnCmd" ToolTip.Tip="Flip vertically (V)" />
-          <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
-          <Button Classes="flat" Content="Fit" Tag="fit" Click="OnCmd" ToolTip.Tip="Fit large pictures to the window; small ones stay their size (F)" />
-          <Button Classes="flat" Content="Zoom to fit" Tag="zoomfit" Click="OnCmd" ToolTip.Tip="Zoom every picture to fill the window, enlarging small ones (Shift+F)" />
-          <Button Classes="flat" Content="100%" Tag="actual" Click="OnCmd" ToolTip.Tip="Actual size (0)" />
-          <Button Classes="flat" Content="−" Tag="zoomout" Click="OnCmd" ToolTip.Tip="Zoom out (-)" />
-          <Button Classes="flat" Content="+" Tag="zoomin" Click="OnCmd" ToolTip.Tip="Zoom in (+)" />
-          <TextBlock x:Name="ZoomText" Width="52" TextAlignment="Center" VerticalAlignment="Center" Classes="caption" />
-          <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
-          <Button x:Name="SlideBtn" Classes="flat" Content="▶ Slideshow" Tag="slideshow" Click="OnCmd" ToolTip.Tip="Start or stop the slideshow (S)" />
-          <Button Classes="flat" Content="⛶" Tag="fullscreen" Click="OnCmd" ToolTip.Tip="Full screen (F11)" />
-          <Button Classes="flat" Content="▤" Tag="thumbs" Click="OnCmd" ToolTip.Tip="Show or hide thumbnails (T)" />
-          <Border Width="1" Margin="4,2" Background="{DynamicResource ShellBorderBrush}" />
-          <Button Classes="flat" Content="Edit in Paint" Tag="paint" Click="OnCmd" />
-          <Button Classes="flat" Content="⋯" ToolTip.Tip="More">
-            <Button.Flyout>
-              <MenuFlyout>
-                <MenuItem Header="Rename…" Tag="rename" Click="OnCmd" />
-                <MenuItem Header="Move to Trash" Tag="delete" Click="OnCmd" />
-                <Separator />
-                <MenuItem Header="Set as wallpaper" Tag="wallpaper" Click="OnCmd" />
-                <MenuItem Header="Copy file path" Tag="copypath" Click="OnCmd" />
-                <MenuItem Header="Share…" Tag="share" Click="OnCmd" />
-                <MenuItem Header="Save rotated/flipped image…" Tag="saverot" Click="OnCmd" />
-              </MenuFlyout>
-            </Button.Flyout>
-          </Button>
-        </StackPanel>
-      </ScrollViewer>
+    <!-- one row of tools, as in the office apps (OfficeToolbar: what doesn't fit goes into More) -->
+    <Border x:Name="Toolbar" DockPanel.Dock="Top" Classes="officetools">
+      <v:OfficeToolbar>
+        <Button Classes="tool label" Tag="open" Click="OnCmd" ToolTip.Tip="Open an image (Ctrl+O)" v:OfficeToolbar.MenuHeader="Open…">
+          <StackPanel Orientation="Horizontal" Spacing="6"><v:IconView Kind="folder" Size="16" /><TextBlock Text="Open…" VerticalAlignment="Center" /></StackPanel>
+        </Button>
+        <Button Classes="tool" Tag="prev" Click="OnCmd" ToolTip.Tip="Previous image (Left)"><v:IconView Kind="chevron-left" Size="18" /></Button>
+        <Button Classes="tool" Tag="next" Click="OnCmd" ToolTip.Tip="Next image (Right)"><v:IconView Kind="chevron-right" Size="18" /></Button>
+        <Border Classes="tbsep" />
+        <Button Classes="tool" Tag="rotl" Click="OnCmd" ToolTip.Tip="Rotate left (Shift+R)"><v:IconView Kind="rotate-left" Size="18" /></Button>
+        <Button Classes="tool" Tag="rotr" Click="OnCmd" ToolTip.Tip="Rotate right (R)"><v:IconView Kind="rotate-right" Size="18" /></Button>
+        <Button Classes="tool" Tag="fliph" Click="OnCmd" ToolTip.Tip="Flip horizontally (H)"><v:IconView Kind="flip-h" Size="18" /></Button>
+        <Button Classes="tool" Tag="flipv" Click="OnCmd" ToolTip.Tip="Flip vertically (V)"><v:IconView Kind="flip-v" Size="18" /></Button>
+        <Border Classes="tbsep" />
+        <Button Classes="tool label" Content="Fit" Tag="fit" Click="OnCmd" ToolTip.Tip="Fit large pictures to the window; small ones stay their size (F)" />
+        <Button Classes="tool label" Content="Zoom to fit" Tag="zoomfit" Click="OnCmd" ToolTip.Tip="Zoom every picture to fill the window, enlarging small ones (Shift+F)" />
+        <Button Classes="tool label" Content="100%" Tag="actual" Click="OnCmd" ToolTip.Tip="Actual size (0)" />
+        <Button Classes="tool" Tag="zoomout" Click="OnCmd" ToolTip.Tip="Zoom out (-)"><v:IconView Kind="zoom-out" Size="18" /></Button>
+        <Button Classes="tool" Tag="zoomin" Click="OnCmd" ToolTip.Tip="Zoom in (+)"><v:IconView Kind="zoom-in" Size="18" /></Button>
+        <TextBlock x:Name="ZoomText" Width="52" TextAlignment="Center" VerticalAlignment="Center" Classes="caption" />
+        <Border Classes="tbsep" />
+        <Button x:Name="SlideBtn" Classes="tool label" Tag="slideshow" Click="OnCmd" ToolTip.Tip="Start or stop the slideshow (S)" v:OfficeToolbar.MenuHeader="Slideshow" />
+        <Button Classes="tool" Tag="fullscreen" Click="OnCmd" ToolTip.Tip="Full screen (F11)"><v:IconView Kind="fullscreen" Size="18" /></Button>
+        <Button Classes="tool" Tag="thumbs" Click="OnCmd" ToolTip.Tip="Show or hide thumbnails (T)"><v:IconView Kind="grid" Size="18" /></Button>
+        <Border Classes="tbsep" />
+        <Button Classes="tool label" Tag="paint" Click="OnCmd" ToolTip.Tip="Edit in Paint" v:OfficeToolbar.MenuHeader="Edit in Paint">
+          <StackPanel Orientation="Horizontal" Spacing="6"><v:IconView Kind="palette" Size="16" /><TextBlock Text="Edit in Paint" VerticalAlignment="Center" /></StackPanel>
+        </Button>
+        <Button Classes="tool" ToolTip.Tip="More for this picture" v:OfficeToolbar.MenuHeader="More for this picture">
+          <v:IconView Kind="more" Size="18" />
+          <Button.Flyout>
+            <MenuFlyout>
+              <MenuItem Header="Rename…" Tag="rename" Click="OnCmd" />
+              <MenuItem Header="Move to Trash" Tag="delete" Click="OnCmd" />
+              <Separator />
+              <MenuItem Header="Set as wallpaper" Tag="wallpaper" Click="OnCmd" />
+              <MenuItem Header="Copy file path" Tag="copypath" Click="OnCmd" />
+              <MenuItem Header="Share…" Tag="share" Click="OnCmd" />
+              <MenuItem Header="Save rotated or flipped image…" Tag="saverot" Click="OnCmd" />
+            </MenuFlyout>
+          </Button.Flyout>
+        </Button>
+      </v:OfficeToolbar>
     </Border>
 
-    <Border x:Name="StatusBar" DockPanel.Dock="Bottom" Classes="card" CornerRadius="0" BorderThickness="0,1,0,0" Padding="12,4">
+    <Border x:Name="StatusBar" DockPanel.Dock="Bottom" Classes="officestatus">
       <TextBlock x:Name="StatusText" Classes="caption" TextTrimming="CharacterEllipsis" />
     </Border>
 

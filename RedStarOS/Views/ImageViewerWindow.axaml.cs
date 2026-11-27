@@ -67,6 +67,7 @@ public partial class ImageViewerWindow : Window
     public ImageViewerWindow()
     {
         InitializeComponent();
+        SlideBtn.Content = Icons.Label("play", "Slideshow");
         ThumbList.ItemsSource = _thumbs;
         ThumbList.SelectionChanged += (_, _) =>
         {
@@ -364,14 +365,14 @@ public partial class ImageViewerWindow : Window
         _slide = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
         _slide.Tick += (_, _) => Go(1);
         _slide.Start();
-        SlideBtn.Content = "⏸ Stop";
+        SlideBtn.Content = Icons.Label("pause", "Stop");
     }
 
     private void StopSlideshow()
     {
         _slide?.Stop();
         _slide = null;
-        SlideBtn.Content = "▶ Slideshow";
+        SlideBtn.Content = Icons.Label("play", "Slideshow");
     }
 
     private void ToggleFullScreen()

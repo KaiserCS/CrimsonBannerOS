@@ -55,13 +55,13 @@ public sealed class PolkitDialog : Window
                 new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children =
                 {
                     new Border { Width = 40, Height = 40, CornerRadius = new CornerRadius(20), Background = new SolidColorBrush(Color.Parse("#C8102E")),
-                        Child = new TextBlock { Text = "🔒", FontSize = 20, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center } },
+                        Child = Icons.Create("lock", 20, Brushes.White) },
                     new TextBlock { Text = "Authentication required", FontSize = 18, FontWeight = FontWeight.SemiBold, VerticalAlignment = VerticalAlignment.Center },
                 } },
                 new TextBlock { Text = req.Message.Length > 0 ? req.Message : "A program wants to do something that needs an administrator.", TextWrapping = TextWrapping.Wrap },
                 req.Users.Count > 1 ? _user : new TextBlock { Text = "As " + req.Users.FirstOrDefault(), Classes = { "caption" } },
                 _password, _error, details,
-                new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Right, Children = { cancel, _ok } },
+                new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Right, Children = { _ok, cancel } },
             },
         };
         Opened += (_, _) => { Activate(); _password.Focus(); };

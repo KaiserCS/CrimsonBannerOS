@@ -206,10 +206,10 @@ public sealed class MessengerWindow : Window
 
         // the conversation
         var header = new StackPanel { Margin = new Thickness(16, 10, 16, 8), Children = { _roomName, _roomInfo } };
-        _banner.Child = new TextBlock { TextWrapping = TextWrapping.Wrap, Text =
-            "🔒 This chat is end-to-end encrypted. Messenger can't read or send encrypted messages yet; use another Matrix client for this one for now." };
+        _banner.Child = new DockPanel { Children = { Icons.Create("lock", 16), new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(8, 0, 0, 0), Text =
+            "This chat is end-to-end encrypted. Messenger can't read or send encrypted messages yet; use another Matrix client for this one for now." } } };
         _scroll.Content = _timeline;
-        var attach = new Button { Content = "📎", Padding = new Thickness(10, 6), VerticalAlignment = VerticalAlignment.Bottom };
+        var attach = new Button { Content = Icons.Create("paperclip", 18), Padding = new Thickness(9, 7), VerticalAlignment = VerticalAlignment.Bottom };
         ToolTip.SetTip(attach, "Send a file or picture");
         attach.Click += async (_, _) => await Attach();
         var send = new Button { Content = "Send", Classes = { "primary" }, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(6, 0, 0, 0) };
@@ -273,7 +273,7 @@ public sealed class MessengerWindow : Window
     private static ListBoxItem RoomItem(MatrixState st, MatrixRoom r)
     {
         var name = new TextBlock { Text = r.DisplayName(st.Me), FontWeight = r.Unread > 0 || r.Invite ? FontWeight.Bold : FontWeight.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis };
-        var preview = new TextBlock { Text = r.Invite ? "✉ Invitation" : r.Preview(st.Me), Classes = { "caption" }, TextTrimming = TextTrimming.CharacterEllipsis };
+        var preview = new TextBlock { Text = r.Invite ? "Invitation" : r.Preview(st.Me), Classes = { "caption" }, TextTrimming = TextTrimming.CharacterEllipsis };
         var g = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Margin = new Thickness(4, 4) };
         var avatar = new Border
         {
@@ -397,7 +397,7 @@ public sealed class MessengerWindow : Window
         switch (m.Kind)
         {
             case MessageKind.Encrypted:
-                panel.Children.Add(new TextBlock { Text = "🔒 Encrypted message (Messenger can't read encrypted chats yet)", FontStyle = FontStyle.Italic, Classes = { "caption" } });
+                panel.Children.Add(new TextBlock { Text = "Encrypted message (Messenger can't read encrypted chats yet)", FontStyle = FontStyle.Italic, Classes = { "caption" } });
                 break;
             case MessageKind.Deleted:
                 panel.Children.Add(new TextBlock { Text = "Message deleted", FontStyle = FontStyle.Italic, Classes = { "caption" } });
@@ -407,8 +407,8 @@ public sealed class MessengerWindow : Window
                 break;
             case MessageKind.File or MessageKind.Video or MessageKind.Audio:
             {
-                var icon = m.Kind switch { MessageKind.Video => "🎞", MessageKind.Audio => "🔊", _ => "📎" };
-                var b = new Button { Content = $"{icon} {m.FileName ?? m.Body}" + (m.Size > 0 ? $"  ({FileOps.FormatSize(m.Size)})" : ""), HorizontalAlignment = HorizontalAlignment.Left };
+                var icon = m.Kind switch { MessageKind.Video => "film", MessageKind.Audio => "music", _ => "paperclip" };
+                var b = new Button { Content = Icons.Label(icon, (m.FileName ?? m.Body) + (m.Size > 0 ? $"  ({FileOps.FormatSize(m.Size)})" : "")), HorizontalAlignment = HorizontalAlignment.Left };
                 ToolTip.SetTip(b, "Save to Downloads and open");
                 b.Click += async (_, _) => await SaveAndOpen(m, b);
                 panel.Children.Add(b);
@@ -458,7 +458,7 @@ public sealed class MessengerWindow : Window
     private static Control ImageView(MatrixMessage m)
     {
         var img = new Image { MaxWidth = 320, MaxHeight = 260, Stretch = Stretch.Uniform, HorizontalAlignment = HorizontalAlignment.Left };
-        var holder = new Button { Content = new TextBlock { Text = "📷 " + m.Body }, Padding = new Thickness(4), HorizontalAlignment = HorizontalAlignment.Left, Background = Brushes.Transparent };
+        var holder = new Button { Content = Icons.Label("image", m.Body), Padding = new Thickness(4), HorizontalAlignment = HorizontalAlignment.Left, Background = Brushes.Transparent };
         ToolTip.SetTip(holder, "Open the picture");
         holder.Click += async (_, _) => await SaveAndOpen(m, holder);
         if (m.Mxc != null)
