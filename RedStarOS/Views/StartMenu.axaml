@@ -32,7 +32,9 @@
     </Style>
     <Style Selector="Button.pintile">
       <Setter Property="Width" Value="96" />
-      <Setter Property="Height" Value="86" />
+      <Setter Property="Height" Value="94" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
       <Setter Property="Padding" Value="4,8,4,4" />
       <Setter Property="CornerRadius" Value="10" />
       <Setter Property="HorizontalContentAlignment" Value="Center" />

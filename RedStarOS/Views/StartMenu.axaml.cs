@@ -323,7 +323,7 @@ public partial class StartMenu : UserControl
                     Children =
                     {
                         pic,
-                        new TextBlock { Text = item.Title, FontSize = 12, TextAlignment = TextAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 86 },
+                        new TextBlock { Text = item.Title, FontSize = 12, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 88, LineHeight = 15 },
                     },
                 },
             };

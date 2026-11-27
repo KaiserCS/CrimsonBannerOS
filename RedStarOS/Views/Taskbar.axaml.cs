@@ -667,6 +667,7 @@ public partial class Taskbar : UserControl
 
         if (overflow.Count > 0) AppTray.Children.Add(MakeOverflowButton(overflow));
         foreach (var e in inline) AppTray.Children.Add(MakeTrayButton(e, onTaskbar: true));
+        TrayRule.IsVisible = AppTray.Children.Count > 0;       // the divider only when there's a tray to divide off
     }
 
     private Control MakeOverflowButton(List<TrayEntry> hidden)
