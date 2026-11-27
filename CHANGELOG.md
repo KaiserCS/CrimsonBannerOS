@@ -2,6 +2,23 @@
 
 Versions are YY.MM.N (README, "Versions"). `tools/release.sh` adds each release's section here.
 
+## 26.11.6 (2026-11-26)
+
+- Virtual desktops, as on Windows 10: Task View (Super+Tab, or the new button next to Start) shows this desktop's
+  windows and every desktop; add, rename and close desktops, drag windows between them. Super+Ctrl+D adds one,
+  Super+Ctrl+Left/Right switch (with Shift the active window comes along), Super+Ctrl+F4 closes the one in use. The
+  taskbar, Alt+Tab and Snap Assist show the desktop in use; a window's taskbar menu has "Move to". In redstar-wm and
+  redstar-comp alike.
+- Night light: a warmer screen by hand (Quick Settings), from sunset to sunrise (worked out on the computer from the
+  time zone) or between set hours, with a strength slider (Settings → Displays). Through each screen's gamma ramp:
+  XRandR on X11, the display hardware inside redstar-comp.
+- The clock's panel redone: round days, today in the accent, event dots, an agenda with times.
+- Taskbar previews show the whole window, stay open while the pointer rests, and sit 8 px above the taskbar like the
+  other panels.
+- Image Viewer: Zoom to fit, and Ctrl+arrows to scroll a zoomed picture.
+- A design guideline (DESIGN.md), and the two contrast gaps it found closed: muted text is lighter, and small text in
+  the accent colour uses a lighter tone of it.
+
 ## 26.11.5 (2026-11-26)
 
 - Snap Assist: an app's picture when its window's class names a Crimson Banner app
