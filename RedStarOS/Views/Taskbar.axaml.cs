@@ -27,7 +27,20 @@ public interface IShellPanel
 public partial class Taskbar : UserControl
 {
     private const int MaxInlineTrayIcons = 4;
-    private const int MaxLabelledTasks = 5;       // more windows than this: icons only, titles in tooltips
+    // window titles share the room the row has: up to LabelMax each, a step at a time narrower as windows open, and
+    // icons only (titles in the previews and tooltips) once a title would be shorter than LabelMin
+    private const double LabelMax = 130, LabelMin = 48, LabelStep = 10;
+    private const double IconSlot = 26 + 2 * 9 + 4;   // icon, the button's margins, the row's spacing
+
+    /// <summary>How wide each window's title may be when <paramref name="labelled"/> of the <paramref name="buttons"/>
+    /// buttons carry one in a row <paramref name="room"/> wide; 0 = icons only. Public for the tests.</summary>
+    public static double LabelWidth(double room, int buttons, int labelled)
+    {
+        if (labelled <= 0 || room <= 0) return 0;
+        double each = (room - buttons * IconSlot) / labelled - 8 - 2;      // the gap before the title, the wider margin
+        each = Math.Floor(each / LabelStep) * LabelStep;
+        return each < LabelMin ? 0 : Math.Min(LabelMax, each);
+    }
 
     private readonly DispatcherTimer _clock = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly DispatcherTimer _status = new() { Interval = TimeSpan.FromSeconds(8) };
@@ -112,6 +125,9 @@ public partial class Taskbar : UserControl
         _status.Tick += (_, _) => RefreshStatus();
         _status.Start();
 
+        // the titles' width follows the room the row has
+        TaskScroll.SizeChanged += (_, e) => { if (Math.Abs(e.NewSize.Width - e.PreviousSize.Width) >= 1) RebuildTasks(); };
+
         UpdateClock();
         RebuildTasks();
         RebuildAppTray();
@@ -165,7 +181,8 @@ public partial class Taskbar : UserControl
 
         _startMenu.CloseRequested += () => _startFlyout.Hide();
         _startMenu.PowerRequested += ShellActions.Perform;
-        _startFlyout.Opened += (_, _) => _startMenu.Refresh();
+        _startFlyout.Opened += (_, _) => { _startMenu.Refresh(); StartButton.Classes.Set("open", true); };
+        _startFlyout.Closed += (_, _) => StartButton.Classes.Set("open", false);
         // the same gap above the taskbar as from the screen's left edge, wherever the Start button sits inside it
         StartButton.LayoutUpdated += (_, _) => PlaceAbove(_startFlyout, StartButton, alignLeft: true);
         _startFlyout.Opening += (_, _) => PlaceAbove(_startFlyout, StartButton, alignLeft: true);
@@ -308,7 +325,8 @@ public partial class Taskbar : UserControl
         }
         foreach (var t in tasks.Where(t => !used.Contains(t))) entries.Add((null, t));
 
-        bool labels = SettingsStore.Current.TaskbarLabels && entries.Count(e => e.Task != null) <= MaxLabelledTasks;
+        double labels = SettingsStore.Current.TaskbarLabels
+            ? LabelWidth(TaskScroll.Bounds.Width, entries.Count, entries.Count(e => e.Task != null)) : 0;
 
         // Buttons are kept and updated in place (keyed by pinned app or window): replacing a button under the
         // pointer would leave its tooltip open but empty, and lose a click in progress.
@@ -365,7 +383,7 @@ public partial class Taskbar : UserControl
         return btn;
     }
 
-    private void FillTaskButton(Button btn, string? pinId, TaskItem? task, bool labels)
+    private void FillTaskButton(Button btn, string? pinId, TaskItem? task, double labels)
     {
         var slot = (TaskSlot)btn.Tag!;
         var appId = task?.AppId ?? pinId;
@@ -373,7 +391,7 @@ public partial class Taskbar : UserControl
         var linux = app == null && appId != null ? DesktopEntries.FromId(appId) : null;
         var title = task?.Title ?? app?.Name ?? linux?.Name ?? "App";
         var active = task?.IsActive == true;
-        var showLabel = labels && task != null;
+        var showLabel = labels > 0 && task != null;
         var starting = false;
 
         bool sameTask = ReferenceEquals(slot.Task, task) && slot.PinId == pinId;
@@ -383,7 +401,7 @@ public partial class Taskbar : UserControl
         if (!Equals(ToolTip.GetTip(btn), tip)) ToolTip.SetTip(btn, tip);      // an open tooltip just updates its text
         btn.Classes.Set("active", active);
 
-        var look = $"{appId}|{title}|{active}|{showLabel}|{starting}|{task != null}|{(task as X11Task)?.IconStamp}|{task?.IsMinimized}";
+        var look = $"{appId}|{title}|{active}|{(showLabel ? labels : 0)}|{starting}|{task != null}|{(task as X11Task)?.IconStamp}|{task?.IsMinimized}";
         if (look == slot.Look && sameTask) return;
         slot.Look = look;
 
@@ -400,26 +418,27 @@ public partial class Taskbar : UserControl
             row.Children.Add(new TextBlock
             {
                 Text = starting ? title + "…" : title,
-                MaxWidth = 130,
+                MaxWidth = labels,
                 FontSize = 13,
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 VerticalAlignment = VerticalAlignment.Center
             });
         }
 
-        // Running indicator: a dot for a running app, a longer bar for the focused one.
+        // Running indicator: a dot for a running app, a longer bar in the accent for the focused one.
         var indicator = new Border
         {
             Width = active ? 20 : 6,
             Height = 3,
             CornerRadius = new CornerRadius(2),
-            Background = active ? Brushes.White : new SolidColorBrush(Color.Parse("#99FFFFFF")),
+            Background = active ? null : new SolidColorBrush(Color.Parse("#99FFFFFF")),
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Bottom,
             Margin = new Thickness(0, 0, 0, 2),
             IsVisible = task != null
         };
 
+        if (active) indicator.Bind(Border.BackgroundProperty, indicator.GetResourceObservable("ShellAccentTextBrush"));
         var content = new Grid();
         content.Children.Add(row);
         content.Children.Add(indicator);

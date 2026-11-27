@@ -39,7 +39,7 @@
       </StackPanel>
 
       <DockPanel Grid.Column="1" Margin="10,0">
-        <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+        <ScrollViewer x:Name="TaskScroll" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
           <StackPanel x:Name="TaskList" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" />
         </ScrollViewer>
       </DockPanel>

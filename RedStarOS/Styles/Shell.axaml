@@ -411,14 +411,13 @@
   <Style Selector="Button.task.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource TaskbarHoverBrush}" />
   </Style>
-  <Style Selector="Button.task.start">
+  <!-- Start: plain like the other buttons (the badge is colour enough), tinted only while its menu is open, so the
+       tint means one thing on the taskbar: what is open or in front -->
+  <Style Selector="Button.task.start.open">
     <Setter Property="Background" Value="{DynamicResource ShellAccentSoftBrush}" />
   </Style>
-  <Style Selector="Button.task.start /template/ ContentPresenter#PART_ContentPresenter">
+  <Style Selector="Button.task.start.open /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource ShellAccentSoftBrush}" />
-  </Style>
-  <Style Selector="Button.task.start:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource ShellAccentBrush}" />
   </Style>
 
   <!-- ===== Toasts ===== -->
