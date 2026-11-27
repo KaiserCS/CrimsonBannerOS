@@ -203,14 +203,6 @@ int main(void)
     CHECK(viewable(a), "shown again");
     CHECK((Window)card(root, "_NET_ACTIVE_WINDOW", XA_WINDOW, 0) == a, "and active");
 
-    printf("Workspace switching is off\n");
-    msg(root, "_NET_NUMBER_OF_DESKTOPS", 4, 0, 0, 0, 0);
-    msg(root, "_NET_CURRENT_DESKTOP", 1, CurrentTime, 0, 0, 0);
-    CHECK(card(root, "_NET_NUMBER_OF_DESKTOPS", XA_CARDINAL, 0) == 1 && card(root, "_NET_CURRENT_DESKTOP", XA_CARDINAL, 0) == 0, "requests for more workspaces or switching are ignored");
-    CHECK(viewable(a) && viewable(b) && viewable(desk), "every window stays visible");
-    msg(b, "_NET_WM_DESKTOP", 2, 2, 0, 0, 0);
-    CHECK(viewable(b) && card(b, "_NET_WM_DESKTOP", XA_CARDINAL, 0) == 0, "a window can't be sent to another workspace");
-
     printf("Snapping (_NET_MOVERESIZE_WINDOW, as Super+Left does)\n");
     msg(a, "_NET_MOVERESIZE_WINDOW", 1 | (0xF << 8) | (2 << 12), 0, 0, SW / 2 - 2 * card(a, "_NET_FRAME_EXTENTS", XA_CARDINAL, 0),
         SH - 48 - card(a, "_NET_FRAME_EXTENTS", XA_CARDINAL, 2) - card(a, "_NET_FRAME_EXTENTS", XA_CARDINAL, 3));
@@ -343,6 +335,43 @@ int main(void)
     st = cards(root, "_NET_CLIENT_LIST_STACKING", XA_WINDOW, &n);
     CHECK(st && n > 0 && (Window)st[0] == desk, "a focused desktop still stays at the bottom");
     if (st) XFree(st);
+
+    printf("Virtual desktops\n");
+    {
+        msg(root, "_NET_NUMBER_OF_DESKTOPS", 3, 0, 0, 0, 0);
+        CHECK(card(root, "_NET_NUMBER_OF_DESKTOPS", XA_CARDINAL, 0) == 3, "the shell can ask for three desktops");
+        unsigned long wn; long *wa = cards(root, "_NET_WORKAREA", XA_CARDINAL, &wn);
+        CHECK(wa && wn == 12, "the work area is given for each of them (%lu numbers)", wn);
+        if (wa) XFree(wa);
+        Window v1 = make("on desktop 1", 200, 200, 300, 200);
+        XMapWindow(d, v1); settle();
+        CHECK(card(v1, "_NET_WM_DESKTOP", XA_CARDINAL, 0) == 0, "a new window opens on the desktop in use");
+        msg(root, "_NET_CURRENT_DESKTOP", 1, CurrentTime, 0, 0, 0);
+        CHECK(card(root, "_NET_CURRENT_DESKTOP", XA_CARDINAL, 0) == 1, "switching to desktop 2");
+        CHECK(!viewable(v1), "hides desktop 1's window");
+        CHECK(viewable(desk), "the desktop (wallpaper, icons) stays on every desktop");
+        Window v2 = make("on desktop 2", 260, 240, 300, 200);
+        XMapWindow(d, v2); settle();
+        CHECK(card(v2, "_NET_WM_DESKTOP", XA_CARDINAL, 0) == 1 && viewable(v2), "a window opened now is on desktop 2");
+        msg(v2, "_NET_WM_DESKTOP", 2, 2, 0, 0, 0);
+        CHECK(card(v2, "_NET_WM_DESKTOP", XA_CARDINAL, 0) == 2 && !viewable(v2), "moving it to desktop 3 takes it out of sight");
+        msg(v1, "_NET_ACTIVE_WINDOW", 2, CurrentTime, 0, 0, 0);
+        CHECK(card(root, "_NET_CURRENT_DESKTOP", XA_CARDINAL, 0) == 0 && viewable(v1) && (Window)card(root, "_NET_ACTIVE_WINDOW", XA_WINDOW, 0) == v1,
+              "activating a window on another desktop goes there and focuses it");
+        msg(root, "_NET_CURRENT_DESKTOP", 2, CurrentTime, 0, 0, 0);
+        CHECK(viewable(v2) && !viewable(v1) && (Window)card(root, "_NET_ACTIVE_WINDOW", XA_WINDOW, 0) == v2,
+              "switching focuses the window used last on the desktop switched to");
+        msg(root, "_NET_NUMBER_OF_DESKTOPS", 2, 0, 0, 0, 0);
+        CHECK(card(root, "_NET_NUMBER_OF_DESKTOPS", XA_CARDINAL, 0) == 2 && card(root, "_NET_CURRENT_DESKTOP", XA_CARDINAL, 0) == 1,
+              "closing the last desktop while on it shows the one before");
+        CHECK(card(v2, "_NET_WM_DESKTOP", XA_CARDINAL, 0) == 1 && viewable(v2), "and its windows move there");
+        msg(v2, "_NET_WM_DESKTOP", 0xFFFFFFFF, 2, 0, 0, 0);
+        msg(root, "_NET_CURRENT_DESKTOP", 0, CurrentTime, 0, 0, 0);
+        CHECK(viewable(v2), "a window put on every desktop stays in sight");
+        XDestroyWindow(d, v1); XDestroyWindow(d, v2);
+        msg(root, "_NET_NUMBER_OF_DESKTOPS", 1, 0, 0, 0, 0);
+        CHECK(card(root, "_NET_NUMBER_OF_DESKTOPS", XA_CARDINAL, 0) == 1, "back to one desktop");
+    }
 
     printf("Withdrawing a window\n");
     XUnmapWindow(d, dlg); settle();

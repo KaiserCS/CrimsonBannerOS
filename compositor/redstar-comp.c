@@ -13,6 +13,8 @@
  * What it does, matching redstar-wm:
  *   • title bars drawn by the compositor (red star, title, minimise / maximise / close; double-click maximises),
  *     3 px borders, resize from the edges, soft shadows on framed windows that aren't maximised or full screen;
+ *   • virtual desktops: each window is on one (or on all); the shell switches, adds and moves (Task View);
+ *   • night light: the shell's warm tint as each screen's gamma ramp;
  *   • click to focus and raise; the desktop window stays at the bottom and full screen; docks and notifications on top;
  *   • Alt+drag moves, Alt+right-drag resizes, dragging to the top edge maximises, to the left/right edge snaps half,
  *     to a corner a quarter, with a preview of where it will go in the shell's accent;
@@ -89,6 +91,9 @@
 #include <wlr/util/log.h>
 #include <wlr/xwayland.h>
 #include <wlr/types/wlr_output_management_v1.h>
+#ifdef HAVE_NIGHT_COLOR_TRANSFORM
+#include <wlr/render/color.h>
+#endif
 #include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/types/wlr_export_dmabuf_v1.h>
 #include <wlr/types/wlr_ext_image_capture_source_v1.h>
@@ -137,6 +142,7 @@ struct view {
 	bool announced;                     /* the shell was told about it */
 	bool fading;                        /* fading in after it appeared */
 	bool bare;                          /* the shell asked for no frame (its switcher, splash…) */
+	int desk;                           /* the virtual desktop it's on, from 0; -1: on every desktop */
 	struct timespec fade_start;
 
 	struct wl_listener map, unmap, commit, destroy;
@@ -227,6 +233,9 @@ struct server {
 	struct view *hover_view;            /* the window whose title-bar buttons are lit */
 
 	struct wlr_box workarea;            /* the screen minus struts (taskbar) */
+	int ndesk, curdesk;                 /* virtual desktops: how many, and the one shown */
+	float night[3];                     /* night light: red, green, blue multipliers (all 1: off) */
+	bool night_on;
 
 	struct wlr_xwayland *xwayland;
 	xcb_connection_t *xcb;
@@ -300,6 +309,9 @@ static void never_zero_hz(struct wlr_output *wo);
 static bool child_of_desktop(struct view *v);
 static void update_capabilities(struct server *s);
 struct ipc_client;
+static void desk_switch(struct server *s, int d, struct view *keep);
+static void shell_desk_line(struct view *v, struct ipc_client *only);
+static void night_set(struct server *s, struct ipc_client *c, char *arg);
 static bool token_take(struct view *v, const char *title);
 static void shell_token_line(struct view *v, struct ipc_client *only);
 static void role_command(struct server *s, char *arg);
@@ -690,10 +702,29 @@ static void keyboard_enter(struct server *s, struct wlr_surface *surface)
 	else wlr_seat_keyboard_notify_enter(s->seat, surface, NULL, 0, NULL);
 }
 
+/* ───────────────────────── virtual desktops ─────────────────────────
+ * Each window is on one desktop (desk, from 0) or on all of them (-1: the shell's desktop, docks, toasts, menus). Only
+ * the shown desktop's windows are drawn; the shell lists them all (stack) with the desktop each is on (on-desktop). */
+static bool view_sticky(struct view *v)
+{
+	return v->unmanaged || v->desk < 0 || v->kind == K_DESKTOP || v->kind == K_DOCK || v->kind == K_NOTIFY || v->kind == K_SPLASH;
+}
+
+static bool view_on_desk(struct view *v) { return view_sticky(v) || v->desk == v->server->curdesk; }
+
+/* drawn when it's neither minimised nor on another desktop (and its menus with it) */
+static void view_show_state(struct view *v)
+{
+	if (!v->tree) return;
+	wlr_scene_node_set_enabled(&v->tree->node, !v->minimized && view_on_desk(v));
+	popups_follow(v);
+}
+
 static void focus_view(struct view *v)
 {
 	struct server *s = v ? v->server : NULL;
 	if (!v || !v->mapped || v->minimized) return;
+	if (!v->unmanaged && !view_on_desk(v)) desk_switch(s, v->desk, v);     /* on another desktop: go there */
 	if (v->unmanaged) {
 		/* menus and popups that ask for the keyboard get it without changing the active window */
 		struct wlr_surface *surf = view_surface(v);
@@ -723,7 +754,7 @@ static void focus_next(struct server *s, struct view *except)
 {
 	struct view *v, *desktop = NULL;
 	wl_list_for_each(v, &s->views, link) {
-		if (v == except || !v->mapped || v->minimized || v->unmanaged) continue;
+		if (v == except || !v->mapped || v->minimized || v->unmanaged || !view_on_desk(v)) continue;
 		if (v->kind == K_DESKTOP) { if (!desktop) desktop = v; continue; }
 		if (v->kind == K_DOCK || v->kind == K_NOTIFY) continue;
 		focus_view(v);
@@ -787,7 +818,7 @@ static void view_set_minimized(struct view *v, bool on)
 {
 	if (v->kind == K_DESKTOP || v->minimized == on) return;
 	v->minimized = on;
-	if (v->tree) wlr_scene_node_set_enabled(&v->tree->node, !on);
+	view_show_state(v);
 	if (v->x11 && v->xs) wlr_xwayland_surface_set_minimized(v->xs, on);
 	if (on) {
 		if (v->server->focused == v) {
@@ -952,6 +983,7 @@ static void view_map(struct view *v, struct wlr_surface *surface)
 {
 	struct server *s = v->server;
 	v->mapped = true;
+	v->desk = s->curdesk;                        /* opens on the desktop in use */
 	v->tree = wlr_scene_tree_create(layer_for(v));
 	v->tree->node.data = v;
 	if (v->unmanaged) {
@@ -982,6 +1014,7 @@ static void view_map(struct view *v, struct wlr_surface *surface)
 		return;
 	}
 	shell_changed(v);
+	shell_desk_line(v, NULL);
 	focus_view(v);
 }
 
@@ -1970,7 +2003,13 @@ static void xwayland_ready(struct wl_listener *l, void *data)
  *     key <name>                                     a global shortcut: start, switcher-open, switcher-open-prev,
  *                                                    switcher-next, switcher-prev, switcher-commit, switcher-cancel,
  *                                                    snap-left, snap-right, maximize, minimize, clipboard, desktop,
- *                                                    files, lock, terminal, search
+ *                                                    files, lock, terminal, search, task-view, desktop-next,
+ *                                                    desktop-prev, desktop-move-next, desktop-move-prev,
+ *                                                    desktop-new, desktop-close
+ *     desktops <count> <shown>                       the virtual desktops: how many, and the one shown (from 0)
+ *     on-desktop <id> <n>                            the desktop a taskbar window is on (-1: every desktop)
+ *     nightlight <applied> <failed>                  the answer to nightlight: screens tinted, and screens without a
+ *                                                    gamma ramp (nested, headless)
  *     snapped <id> <zone>                            a window was dropped at an edge or corner and snapped (left,
  *                                                    right, top-left, top-right, bottom-left, bottom-right): the
  *                                                    shell offers the other windows for the space left
@@ -1982,6 +2021,11 @@ static void xwayland_ready(struct wl_listener *l, void *data)
  *     accent #RRGGBB                                 the shell's accent: snap previews and the active title bar
  *     peek on|off                                    every window nearly see-through, or solid again (Show desktop)
  *     switcher-end                                   the switcher was closed with the mouse
+ *     desktops <n>                                   how many virtual desktops (1–20; windows on ones that go move to
+ *                                                    the last one left)
+ *     desktop <n>                                    show desktop n (from 0)
+ *     to-desktop <n> <id>                            move a window to desktop n (-1: every desktop)
+ *     nightlight <red> <green> <blue>                tint every screen (multipliers 0.1–1, all 1: off)
  *
  * Native ids are (1 << 32) + n, so they never collide with X11 window ids.
  */
@@ -2136,6 +2180,71 @@ static struct view *view_by_shell_id(struct server *s, uint64_t id)
 	return NULL;
 }
 
+/* "on-desktop <id> <n>" for a window the taskbar lists (-1: on every desktop) */
+static void shell_desk_line(struct view *v, struct ipc_client *only)
+{
+	if (!stack_listed(v)) return;
+	ipc_send(v->server, only, "on-desktop\t%llu\t%d", (unsigned long long)view_shell_id(v), view_sticky(v) ? -1 : v->desk);
+}
+
+static void shell_desks_line(struct server *s, struct ipc_client *only)
+{
+	ipc_send(s, only, "desktops\t%d\t%d", s->ndesk, s->curdesk);
+}
+
+/* after the shown desktop changed: draw its windows, hide the others', and give the keyboard to the window used last
+ * there (unless the caller focuses one: keep) */
+static void desk_refresh(struct server *s, struct view *keep)
+{
+	struct view *v;
+	wl_list_for_each(v, &s->views, link) if (v->mapped && !v->unmanaged) view_show_state(v);
+	struct view *f = s->focused;
+	if (f && !view_on_desk(f)) {
+		view_set_activated(f, false);
+		s->focused = NULL;
+		view_update_decorations(f);
+	}
+	if (!keep) focus_next(s, NULL);
+	shell_desks_line(s, NULL);
+	shell_stack(s);
+}
+
+static void desk_switch(struct server *s, int d, struct view *keep)
+{
+	if (d < 0 || d >= s->ndesk || d == s->curdesk) return;
+	s->curdesk = d;
+	desk_refresh(s, keep);
+}
+
+static void view_to_desk(struct view *v, int d)
+{
+	struct server *s = v->server;
+	if (v->unmanaged || v->kind == K_DESKTOP || v->kind == K_DOCK || v->kind == K_NOTIFY || v->kind == K_SPLASH) return;
+	v->desk = d < 0 ? -1 : d >= s->ndesk ? s->ndesk - 1 : d;
+	view_show_state(v);
+	if (s->focused == v && !view_on_desk(v)) {
+		view_set_activated(v, false);
+		s->focused = NULL;
+		view_update_decorations(v);
+		focus_next(s, v);
+	}
+	shell_desk_line(v, NULL);
+}
+
+/* how many desktops (1–20); windows on desktops that go move to the last one left */
+static void desk_count(struct server *s, int n)
+{
+	if (n < 1) n = 1;
+	if (n > 20) n = 20;
+	if (n == s->ndesk) return;
+	s->ndesk = n;
+	struct view *v;
+	wl_list_for_each(v, &s->views, link)
+		if (v->mapped && !v->unmanaged && v->desk >= n) { v->desk = n - 1; shell_desk_line(v, NULL); }
+	if (s->curdesk >= n) s->curdesk = n - 1;
+	desk_refresh(s, s->focused && view_on_desk(s->focused) ? s->focused : NULL);
+}
+
 static void cursor_theme_set(struct server *s, const char *theme, int size);
 static void idle_rearm(struct server *s);
 static void input_activity(struct server *s);
@@ -2159,7 +2268,9 @@ static void ipc_command(struct ipc_client *c, char *line)
 		wl_list_for_each_reverse(v, &s->views, link) {
 			if (native_listed(v)) { v->announced = true; shell_window_line(v, c); }
 			if (v->mapped && v->token[0]) shell_token_line(v, c);
+			shell_desk_line(v, c);
 		}
+		shell_desks_line(s, c);
 		uint64_t active = s->focused && stack_listed(s->focused) ? view_shell_id(s->focused) : 0;
 		ipc_send(s, c, "active\t%llu", (unsigned long long)active);
 		s->last_active = active;
@@ -2214,6 +2325,15 @@ static void ipc_command(struct ipc_client *c, char *line)
 				wlr_scene_node_for_each_buffer(&v->tree->node, peek_buffer, &op);
 		return;
 	}
+	if (strcmp(line, "desktops") == 0) { if (arg) desk_count(s, atoi(arg)); return; }
+	if (strcmp(line, "desktop") == 0) { if (arg) desk_switch(s, atoi(arg), NULL); return; }
+	if (strcmp(line, "to-desktop") == 0) {           /* "to-desktop\t<desktop>\t<id>"; desktop -1: every desktop */
+		char *id = arg ? strchr(arg, '\t') : NULL;
+		struct view *v = id ? view_by_shell_id(s, strtoull(id + 1, NULL, 10)) : NULL;
+		if (v) view_to_desk(v, atoi(arg));
+		return;
+	}
+	if (strcmp(line, "nightlight") == 0) { night_set(s, c, arg); return; }
 	if (strcmp(line, "outputs") == 0) { outputs_describe(s, c); return; }
 	if (strcmp(line, "role") == 0) { if (arg) role_command(s, arg); return; }
 	if (strcmp(line, "outputs-save") == 0) { outputs_save(s); return; }
@@ -2460,6 +2580,16 @@ static bool shell_shortcut(struct server *s, xkb_keysym_t sym, bool pressed, uin
 	if (pressed && (s->super_down || (mods & WLR_MODIFIER_LOGO))) {
 		s->super_used = true;
 		const char *name = NULL;
+		/* virtual desktops, as on Windows: Super+Ctrl+Left/Right switch, with Shift the active window goes along,
+		 * Super+Ctrl+D adds one, Super+Ctrl+F4 closes this one, Super+Tab shows Task View */
+		if (ctrl && (lower == XKB_KEY_Left || lower == XKB_KEY_Right)) {
+			bool next = lower == XKB_KEY_Right;
+			shell_key(s, shift ? (next ? "desktop-move-next" : "desktop-move-prev") : (next ? "desktop-next" : "desktop-prev"));
+			return true;
+		}
+		if (ctrl && lower == XKB_KEY_d) { shell_key(s, "desktop-new"); return true; }
+		if (ctrl && sym == XKB_KEY_F4) { shell_key(s, "desktop-close"); return true; }
+		if (sym == XKB_KEY_Tab || sym == XKB_KEY_ISO_Left_Tab) { shell_key(s, "task-view"); return true; }
 		switch (lower) {
 		case XKB_KEY_Left: name = "snap-left"; break;
 		case XKB_KEY_Right: name = "snap-right"; break;
@@ -3426,6 +3556,63 @@ static void outputs_save(struct server *s)
 	if (fclose(f) == 0) rename(tmp, outputs_file);
 }
 
+/* ───────────────────────── night light ─────────────────────────
+ * The shell works out the tint (from the colour temperature it fades to) and sends three multipliers; each screen
+ * gets them as its gamma ramp, in the display hardware, so it costs nothing to draw. Screens without one (a window on
+ * another desktop, the headless test screen) say so in the answer. */
+static void night_apply_output(struct server *s, struct output *o, int *ok, int *failed)
+{
+	if (!o->wlr->enabled) return;
+#if defined(HAVE_NIGHT_COLOR_TRANSFORM) || defined(HAVE_NIGHT_GAMMA_LUT)
+	size_t size = 256;
+#ifdef HAVE_GAMMA_SIZE
+	size_t hw = wlr_output_get_gamma_size(o->wlr);
+	if (hw == 0) { (*failed)++; return; }
+	size = hw;
+#endif
+	uint16_t *r = calloc(size * 3, sizeof *r);
+	if (!r) { (*failed)++; return; }
+	uint16_t *g = r + size, *b = g + size;
+	for (size_t i = 0; i < size; i++) {
+		double x = size > 1 ? (double)i / (double)(size - 1) : 1.0;
+		r[i] = (uint16_t)(x * s->night[0] * 65535.0 + 0.5);
+		g[i] = (uint16_t)(x * s->night[1] * 65535.0 + 0.5);
+		b[i] = (uint16_t)(x * s->night[2] * 65535.0 + 0.5);
+	}
+	struct wlr_output_state st;
+	wlr_output_state_init(&st);
+#ifdef HAVE_NIGHT_COLOR_TRANSFORM
+	struct wlr_color_transform *t = s->night_on ? wlr_color_transform_init_lut_3x1d(size, r, g, b) : NULL;
+	wlr_output_state_set_color_transform(&st, t);
+	if (t) wlr_color_transform_unref(t);
+#else
+	if (s->night_on) wlr_output_state_set_gamma_lut(&st, size, r, g, b);
+	else wlr_output_state_set_gamma_lut(&st, 0, NULL, NULL, NULL);
+#endif
+	bool good = wlr_output_test_state(o->wlr, &st) && wlr_output_commit_state(o->wlr, &st);
+	wlr_output_state_finish(&st);
+	free(r);
+	if (good) (*ok)++;
+	else (*failed)++;
+#else
+	(void)s;
+	(*failed)++;                                     /* wlroots without a way to set it */
+#endif
+}
+
+/* "nightlight <red> <green> <blue>" (multipliers; all 1: off), answered with how many screens took it */
+static void night_set(struct server *s, struct ipc_client *c, char *arg)
+{
+	float m[3] = { 1, 1, 1 };
+	if (arg) sscanf(arg, "%f %f %f", &m[0], &m[1], &m[2]);
+	for (int i = 0; i < 3; i++) s->night[i] = m[i] < 0.1f ? 0.1f : m[i] > 1 ? 1 : m[i];
+	s->night_on = s->night[0] < 0.999f || s->night[1] < 0.999f || s->night[2] < 0.999f;
+	int ok = 0, failed = 0;
+	struct output *o;
+	wl_list_for_each(o, &s->outputs, link) night_apply_output(s, o, &ok, &failed);
+	ipc_send(s, c, "nightlight\t%d\t%d", ok, failed);
+}
+
 /* ───────────────────────── outputs ───────────────────────── */
 
 static void output_frame(struct wl_listener *l, void *data)
@@ -3540,6 +3727,7 @@ static void new_output(struct wl_listener *l, void *data)
 		output_configure(o, false, NULL, 0, 0, 0, 1, 0, true, 0, 0, false, why, sizeof why);   /* it was turned off */
 	}
 	output_manager_update(s);
+	if (s->night_on) { int ok = 0, failed = 0; night_apply_output(s, o, &ok, &failed); }   /* a screen plugged in at night */
 	nested_x11_output(s->loop, wo, host_display, want_fullscreen);     /* no-op unless nested on X11 */
 }
 
@@ -3700,6 +3888,8 @@ int main(int argc, char **argv)
 	wl_list_init(&s->popups);
 	wl_list_init(&s->ipc_clients);
 	s->ipc_fd = -1;
+	s->ndesk = 1;
+	s->night[0] = s->night[1] = s->night[2] = 1;
 
 	s->display = wl_display_create();
 	s->loop = wl_display_get_event_loop(s->display);

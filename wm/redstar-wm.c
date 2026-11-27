@@ -7,8 +7,8 @@
  *     edges and corners to resize, Alt+drag to move, Alt+right-drag to resize, Alt+F4 to close.
  *   - EWMH for the shell and for apps: _NET_ACTIVE_WINDOW, _NET_CLIENT_LIST(_STACKING), _NET_WM_STATE
  *     (fullscreen, maximised, hidden, above, skip taskbar), _NET_WM_MOVERESIZE (apps' own title bars),
- *     _NET_MOVERESIZE_WINDOW (snapping), _NET_CLOSE_WINDOW, workspaces (_NET_NUMBER_OF_DESKTOPS,
- *     _NET_CURRENT_DESKTOP, _NET_WM_DESKTOP), struts → _NET_WORKAREA, _NET_FRAME_EXTENTS, window types
+ *     _NET_MOVERESIZE_WINDOW (snapping), _NET_CLOSE_WINDOW, virtual desktops (_NET_NUMBER_OF_DESKTOPS,
+ *     _NET_CURRENT_DESKTOP, _NET_WM_DESKTOP: the shell's Task View adds, switches and moves between them), struts → _NET_WORKAREA, _NET_FRAME_EXTENTS, window types
  *     (desktop at the bottom and full screen, docks and notifications on top, dialogs centred).
  *   - ICCCM: WM_STATE, WM_DELETE_WINDOW, WM_TAKE_FOCUS, WM_CHANGE_STATE (iconify), size hints,
  *     transient windows, Motif "no decorations" hints.
@@ -70,7 +70,8 @@ static double scale = 1.0;
 static int TH = 32, BW = 3;         /* title height, border (scaled) */
 static Client *clients, *stack, *active;
 static void snap_preview_hide(void);
-static int ndesk = 1, curdesk = 0;     /* Red Star uses a single workspace */
+static int ndesk = 1, curdesk = 0;     /* virtual desktops: the shell sets how many (_NET_NUMBER_OF_DESKTOPS) */
+#define MAX_DESKTOPS 20
 static int wa_x, wa_y, wa_w, wa_h;  /* work area */
 static Cursor cur_normal, cur_move, cur_edge[8];
 static GC gc;
@@ -341,10 +342,15 @@ static void set_root_desktop_props(void)
     v = curdesk; set_cardinals(root, A[NET_CURRENT_DESKTOP], XA_CARDINAL, &v, 1);
     long geo[2] = { SW, SH }; set_cardinals(root, A[NET_DESKTOP_GEOMETRY], XA_CARDINAL, geo, 2);
     long *vp = calloc(2 * ndesk, sizeof(long)); set_cardinals(root, A[NET_DESKTOP_VIEWPORT], XA_CARDINAL, vp, 2 * ndesk); free(vp);
-    char names[256]; int len = 0;
-    for (int i = 0; i < ndesk; i++) len += snprintf(names + len, sizeof names - len, "Desktop") + 1;
-    XChangeProperty(dpy, root, A[NET_DESKTOP_NAMES], A[UTF8_STRING], 8, PropModeReplace, (unsigned char *)names, len);
     v = 0; set_cardinals(root, A[NET_SHOWING_DESKTOP], XA_CARDINAL, &v, 1);
+}
+
+/* the desktops' names belong to the shell (it lets them be renamed); until it sets them: "Desktop 1"… */
+static void set_default_desktop_names(void)
+{
+    char names[512]; int len = 0;
+    for (int i = 0; i < ndesk && len < (int)sizeof names - 16; i++) len += snprintf(names + len, sizeof names - len, "Desktop %d", i + 1) + 1;
+    XChangeProperty(dpy, root, A[NET_DESKTOP_NAMES], A[UTF8_STRING], 8, PropModeReplace, (unsigned char *)names, len);
 }
 
 /* ───────────────────────── drawing ───────────────────────── */
@@ -565,6 +571,23 @@ static int visible(Client *c)
     return !c->minimized && (c->desktop == -1 || c->sticky || c->desktop == curdesk);
 }
 
+static void focus_next(void);
+static void restack(void);
+
+/* Shows desktop d: the windows on the one being left go (their frames unmapped), d's appear, and the window used last
+ * there gets the keyboard (focus_top: unless the caller is about to focus one itself). */
+static void switch_desktop(int d, int focus_top)
+{
+    if (d < 0 || d >= ndesk || d == curdesk) return;
+    curdesk = d;
+    for (Client *o = clients; o; o = o->next) if (!visible(o)) XUnmapWindow(dpy, o->frame);
+    for (Client *o = clients; o; o = o->next) if (visible(o)) XMapWindow(dpy, o->frame);
+    long v = curdesk; set_cardinals(root, A[NET_CURRENT_DESKTOP], XA_CARDINAL, &v, 1);
+    restack();
+    if (focus_top) focus_next();
+    DBG("desktop %d of %d", curdesk + 1, ndesk);
+}
+
 static void focus(Client *c)
 {
     Client *old = active;
@@ -620,20 +643,7 @@ static void activate(Client *c)
         XMapWindow(dpy, c->win);
         set_wm_state(c, NormalState);
     }
-    if (!visible(c) && c->desktop >= 0) {
-        /* on another workspace: go there */
-        XClientMessageEvent m = {0};
-        (void)m;
-        int target = c->desktop;
-        for (Client *o = clients; o; o = o->next) {
-            int was = visible(o);
-            int now = !o->minimized && (o->desktop == -1 || o->sticky || o->desktop == target);
-            if (was && !now) XUnmapWindow(dpy, o->frame);
-        }
-        curdesk = target;
-        long v = curdesk; set_cardinals(root, A[NET_CURRENT_DESKTOP], XA_CARDINAL, &v, 1);
-        for (Client *o = clients; o; o = o->next) if (visible(o)) XMapWindow(dpy, o->frame);
-    }
+    if (!visible(c) && c->desktop >= 0) switch_desktop(c->desktop, 0);   /* on another desktop: go there */
     XMapWindow(dpy, c->frame);
     update_net_state(c);
     raise_client(c);
@@ -714,16 +724,43 @@ static void refit_all(void)
     }
 }
 
-/* ───────────────────────── workspaces ───────────────────────── */
+/* ───────────────────────── virtual desktops ───────────────────────── */
 static void move_to_desktop(Client *c, long d)
 {
-    if (!c) return;
+    if (!c || c->type == T_DESKTOP || c->type == T_DOCK || c->type == T_NOTIFY) return;
     if (d == (long)0xFFFFFFFF || d < 0) { c->desktop = -1; c->sticky = 1; }
-    else { c->desktop = (int)(d % ndesk); c->sticky = 0; }
+    else { c->desktop = (int)(d >= ndesk ? ndesk - 1 : d); c->sticky = 0; }
     long v = c->desktop < 0 ? (long)0xFFFFFFFF : c->desktop;
     set_cardinals(c->win, A[NET_WM_DESKTOP], XA_CARDINAL, &v, 1);
     if (visible(c)) XMapWindow(dpy, c->frame); else { XUnmapWindow(dpy, c->frame); if (active == c) focus_next(); }
     update_net_state(c);
+    /* its dialogs go with it */
+    for (Client *t = clients; t; t = t->next)
+        if (t != c && t->transient_for == c->win && t->desktop != c->desktop) move_to_desktop(t, v);
+}
+
+/* How many desktops there are (1–20). Windows on desktops that go move to the last one left, and if the one shown goes,
+ * the last one left is shown. (The shell moves windows itself first when it closes a desktop in the middle.) */
+static void set_desktop_count(int n)
+{
+    if (n < 1) n = 1;
+    if (n > MAX_DESKTOPS) n = MAX_DESKTOPS;
+    if (n == ndesk) return;
+    int was = ndesk;
+    ndesk = n;
+    for (Client *c = clients; c; c = c->next) if (c->desktop >= n) move_to_desktop(c, n - 1);
+    if (curdesk >= n) { curdesk = -1; switch_desktop(n - 1, 1); }
+    set_root_desktop_props();
+    update_workarea();
+    /* names the shell hasn't given yet */
+    unsigned long len = 0; Atom type; int fmt; unsigned long after; unsigned char *data = NULL;
+    int named = 0;
+    if (XGetWindowProperty(dpy, root, A[NET_DESKTOP_NAMES], 0, 1024, False, A[UTF8_STRING], &type, &fmt, &len, &after, &data) == Success && data) {
+        for (unsigned long i = 0; i < len; i++) if (!data[i]) named++;
+        XFree(data);
+    }
+    if (named < n) set_default_desktop_names();
+    DBG("%d desktops (were %d)", ndesk, was);
 }
 
 /* ───────────────────────── manage / unmanage ───────────────────────── */
@@ -769,7 +806,11 @@ static void manage(Window w, XWindowAttributes *wa, int already_mapped)
 
     unsigned long n; long *d = get_cardinals(w, A[NET_WM_DESKTOP], XA_CARDINAL, &n);
     if (d && n && d[0] == (long)0xFFFFFFFF) { c->desktop = -1; c->sticky = 1; }
+    else if (d && n && d[0] >= 0 && d[0] < ndesk && c->desktop >= 0) c->desktop = (int)d[0];   /* asked for one */
     if (d) XFree(d);
+    /* a dialog opens on its window's desktop */
+    if (c->transient_for && c->desktop >= 0)
+        for (Client *p = clients; p; p = p->next) if (p->win == c->transient_for) { c->desktop = p->desktop; c->sticky = p->sticky; break; }
     /* states requested before mapping (Avalonia sets fullscreen / maximised this way) */
     int want_full = 0, want_max = 0;
     long *st = get_cardinals(w, A[NET_WM_STATE], XA_ATOM, &n);
@@ -1224,8 +1265,8 @@ static void on_client_message(XClientMessageEvent *e)
         if (n) XFree(n);
         if (a1) XFree(a1);
     }
-    if (e->message_type == A[NET_CURRENT_DESKTOP]) return;           /* one workspace: nothing to switch */
-    if (e->message_type == A[NET_NUMBER_OF_DESKTOPS]) return;        /* the count stays at one */
+    if (e->message_type == A[NET_CURRENT_DESKTOP]) { switch_desktop((int)l[0], 1); return; }
+    if (e->message_type == A[NET_NUMBER_OF_DESKTOPS]) { set_desktop_count((int)l[0]); return; }
     if (e->message_type == A[NET_REQUEST_FRAME_EXTENTS]) {
         long ext[4] = { BW, BW, TH, BW };
         set_cardinals(e->window, A[NET_FRAME_EXTENTS], XA_CARDINAL, ext, 4);
@@ -1236,7 +1277,7 @@ static void on_client_message(XClientMessageEvent *e)
     else if (e->message_type == A[NET_CLOSE_WINDOW]) close_client(c);
     else if (e->message_type == A[WM_CHANGE_STATE] && l[0] == IconicState) minimize(c);
     else if (e->message_type == A[NET_WM_STATE]) { state_change(c, l[0], (Atom)l[1]); state_change(c, l[0], (Atom)l[2]); }
-    else if (e->message_type == A[NET_WM_DESKTOP]) { /* one workspace: every window stays on it */ }
+    else if (e->message_type == A[NET_WM_DESKTOP]) move_to_desktop(c, l[0]);
     else if (e->message_type == A[NET_WM_MOVERESIZE]) {
         int dir = (int)l[2];
         if (dir == 11) { if (drag_mode) end_drag(); return; }     /* cancel */
@@ -1445,6 +1486,7 @@ int main(int argc, char **argv)
     for (int i = NET_SUPPORTED; i < ATOM_COUNT; i++) if (i != UTF8_STRING && i != MOTIF_WM_HINTS && i != REDSTAR_SHADOW) sup[ns++] = A[i];
     set_cardinals(root, A[NET_SUPPORTED], XA_ATOM, sup, ns);
     set_root_desktop_props();
+    set_default_desktop_names();
     update_workarea();
 
     XGrabKey(dpy, XKeysymToKeycode(dpy, XK_F4), Mod1Mask, root, True, GrabModeAsync, GrabModeAsync);

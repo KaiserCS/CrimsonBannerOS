@@ -27,6 +27,24 @@ libdrm = dependency('libdrm').partial_dependency(compile_args: true, includes: t
 pixman = dependency('pixman-1')
 math = meson.get_compiler('c').find_library('m')
 
+# Night light sets each screen's gamma ramp. wlroots has had two ways to do that (a colour transform made from a
+# lookup table, which replaced setting the ramp directly); use whichever these headers have, and say which.
+cc = meson.get_compiler('c')
+wlr_args = ['-DWLR_USE_UNSTABLE']
+if cc.has_header_symbol('wlr/render/color.h', 'wlr_color_transform_init_lut_3x1d', dependencies: wlroots, args: wlr_args) and \
+   cc.has_header_symbol('wlr/types/wlr_output.h', 'wlr_output_state_set_color_transform', dependencies: wlroots, args: wlr_args)
+  add_project_arguments('-DHAVE_NIGHT_COLOR_TRANSFORM', language: 'c')
+  message('night light: gamma ramps as colour transforms')
+elif cc.has_header_symbol('wlr/types/wlr_output.h', 'wlr_output_state_set_gamma_lut', dependencies: wlroots, args: wlr_args)
+  add_project_arguments('-DHAVE_NIGHT_GAMMA_LUT', language: 'c')
+  message('night light: gamma ramps set directly')
+else
+  warning('night light: this wlroots has no way to set gamma ramps; it will report every screen as unable')
+endif
+if cc.has_header_symbol('wlr/types/wlr_output.h', 'wlr_output_get_gamma_size', dependencies: wlroots, args: wlr_args)
+  add_project_arguments('-DHAVE_GAMMA_SIZE', language: 'c')
+endif
+
 # wlroots' headers include the server-side protocol headers by name; generate them
 scanner = find_program(dependency('wayland-scanner', native: true).get_variable('wayland_scanner'))
 wp_dir = wayland_protocols.get_variable('pkgdatadir')

@@ -238,6 +238,34 @@ int main(void)
 	wl_surface_commit(surf);
 	wait_line("\x01never", NULL, 0, 300);
 
+	/* virtual desktops */
+	char want[128];
+	if (write(ipc, "desktops\t3\n", 11) < 0) return 1;
+	check(wait_line("desktops\t3\t0", NULL, 0, 2000), "the shell can ask for three desktops (desktop 1 shown)");
+	snprintf(line, sizeof line, "to-desktop\t2\t%llu\n", id);
+	if (write(ipc, line, strlen(line)) < 0) return 1;
+	snprintf(want, sizeof want, "on-desktop\t%llu\t2", id);
+	check(wait_line(want, NULL, 0, 2000), "a window moved to desktop 3 is reported there");
+	snprintf(want, sizeof want, "active\t%llu", id);
+	check(!wait_line(want, NULL, 0, 300), "and it's no longer the active window");
+	cmd("activate", id);
+	check(wait_line("desktops\t3\t2", NULL, 0, 2000), "activating it shows desktop 3");
+	check(wait_line(want, NULL, 0, 2000), "and makes it the active window there");
+	if (write(ipc, "desktop\t0\n", 10) < 0) return 1;
+	check(wait_line("desktops\t3\t0", NULL, 0, 2000), "switching back to desktop 1");
+	if (write(ipc, "desktops\t1\n", 11) < 0) return 1;
+	snprintf(want, sizeof want, "on-desktop\t%llu\t0", id);
+	check(wait_line(want, NULL, 0, 2000), "going back to one desktop brings its window along");
+	check(wait_line("desktops\t1\t0", NULL, 0, 2000), "one desktop left");
+
+	/* night light: the virtual test screen has no gamma ramp, which must be said rather than ignored */
+	if (write(ipc, "nightlight\t1\t0.8\t0.6\n", 21) < 0) return 1;
+	bool night = wait_line("nightlight\t", line, sizeof line, 2000);
+	check(night, "night light is answered with how many screens took it");
+	if (night) printf("     (%s: tinted, unable)\n", line);
+	if (write(ipc, "nightlight\t1\t1\t1\n", 17) < 0) return 1;
+	check(wait_line("nightlight\t", NULL, 0, 2000), "and turned off again");
+
 	cmd("close", id);
 	check(wait_for(&closed, true, 2000), "the taskbar's close asks the window to close");
 
