@@ -2,6 +2,13 @@
 
 Versions are YY.MM.N (README, "Versions"). `tools/release.sh` adds each release's section here.
 
+## 26.11.7 (2026-11-26)
+
+- Installing onto btrfs works: the installed system stopped at "premature end of file /@/boot/vmlinuz-linux", because
+  GRUB couldn't read the kernel btrfs had compressed. /boot now has no compression and plain copies of the kernel and
+  initramfs, kept that way after every kernel update. Every ISO build now installs onto both ext4 and btrfs and starts
+  the result.
+
 ## 26.11.6 (2026-11-26)
 
 - Virtual desktops, as on Windows 10: Task View (Super+Tab, or the new button next to Start) shows this desktop's
