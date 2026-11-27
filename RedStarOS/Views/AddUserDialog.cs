@@ -17,7 +17,7 @@ public sealed class AddUserDialog : Window
     private readonly TextBox _pw = new() { PlaceholderText = "Password", PasswordChar = '●' };
     private readonly TextBox _pw2 = new() { PlaceholderText = "Password again", PasswordChar = '●' };
     private readonly CheckBox _admin = new() { Content = "Administrator (can install software and change the system)" };
-    private readonly TextBlock _error = new() { Foreground = new SolidColorBrush(Color.Parse("#E53E3E")), TextWrapping = TextWrapping.Wrap, IsVisible = false };
+    private readonly TextBlock _error = new() { TextWrapping = TextWrapping.Wrap, IsVisible = false };
     private readonly Button _ok = new() { Content = "Add user", Classes = { "primary" }, IsDefault = true };
     private bool _userEdited;
 
@@ -39,11 +39,21 @@ public sealed class AddUserDialog : Window
             Children =
             {
                 new TextBlock { Text = "Add a user", FontSize = 18, FontWeight = FontWeight.SemiBold },
-                _real, _user, _pw, _pw2, _admin, _error,
+                Labelled("Full name", _real), Labelled("User name, in lower case", _user), Labelled("Password", _pw), Labelled("The password again", _pw2),
+                _admin, _error,
                 new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Right, Children = { _ok, cancel } },
             },
         };
+        _error.Bind(TextBlock.ForegroundProperty, _error.GetResourceObservable("ShellDangerBrush"));
         Opened += (_, _) => _real.Focus();
+    }
+
+    /// <summary>A field with its name above it (a placeholder alone goes as soon as you type).</summary>
+    private static Control Labelled(string label, TextBox box)
+    {
+        box.PlaceholderText = null;
+        Avalonia.Automation.AutomationProperties.SetName(box, label);
+        return new StackPanel { Spacing = 4, Children = { new TextBlock { Text = label, Classes = { "caption" } }, box } };
     }
 
     private async Task Add()

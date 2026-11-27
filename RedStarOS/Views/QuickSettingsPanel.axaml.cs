@@ -112,7 +112,7 @@ public partial class QuickSettingsPanel : UserControl, IShellPanel
     // ------------------------------------------------------------ handlers
 
     private void OnSettings(object? s, RoutedEventArgs e) { CloseRequested?.Invoke(); ShellActions.OpenSettings(); }
-    private void OnNetwork(object? s, RoutedEventArgs e) { CloseRequested?.Invoke(); WindowManager.Open(new NetworkWindow()); }
+    private void OnNetwork(object? s, RoutedEventArgs e) { CloseRequested?.Invoke(); SettingsWindow.OpenPage("Wi-Fi & Network"); }
     private void OnTheme(object? s, RoutedEventArgs e) { ShellActions.ToggleTheme(); RefreshToggles(); }
     private void OnDnd(object? s, RoutedEventArgs e) { Notifier.SetDoNotDisturb(!Notifier.DoNotDisturb); RefreshToggles(); }
     private void OnNextWallpaper(object? s, RoutedEventArgs e) => WallpaperService.Next();

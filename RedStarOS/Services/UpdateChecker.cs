@@ -41,6 +41,15 @@ public static class UpdateChecker
         catch { return null; }
     }
 
+    /// <summary>"You're up to date.", or for a development build of the latest release, that it already has it.</summary>
+    public static string UpToDateText(string latest)
+    {
+        var cur = AppVersion.Current;
+        return !cur.IsRelease && AppVersion.Parse(latest)?.Release == cur.Release
+            ? $"You're up to date: this development build already has everything in {latest}."
+            : "You're up to date.";
+    }
+
     public static async Task<Result> CheckAsync(string? url = null)
     {
         url ??= FeedUrl();

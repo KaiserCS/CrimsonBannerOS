@@ -75,6 +75,51 @@ public static class SettingsPages
     }
 
     // ═════════════════════════════════ Wi-Fi & network ═════════════════════════════════
+    /// <summary>This computer's name and network interfaces (what the separate Network window showed).</summary>
+    private static void InterfacesSection(StackPanel p)
+    {
+        p.Children.Add(Eyebrow("THIS COMPUTER"));
+        var list = new StackPanel { Spacing = 8 };
+        void Fill()
+        {
+            list.Children.Clear();
+            list.Children.Add(new TextBlock { Text = "Computer name: " + Environment.MachineName, FontWeight = FontWeight.SemiBold });
+            var ifs = SystemInfo.NetworkInterfaces().ToList();
+            if (ifs.Count == 0) list.Children.Add(Note("No network interfaces were found."));
+            foreach (var n in ifs)
+            {
+                var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
+                var icon = Icons.Create(n.Type.Contains("Wireless", StringComparison.OrdinalIgnoreCase) || n.Type.Contains("Wi-Fi", StringComparison.OrdinalIgnoreCase) ? "wifi" : "wired", 18);
+                icon.Opacity = n.Up ? 1 : 0.45;
+                icon.Margin = new Thickness(0, 0, 12, 0);
+                row.Children.Add(icon);
+                var text = new StackPanel { Spacing = 1, Children =
+                {
+                    new TextBlock { Text = $"{n.Name} ({n.Type})", FontWeight = FontWeight.SemiBold },
+                    new TextBlock { Text = $"IPv4 {(string.IsNullOrEmpty(n.Ipv4) || n.Ipv4 == "-" ? "none" : n.Ipv4)}, MAC {n.Mac}", Classes = { "caption" } },
+                } };
+                Grid.SetColumn(text, 1); row.Children.Add(text);
+                var state = new TextBlock { Text = n.Up ? "Connected" : "Off", Classes = { "caption" }, VerticalAlignment = VerticalAlignment.Center };
+                Grid.SetColumn(state, 2); row.Children.Add(state);
+                list.Children.Add(row);
+            }
+        }
+        Fill();
+        p.Children.Add(Card(list));
+        p.Children.Add(Row(Btn("Refresh", Fill), Btn("Open the system's network settings", OpenSystemNetworkSettings)));
+    }
+
+    private static void OpenSystemNetworkSettings()
+    {
+        foreach (var tool in new[] { "nm-connection-editor", "gnome-control-center", "systemsettings", "systemsettings5", "xfce4-settings-manager" })
+        {
+            var path = ProcessUtil.Which(tool);
+            if (path == null) continue;
+            ProcessUtil.StartDetached(path, tool == "gnome-control-center" ? new[] { "network" } : Array.Empty<string>());
+            return;
+        }
+        Notifier.Show("Network", "No system network settings program is installed (nm-connection-editor, for example).", "settings");
+    }
     public static Control Network()
     {
         var p = Page("Wi-Fi & Network", "Wireless networks, airplane mode and saved connections (NetworkManager).");
@@ -83,7 +128,7 @@ public static class SettingsPages
         if (ProcessUtil.Which("nmcli") == null)
         {
             p.Children.Add(Missing("Managing Wi-Fi", "network-manager (nmcli)"));
-            p.Children.Add(Btn("Show network interfaces", () => WindowManager.Open(new NetworkWindow())));
+            InterfacesSection(p);
             return p;
         }
         var wifiOn = new ToggleSwitch { OnContent = "Wi-Fi on", OffContent = "Wi-Fi off" };
@@ -98,7 +143,7 @@ public static class SettingsPages
         p.Children.Add(nets);
         p.Children.Add(Eyebrow("SAVED CONNECTIONS"));
         p.Children.Add(saved);
-        p.Children.Add(Btn("Network interfaces…", () => WindowManager.Open(new NetworkWindow())));
+        InterfacesSection(p);
 
         async Task Refresh(bool rescan)
         {
@@ -778,6 +823,125 @@ public static class SettingsPages
         return p;
     }
 
+    // ═════════════════════════════════ Account ═════════════════════════════════
+    /// <summary>Profile photo, the lock screen's password and the account type (what the Account window had).</summary>
+    public static Control Account()
+    {
+        var st = SettingsStore.Current;
+        var p = Page("Account", "Your photo, the lock screen's password and what kind of account this is.");
+        var status = new TextBlock { TextWrapping = TextWrapping.Wrap, FontWeight = FontWeight.SemiBold };
+
+        // who
+        var photo = new Image { Width = 72, Height = 72, Stretch = Stretch.UniformToFill };
+        void ShowPhoto()
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(st.AvatarPath) && File.Exists(st.AvatarPath)) { using var fs = File.OpenRead(st.AvatarPath); photo.Source = new Avalonia.Media.Imaging.Bitmap(fs); }
+                else photo.Source = new Avalonia.Media.Imaging.Bitmap(Avalonia.Platform.AssetLoader.Open(new Uri("avares://RedStarOS/Assets/avatar.png")));
+            }
+            catch { }
+        }
+        ShowPhoto();
+        var change = Btn("Change photo…", async () =>
+        {
+            if (Owner(p) is not { } owner) return;
+            var files = await FileDialogs.Open(owner, new Avalonia.Platform.Storage.FilePickerOpenOptions
+            {
+                Title = "Choose a profile photo", AllowMultiple = false, FileTypeFilter = new[] { Avalonia.Platform.Storage.FilePickerFileTypes.ImageAll },
+            });
+            if (files.Count == 0) return;
+            try
+            {
+                await using var stream = await files[0].OpenReadAsync();
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                // a private copy, so the photo survives the original being moved
+                var ext = Path.GetExtension(files[0].Name);
+                var dest = AppPaths.ConfigFile("avatar" + (string.IsNullOrEmpty(ext) ? ".png" : ext));
+                await File.WriteAllBytesAsync(dest, ms.ToArray());
+                st.AvatarPath = dest;
+                SettingsStore.Save();
+                ShowPhoto();
+                status.Text = "Profile photo changed.";
+            }
+            catch (Exception ex) { status.Text = "That picture couldn't be used: " + ex.Message; }
+        });
+        var who = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 16, Children =
+        {
+            new Border { Width = 72, Height = 72, CornerRadius = new CornerRadius(36), ClipToBounds = true, Child = photo },
+            new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 6, Children =
+            {
+                new TextBlock { Text = Environment.UserName, FontSize = 16, FontWeight = FontWeight.SemiBold },
+                new TextBlock { Text = "on " + Environment.MachineName, Classes = { "caption" } },
+                change,
+            } },
+        } };
+        p.Children.Add(Card(who));
+
+        // the lock screen
+        p.Children.Add(Eyebrow("LOCK SCREEN"));
+        var sys = new CheckBox { Content = "The lock screen asks for my Linux password", IsChecked = st.LockWithSystemPassword, IsEnabled = SystemAuth.Available };
+        ToolTip.SetTip(sys, SystemAuth.Available
+            ? "Checked by the system's sign-in rules (PAM, service \"" + SystemAuth.ServiceName + "\"). Turn it off to use a lock password of its own, below."
+            : "PAM (libpam) isn't available here, so the lock password below is used.");
+        var own = new StackPanel { Spacing = 8 };
+        TextBox Pw(string label) { var t = new TextBox { PasswordChar = '●', Width = 260, HorizontalAlignment = HorizontalAlignment.Left, PlaceholderText = label }; Avalonia.Automation.AutomationProperties.SetName(t, label); return t; }
+        var current = Pw("Current lock password");
+        var fresh = Pw("New lock password");
+        var again = Pw("New lock password again");
+        own.Children.Add(current); own.Children.Add(fresh); own.Children.Add(again);
+        own.Children.Add(Btn("Change the lock password", () =>
+        {
+            if (!PasswordUtil.Verify(current.Text)) { status.Text = "The current lock password isn't right."; return; }
+            if ((fresh.Text ?? "") != (again.Text ?? "")) { status.Text = "The two new passwords aren't the same."; return; }
+            PasswordUtil.Set(fresh.Text);
+            current.Text = fresh.Text = again.Text = "";
+            status.Text = PasswordUtil.HasPassword ? "Lock password changed." : "Lock password removed: the lock screen opens without one.";
+        }));
+        own.IsVisible = !(sys.IsChecked == true && SystemAuth.Available);
+        sys.IsCheckedChanged += (_, _) =>
+        {
+            st.LockWithSystemPassword = sys.IsChecked == true;
+            SettingsStore.Save();
+            own.IsVisible = !(sys.IsChecked == true && SystemAuth.Available);
+        };
+        p.Children.Add(sys);
+        p.Children.Add(own);
+        p.Children.Add(Btn("Change my Linux password…", () => ProcessUtil.RunInTerminal("passwd", new List<string>())));
+
+        // the kind of account
+        p.Children.Add(Eyebrow("ACCOUNT TYPE"));
+        var kinds = new (string Id, string Name, string What)[]
+        {
+            ("Admin", "Administrator", "Can install software and change the system."),
+            ("Developer", "Developer", "The same as an administrator account, for now."),
+            ("Child", "Child", "Online apps and installed Linux apps are hidden from the Start menu."),
+        };
+        var group = new StackPanel { Spacing = 6 };
+        foreach (var k in kinds)
+        {
+            var id = k.Id;
+            var r = new RadioButton { GroupName = "accounttype", IsChecked = st.AccountType == id, Content = new StackPanel { Spacing = 1, Children =
+            {
+                new TextBlock { Text = k.Name, FontWeight = FontWeight.SemiBold },
+                new TextBlock { Text = k.What, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap },
+            } } };
+            r.IsCheckedChanged += (_, _) =>
+            {
+                if (r.IsChecked != true || st.AccountType == id) return;
+                st.AccountType = id;
+                SettingsStore.Save();
+                WindowManager.RaiseChanged();
+                status.Text = $"This is now a {k.Name.ToLowerInvariant()} account.";
+            };
+            group.Children.Add(r);
+        }
+        p.Children.Add(group);
+        p.Children.Add(status);
+        return p;
+    }
+
     // ═════════════════════════════════ Software updates ═════════════════════════════════
     public static Control Updates()
     {
@@ -798,25 +962,51 @@ public static class SettingsPages
         p.Children.Add(auto);
         var last = Note(st.LastUpdateCheck is { } t ? $"Last checked {t:d MMM yyyy, HH:mm}." : "Not checked yet.");
         p.Children.Add(last);
-        var feed = UpdateChecker.FeedUrl();
-        if (feed == null)
-            p.Children.Add(Card(Note("No releases feed is known for this build. Open Updates to enter one (a GitHub “releases/latest” API address), or build the AppImage with GH_REPO=user/repo.")));
+        // where releases are announced (a GitHub "releases/latest" API address); set for released builds
+        var source = new TextBox { Text = st.UpdateUrl ?? UpdateChecker.FeedUrl() ?? "", PlaceholderText = "https://api.github.com/repos/USER/REPO/releases/latest", MinWidth = 420 };
+        Avalonia.Automation.AutomationProperties.SetName(source, "Update source");
+        source.LostFocus += (_, _) =>
+        {
+            var url = (source.Text ?? "").Trim();
+            var builtIn = st.UpdateUrl == null ? UpdateChecker.FeedUrl() : null;
+            st.UpdateUrl = url.Length == 0 || url == builtIn ? null : url;          // empty: back to the build's own
+            SettingsStore.Save();
+        };
         var result = new TextBlock { TextWrapping = TextWrapping.Wrap, FontWeight = FontWeight.SemiBold };
-        var open = Btn("Open Updates…", () => WindowManager.Open(new UpdatesWindow()));
+        string? pageUrl = null;
+        var download = Btn("Open the download page", () => { if (pageUrl != null) SystemUtil.OpenExternal(pageUrl); });
+        var appImage = Btn("Update the AppImage", () =>
+        {
+            var file = Environment.GetEnvironmentVariable("APPIMAGE");
+            var tool = ProcessUtil.Which("appimageupdatetool") ?? ProcessUtil.Which("AppImageUpdate");
+            if (file != null && tool != null) { ProcessUtil.StartDetached(tool, new[] { file }); result.Text = "AppImageUpdate has started. Restart Crimson Banner OS when it finishes."; }
+            else result.Text = "AppImageUpdate isn't installed. Use the download page instead.";
+        });
+        download.IsVisible = appImage.IsVisible = false;
         Button? check = null;
         check = Btn("Check now", async () =>
         {
+            var url = (source.Text ?? "").Trim();
+            if (url.Length > 0) { st.UpdateUrl = url; SettingsStore.Save(); }
+            if (UpdateChecker.FeedUrl() == null) { result.Text = "Write where releases are announced in Update source first."; return; }
             check!.IsEnabled = false;
+            download.IsVisible = appImage.IsVisible = false;
             result.Text = "Checking…";
             var r = await UpdateChecker.CheckAsync();
             check.IsEnabled = true;
-            if (r.Error != null) { result.Text = "Couldn't check: " + r.Error; return; }
+            pageUrl = r.PageUrl;
+            if (r.Error != null) { result.Text = "Couldn't check: " + r.Error; download.IsVisible = pageUrl != null; return; }
             st.LastUpdateCheck = DateTime.Now; SettingsStore.Save();
             last.Text = $"Last checked {DateTime.Now:d MMM yyyy, HH:mm}.";
-            result.Text = r.Newer ? $"Crimson Banner OS {r.Latest} is available. Use “Open Updates…” to install it." : "You're up to date.";
+            result.Text = r.Newer ? $"Crimson Banner OS {r.Latest} is available." : UpdateChecker.UpToDateText(r.Latest);
+            download.IsVisible = r.Newer && pageUrl != null;
+            appImage.IsVisible = r.Newer && Environment.GetEnvironmentVariable("APPIMAGE") != null;
         }, true);
-        p.Children.Add(Row(check, open));
+        p.Children.Add(Row(check, download, appImage));
         p.Children.Add(result);
+        p.Children.Add(Eyebrow("UPDATE SOURCE"));
+        p.Children.Add(source);
+        p.Children.Add(Note("Where this build looks for new releases: a GitHub “releases/latest” API address. Released AppImages have it already."));
         if (!string.IsNullOrEmpty(st.SkippedVersion))
             p.Children.Add(Row(Note($"Skipped version: {st.SkippedVersion}"), Btn("Don't skip", () => { st.SkippedVersion = null; SettingsStore.Save(); })));
 

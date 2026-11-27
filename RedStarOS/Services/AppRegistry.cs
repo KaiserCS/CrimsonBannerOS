@@ -68,8 +68,7 @@ public static class AppRegistry
         ["PongWindow"] = "pong", ["MessengerWindow"] = "messenger", ["FileManagerWindow"] = "files",
         ["CalculatorWindow"] = "calculator", ["NotesWindow"] = "notes", ["ImageViewerWindow"] = "imageviewer",
         ["CameraWindow"] = "camera", ["PaintWindow"] = "paint", ["ClockWindow"] = "clock", ["TaskManagerWindow"] = "taskmgr", ["CalendarWindow"] = "calendar", ["SettingsWindow"] = "settings",
-        ["UpdatesWindow"] = "settings", ["NetworkWindow"] = "settings", ["ConnectNetworkWindow"] = "settings",
-        ["AccountWindow"] = "settings", ["AppearanceWindow"] = "settings", ["WallpaperPickerWindow"] = "settings"
+        ["WallpaperPickerWindow"] = "settings"
     };
 
     public static string? IdForWindow(Window w) =>

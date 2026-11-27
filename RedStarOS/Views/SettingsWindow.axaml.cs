@@ -87,7 +87,7 @@ public partial class SettingsWindow : Window
             new("Region & keyboard", "keyboard", AppIcons.Plate, SettingsPages.RegionPage),
             new("Crimson Online", "globe", AppIcons.Plate, SettingsPages.OnlinePage),
             new("Accessibility", "accessibility", AppIcons.Plate, SettingsPages.Accessibility),
-            new("Account", "user", AppIcons.Plate, () => PageLauncher("Account", "Password, profile photo and account type.", "Open Account", () => WindowManager.Open(new AccountWindow()))),
+            new("Account", "user", AppIcons.Plate, SettingsPages.Account),
             new("Software Updates", "refresh", AppIcons.Plate, SettingsPages.Updates),
             new("Diagnostics", "bug", AppIcons.Plate, SettingsPages.DiagnosticsPage),
             new("Games", "game", AppIcons.Plate, BuildGames),

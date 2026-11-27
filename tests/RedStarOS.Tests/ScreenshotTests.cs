@@ -313,6 +313,18 @@ public class ScreenshotTests
         finally { VirtualDesktops.Reset(); }
     }
 
+    [AvaloniaTheory]
+    [InlineData("Account")]
+    [InlineData("Updates")]
+    [InlineData("Network")]
+    public void Settings_pages_folded_in(string page)
+    {
+        Control content = page switch { "Account" => SettingsPages.Account(), "Updates" => SettingsPages.Updates(), _ => SettingsPages.Network() };
+        var w = new Window { Width = 760, Height = 720, Content = new ScrollViewer { Content = new Border { Padding = new Avalonia.Thickness(28, 24), Child = content } } };
+        w.Bind(Window.BackgroundProperty, w.GetResourceObservable("ShellBackdropBrush"));
+        ShowAndCapture(w, "Shell-Settings-" + page);
+    }
+
     [AvaloniaFact]
     public void Settings_night_light()
     {
