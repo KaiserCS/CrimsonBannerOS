@@ -13,6 +13,7 @@ software under the GPL:
 | **Software** | Installs more programs: our own catalogue, Flatpaks from Flathub, AppImages. Free software only |
 
 Why it's built this way, and which dependencies it accepts, is set out in [PRINCIPLES.md](PRINCIPLES.md).
+How it looks (colour, type, icons, components, words, accessibility) is set out in [DESIGN.md](DESIGN.md).
 
 ## The apps
 

@@ -24,6 +24,10 @@ public static class ThemeService
             _ => false
         };
 
+    /// <summary>The accent for small text: on dark, mixed 45% with white so every accent reads at 4.5:1 or better on
+    /// graphite and on panels (crimson itself is 2.9:1); on light, the accent as it is.</summary>
+    public static Color AccentText(Color accent, bool dark) => dark ? Mix(accent, Colors.White, 0.45) : accent;
+
     /// <summary>The chosen accent (crimson unless another is chosen).</summary>
     public static Color AccentColor => Color.TryParse(SettingsStore.Current.Accent, out var c) ? c : Color.Parse("#C8102E");
 
@@ -56,6 +60,7 @@ public static class ThemeService
             // Brushes used by Styles/Shell.axaml (Start tile, primary buttons, "on" tiles, badges).
             app.Resources["ShellAccentBrush"] = new SolidColorBrush(c);
             app.Resources["ShellAccentSoftBrush"] = new SolidColorBrush(Color.FromArgb(0x3A, c.R, c.G, c.B));
+            app.Resources["ShellAccentTextBrush"] = new SolidColorBrush(AccentText(c, IsDark));
         }
 
         if (Color.TryParse(s.Accent, out var fc)) app.Resources["ShellFocusBrush"] = new SolidColorBrush(fc);

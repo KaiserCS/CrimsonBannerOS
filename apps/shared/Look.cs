@@ -49,6 +49,8 @@ public static class Look
         app.Resources["SystemAccentColorDark3"] = Mix(c, Colors.Black, 0.60);
         app.Resources["ShellAccentBrush"] = new SolidColorBrush(c);
         app.Resources["ShellAccentSoftBrush"] = new SolidColorBrush(Color.FromArgb(0x3A, c.R, c.G, c.B));
+        // the accent for small text: lightened on dark so it reads at 4.5:1 on graphite (DESIGN.md), as is on light
+        app.Resources["ShellAccentTextBrush"] = new SolidColorBrush(theme == "Light" ? c : Mix(c, Colors.White, 0.45));
         app.Resources["ShellFocusBrush"] = new SolidColorBrush(c);
     }
 

@@ -336,20 +336,20 @@ jobs:
           # Planner, the first of our own apps: built from the tree (it shares the shell's styles), signed into the
           # same repository, listed in the catalogue, and installed as Software installs it
           sudo -u builder -H tools/publish-app.sh --local apps/planner
-          python3 -c "import json; d=json.load(open('/srv/crimson-banner-apps/catalog/catalog.json')); a=[x for x in d['software'] if x['id']=='planner'][0]; assert a['version']=='1.0.1' and a['install']==[{'kind':'pacman','package':'crimson-planner'}] and a['license']=='GPL-3.0-or-later', a"
+          python3 -c "import json; d=json.load(open('/srv/crimson-banner-apps/catalog/catalog.json')); import re; v=re.search(r'^pkgver=(.+)$', open('apps/planner/PKGBUILD').read(), re.M).group(1); a=[x for x in d['software'] if x['id']=='planner'][0]; assert a['version']==v and a['install']==[{'kind':'pacman','package':'crimson-planner'}] and a['license']=='GPL-3.0-or-later', a"
           pacman -Sy --noconfirm crimson-planner
           test -x /usr/bin/crimson-planner && test -f /usr/lib/crimson-planner/CrimsonPlanner.dll
           test -f /usr/share/applications/crimson-planner.desktop && test -f /usr/share/icons/hicolor/256x256/apps/crimson-planner.png
           pacman -Rns --noconfirm crimson-planner
           # People's Archive, the same way
           sudo -u builder -H tools/publish-app.sh --local apps/archive
-          python3 -c "import json; d=json.load(open('/srv/crimson-banner-apps/catalog/catalog.json')); a=[x for x in d['software'] if x['id']=='archive'][0]; assert a['version']=='1.0.1' and a['install']==[{'kind':'pacman','package':'crimson-archive'}], a"
+          python3 -c "import json; d=json.load(open('/srv/crimson-banner-apps/catalog/catalog.json')); import re; v=re.search(r'^pkgver=(.+)$', open('apps/archive/PKGBUILD').read(), re.M).group(1); a=[x for x in d['software'] if x['id']=='archive'][0]; assert a['version']==v and a['install']==[{'kind':'pacman','package':'crimson-archive'}], a"
           pacman -Sy --noconfirm crimson-archive
           test -x /usr/bin/crimson-archive && test -f /usr/lib/crimson-archive/PeoplesArchive.dll && test -f /usr/share/applications/crimson-archive.desktop
           pacman -Rns --noconfirm crimson-archive
           # Atlas, the same way
           sudo -u builder -H tools/publish-app.sh --local apps/atlas
-          python3 -c "import json; d=json.load(open('/srv/crimson-banner-apps/catalog/catalog.json')); a=[x for x in d['software'] if x['id']=='atlas'][0]; assert a['version']=='1.0.0' and a['install']==[{'kind':'pacman','package':'crimson-atlas'}], a"
+          python3 -c "import json; d=json.load(open('/srv/crimson-banner-apps/catalog/catalog.json')); import re; v=re.search(r'^pkgver=(.+)$', open('apps/atlas/PKGBUILD').read(), re.M).group(1); a=[x for x in d['software'] if x['id']=='atlas'][0]; assert a['version']==v and a['install']==[{'kind':'pacman','package':'crimson-atlas'}], a"
           pacman -Sy --noconfirm crimson-atlas
           test -x /usr/bin/crimson-atlas && test -f /usr/lib/crimson-atlas/CrimsonAtlas.dll && test -f /usr/share/applications/crimson-atlas.desktop
           pacman -Rns --noconfirm crimson-atlas
