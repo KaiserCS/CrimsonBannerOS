@@ -280,6 +280,8 @@ public class ScreenshotTests
     [AvaloniaFact]
     public void Shell_task_view()
     {
+        var owner = WindowManager.Desktop;
+        WindowManager.Desktop = null;                 // (another test may have left a closed one)
         var calc = WindowManager.Open(new CalculatorWindow(), "calculator");
         var notes = WindowManager.Open(new NotesWindow(), "notes");
         var names = SettingsStore.Current.DesktopNames;
@@ -295,6 +297,7 @@ public class ScreenshotTests
         finally
         {
             calc.Close(); notes.Close();
+            WindowManager.Desktop = owner;
             names.Clear(); names.AddRange(saved);
             VirtualDesktops.Reset();
         }

@@ -110,7 +110,10 @@ public class VirtualDesktopTests
         var was = System.Globalization.CultureInfo.CurrentCulture;
         try
         {
-            System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("de-DE");
+            // a decimal comma, as in German (the tests run without culture data, so made by hand)
+            var comma = (System.Globalization.CultureInfo)System.Globalization.CultureInfo.InvariantCulture.Clone();
+            comma.NumberFormat.NumberDecimalSeparator = ",";
+            System.Globalization.CultureInfo.CurrentCulture = comma;
             Assert.Equal("nightlight\t1\t0.75\t0.5", CompIpc.NightLightLine(1, 0.75, 0.5));
         }
         finally { System.Globalization.CultureInfo.CurrentCulture = was; }
