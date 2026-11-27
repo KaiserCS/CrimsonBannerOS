@@ -102,6 +102,24 @@ public class DesktopShellTests : IDisposable
     public void Snap_assist_offers_the_half_left_over(string zone, string? fill) => Assert.Equal(fill, SnapAssist.Remaining(zone));
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
+    public void A_taskbar_preview_opens_the_panel_gap_above_the_taskbar_not_the_button()
+    {
+        var bar = new RedStarOS.Views.Taskbar();
+        var btn = new Avalonia.Controls.Button { Width = 40, Height = 40 };
+        Avalonia.Controls.ControlExtensions.FindControl<Avalonia.Controls.StackPanel>(bar, "TaskList")!.Children.Add(btn);
+        var w = new Avalonia.Controls.Window { Width = 1280, Height = 56, Content = bar };
+        w.Show();
+        try
+        {
+            double inset = Avalonia.VisualExtensions.TranslatePoint(btn, new Avalonia.Point(0, 0), bar)!.Value.Y;
+            Assert.True(inset > 0, $"the button sits {inset} below the taskbar's top");
+            // the preview's bottom: the button's top, less the gap, is PanelGap above the taskbar's top edge
+            Assert.Equal(-RedStarOS.Views.Taskbar.PanelGap, inset - TaskPreview.Gap(btn), 3);
+        }
+        finally { w.Close(); }
+    }
+
+    [Avalonia.Headless.XUnit.AvaloniaFact]
     public void A_taskbar_preview_shows_the_whole_window_not_a_corner_of_it()
     {
         // a big window, red to its edges: its picture must be red to its edges too

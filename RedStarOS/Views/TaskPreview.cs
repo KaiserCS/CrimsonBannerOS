@@ -8,6 +8,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using RedStarOS.Services;
 
 namespace RedStarOS.Views;
@@ -75,10 +76,19 @@ public static class TaskPreview
         card.PointerEntered += (_, _) => Hide.Stop();
         card.PointerExited += (_, _) => { Hide.Stop(); Hide.Start(); };
         Host.PlacementTarget = btn;
+        Host.VerticalOffset = -Gap(btn);
         Host.Child = card;
         Host.IsOpen = true;
         _showing = true;
     }
+
+    /// <summary>
+    /// How far above its button the preview opens: <see cref="Taskbar.PanelGap"/> clear of the taskbar's top edge, like
+    /// the Start menu and the panels. The button sits inside the taskbar, so measuring from it alone left the preview
+    /// overlapping the taskbar.
+    /// </summary>
+    public static double Gap(Control btn) =>
+        Taskbar.PanelGap + (btn.FindAncestorOfType<Taskbar>() is { } bar && btn.TranslatePoint(new Point(0, 0), bar) is { } p ? Math.Max(0, p.Y) : 0);
 
     public static Control Card(TaskItem task)
     {
