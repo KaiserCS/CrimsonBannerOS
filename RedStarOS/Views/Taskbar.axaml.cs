@@ -123,6 +123,21 @@ public partial class Taskbar : UserControl
 
         _numbersAfter.Tick += (_, _) => { _numbersAfter.Stop(); ShowNumbers(true); };
 
+        // the banner eases down and up (150 ms), unless motion is turned off
+        if (!SettingsStore.Current.ReduceMotion)
+        {
+            var ease = new Avalonia.Animation.Easings.CubicEaseOut();
+            var span = TimeSpan.FromMilliseconds(150);
+            Avalonia.Animation.Transitions Move() => new()
+            {
+                new Avalonia.Animation.TransformOperationsTransition { Property = Visual.RenderTransformProperty, Duration = span, Easing = ease },
+            };
+            BannerHang.Transitions = Move();
+            BannerStar.Transitions = Move();
+            BannerShine.Transitions = new() { new Avalonia.Animation.DoubleTransition { Property = Visual.OpacityProperty, Duration = span, Easing = ease } };
+        }
+        ApplyStartLook();
+
         // the titles' width follows the room the row has
         TaskScroll.SizeChanged += (_, e) =>
         {
@@ -188,6 +203,15 @@ public partial class Taskbar : UserControl
         // the same gap above the taskbar as from the screen's left edge, wherever the Start button sits inside it
         StartButton.LayoutUpdated += (_, _) => PlaceAbove(_startFlyout, StartButton, alignLeft: true);
         _startFlyout.Opening += (_, _) => { FitStart(); PlaceAbove(_startFlyout, StartButton, alignLeft: true); };
+    }
+
+    /// <summary>Start as the banner, or as the round badge (Settings → Desktop &amp; Taskbar).</summary>
+    private void ApplyStartLook()
+    {
+        bool banner = SettingsStore.Current.StartBanner;
+        StartBanner.IsVisible = banner;
+        StartBadge.IsVisible = !banner;
+        StartButton.Classes.Set("banner", banner);
     }
 
     /// <summary>The Start menu at most 750 × 600, smaller on a small screen (the gaps and the taskbar left clear).</summary>
@@ -315,6 +339,7 @@ public partial class Taskbar : UserControl
 
         bool child = SettingsStore.Current.AccountType == "Child";
         TaskViewButton.IsVisible = SettingsStore.Current.TaskViewButton;
+        ApplyStartLook();
         // the desktop in use's windows (Settings → Desktop & Taskbar can list every desktop's)
         bool all = SettingsStore.Current.TaskbarAllDesktops;
         var tasks = WindowManager.Tasks.Where(t => all || VirtualDesktops.OnCurrent(t)).ToList();

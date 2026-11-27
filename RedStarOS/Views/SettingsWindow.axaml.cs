@@ -387,6 +387,7 @@ public partial class SettingsWindow : Window
         });
 
         p.Children.Add(Eyebrow("TASKBAR"));
+        p.Children.Add(Check("Show Start as the banner hanging from the taskbar (off: the round badge)", s.StartBanner, v => SettingsStore.Current.StartBanner = v));
         p.Children.Add(Check("Show window titles next to taskbar icons", s.TaskbarLabels, v => SettingsStore.Current.TaskbarLabels = v));
         p.Children.Add(Check("24-hour clock", s.Clock24h, v => SettingsStore.Current.Clock24h = v));
 

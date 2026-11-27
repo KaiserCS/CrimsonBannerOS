@@ -14,24 +14,50 @@
     <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto" Margin="8,0">
 
       <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-      <Button x:Name="StartButton" Classes="task start" Width="44" Height="44" Padding="0"
+      <Button x:Name="StartButton" Classes="task start banner" Width="44" Height="44" Padding="0"
               ToolTip.Tip="Start (Win key)">
-        <!-- Red Star OS badge: white star on a red disc (vector, sharp at any scale) -->
-        <Viewbox Width="28" Height="28">
-          <Canvas Width="24" Height="24">
-            <Ellipse Canvas.Left="1" Canvas.Top="1" Width="22" Height="22">
-              <Ellipse.Fill>
-                <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
-                  <GradientStop Offset="0" Color="#E8344B" />
-                  <GradientStop Offset="1" Color="#A00B1F" />
-                </LinearGradientBrush>
-              </Ellipse.Fill>
-            </Ellipse>
-            <Ellipse Canvas.Left="1.6" Canvas.Top="1.6" Width="20.8" Height="20.8" Stroke="#47FFFFFF" StrokeThickness="0.8" />
-            <Path Fill="White" Stroke="White" StrokeThickness="0.5" StrokeJoin="Round"
-                  Data="M 12,5.3 L 13.76,10.27 L 19.04,10.41 L 14.85,13.63 L 16.35,18.69 L 12,15.7 L 7.65,18.69 L 9.15,13.63 L 4.96,10.41 L 10.24,10.27 Z" />
+        <Panel>
+          <!-- the banner (the default): the desktop's banner, small, hanging from the taskbar's top edge on a short
+               rod; it hangs lower while Start is open (styles: Button.task.start.banner in Shell.axaml) -->
+          <Canvas x:Name="StartBanner" Width="44" Height="56" Margin="0,-7,0,-5" ClipToBounds="False">
+            <Rectangle x:Name="BannerRod" Canvas.Left="4" Canvas.Top="0" Width="36" Height="3" RadiusX="1.5" RadiusY="1.5" />
+            <Panel x:Name="BannerHang" Canvas.Left="9" Canvas.Top="2" Width="26" Height="46" RenderTransformOrigin="50%,0%">
+              <Path x:Name="BannerCloth" Data="M 0,0 H 26 V 38 L 13,31 L 0,38 Z" Stretch="None" VerticalAlignment="Top">
+                <Path.Fill>
+                  <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                    <GradientStop Offset="0" Color="#A00B1F" />
+                    <GradientStop Offset="0.45" Color="#D8243C" />
+                    <GradientStop Offset="1" Color="#A80C22" />
+                  </LinearGradientBrush>
+                </Path.Fill>
+              </Path>
+              <!-- lighter when pointed at or open -->
+              <Path x:Name="BannerShine" Data="M 0,0 H 26 V 38 L 13,31 L 0,38 Z" Stretch="None" VerticalAlignment="Top" Fill="White" Opacity="0" />
+            </Panel>
+            <!-- the star rides down with the cloth (it isn't stretched with it) -->
+            <Viewbox x:Name="BannerStar" Canvas.Left="14.5" Canvas.Top="9.5" Width="15" Height="15">
+              <Canvas Width="24" Height="24">
+                <Path Fill="White" Data="M 12,2.2 L 14.6,9.3 L 22.2,9.5 L 16.2,14.1 L 18.3,21.4 L 12,17.1 L 5.7,21.4 L 7.8,14.1 L 1.8,9.5 L 9.4,9.3 Z" />
+              </Canvas>
+            </Viewbox>
           </Canvas>
-        </Viewbox>
+          <!-- the round badge (Settings → Desktop & Taskbar can bring it back): white star on a red disc -->
+          <Viewbox x:Name="StartBadge" Width="28" Height="28" IsVisible="False">
+            <Canvas Width="24" Height="24">
+              <Ellipse Canvas.Left="1" Canvas.Top="1" Width="22" Height="22">
+                <Ellipse.Fill>
+                  <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                    <GradientStop Offset="0" Color="#E8344B" />
+                    <GradientStop Offset="1" Color="#A00B1F" />
+                  </LinearGradientBrush>
+                </Ellipse.Fill>
+              </Ellipse>
+              <Ellipse Canvas.Left="1.6" Canvas.Top="1.6" Width="20.8" Height="20.8" Stroke="#47FFFFFF" StrokeThickness="0.8" />
+              <Path Fill="White" Stroke="White" StrokeThickness="0.5" StrokeJoin="Round"
+                    Data="M 12,5.3 L 13.76,10.27 L 19.04,10.41 L 14.85,13.63 L 16.35,18.69 L 12,15.7 L 7.65,18.69 L 9.15,13.63 L 4.96,10.41 L 10.24,10.27 Z" />
+            </Canvas>
+          </Viewbox>
+        </Panel>
       </Button>
       <!-- Task View: the open windows and the virtual desktops (Super+Tab) -->
       <Button x:Name="TaskViewButton" Classes="task" Width="44" Height="44" Padding="0"

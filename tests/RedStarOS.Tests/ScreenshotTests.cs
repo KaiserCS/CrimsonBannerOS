@@ -336,6 +336,21 @@ public class ScreenshotTests
     }
 
     [AvaloniaFact]
+    public void Shell_taskbar_start_open()
+    {
+        // the banner as it hangs while Start is open (no easing, so the picture shows where it ends)
+        bool motion = SettingsStore.Current.ReduceMotion;
+        SettingsStore.Current.ReduceMotion = true;
+        try
+        {
+            var bar = new Taskbar();
+            bar.FindControl<Button>("StartButton")!.Classes.Add("open");
+            ShowAndCapture(OnWallpaper(bar, 1280, 56), "Shell-TaskbarStartOpen");
+        }
+        finally { SettingsStore.Current.ReduceMotion = motion; }
+    }
+
+    [AvaloniaFact]
     public void Shell_taskbar_preview()
     {
         var calc = new CalculatorWindow();

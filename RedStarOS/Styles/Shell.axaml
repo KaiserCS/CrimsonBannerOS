@@ -411,12 +411,51 @@
   <Style Selector="Button.task.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource TaskbarHoverBrush}" />
   </Style>
+  <!-- Start as the banner: no square behind it in any state; the banner itself answers. Hovered it hangs 3 px lower
+       and lighter, open 8 px lower and lighter still, eased over 150 ms (Reduce motion: at once) -->
+  <Style Selector="Button.task.start.banner /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="Button.task.start.banner Rectangle#BannerRod">
+    <Setter Property="Fill" Value="#55555E" />
+  </Style>
+  <Style Selector="Button.task.start.banner Panel#BannerHang">
+    <Setter Property="RenderTransform" Value="scaleY(1)" />
+  </Style>
+  <Style Selector="Button.task.start.banner Viewbox#BannerStar">
+    <Setter Property="RenderTransform" Value="translateY(0px)" />
+  </Style>
+  <Style Selector="Button.task.start.banner:pointerover Panel#BannerHang">
+    <Setter Property="RenderTransform" Value="scaleY(1.08)" />
+  </Style>
+  <Style Selector="Button.task.start.banner:pointerover Viewbox#BannerStar">
+    <Setter Property="RenderTransform" Value="translateY(1.2px)" />
+  </Style>
+  <Style Selector="Button.task.start.banner:pointerover Path#BannerShine">
+    <Setter Property="Opacity" Value="0.08" />
+  </Style>
+  <Style Selector="Button.task.start.banner.open Panel#BannerHang">
+    <Setter Property="RenderTransform" Value="scaleY(1.21)" />
+  </Style>
+  <Style Selector="Button.task.start.banner.open Viewbox#BannerStar">
+    <Setter Property="RenderTransform" Value="translateY(3.2px)" />
+  </Style>
+  <Style Selector="Button.task.start.banner.open Path#BannerShine">
+    <Setter Property="Opacity" Value="0.14" />
+  </Style>
+  <Style Selector="Button.task.start.banner.open Rectangle#BannerRod">
+    <Setter Property="Fill" Value="#6E6E78" />
+  </Style>
+  <Style Selector="Button.task.start.banner:focus-visible Rectangle#BannerRod">
+    <Setter Property="Fill" Value="{DynamicResource ShellAccentTextBrush}" />
+  </Style>
+
   <!-- Start: plain like the other buttons (the badge is colour enough), tinted only while its menu is open, so the
        tint means one thing on the taskbar: what is open or in front -->
-  <Style Selector="Button.task.start.open">
+  <Style Selector="Button.task.start.open:not(.banner)">
     <Setter Property="Background" Value="{DynamicResource ShellAccentSoftBrush}" />
   </Style>
-  <Style Selector="Button.task.start.open /template/ ContentPresenter#PART_ContentPresenter">
+  <Style Selector="Button.task.start.open:not(.banner) /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource ShellAccentSoftBrush}" />
   </Style>
 

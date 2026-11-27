@@ -33,6 +33,7 @@ public sealed class Settings
     public int DesktopCount { get; set; } = 1;
     public List<string> DesktopNames { get; set; } = new();   // "" or missing: "Desktop n"
     public bool TaskViewButton { get; set; } = true;          // the Task View button next to Start
+    public bool StartBanner { get; set; } = true;             // Start as the banner hanging from the taskbar (off: the round badge)
     public bool TaskbarAllDesktops { get; set; }              // the taskbar lists windows of every desktop
     public bool AltTabAllDesktops { get; set; }               // Alt+Tab offers windows of every desktop
     // night light: a warmer screen in the evening
