@@ -413,8 +413,14 @@
   </Style>
   <!-- Start as the banner: no square behind it in any state; the banner itself answers. Hovered it hangs 3 px lower
        and lighter, open 8 px lower and lighter still, eased over 150 ms (Reduce motion: at once) -->
+  <Style Selector="Button.task.start.banner">
+    <Setter Property="ClipToBounds" Value="False" />
+  </Style>
+  <!-- the banner reaches up past the button to the taskbar's top edge: nothing may clip it -->
   <Style Selector="Button.task.start.banner /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="Transparent" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="ClipToBounds" Value="False" />
   </Style>
   <Style Selector="Button.task.start.banner Rectangle#BannerRod">
     <Setter Property="Fill" Value="#55555E" />
