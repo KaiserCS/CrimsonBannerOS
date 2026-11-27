@@ -57,7 +57,8 @@ make_source() {
   # the full version goes into the tarball, which has no git history to work it out from (tools/version.sh)
   local stamp; stamp="$(mktemp -d)"
   tools/version.sh > "$stamp/.build-version"
-  tar --sort=name --owner=0 --group=0 --transform "s#^#$NAME-$ver/#" -cf "${out%.gz}" --null -T "$list"
+  # S: the folder prefix goes on members' names, not on links' targets (the icon theme's links are relative)
+  tar --sort=name --owner=0 --group=0 --transform "s#^#$NAME-$ver/#S" -cf "${out%.gz}" --null -T "$list"
   tar --owner=0 --group=0 --transform "s#^#$NAME-$ver/#" -rf "${out%.gz}" -C "$stamp" .build-version
   gzip -nf "${out%.gz}"
   rm -rf "$list" "$stamp"
