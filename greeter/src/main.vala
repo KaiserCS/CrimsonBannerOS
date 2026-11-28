@@ -34,7 +34,12 @@ int main (string[] args) {
 
     var app = new Gtk.Application ("org.redstaros.Login", ApplicationFlags.NON_UNIQUE);
     app.activate.connect (() => {
-        Gtk.Settings.get_default ().gtk_application_prefer_dark_theme = true;
+        // dark controls: GTK 4.20's colour scheme where it's there, else the older switch
+        var settings = Gtk.Settings.get_default ();
+        if (settings.get_class ().find_property ("gtk-interface-color-scheme") != null)
+            settings.set ("gtk-interface-color-scheme", 2);   // GTK_INTERFACE_COLOR_SCHEME_DARK
+        else
+            settings.gtk_application_prefer_dark_theme = true;
         var css = new Gtk.CssProvider ();
         css.load_from_string (LoginWindow.CSS);
         Gtk.StyleContext.add_provider_for_display (Gdk.Display.get_default (), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
