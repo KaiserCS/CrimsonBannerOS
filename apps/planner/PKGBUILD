@@ -3,7 +3,7 @@
 # It shares the shell's styles (RedStarOS/Styles/Shell.axaml) and apps/shared, so it's built from the source tree:
 # tools/publish-app.sh sets $CRIMSON_TREE to it; by hand: CRIMSON_TREE=/path/to/CrimsonBannerOS makepkg
 pkgname=crimson-planner
-pkgver=1.0.2
+pkgver=1.1.0
 pkgrel=1
 pkgdesc='Planner: economic computation for central planning (Crimson Banner OS)'
 arch=(x86_64 aarch64)

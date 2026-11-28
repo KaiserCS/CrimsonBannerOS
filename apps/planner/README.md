@@ -4,6 +4,15 @@ Crimson Banner OS's planning app, in Software's Crimson Banner tab (`crimson-pla
 Planning Algorithm**, after *The Economic Structure*. It proposes quotas from what local councils report, and councils
 decide. Every figure is plain arithmetic that a council can trace back to the reports. Nothing goes over the network.
 
+## Simple and advanced views
+
+Planner opens in its **simple view**, for anyone. One page, "This period", goes through a period in the order it
+happens: hand in the councils' reports, check what stands out, decide each product (agree, change or reject Planner's
+figure), and send each council its share. "How it works" explains the process without the arithmetic. The
+**advanced view** has every figure, table and setting described below. The switch is at the bottom of the sidebar,
+and Planner remembers the choice (`~/.config/crimson-planner/view`). Decisions made in either view are the same
+decisions.
+
 ## How a plan is worked out
 
 The three steps follow the document's computational logging, sorting and execution.

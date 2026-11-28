@@ -81,9 +81,18 @@ Now that people can install it, a bad release reaches every installed system at 
 
 - [ ] **Mirror to Codeberg** (Forgejo, run by a non-profit) with `check.sh` on Forgejo Actions: source hosting and CI
       move from dependent to commons, 14 of 17 (82%), and there's a way out of GitHub.
-- [ ] **Off .NET and Avalonia**, step by step: choose the stack, port the login screen as the pilot, then the
-      separate apps, then the shell (the assessment of 27 Nov 2026 is in the commit history). Both layers would
-      become commons: weighted 30 of 32 (94%).
+- [ ] **Off .NET and Avalonia**, step by step. Both layers would become commons: weighted 30 of 32 (94%).
+      The shell is about 53,000 lines: 32,000 of windows and styles, 21,000 of services (28 of its 103 service files
+      use Avalonia). The choices (27 Nov 2026), for the head to decide:
+      - *C and GTK 4*, as Crimson Online already is: no new dependency, both layers commons, the most code to write.
+      - *Vala and GTK 4*: GNOME's language, close to C# in its syntax, so the services port nearly line for line;
+        adds the Vala compiler (GNOME, LGPL-2.1-or-later). Both layers commons.
+      - *C# on GTK 4 through Gir.Core* (MIT, a community project, not yet 1.0): only the toolkit changes, so the
+        services stay; .NET stays dependent, weighted 27 of 32 (84%). Mono (now WineHQ's) is no way out of .NET:
+        it follows the old .NET Framework, not .NET 8.
+      Whichever is chosen: first the login screen (`RedStarOS --greeter`, about 780 lines, its own process under
+      greetd) as the pilot, then the separate apps (Planner, People's Archive, Atlas), then the shell a window at a
+      time, since separate processes can each use their own toolkit.
 - [ ] **Who pays for each dependency:** fill it in for every row of the table (PRINCIPLES.md, 11).
 
 ## 6. Security housekeeping

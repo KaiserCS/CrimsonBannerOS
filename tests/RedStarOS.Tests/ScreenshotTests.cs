@@ -150,6 +150,8 @@ public class ScreenshotTests
     [InlineData("plan", null)]
     [InlineData("quotas", 3)]
     [InlineData("ledger", null)]
+    [InlineData("simple", null)]
+    [InlineData("howto", null)]
     public void Planner_pages(string page, int? period)
     {
         var w = CrimsonPlanner.Views.PlannerWindow.Sample(page, period);

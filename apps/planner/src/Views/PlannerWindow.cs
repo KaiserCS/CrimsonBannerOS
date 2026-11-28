@@ -22,6 +22,8 @@ namespace CrimsonPlanner.Views;
 ///   Plan       the period's proposals, and the councils' decisions on them
 ///   Quotas     the enacted quotas, down to every council, and their files
 ///   Ledger     the verification ledger, checked
+/// The simple view (SimpleView.cs) puts the same plan in plain words for anyone, and is what Planner opens with
+/// until someone chooses the advanced one.
 /// </summary>
 public sealed partial class PlannerWindow : Window
 {
@@ -61,6 +63,7 @@ public sealed partial class PlannerWindow : Window
         else if (LatestPlan() is { } recent) Open(recent, quiet: true);
         else { _plan = Example.SmallEconomy(); _path = PathFor(_plan); Save(); }
         _period = _plan.LatestPeriod;
+        _simple = save && LoadSimple();
 
         var side = new DockPanel { Width = 216, Margin = new Thickness(14, 16, 6, 14) };
         var brand = new StackPanel { Spacing = 2, Margin = new Thickness(10, 2, 0, 18) };
@@ -69,18 +72,14 @@ public sealed partial class PlannerWindow : Window
         DockPanel.SetDock(brand, Dock.Top);
         side.Children.Add(brand);
         var foot = new StackPanel { Spacing = 6, Margin = new Thickness(10, 10, 4, 0) };
+        foot.Children.Add(Kicker("VIEW"));
+        foot.Children.Add(_viewSwitch);
         foot.Children.Add(Kicker("ADVISES · COUNCILS DECIDE"));
         foot.Children.Add(_fileLine);
         DockPanel.SetDock(foot, Dock.Bottom);
         side.Children.Add(foot);
         side.Children.Add(_nav);
-        foreach (var (id, label) in new[] { ("overview", "Overview"), ("economy", "Economy"), ("councils", "Councils"), ("reports", "Reports"),
-                                            ("plan", "Plan"), ("quotas", "Quotas"), ("ledger", "Ledger") })
-        {
-            var b = new Button { Classes = { "nav" }, Content = new TextBlock { Text = label, FontSize = 14 }, Tag = id };
-            b.Click += (_, _) => ShowPage(id);
-            _nav.Children.Add(b);
-        }
+        BuildNav();
 
         // pages fit the window's width (their panels wrap); only wide tables scroll sideways, each in its own panel
         var scroll = new ScrollViewer { Content = _content, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled };
@@ -92,7 +91,7 @@ public sealed partial class PlannerWindow : Window
 
         DragDrop.SetAllowDrop(this, true);
         AddHandler(DragDrop.DropEvent, OnDrop);
-        ShowPage("overview");
+        ShowPage(_simple ? "simple" : "overview");
     }
 
     private readonly bool _autosave;
@@ -113,6 +112,8 @@ public sealed partial class PlannerWindow : Window
             "plan" => PlanPage(),
             "quotas" => QuotasPage(),
             "ledger" => LedgerPage(),
+            "simple" => SimplePage(),
+            "howto" => HowToPage(),
             _ => OverviewPage(),
         };
     }
@@ -658,17 +659,7 @@ public sealed partial class PlannerWindow : Window
             col.Children.Add(Panel(box));
         }
         var export = Pill("Export the quotas", accent: true);
-        export.Click += (_, _) =>
-        {
-            var folder = Path.Combine(PlansFolder, "Quotas", PlanCsv.Safe(_plan.Name), $"period-{_period}");
-            try
-            {
-                var files = PlanCsv.ExportQuotas(_plan, _period, folder);
-                Say($"Wrote {files.Count} files to {folder}: one for everything, and one for each council in its region's folder.");
-            }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Say("The quotas couldn't be written: " + e.Message, true); }
-            Refresh();
-        };
+        export.Click += (_, _) => { ExportQuotas(); Refresh(); };
         col.Children.Add(export);
         return col;
     }
@@ -735,7 +726,8 @@ public sealed partial class PlannerWindow : Window
         _result = null;
         Save();
         Say(empty ? "A new, empty plan: add products in Economy and councils in Councils, then take in their reports." : "Opened a copy of the example economy.");
-        ShowPage(empty ? "economy" : "overview");
+        if (empty && _simple) { SetView(false); Say("A new, empty plan: add products in Economy and councils in Councils, then take in their reports."); }
+        ShowPage(empty ? "economy" : _simple ? "simple" : "overview");
     }
 
     private void Save()
@@ -750,7 +742,7 @@ public sealed partial class PlannerWindow : Window
         var files = e.DataTransfer.TryGetFiles()?.Select(f => f.TryGetLocalPath()).Where(p => p != null).Cast<string>().ToList();
         if (files == null || files.Count == 0) return;
         foreach (var f in files) ImportFile(f);
-        ShowPage(files.Any(f => f.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)) ? "reports" : "overview");
+        ShowPage(_simple ? "simple" : files.Any(f => f.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)) ? "reports" : "overview");
     }
 
     /// <summary>For the tests: a page of the example (at a period, or the latest), without saving anything.</summary>
@@ -762,6 +754,8 @@ public sealed partial class PlannerWindow : Window
         w._period = period ?? w._plan.LatestPeriod;
         w._decidedBy = "Northern Regional Council";
         w._result = null;
+        w._simple = page is "simple" or "howto";
+        w.BuildNav();
         w.ShowPage(page);
         return w;
     }
