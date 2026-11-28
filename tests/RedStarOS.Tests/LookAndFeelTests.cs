@@ -55,6 +55,7 @@ public class LookAndFeelTests
         var s = new Settings { GtkTheme = "Arc", IconTheme = "Papirus", CursorTheme = "Bibata" };
         var keys = LookAndFeel.GtkKeys(s, dark: true).ToDictionary(k => k.Key, k => k.Value);
         Assert.Equal("1", keys["gtk-application-prefer-dark-theme"]);
+        Assert.Equal("dark", keys["gtk-interface-color-scheme"]);
         Assert.Equal("Arc", keys["gtk-theme-name"]);
         Assert.Equal("Papirus", keys["gtk-icon-theme-name"]);
         Assert.Equal("Bibata", keys["gtk-cursor-theme-name"]);

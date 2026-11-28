@@ -263,7 +263,7 @@ public static class LookAndFeel
         {
             var gtk4 = v == "gtk-4.0";
             // GTK 4 has no gtk-application-prefer-dark-theme for libadwaita apps, but plain GTK 4 still reads it
-            try { MergeIni(Path.Combine(cfg, v, "settings.ini"), "Settings", keys.Where(k => !(gtk4 && k.Key == "gtk-theme-name" && k.Value == "HighContrast"))); }
+            try { MergeIni(Path.Combine(cfg, v, "settings.ini"), "Settings", keys.Where(k => !(gtk4 && k.Key == "gtk-theme-name" && k.Value == "HighContrast") && (gtk4 || k.Key != "gtk-interface-color-scheme"))); }
             catch (Exception ex) { Console.Error.WriteLine($"appearance: {v}: {ex.Message}"); }
         }
         if (ProcessUtil.Which("gsettings") is { } gs)
@@ -296,6 +296,8 @@ public static class LookAndFeel
     public static List<KeyValuePair<string, string>> GtkKeys(Settings s, bool dark)
     {
         var k = new List<KeyValuePair<string, string>> { new("gtk-application-prefer-dark-theme", dark ? "1" : "0") };
+        // GTK 4.20 and later choose a theme's dark sheet from this instead (written for GTK 4 only)
+        k.Add(new("gtk-interface-color-scheme", dark ? "dark" : "light"));
         if (EffectiveGtkTheme(s) is { } gtk) k.Add(new("gtk-theme-name", gtk));
         if (EffectiveIconTheme(s) is { } icons) k.Add(new("gtk-icon-theme-name", icons));
         if (!string.IsNullOrEmpty(s.CursorTheme)) k.Add(new("gtk-cursor-theme-name", s.CursorTheme));

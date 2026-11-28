@@ -20,6 +20,9 @@ int main (string[] args) {
             var settings = Gtk.Settings.get_default ();
             settings.gtk_theme_name = "CrimsonBanner";
             settings.gtk_application_prefer_dark_theme = mode == Crimson.Mode.DARK;
+            // GTK 4.20 picks the theme's dark sheet from its colour scheme, not the older switch
+            if (settings.get_class ().find_property ("gtk-interface-color-scheme") != null)
+                settings.set ("gtk-interface-color-scheme", mode == Crimson.Mode.DARK ? 2 : 3);
         } else {
             Crimson.Theme.apply_mode (mode, accent);
         }
