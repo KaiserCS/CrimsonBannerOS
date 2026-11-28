@@ -310,7 +310,9 @@ jobs:
           crimson-gtk/test/headless.sh gallery-other-light.png crimson-gtk/build/crimson-gtk-gallery --as-other-program --light
           # a program's main menu (a popover menu) under the theme, drawn on its own
           crimson-gtk/test/headless.sh gallery-menu-window.png crimson-gtk/build/crimson-gtk-gallery --as-other-program --menu "$PWD/gallery-menu.png"
-          for f in gallery-dark gallery-light gallery-other gallery-other-light gallery-menu; do
+          crimson-gtk/test/headless.sh gallery-menu-window2.png crimson-gtk/build/crimson-gtk-gallery --as-other-program --light --menu "$PWD/gallery-menu-light.png"
+          crimson-gtk/test/headless.sh gallery-menu-window3.png crimson-gtk/build/crimson-gtk-gallery --menu "$PWD/gallery-menu-ours.png"
+          for f in gallery-dark gallery-light gallery-other gallery-other-light gallery-menu gallery-menu-light gallery-menu-ours; do
             echo "---- screen.png (GTK-$f) ----"; base64 -w 0 $f.png; echo; echo "---- end screen.png ----"
           done
 
