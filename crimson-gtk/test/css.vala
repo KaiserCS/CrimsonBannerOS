@@ -30,7 +30,7 @@ int main (string[] args) {
     });
     // the theme folder other programs use, read by GTK 4 itself: it needs a display, for GTK's own theme to start from
     var folder = args.length > 1 ? args[1] : null;
-    if (folder != null) Test.add_func ("/theme/folder", () => {
+    if (folder != null) Test.add_data_func ("/theme/folder", () => {
         if (!Gtk.init_check ()) {
             if (Environment.get_variable ("CRIMSON_GTK_REQUIRE_DISPLAY") != null) error ("no display");
             Test.skip ("no display");
