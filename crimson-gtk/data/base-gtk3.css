@@ -25,9 +25,16 @@ button {
 }
 button:hover { background-color: @button_hover; }
 button:active, button:checked { background-color: @card; }
-button.suggested-action { background-color: @accent; border-color: transparent; color: #FFFFFF; }
-button.suggested-action:hover { background-color: shade(@accent, 1.08); }
-button.destructive-action { background-color: @danger; border-color: transparent; color: #FFFFFF; }
+/* the main action, also where GTK 3's Adwaita is more specific (a dialog's header bar: Firefox's Open) */
+button.suggested-action, headerbar button.suggested-action, .titlebar button.suggested-action,
+button.suggested-action:backdrop, headerbar button.suggested-action:backdrop, .titlebar button.suggested-action:backdrop {
+  background-image: none; background-color: @accent; border-color: transparent; color: #FFFFFF; box-shadow: none;
+}
+button.suggested-action:hover, headerbar button.suggested-action:hover, .titlebar button.suggested-action:hover { background-color: shade(@accent, 1.08); }
+button.suggested-action:disabled, headerbar button.suggested-action:disabled { background-color: alpha(@accent, 0.45); color: alpha(#FFFFFF, 0.7); }
+button.destructive-action, headerbar button.destructive-action, .titlebar button.destructive-action {
+  background-image: none; background-color: @danger; border-color: transparent; color: #FFFFFF; box-shadow: none;
+}
 button.flat { background-color: transparent; border-color: transparent; }
 button.flat:hover { background-color: @hover; }
 
@@ -68,5 +75,14 @@ scale highlight, progressbar progress { background-image: none; background-color
 scale slider { background-image: none; background-color: #FFFFFF; border: none; }
 
 notebook > header tab:checked { box-shadow: inset 0 -3px @accent; }
-treeview.view:selected, list row:selected, row:selected { background-color: @accent_soft; color: @fg; }
+/* the chosen row: the soft accent wash, focused or not (GTK 3's Adwaita colours them blue, more specifically) */
+.view:selected, .view:selected:focus, .view text:selected, .view text:selected:focus,
+treeview.view:selected, treeview.view:selected:focus, treeview.view:selected:backdrop,
+iconview:selected, iconview:selected:focus, flowbox flowboxchild:selected,
+row:selected, row:selected:focus, list row:selected, list row:selected:focus, placessidebar row:selected,
+label selection, entry selection, textview text selection {
+  background-color: @accent_soft;
+  color: @fg;
+}
+treeview.view:selected:focus, row:selected:focus, .view:selected:focus { box-shadow: inset 3px 0 @accent; }
 separator { background-color: @border; }

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // crimson-gtk-gallery: every part of Crimson Banner's GTK 4 look in one window, to check it against the shell's.
 //   crimson-gtk-gallery [--light] [--accent #RRGGBB] [--screenshot FILE]
+//   crimson-gtk-gallery --menu FILE      also a program's main menu (a popover menu, as Crimson Online's), drawn
+//                                        to FILE with its size printed
 //   crimson-gtk-gallery --as-other-program [--light]    without our own styling: GTK's installed "Crimson Banner"
 //                                                       theme instead, as any other GTK 4 program gets it
 int main (string[] args) {
@@ -8,9 +10,11 @@ int main (string[] args) {
     string accent = Crimson.Theme.DEFAULT_ACCENT;
     string? shot = null;
     bool other = false;
+    string? menu_shot = null;
     for (int i = 1; i < args.length; i++) {
         if (args[i] == "--light") mode = Crimson.Mode.LIGHT;
         else if (args[i] == "--as-other-program") other = true;
+        else if (args[i] == "--menu" && i + 1 < args.length) menu_shot = args[++i];
         else if (args[i] == "--accent" && i + 1 < args.length) accent = args[++i];
         else if (args[i] == "--screenshot" && i + 1 < args.length) shot = args[++i];
     }
@@ -26,14 +30,25 @@ int main (string[] args) {
         } else {
             Crimson.Theme.apply_mode (mode, accent);
         }
-        var win = gallery (app);
+        Gtk.MenuButton menu_button;
+        var win = gallery (app, out menu_button);
         win.present ();
+        if (menu_shot != null) Timeout.add (1200, () => {
+            menu_button.popup ();
+            Timeout.add (1200, () => {
+                var pop = menu_button.popover;
+                print ("menu: %d x %d\n", pop.get_width (), pop.get_height ());
+                Crimson.save_drawing (pop, menu_shot);
+                return Source.REMOVE;
+            });
+            return Source.REMOVE;
+        });
         if (shot != null) Timeout.add (2000, () => { Crimson.save_screenshot (win, shot); app.quit (); return Source.REMOVE; });
     });
     return app.run (new string[] { args[0] });
 }
 
-Gtk.Window gallery (Gtk.Application app) {
+Gtk.Window gallery (Gtk.Application app, out Gtk.MenuButton menu_button) {
     var win = new Gtk.ApplicationWindow (app);
     win.title = "Crimson Banner GTK";
     win.set_default_size (1180, 820);
@@ -59,6 +74,29 @@ Gtk.Window gallery (Gtk.Application app) {
         if (i == 0) b.add_css_class ("on");
         side.append (b);
     }
+
+    // a main menu, as a program's (Crimson Online's): sections, a check, a submenu
+    var model = new Menu ();
+    var s1 = new Menu ();
+    s1.append ("New Tab", "app.none");
+    s1.append ("New Window", "app.none");
+    model.append_section (null, s1);
+    var s2 = new Menu ();
+    s2.append ("Find in Page…", "app.none");
+    s2.append ("Block Ads and Trackers", "app.check");
+    var sub = new Menu ();
+    sub.append ("Bookmarks", "app.none");
+    s2.append_submenu ("History", sub);
+    model.append_section (null, s2);
+    var none = new SimpleAction ("none", null);
+    app.add_action (none);
+    var check = new SimpleAction.stateful ("check", null, new Variant.boolean (true));
+    app.add_action (check);
+    menu_button = new Gtk.MenuButton ();
+    menu_button.icon_name = "open-menu-symbolic";
+    menu_button.menu_model = model;
+    menu_button.halign = Gtk.Align.START;
+    side.append (menu_button);
 
     var col = new Gtk.Box (Gtk.Orientation.VERTICAL, 16);
     col.margin_start = 22;

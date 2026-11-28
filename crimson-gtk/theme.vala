@@ -360,13 +360,18 @@ public Gtk.Box empty_state (string icon_name, string title, string body) {
 
 /// The window as it's drawn, to a PNG (CI has no one to look at the screen).
 public bool save_screenshot (Gtk.Window win, string file) {
+    return save_drawing (win, file);
+}
+
+/// Any surface as it's drawn (a window, or a popover, which is a surface of its own), to a PNG.
+public bool save_drawing (Gtk.Widget win, string file) {
     int w = win.get_width (), h = win.get_height ();
     var paintable = new Gtk.WidgetPaintable (win);
     var snap = new Gtk.Snapshot ();
     paintable.snapshot (snap, w, h);
     var node = snap.to_node ();
     if (node == null) { printerr ("crimson-gtk: nothing was drawn\n"); return false; }
-    var texture = win.get_renderer ().render_texture (node, null);
+    var texture = win.get_native ().get_renderer ().render_texture (node, null);
     if (!texture.save_to_png (file)) { printerr ("crimson-gtk: couldn't write %s\n", file); return false; }
     print ("drew %dx%d to %s\n", w, h, file);
     return true;
