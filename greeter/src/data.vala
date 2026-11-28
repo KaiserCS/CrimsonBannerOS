@@ -122,7 +122,9 @@ namespace Data {
             if (shell.length == 0 || Path.get_basename (shell) in NO_LOGIN_SHELLS) continue;
             if (f[0] == "greeter" || f[0] == "nobody" || seen.contains (f[0])) continue;
             seen.add (f[0]);
-            list.add (new LoginUser (f[0], f[4].split (",")[0].strip (), uid, f[5]));
+            // the name they go by: the comment's first part (GECOS); an empty comment splits into nothing
+            var gecos = f[4].split (",");
+            list.add (new LoginUser (f[0], gecos.length > 0 ? gecos[0].strip () : "", uid, f[5]));
         }
         list.sort ((a, b) => a.shown.casefold ().collate (b.shown.casefold ()));
         return list;
