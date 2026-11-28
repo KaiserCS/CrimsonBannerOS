@@ -84,5 +84,12 @@ label selection, entry selection, textview text selection {
   background-color: @accent_soft;
   color: @fg;
 }
+/* selected text where it has focus: Firefox takes its highlight in pages from these */
+.view text selection:focus, textview text selection:focus, entry selection:focus, label:focus selection,
+flowbox flowboxchild selection:focus, iconview text selection:focus, spinbutton:not(.vertical) selection:focus,
+.view text selection, entry selection, label selection {
+  background-color: alpha(@accent, 0.45);
+  color: @fg;
+}
 treeview.view:selected:focus, row:selected:focus, .view:selected:focus { box-shadow: inset 3px 0 @accent; }
 separator { background-color: @border; }

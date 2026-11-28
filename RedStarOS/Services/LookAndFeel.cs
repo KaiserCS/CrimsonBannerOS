@@ -118,6 +118,10 @@ public static class LookAndFeel
         try { if (File.Exists(index)) text = File.ReadAllText(index); } catch (IOException) { }
         var accent = ThemeService.AccentHex;
         var (want, ours, current) = UserGtkThemePlan(accent, text);
+        // made before the system's copy was last updated: made again, so a fix to the theme reaches it too
+        if (current && SystemGtkThemeDir(OurGtkTheme) is { } system)
+            try { if (File.GetLastWriteTimeUtc(Path.Combine(system, "index.theme")) > File.GetLastWriteTimeUtc(index)) current = false; }
+            catch (IOException) { }
         if (!want)
         {
             if (ours) try { Directory.Delete(dir, true); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
