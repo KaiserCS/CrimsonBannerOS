@@ -145,12 +145,16 @@ public class Theme : Object {
         }
     }
 
+    private const string ROOTS = ":root, window, popover, tooltip, dialog";
+
     /// The GTK 4 theme's gtk.css: light by default, dark by GTK's colour scheme (GTK 4.20 and later choose this way).
     public static string gtk4_sheet (string accent) {
         var sb = new StringBuilder ();
         sb.append ("@import url(\"%s\");\n".printf (GTK4_LIGHT));
-        sb.append (":root {\n" + variables (Mode.LIGHT, accent) + "}\n");
-        sb.append ("@media (prefers-color-scheme: dark) {\n:root {\n" + variables (Mode.DARK, accent) + "}\n");
+        // on every surface, not only :root: a popover or a tooltip is a surface of its own, and its parts didn't
+        // see :root's variables (a menu came out with GTK's light background under our white text)
+        sb.append (ROOTS + " {\n" + variables (Mode.LIGHT, accent) + "}\n");
+        sb.append ("@media (prefers-color-scheme: dark) {\n" + ROOTS + " {\n" + variables (Mode.DARK, accent) + "}\n");
         sb.append (resource ("dark-surfaces.css"));
         sb.append ("}\n");
         sb.append (with_variables (resource ("base.css")));

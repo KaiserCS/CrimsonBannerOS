@@ -171,6 +171,34 @@ static void test_unique_paths(void)
 	g_free(e);
 }
 
+static void test_menu_labels(void)
+{
+	char *s = online_menu_label("Short", "https://a.example/", 48);
+	g_assert_cmpstr(s, ==, "Short");
+	g_free(s);
+	/* a long title is cut, with an ellipsis, to the length asked for */
+	s = online_menu_label("The very long title of a video about the history of the workers' movement in America", "https://www.youtube.com/watch?v=x", 30);
+	g_assert_cmpint(g_utf8_strlen(s, -1), <=, 30);
+	g_assert_true(g_str_has_suffix(s, "…"));
+	g_free(s);
+	/* characters, not bytes */
+	s = online_menu_label("Ünïcödé ünïcödé ünïcödé", "https://a.example/", 10);
+	g_assert_cmpint(g_utf8_strlen(s, -1), ==, 10);
+	g_assert_true(g_utf8_validate(s, -1, NULL));
+	g_free(s);
+	/* no title: the host */
+	s = online_menu_label("", "https://News.Example.org/page", 48);
+	g_assert_cmpstr(s, ==, "news.example.org");
+	g_free(s);
+	s = online_menu_label(NULL, NULL, 48);
+	g_assert_cmpstr(s, ==, "Untitled");
+	g_free(s);
+	/* an underscore stays an underscore, not a shortcut's mark */
+	s = online_menu_label("my_file_name", "https://a.example/", 48);
+	g_assert_cmpstr(s, ==, "my__file__name");
+	g_free(s);
+}
+
 int main(int argc, char **argv)
 {
 	g_test_init(&argc, &argv, NULL);
@@ -181,5 +209,6 @@ int main(int argc, char **argv)
 	g_test_add_func("/address-bar", test_address_bar);
 	g_test_add_func("/hosts", test_hosts_and_blocking);
 	g_test_add_func("/download-names", test_unique_paths);
+	g_test_add_func("/menu-labels", test_menu_labels);
 	return g_test_run();
 }

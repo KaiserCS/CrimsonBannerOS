@@ -137,3 +137,27 @@ char *online_unique_path(const char *dir, const char *name)
 }
 
 char *online_html_escape(const char *s) { return g_markup_escape_text(s ? s : "", -1); }
+
+char *online_menu_label(const char *title, const char *url, guint max)
+{
+	gchar *text = NULL;
+	if (title && *title && g_utf8_validate(title, -1, NULL)) text = g_strstrip(g_strdup(title));
+	if (!text || !*text) {
+		g_free(text);
+		text = online_host(url ? url : "");
+		if (!*text) { g_free(text); text = g_strdup(url && *url ? url : "Untitled"); }
+	}
+	if (max > 1 && g_utf8_strlen(text, -1) > (glong)max) {
+		gchar *cut = g_utf8_substring(text, 0, max - 1);
+		g_free(text);
+		text = g_strconcat(g_strchomp(cut), "…", NULL);
+		g_free(cut);
+	}
+	GString *out = g_string_new(NULL);
+	for (const char *p = text; *p; p++) {
+		if (*p == '_') g_string_append_c(out, '_');
+		g_string_append_c(out, *p);
+	}
+	g_free(text);
+	return g_string_free(out, FALSE);
+}

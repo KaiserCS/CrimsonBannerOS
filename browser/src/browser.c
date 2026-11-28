@@ -828,9 +828,12 @@ static void rebuild_bookmarks(void)
 	g_ptr_array_unref(bm);
 }
 
-static GMenuItem *open_item(const char *label, const char *url)
+static GMenuItem *open_item(const char *title, const char *url)
 {
+	/* short, so one long title doesn't make the whole menu as wide as itself */
+	gchar *label = online_menu_label(title, url, 48);
 	GMenuItem *it = g_menu_item_new(label, NULL);
+	g_free(label);
 	g_menu_item_set_action_and_target_value(it, "win.open", g_variant_new_string(url));
 	return it;
 }

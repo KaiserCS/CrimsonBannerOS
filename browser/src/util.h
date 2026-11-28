@@ -18,5 +18,10 @@ gboolean online_site_blocked(const char *blocked_sites, const char *url);
 /* A free file name in dir for a download: "name.ext", else "name (2).ext", "name (3).ext"… */
 char *online_unique_path(const char *dir, const char *name);
 
+/* A page's title as a menu item: at most max characters (cut with "…"), the URL's host when there is no title, and
+ * underscores doubled, since GTK's menus read one as a keyboard shortcut's mark. One long title would otherwise
+ * make the whole menu as wide as itself (a menu is as wide as its widest page). */
+char *online_menu_label(const char *title, const char *url, guint max);
+
 /* Text made safe to put in HTML. */
 char *online_html_escape(const char *s);
