@@ -12,7 +12,7 @@ namespace RedStarOS.Tests;
 
 /// <summary>
 /// Windows that need arguments (so <see cref="WindowSmokeTests"/> can't create them) must open too, and with
-/// REDSTAR_SCREENSHOTS=folder every window is also rendered (Skia) and saved as a PNG — CI uploads them, so a
+/// REDSTAR_SCREENSHOTS=folder every window is also saved as a PNG (they are always drawn, with Skia) — CI prints them, so a
 /// change's effect on every screen can be looked at without running the app.
 /// </summary>
 public class ScreenshotTests

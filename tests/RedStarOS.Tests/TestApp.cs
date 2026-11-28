@@ -22,11 +22,10 @@ public static class TestAppBuilder
     }
 
     /// <summary>
-    /// With REDSTAR_SCREENSHOTS set, windows are really drawn (Skia) so ScreenshotTests can save pictures of them;
-    /// otherwise the faster drawing-free headless renderer is used.
+    /// Windows are really drawn (Skia), always: tests that look at pixels (a taskbar preview, an icon on its tile) or
+    /// at a picture's real size (the image viewer) need it, and ./check.sh must run them exactly as CI does
+    /// (PRINCIPLES.md, 4). REDSTAR_SCREENSHOTS only decides whether ScreenshotTests also save their pictures.
     /// </summary>
     public static AppBuilder BuildAvaloniaApp() =>
-        string.IsNullOrEmpty(Environment.GetEnvironmentVariable("REDSTAR_SCREENSHOTS"))
-            ? AppBuilder.Configure<App>().UseHeadless(new AvaloniaHeadlessPlatformOptions())
-            : AppBuilder.Configure<App>().UseSkia().UseHarfBuzz().UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false });
+        AppBuilder.Configure<App>().UseSkia().UseHarfBuzz().UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false });
 }
