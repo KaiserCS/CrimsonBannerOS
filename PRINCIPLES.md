@@ -240,22 +240,63 @@ passed (`tools/test-principles.sh`).
 
 ## 8. Who decides, and who holds the keys
 
-Collective property needs a collective to hold it, and as of 27 Nov 2026 this project has one decision-maker. That is
-written here instead of left to be assumed.
+Crimson Banner OS is the **Workers Party of America**'s system, kept by the Party's **Digital Infrastructure
+Committee**. As the head of the committee set out on 27 Nov 2026:
 
-- **Decisions are the owner's.** The owner decides what goes in, which exceptions stand and what the project signs.
-  The AI-assisted tool writes and proposes and decides nothing. Each decision is dated in this file (6).
-- **What the owner's control doesn't reach.** Everything is GPL-3.0-or-later and there is no contributor licence
-  agreement, so what anyone gives stays theirs under the GPL: it can't be taken private, and anyone may fork. A fork
-  signs with its own key, and installed systems and Software follow it by pointing at its servers and its public key
+- **The head of the committee decides** what goes in, which exceptions stand and what the project signs, for as long
+  as the committee is small. The AI-assisted tool writes and proposes, and decides nothing. Each decision is dated in
+  this file (6).
+- **Who contributes.** Contributions to the system are made by comrades the Vanguard appoints to maintain it, and
+  otherwise by the head of the committee alone. A contribution from anyone else is welcome as a suggestion (9), and
+  goes in when an appointed maintainer or the head takes it up.
+- **Votes, once membership expands.** When the committee grows, its decisions are put to a vote. How the votes are
+  held (who votes, on what, and with what majority) is to be written here when that happens.
+- **The keys, once the committee expands.** The signing key is on the head's computer only (25 Nov 2026: no signing
+  in CI). When the committee expands, the keys are dispersed among trusted comrades. `software/crimson-banner.gpg` is
+  a keyring, which can hold more than one public key, so installed systems can trust more than one signer; the tools
+  sign with one today (`PROJECT_KEY` in `tools/publish-os.sh`), and are to take more when the keys are dispersed.
+  Until then, losing the key means installed systems can't take our updates until people trust a new one by hand, so
+  an offline backup and a revocation certificate come first (ROADMAP, 6).
+- **What the licence keeps open.** The system is GPL-3.0-or-later with no contributor licence agreement. Who may
+  contribute to the Party's system is the committee's decision; the licence still lets anyone study, change and share
+  the code, and run a fork of their own under the same licence, signed with its own key
   (`CRIMSON_OS_SERVER`, `CRIMSON_APPS_SERVER`, `SoftwareCatalogUrl`, `CRIMSON_KEYRING`).
-- **The signing key is a single point.** It is on the owner's computer only (25 Nov 2026: no signing in CI), which is
-  safer, but if it is lost, installed systems can't take our updates until people trust a new key by hand.
-  `software/crimson-banner.gpg` is a keyring, which can hold more than one public key, but the tools sign with one
-  (`PROJECT_KEY` in `tools/publish-os.sh`), and a second signer needs a second person.
-- **Not decided, and left to the owner:** how people other than the owner come to share in decisions once there are
-  any; who a second signer would be; and where a revocation certificate for the key is kept. Until the owner records
-  an answer here, the owner's word stands. No rule has been invented for any of these.
+
+## 9. The mass line: suggestions are always welcome
+
+The system is worked out from what the people using it need, and goes back to them as the plan.
+
+- Suggestions are taken by whatever way the person chooses: an issue, a Matrix message, in person. Nothing is
+  gathered without them (5): a suggestion is something a person sends.
+- Every suggestion gets an answer: taken up (into the plan, ROADMAP.md), put aside with the reason, or declined with
+  the reason.
+- Each review of the plan says what changed because of suggestions.
+
+## 10. Who it is for
+
+A common platform for communication, organising and planning, for the Workers Party of America first, and with it:
+
+- unions and workers' cooperatives;
+- schools and libraries;
+- tenants' and community organisations;
+- the old and cheap computers the people who most need a free system have.
+
+Messenger (Matrix), Planner, People's Archive and Atlas serve this directly. A feature for these groups comes before
+one for nobody in particular, and the system has to stay usable on old hardware.
+
+Translations wait until the system is past beta (decided 27 Nov 2026). Until then every string is in English.
+
+## 11. Give back to the commons
+
+The commons the system stands on (section 3) is other people's labour, much of it paid for by companies. Taking from
+it without giving back is free-riding, so:
+
+- Fixes to a dependency go upstream, to its project, and not only into our tree.
+- Each dependency's row says who pays for its work when that is known (a company's staff, a foundation, a
+  cooperative, volunteers), so the dependence on capital can be seen and reduced. The existing rows are to be filled in
+  as that is found out (ROADMAP, 5).
+- When the Party has money for it, the commons it depends on is supported first where the work is done by a
+  community, a cooperative or volunteers.
 
 ## Applying it: checks for a change
 
@@ -266,5 +307,7 @@ written here instead of left to be assumed.
 - Does `./check.sh` cover it?
 - Does the layer score stay at or above 75%? Is the weighted figure updated too?
 - Does it keep an exception alive? Then its review date in section 7 is set.
+- Does it serve the people the system is for (10), and work on old hardware?
+- Does it change a dependency? Can the fix go upstream too (11)?
 - For a dependency, licence or distribution question: what do the FSF's Free Software Directory, licence list and
   FSDG say?

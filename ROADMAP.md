@@ -1,7 +1,14 @@
 # Roadmap
 
-Where Crimson Banner OS stands, and what comes next, in order. Update it as items are done: strike them through
-with the date, as `PRINCIPLES.md` does.
+Where Crimson Banner OS stands, and what comes next, in order. This is the Digital Infrastructure Committee's plan
+(PRINCIPLES.md, 8): the head of the committee is responsible for every item unless the item names someone else.
+
+**How the plan is kept.**
+- Items are done in order, and struck through with the date when done, as `PRINCIPLES.md` does.
+- An item someone takes on carries their name, and an item with a deadline carries its date: `(head, by 15 Dec 2026)`.
+- The plan is reviewed at the end of every month (Reviews, at the bottom): what was done, what slipped and why, what
+  changed because of suggestions (PRINCIPLES.md, 9), and what the next month takes on. A review criticises the work
+  plainly, the head's own included, and says what will be done differently.
 
 ## Where it stands (25 Nov 2026, release 26.11.3)
 
@@ -10,7 +17,8 @@ with the date, as `PRINCIPLES.md` does.
   redstar-wm and 3,600 in Crimson Online; 186 automated tests.
 - **A distribution now:** an installer ISO, signed updates for installed systems (`[crimson-banner]`), its own
   login screen, its own branding, and one look across the shell, in light and dark.
-- **Self-reliance:** 13 of 17 layers ours or community commons (76%), against a floor of 75%: one layer of margin.
+- **Self-reliance:** 14 of 17 layers ours or community commons (82%), against a floor of 75%; weighted by what
+  rests on each layer, 24 of 32 (75%), with no margin (corrected 27 Nov 2026: this said 13 of 17).
 - **Tested on:** a VMware virtual machine and CI's emulated machines (QEMU). Not yet on real hardware.
 
 ## 1. Trustworthy to install and update
@@ -48,6 +56,8 @@ Now that people can install it, a bad release reaches every installed system at 
       councils' reports, the verification ledger, turnover as shadow price, Leontief's input–output model, labour
       time, ratification with a quorum, recounts, quotas down to every council~~ (25 Nov 2026; published with
       `tools/publish-app.sh apps/planner`). Next: optimising a plan (linear programming), encrypted plan files.
+- [ ] **Planner's simple view**: one page that walks anyone through a period (hand in reports, read what they
+      say, decide, send out the quotas) in plain words, with the advanced pages a switch away.
 - [x] ~~**People's Archive** 1.0 (`apps/archive`): Project Gutenberg, Wikisource and the Marxists Internet Archive
       (and any OPDS catalogue), a shelf, and a reading room for EPUB and text~~ (25 Nov 2026; published with
       `tools/publish-app.sh apps/archive`). Gutenberg comes from its catalogue file and PGLAF's
@@ -58,7 +68,10 @@ Now that people can install it, a bad release reaches every installed system at 
 
 ## 4. Reach more people
 
-- [ ] **Translations:** every string is in English in the code. Add the plumbing now, while it's 50,000 lines and not 100,000.
+- [ ] **Translations**, once the system is past beta (decided 27 Nov 2026, PRINCIPLES.md, 10). Every string is in
+      English in the code until then.
+- [ ] **"Tell the committee"**: a suggestion the person writes and sends themselves, from Settings, by Matrix or as
+      an issue; nothing is sent unless they send it (PRINCIPLES.md, 9).
 - [ ] **Accessibility:** what works with Orca (screen-reader support for Avalonia on Linux is limited), and
       everything reachable from the keyboard.
 - [ ] **Docs:** a user guide; a contributor guide (CONTRIBUTING, issue templates). One person carries the project
@@ -68,7 +81,10 @@ Now that people can install it, a bad release reaches every installed system at 
 
 - [ ] **Mirror to Codeberg** (Forgejo, run by a non-profit) with `check.sh` on Forgejo Actions: source hosting and CI
       move from dependent to commons, 14 of 17 (82%), and there's a way out of GitHub.
-- [ ] **.NET and Avalonia** stay dependent with no realistic replacement: say so in `PRINCIPLES.md`.
+- [ ] **Off .NET and Avalonia**, step by step: choose the stack, port the login screen as the pilot, then the
+      separate apps, then the shell (the assessment of 27 Nov 2026 is in the commit history). Both layers would
+      become commons: weighted 30 of 32 (94%).
+- [ ] **Who pays for each dependency:** fill it in for every row of the table (PRINCIPLES.md, 11).
 
 ## 6. Security housekeeping
 
@@ -98,3 +114,7 @@ Extrapolated from the first eight days; it holds only if the pace does.
 **Writing code isn't the bottleneck; checking it in the real world is.** VMware alone took about two of the eight
 days, and that was one virtual machine. Every kind of hardware and every installed system adds that kind of work,
 so section 1 comes first: tests like the install test are what let the pace continue safely.
+
+## Reviews
+
+- **31 Dec 2026:** the first monthly review.
