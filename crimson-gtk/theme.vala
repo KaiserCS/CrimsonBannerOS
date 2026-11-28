@@ -71,6 +71,90 @@ public class Theme : Object {
         return sb.str;
     }
 
+    /// The colour tokens of a theme file (dark.css or light.css), by name.
+    private static HashTable<string, string> tokens (Mode mode) {
+        var map = new HashTable<string, string> (str_hash, str_equal);
+        try {
+            var re = new Regex ("@define-color\\s+([a-z_]+)\\s+([^;]+);");
+            MatchInfo m;
+            if (re.match (resource (mode == Mode.DARK ? "dark.css" : "light.css"), 0, out m))
+                do { map.insert (m.fetch (1), m.fetch (2).strip ()); } while (m.next ());
+        } catch (RegexError e) { critical ("crimson-gtk: %s", e.message); }
+        return map;
+    }
+
+    /// The accent and what's made from it, as plain colours: the soft wash, and small text (lightened on dark).
+    public static void accent_colours (Mode mode, string accent, out string soft, out string text) {
+        var c = Gdk.RGBA ();
+        if (!c.parse (is_colour (accent) ? accent : DEFAULT_ACCENT)) c.parse (DEFAULT_ACCENT);
+        int r = (int) Math.round (c.red * 255), g = (int) Math.round (c.green * 255), b = (int) Math.round (c.blue * 255);
+        soft = "rgba(%d, %d, %d, 0.23)".printf (r, g, b);
+        if (mode == Mode.LIGHT) { text = "#%02X%02X%02X".printf (r, g, b); return; }
+        // mixed 45% with white, as the shell's ShellAccentTextBrush
+        text = "#%02X%02X%02X".printf ((int) Math.round (r * 0.55 + 255 * 0.45), (int) Math.round (g * 0.55 + 255 * 0.45),
+                                       (int) Math.round (b * 0.55 + 255 * 0.45));
+    }
+
+    /// A theme's tokens and accent as CSS variables (--cb-fg, --cb-panel…), and GTK's own accent variables.
+    private static string variables (Mode mode, string accent) {
+        var sb = new StringBuilder ();
+        var t = tokens (mode);
+        foreach (var name in sorted_keys (t)) sb.append ("  --cb-%s: %s;\n".printf (name.replace ("_", "-"), t.get (name)));
+        string soft, text;
+        accent_colours (mode, accent, out soft, out text);
+        var a = is_colour (accent) ? accent : DEFAULT_ACCENT;
+        sb.append ("  --cb-accent: %s;\n  --cb-accent-soft: %s;\n  --cb-accent-text: %s;\n".printf (a, soft, text));
+        sb.append ("  --cb-brand: %s;\n  --cb-danger: %s;\n".printf (BRAND, DANGER));
+        sb.append ("  --accent-bg-color: %s;\n  --accent-fg-color: #FFFFFF;\n  --accent-color: %s;\n".printf (a, text));
+        return sb.str;
+    }
+
+    private static string[] sorted_keys (HashTable<string, string> t) {
+        var list = new GenericArray<string> ();
+        foreach (var k in t.get_keys ()) list.add (k);
+        list.sort (strcmp);
+        string[] keys = {};
+        for (int i = 0; i < list.length; i++) keys += list[i];
+        return keys;
+    }
+
+    /// base.css with its named colours (@panel) as CSS variables (var(--cb-panel)), and its @define-color lines gone
+    /// (they're the variables now), so one sheet can be light or dark by media query.
+    public static string with_variables (string css) {
+        var known = new GenericSet<string> (str_hash, str_equal);
+        foreach (var k in tokens (Mode.DARK).get_keys ()) known.add (k);
+        foreach (var k in new string[] { "accent", "accent_soft", "accent_text", "brand", "danger" }) known.add (k);
+        var sb = new StringBuilder ();
+        foreach (var line in css.split ("\n")) {
+            if (line.strip ().has_prefix ("@define-color")) continue;
+            sb.append (line);
+            sb.append_c ('\n');
+        }
+        try {
+            var re = new Regex ("@([a-z_]+)\\b");
+            return re.replace_eval (sb.str, -1, 0, 0, (m, res) => {
+                var name = m.fetch (1);
+                res.append (known.contains (name) ? "var(--cb-%s)".printf (name.replace ("_", "-")) : m.fetch (0));
+                return false;
+            });
+        } catch (RegexError e) {
+            critical ("crimson-gtk: %s", e.message);
+            return sb.str;
+        }
+    }
+
+    /// The GTK 4 theme's gtk.css: light by default, dark by GTK's colour scheme (GTK 4.20 and later choose this way).
+    public static string gtk4_sheet (string accent) {
+        var sb = new StringBuilder ();
+        sb.append ("@import url(\"%s\");\n".printf (GTK4_LIGHT));
+        sb.append (":root {\n" + variables (Mode.LIGHT, accent) + "}\n");
+        sb.append ("@media (prefers-color-scheme: dark) {\n:root {\n" + variables (Mode.DARK, accent) + "}\n");
+        sb.append (resource ("dark-surfaces.css"));
+        sb.append ("}\n");
+        sb.append (with_variables (resource ("base.css")));
+        return sb.str;
+    }
+
     /// GTK's own built-in theme each of ours starts from, so anything ours doesn't restyle still looks right.
     public const string GTK4_LIGHT = "resource:///org/gtk/libgtk/theme/Default/Default-light.css";
     public const string GTK4_DARK = "resource:///org/gtk/libgtk/theme/Default/Default-dark.css";
@@ -87,8 +171,9 @@ public class Theme : Object {
         FileUtils.set_contents (Path.build_filename (dir, "index.theme"),
             "[Desktop Entry]\nType=X-GNOME-Metatheme\nName=Crimson Banner\nComment=Crimson Banner OS: graphite, with one accent\nEncoding=UTF-8\n\n"
             + "[X-GNOME-Metatheme]\nGtkTheme=CrimsonBanner\nIconTheme=CrimsonBanner\n# accent: %s\n".printf (accent));
-        FileUtils.set_contents (Path.build_filename (dir, "gtk-4.0", "gtk.css"),
-            head + "@import url(\"%s\");\n".printf (GTK4_LIGHT) + css_for (Mode.LIGHT, accent));
+        // gtk.css answers both: GTK 4.20 and later pick dark by media query; gtk-dark.css is for older GTK, and for
+        // GTK_THEME=CrimsonBanner:dark
+        FileUtils.set_contents (Path.build_filename (dir, "gtk-4.0", "gtk.css"), head + gtk4_sheet (accent));
         FileUtils.set_contents (Path.build_filename (dir, "gtk-4.0", "gtk-dark.css"),
             head + "@import url(\"%s\");\n".printf (GTK4_DARK) + css_for (Mode.DARK, accent));
         FileUtils.set_contents (Path.build_filename (dir, "gtk-3.0", "gtk.css"),

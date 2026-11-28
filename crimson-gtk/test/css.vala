@@ -25,6 +25,14 @@ int main (string[] args) {
         assert (Crimson.Theme.is_colour ("#C8102E"));
         assert (!Crimson.Theme.is_colour ("crimsonish"));
         assert (!Crimson.Theme.is_colour (""));
+        // GTK 4's theme sheet: every named colour turned into a variable, dark by media query
+        var sheet = Crimson.Theme.gtk4_sheet ("#0078D4");
+        assert (!sheet.contains ("@panel") && !sheet.contains ("@accent") && !sheet.contains ("@define-color"));
+        assert (sheet.contains ("var(--cb-panel)") && sheet.contains ("@media (prefers-color-scheme: dark)"));
+        assert (sheet.contains ("--cb-accent: #0078D4;"));
+        string soft, text;
+        Crimson.Theme.accent_colours (Crimson.Mode.DARK, "#C8102E", out soft, out text);
+        assert (soft == "rgba(200, 16, 46, 0.23)" && text == "#E17C8C");   // DESIGN.md's crimson text on dark
         // a bad accent falls back to crimson
         assert (Crimson.Theme.css_for (Crimson.Mode.DARK, "nope").contains ("@define-color accent #C8102E;"));
     });

@@ -1,0 +1,27 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later
+   For other GTK 4 programs, in the dark (inside @media (prefers-color-scheme: dark) in the theme's gtk.css): the
+   surfaces GTK's own light theme paints that base.css doesn't restyle. GTK 4.20 and later choose dark this way,
+   not with gtk-dark.css, and a theme can't import GTK's own dark sheet under a media query. */
+label, image, .title, .subtitle, expander, check, radio { color: inherit; }
+.dim-label { color: var(--cb-muted); }
+.view, textview > text, iconview, listview, columnview, gridview, list, flowbox, calendar,
+.navigation-sidebar, stacksidebar, placessidebar, scrolledwindow > viewport, .content-view {
+  background-color: var(--cb-panel);
+  color: var(--cb-fg);
+}
+listview > row:hover, list > row:hover, columnview > listview > row:hover, .navigation-sidebar > row:hover { background-color: var(--cb-hover); }
+textview, textview > text { background-color: var(--cb-field); color: var(--cb-fg); }
+notebook > header, notebook > stack { background-color: transparent; border-color: var(--cb-rule); }
+notebook > header tab { color: var(--cb-muted); }
+notebook > header tab:checked { color: var(--cb-fg); }
+frame > border, .frame { border-color: var(--cb-border); }
+infobar, actionbar, searchbar > revealer > box, toolbar, menubar, statusbar {
+  background-color: var(--cb-backdrop-top);
+  color: var(--cb-fg);
+  border-color: var(--cb-rule);
+}
+scrollbar { background-color: transparent; }
+scrollbar slider { background-color: rgba(255, 255, 255, 0.35); }
+levelbar > trough > block.filled { background-color: var(--cb-accent); }
+link, button.link, label > link { color: var(--cb-accent-text); }
+dialog, messagedialog, .dialog-action-area { background-color: var(--cb-backdrop-bottom); color: var(--cb-fg); }

@@ -3,6 +3,7 @@
   <gresource prefix="/org/redstaros/crimson-gtk">
     <file>base.css</file>
     <file>base-gtk3.css</file>
+    <file>dark-surfaces.css</file>
     <file>dark.css</file>
     <file>light.css</file>
   </gresource>
