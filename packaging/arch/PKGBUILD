@@ -127,8 +127,7 @@ package_crimson-banner-shell() {
 
 package_crimson-banner-greeter() {
   pkgdesc="Crimson Banner OS's login screen, run by greetd (sudo crimson-greeter-setup enable switches to it)"
-  # crimson-banner-shell: its login screen (RedStarOS --greeter) stays as the fallback while crimson-login is new
-  depends=(greetd gtk4 json-glib glib2 crimson-banner-shell redstar-comp xorg-xwayland xorg-xinit sh bash)
+  depends=(greetd gtk4 json-glib glib2 redstar-comp xorg-xwayland xorg-xinit sh bash)
   provides=(greetd-greeter)
   cd "$pkgbase-$pkgver"
   meson install -C "$srcdir/login" --destdir "$pkgdir" --no-rebuild

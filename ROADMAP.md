@@ -93,9 +93,11 @@ Now that people can install it, a bad release reaches every installed system at 
       **Chosen 27 Nov 2026: Vala and GTK 4, and no Qt.** First the login screen as the pilot, then the separate
       apps (Planner, People's Archive, Atlas), then the shell a window at a time, since separate processes can each
       use their own toolkit.
-  - [x] ~~The login screen: crimson-login (`greeter/`), in Vala and GTK 4~~ (27 Nov 2026). The shell's own
-        (`RedStarOS --greeter`) stays as its fallback until crimson-login has been tried on real hardware.
-  - [ ] Remove the shell's login screen once it has.
+  - [x] ~~The login screen: crimson-login (`greeter/`), in Vala and GTK 4~~ (27 Nov 2026), signed in with on the
+        head's own computer the same night.
+  - [x] ~~Remove the shell's login screen~~ (27 Nov 2026).
+  - [x] ~~A shared GTK 4 theme for everything that moves (`crimson-gtk/`): the shell's tokens and components~~
+        (27 Nov 2026).
   - [ ] Planner, People's Archive and Atlas.
 - [ ] **Who pays for each dependency:** fill it in for every row of the table (PRINCIPLES.md, 11).
 

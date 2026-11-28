@@ -14,18 +14,6 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         Diagnostics.Install();                  // unexpected errors → crash.log, the session keeps running
-        if (Program.Greeter && ApplicationLifetime is IClassicDesktopStyleApplicationLifetime greeter)
-        {
-            // the login screen: none of the desktop, just the window that signs people in
-            ThemeService.Apply();
-            greeter.ShutdownMode = ShutdownMode.OnMainWindowClose;
-            Services.Greeter.IGreetd backend = Program.GreeterDemo
-                ? new Services.Greeter.DemoGreetd()
-                : Services.Greeter.GreetdClient.ConnectAsync(Services.Greeter.GreetdClient.SocketPath!).GetAwaiter().GetResult();
-            greeter.MainWindow = new GreeterWindow(backend, Program.GreeterDemo);
-            base.OnFrameworkInitializationCompleted();
-            return;
-        }
         SettingsStore.Load();
         PointerTrace.Install();                 // Diagnostics → Record pointer activity (or REDSTAR_TRACE_POINTER=file)
         ThemeService.Apply();

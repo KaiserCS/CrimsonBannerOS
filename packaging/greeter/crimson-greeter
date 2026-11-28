@@ -1,8 +1,8 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Crimson Banner OS's login screen, as greetd starts it (/etc/greetd/config.toml, written by crimson-greeter-setup):
-# redstar-comp on this console, with the login screen inside it: crimson-login (Vala and GTK 4, greeter/), or the
-# shell's own (RedStarOS --greeter) where crimson-login isn't installed. CRIMSON_GREETER_LOGIN chooses another.
+# redstar-comp on this console, with the login screen inside it: crimson-login (Vala and GTK 4, greeter/).
+# CRIMSON_GREETER_LOGIN chooses another program (the tests use it).
 #
 # If that fails to come up twice in a row (graphics redstar-comp can't drive, such as a VM's without 3D), the same
 # login screen runs on X11 instead. If that fails twice too, greetd's text login (agreety) is used until the computer
@@ -24,9 +24,8 @@ export HOME="$CACHE" XDG_CONFIG_HOME="$CACHE/config" XDG_CACHE_HOME="$CACHE/cach
 export CRIMSON_GREETER_STATE="$CACHE/state.json"
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
 
-# the login screen itself: crimson-login when it's there, else the shell's
 LOGIN_BIN="${CRIMSON_GREETER_LOGIN:-/usr/bin/crimson-login}"
-if [ -x "$LOGIN_BIN" ]; then set -- "$LOGIN_BIN"; else set -- /usr/lib/crimson-banner/RedStarOS --greeter; fi
+set -- "$LOGIN_BIN"
 
 start="$(date +%s)"
 XORG="${CRIMSON_GREETER_XORG:-/usr/bin/Xorg}"

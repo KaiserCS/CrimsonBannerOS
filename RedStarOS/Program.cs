@@ -13,25 +13,15 @@ namespace RedStarOS;
 
 internal static class Program
 {
-    /// <summary>The login screen (--greeter, started by greetd) or its preview (--greeter-demo): no desktop at all.</summary>
-    public static bool Greeter { get; private set; }
-    public static bool GreeterDemo { get; private set; }
-
     [STAThread]
     public static void Main(string[] args)
     {
         RedStarOS.Services.NativeIsolation.Apply();   // Skia's and HarfBuzz's own copies, not the system's (before any text is drawn)
         if (args.Contains("--greeter") || args.Contains("--greeter-demo"))
         {
-            Greeter = true;
-            GreeterDemo = args.Contains("--greeter-demo");
-            if (!GreeterDemo && RedStarOS.Services.Greeter.GreetdClient.SocketPath == null)
-            {
-                Console.Error.WriteLine("--greeter is started by greetd (GREETD_SOCK isn't set). To look at it: RedStarOS --greeter-demo");
-                Environment.ExitCode = 2;
-                return;
-            }
-            BuildAvaloniaApp(false).StartWithClassicDesktopLifetime(args);
+            // the login screen is its own program now (greeter/, Vala and GTK 4)
+            Console.Error.WriteLine("The login screen is crimson-login now (crimson-login --demo to look at it).");
+            Environment.ExitCode = 2;
             return;
         }
         // On top of another desktop, Red Star runs inside its own display so every key and click stays in it.

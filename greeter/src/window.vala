@@ -106,7 +106,7 @@ public class LoginWindow : Gtk.ApplicationWindow {
         root.add_overlay (scrim);
 
         var brand = new Gtk.Label ("Crimson Banner OS" + (demo ? " · preview: any password works, nothing is started" : "") + "\n" + Data.host_name ());
-        brand.add_css_class ("brand");
+        brand.add_css_class ("host");
         brand.halign = Gtk.Align.START;
         brand.valign = Gtk.Align.START;
         brand.xalign = 0;
@@ -131,12 +131,13 @@ public class LoginWindow : Gtk.ApplicationWindow {
             l.max_width_chars = 40;
             l.visible = false;
         }
+        sign_in.add_css_class ("primary");
         sign_in.add_css_class ("signin");
         sign_in.clicked.connect (() => submit.begin ());
         answer.activate.connect (() => submit.begin ());
         user_box.activate.connect (() => answer.grab_focus ());
 
-        card.add_css_class ("card");
+        card.add_css_class ("login-card");
         card.width_request = 360;
         card.halign = Gtk.Align.CENTER;
         card.append (avatar);
@@ -236,6 +237,7 @@ public class LoginWindow : Gtk.ApplicationWindow {
 
     private Gtk.Button person_tile (string label, Gtk.Widget picture, owned Pick pick) {
         var b = new Gtk.Button ();
+        b.add_css_class ("flat");
         b.add_css_class ("person");
         var box = new Gtk.Box (Gtk.Orientation.VERTICAL, 6);
         box.width_request = 92;
@@ -394,6 +396,7 @@ public class LoginWindow : Gtk.ApplicationWindow {
 
     private Gtk.Button power_button (string label, string verb) {
         var b = new Gtk.Button.with_label (label);
+        b.add_css_class ("flat");
         b.add_css_class ("power");
         b.clicked.connect (() => power.begin (label, verb));
         return b;
@@ -418,30 +421,25 @@ public class LoginWindow : Gtk.ApplicationWindow {
         }
     }
 
+    /// What only the login screen has; everything else is Crimson Banner's GTK theme (crimson-gtk).
     public const string CSS = """
-window.login { background: #1A0A0C; color: white; }
-.scrim { background: alpha(black, 0.44); }
-.brand { opacity: 0.75; font-size: 13px; }
+window.login { background-image: none; background-color: #1A0A0C; color: #FFFFFF; }
+.scrim { background-color: alpha(black, 0.44); }
+.host { opacity: 0.75; font-size: 13px; }
 .clock { font-size: 88px; font-weight: 300; }
 .date { opacity: 0.85; font-size: 18px; }
-.card { background: rgba(20, 20, 24, 0.78); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 20px; padding: 26px 28px; }
-.card .name { font-size: 20px; font-weight: 600; }
-.card entry { min-height: 40px; border-radius: 10px; }
-.card entry:focus-within { outline: 2px solid alpha(#C8102E, 0.75); outline-offset: -2px; }
-dropdown button:focus-visible, button:focus-visible { outline-color: alpha(#C8102E, 0.75); }
-.card .error { color: #FF8A8A; font-size: 13px; }
-.card .notes { opacity: 0.8; font-size: 12px; }
-.avatar { border-radius: 9999px; }
-.avatar { border: 2px solid rgba(255, 255, 255, 0.25); }
-.letter { background: #C8102E; color: white; border-radius: 9999px; font-weight: 600; }
+.login-card { background-color: rgba(20, 20, 24, 0.78); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 20px; padding: 26px 28px; }
+.login-card .name { font-size: 20px; font-weight: 600; }
+.login-card entry { min-height: 40px; border-radius: 10px; }
+.login-card .error { color: #FF8A8A; font-size: 13px; }
+.login-card .notes { opacity: 0.8; font-size: 12px; }
+.avatar { border-radius: 9999px; border: 2px solid rgba(255, 255, 255, 0.25); }
+.letter { background-color: #C8102E; color: #FFFFFF; border-radius: 9999px; font-weight: 600; }
 .letter.big { font-size: 40px; }
 .letter.small { font-size: 24px; }
-button.signin { background: #C8102E; color: white; min-height: 40px; border-radius: 10px; font-weight: 600; border: none; box-shadow: none; }
-button.signin:hover { background: shade(#C8102E, 1.12); }
-button.signin:disabled { background: alpha(#C8102E, 0.55); color: alpha(white, 0.8); }
-button.person, button.power { background: transparent; border: none; box-shadow: none; color: white; }
+button.signin { min-height: 26px; border-radius: 10px; }
+button.person, button.power { color: #FFFFFF; }
 button.person { padding: 8px; border-radius: 14px; font-size: 12px; }
-button.person:hover, button.power:hover { background: alpha(white, 0.1); }
 .bottom .dim { opacity: 0.8; }
 """;
 }

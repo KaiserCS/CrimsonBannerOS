@@ -34,31 +34,14 @@ int main (string[] args) {
 
     var app = new Gtk.Application ("org.redstaros.Login", ApplicationFlags.NON_UNIQUE);
     app.activate.connect (() => {
-        // dark controls: GTK 4.20's colour scheme where it's there, else the older switch
-        var settings = Gtk.Settings.get_default ();
-        if (settings.get_class ().find_property ("gtk-interface-color-scheme") != null)
-            settings.set ("gtk-interface-color-scheme", 2);   // GTK_INTERFACE_COLOR_SCHEME_DARK
-        else
-            settings.gtk_application_prefer_dark_theme = true;
+        // Crimson Banner's GTK theme, always dark here, with what only the login screen has on top
+        Crimson.Theme.apply_mode (Crimson.Mode.DARK);
         var css = new Gtk.CssProvider ();
         css.load_from_string (LoginWindow.CSS);
-        Gtk.StyleContext.add_provider_for_display (Gdk.Display.get_default (), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+        Gtk.StyleContext.add_provider_for_display (Gdk.Display.get_default (), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1);
         var win = new LoginWindow (app, greetd, demo);
         win.present ();
-        if (shot != null) Timeout.add (2500, () => { save_screenshot (win, shot); app.quit (); return Source.REMOVE; });
+        if (shot != null) Timeout.add (2500, () => { Crimson.save_screenshot (win, shot); app.quit (); return Source.REMOVE; });
     });
     return app.run (new string[] { args[0] });
-}
-
-/// The window as it's drawn, to a PNG (for CI, which has no one to look at the screen).
-void save_screenshot (Gtk.Window win, string file) {
-    int w = win.get_width (), h = win.get_height ();
-    var paintable = new Gtk.WidgetPaintable (win);
-    var snap = new Gtk.Snapshot ();
-    paintable.snapshot (snap, w, h);
-    var node = snap.to_node ();
-    if (node == null) { printerr ("crimson-login: nothing was drawn\n"); return; }
-    var texture = win.get_renderer ().render_texture (node, null);
-    if (!texture.save_to_png (file)) printerr ("crimson-login: couldn't write %s\n", file);
-    else print ("crimson-login: drew %dx%d to %s\n", w, h, file);
 }

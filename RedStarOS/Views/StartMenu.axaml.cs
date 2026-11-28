@@ -171,7 +171,7 @@ public partial class StartMenu : UserControl
 
         var avatar = ShellUi.LoadAvatar();
         if (avatar != null) AvatarImage.Source = avatar;
-        UserLabel.Text = RedStarOS.Services.Greeter.GreeterData.ShownName(Environment.UserName);
+        UserLabel.Text = RedStarOS.Services.People.ShownName(Environment.UserName);
 
         _categoryKey = KeyHome;
         if (!_items.Any(i => i.IsLinux)) _linuxSection = false;

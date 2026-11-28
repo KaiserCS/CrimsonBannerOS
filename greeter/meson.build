@@ -13,13 +13,17 @@ json = dependency('json-glib-1.0', version: '>= 1.6')
 gtk = dependency('gtk4', version: '>= 4.12')
 
 gnome = import('gnome')
+# Crimson Banner's GTK theme (crimson-gtk/), compiled in with the login screen's own sources
+theme = files('../crimson-gtk/theme.vala')
+theme_resources = gnome.compile_resources('crimson-gtk-resources', '../crimson-gtk/data/crimson-gtk.gresource.xml',
+  source_dir: '../crimson-gtk/data', c_name: 'crimson_gtk')
 # the login screen's picture, the shell's own (RedStarOS/Assets/login-bg.jpg), inside the program
 resources = gnome.compile_resources('login-resources', 'data/login.gresource.xml',
   source_dir: ['data', '../RedStarOS/Assets'], c_name: 'login')
 
 core = files('src/greetd.vala', 'src/flow.vala', 'src/data.vala')
 
-executable('crimson-login', core, 'src/window.vala', 'src/main.vala', resources,
+executable('crimson-login', core, theme, 'src/window.vala', 'src/main.vala', resources, theme_resources,
   dependencies: [glib, gobject, gio, giounix, json, gtk],
   install: true)
 

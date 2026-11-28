@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/redstaros/crimson-gtk">
+    <file>base.css</file>
+    <file>dark.css</file>
+    <file>light.css</file>
+  </gresource>
+</gresources>

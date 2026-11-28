@@ -106,7 +106,7 @@ is reported beside the count. The floor is on the count, as the owner set it; th
 | Distribution base | Arch Linux (pacman) | commons | 3 |
 | Packages and their repository | `packaging/arch`, `tools/repo.sh`, `tools/publish-os.sh`: our PKGBUILDs, signed with our own key, in our own pacman repository, which installed systems update from | ours | 2 |
 | Installing more software | Software: our own catalogue, Flatpak and AppImage in one app of our own, free software only | ours | 1 |
-| Login screen | Crimson Banner's own login screen (crimson-login, Vala and GTK 4, in redstar-comp; the shell's `RedStarOS --greeter` as its fallback), on greetd | ours | 1 |
+| Login screen | Crimson Banner's own login screen (crimson-login, Vala and GTK 4, in redstar-comp), on greetd | ours | 1 |
 | Installer images | `iso/` and `tools/iso.sh` on archiso; Calamares as the installer; the libre and Mac kernels built by us | commons | 1 |
 
 **Weighted: 24 of 32 (75%).** The three *dependent* layers (UI toolkit, runtime, hosting and CI) carry 8 of the 32

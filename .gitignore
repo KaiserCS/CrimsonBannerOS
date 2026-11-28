@@ -13,6 +13,8 @@ TestResults/
 
 compositor/build/
 browser/build/
+greeter/build/
+crimson-gtk/build/
 compositor/test/comptest
 
 # test binaries and caches

@@ -76,14 +76,12 @@ STUB_CODE=1 greeter >/dev/null || true
 STUB_CODE=0 greeter >/dev/null
 eq "someone signing in resets the count" "$(cat "$T/run/failures")" "0"
 eq "and it's the graphical one again" "$(STUB_CODE=0 greeter; echo done)" "done"
-# which login screen: crimson-login when it's installed, else the shell's
+# the login screen it starts: crimson-login
 export CRIMSON_GREETER_LOGIN="$T/bin/crimson-login"
+printf '#!/bin/sh\n' > "$T/bin/crimson-login"; chmod +x "$T/bin/crimson-login"
 echo 0 > "$T/run/failures"
 greeter >/dev/null
-eq "without crimson-login: the shell's login screen" "$(cat "$T/args")" "-- /usr/lib/crimson-banner/RedStarOS --greeter"
-printf '#!/bin/sh\n' > "$T/bin/crimson-login"; chmod +x "$T/bin/crimson-login"
-greeter >/dev/null
-eq "with crimson-login: it" "$(cat "$T/args")" "-- $T/bin/crimson-login"
+eq "it starts crimson-login" "$(cat "$T/args")" "-- $T/bin/crimson-login"
 # no KMS display device at all (an old frame buffer only): X11 straight away
 rm -f "$T/tried" "$T/dri/card0"; echo 0 > "$T/run/failures"
 STUB_CODE=0 greeter >/dev/null

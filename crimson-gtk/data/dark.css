@@ -1,0 +1,20 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later
+   Crimson Banner's colour tokens, dark (the default): the same values as RedStarOS/Styles/Shell.axaml's Dark
+   dictionary and DESIGN.md's colour table. Change them there and here together. */
+@define-color fg #FFFFFF;
+@define-color muted #969AA0;
+@define-color backdrop_top #1C1C1F;
+@define-color backdrop_bottom #09090A;
+@define-color panel rgba(255, 255, 255, 0.055);
+@define-color panel_border rgba(255, 255, 255, 0.094);
+@define-color card rgba(255, 255, 255, 0.07);
+@define-color hover rgba(255, 255, 255, 0.10);
+@define-color border rgba(255, 255, 255, 0.15);
+@define-color rule rgba(255, 255, 255, 0.086);
+@define-color field rgba(0, 0, 0, 0.30);
+@define-color button rgba(255, 255, 255, 0.09);
+@define-color button_hover rgba(255, 255, 255, 0.14);
+@define-color button_border rgba(255, 255, 255, 0.133);
+@define-color entry_bg rgba(0, 0, 0, 0.25);
+@define-color entry_border rgba(255, 255, 255, 0.165);
+@define-color menu rgba(28, 28, 32, 0.96);

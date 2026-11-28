@@ -1,0 +1,143 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later
+   Crimson Banner's components for GTK 4: the classes of RedStarOS/Styles/Shell.axaml under the same names, and
+   GTK's own controls restyled to match (DESIGN.md). It comes after the colour tokens (dark.css or light.css) and
+   the accent, which Crimson.Theme defines: @accent, @accent_soft, @accent_text, @brand, @danger. */
+
+/* GTK's own names for the accent, so its built-in pieces follow ours */
+@define-color accent_bg_color @accent;
+@define-color accent_fg_color #FFFFFF;
+@define-color accent_color @accent_text;
+@define-color theme_selected_bg_color @accent;
+@define-color theme_selected_fg_color #FFFFFF;
+
+/* ── every window: the deck's backdrop ── */
+window, window.background {
+  background-color: @backdrop_bottom;
+  background-image: linear-gradient(to bottom, @backdrop_top, @backdrop_bottom);
+  color: @fg;
+}
+*:focus-visible { outline-color: alpha(@accent, 0.75); }
+selection { background-color: alpha(@accent, 0.40); color: @fg; }
+
+/* ── type ── */
+.display { font-size: 30px; font-weight: bold; }
+.h1 { font-size: 24px; font-weight: bold; }
+.h2 { font-size: 16px; font-weight: bold; }
+.muted { color: @muted; }
+.caption { font-size: 12px; color: @muted; }
+.kicker { font-size: 11px; font-weight: bold; letter-spacing: 0.8px; color: @muted; }
+.kicker.accent { color: @accent_text; }
+.brand { color: @brand; }
+
+/* ── surfaces ── */
+.panel { background-color: @panel; border: 1px solid @panel_border; border-radius: 12px; padding: 16px 18px; }
+.card { background-color: @panel; border: 1px solid @panel_border; border-radius: 12px; padding: 14px; }
+separator, .divider { background-color: @border; min-width: 1px; min-height: 1px; }
+
+/* ── buttons ── */
+button {
+  background-image: none;
+  background-color: @button;
+  border: 1px solid @button_border;
+  border-radius: 8px;
+  padding: 7px 14px;
+  color: @fg;
+  box-shadow: none;
+  text-shadow: none;
+}
+button:hover { background-color: @button_hover; }
+button:active, button:checked { background-color: @card; }
+button:disabled { opacity: 0.45; }
+button.primary, button.suggested-action { background-color: @accent; border-color: transparent; color: #FFFFFF; font-weight: 600; }
+button.primary:hover, button.suggested-action:hover { background-color: shade(@accent, 1.08); }
+button.primary:active, button.suggested-action:active { background-color: shade(@accent, 0.92); }
+button.danger, button.destructive-action { background-color: @danger; border-color: transparent; color: #FFFFFF; font-weight: 600; }
+button.flat { background-color: transparent; border-color: transparent; padding: 6px 10px; }
+button.flat:hover { background-color: @hover; }
+
+/* pills: the deck's buttons; .accent filled, .on the chosen one of a set, .large for a page's main action */
+button.pill {
+  background-color: @card;
+  border: 1px solid @border;
+  border-radius: 999px;
+  padding: 6px 14px;
+  min-height: 16px;
+  font-size: 11.5px;
+  font-weight: bold;
+}
+button.pill:hover { background-color: @hover; }
+button.pill.on { background-color: @accent_soft; border-color: @accent; color: @accent_text; }
+button.pill.accent { background-color: @accent; border-color: transparent; color: #FFFFFF; }
+button.pill.accent:hover { background-color: shade(@accent, 1.08); }
+button.pill.large { padding: 9px 22px; font-size: 12.5px; }
+
+/* a sidebar's places */
+button.nav { background-color: transparent; border-color: transparent; border-radius: 10px; padding: 9px 12px; }
+button.nav:hover { background-color: @hover; }
+button.nav.on { background-color: @card; font-weight: 600; }
+
+/* ── small labels and readouts ── */
+.badge {
+  background-color: @card;
+  border: 1px solid @border;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+.badge.accent { background-color: @accent; border-color: transparent; color: #FFFFFF; }
+.status { background-color: @field; border: 1px solid @border; border-radius: 999px; padding: 6px 14px; font-size: 11px; font-weight: bold; letter-spacing: 0.5px; }
+
+/* the display: dark glass with red digits, in both themes */
+.lcd { background-color: rgba(12, 12, 14, 0.94); border: 1px solid rgba(0, 0, 0, 0.6); border-radius: 8px; padding: 10px 16px; }
+.lcd-label { color: rgba(196, 20, 28, 0.70); font-size: 10px; font-weight: bold; letter-spacing: 1px; }
+.lcd-digits { color: #F02028; font-family: "DejaVu Sans Mono", "Liberation Mono", monospace; font-size: 26px; font-weight: bold; text-shadow: 0 0 8px rgba(196, 20, 28, 0.8); }
+
+/* ── fields ── */
+entry, spinbutton {
+  background-color: @entry_bg;
+  background-image: none;
+  border: 1px solid @entry_border;
+  border-radius: 8px;
+  min-height: 34px;
+  padding: 0 10px;
+  color: @fg;
+  box-shadow: none;
+}
+entry:focus-within, spinbutton:focus-within { border-color: @accent; outline: 2px solid alpha(@accent, 0.35); outline-offset: -1px; }
+entry.pill-field { background-color: @field; border-color: @border; border-radius: 999px; padding: 0 16px; }
+entry > placeholder, entry > text > placeholder { color: @muted; }
+
+/* drop-downs, menus and popovers: graphite (or white) with a hairline */
+dropdown > button, combobox > button, menubutton > button { padding: 7px 12px; }
+popover > contents, popover.menu > contents {
+  background-color: @menu;
+  border: 1px solid @border;
+  border-radius: 12px;
+  padding: 4px;
+  color: @fg;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+popover > arrow { background-color: @menu; border: 1px solid @border; }
+popover modelbutton, popover listview > row, popover list > row { border-radius: 6px; padding: 6px 10px; }
+popover modelbutton:hover, popover listview > row:hover, popover list > row:hover { background-color: @hover; }
+row:selected, listview > row:selected { background-color: @accent_soft; color: @fg; }
+tooltip, tooltip.background { background-color: @menu; color: @fg; border: 1px solid @border; border-radius: 8px; }
+
+/* switches, checks, sliders and progress: the accent where something is on */
+switch { background-color: @button_border; border: none; border-radius: 999px; }
+switch:checked { background-color: @accent; }
+switch > slider { background-color: #FFFFFF; border: none; border-radius: 999px; box-shadow: none; min-width: 20px; min-height: 20px; }
+checkbutton check, checkbutton radio { background-color: @entry_bg; border: 1px solid @entry_border; }
+checkbutton check:checked, checkbutton radio:checked { background-color: @accent; border-color: @accent; color: #FFFFFF; }
+scale > trough, progressbar > trough { background-color: @field; border-radius: 999px; min-height: 6px; }
+scale > trough > highlight, progressbar > trough > progress { background-color: @accent; border-radius: 999px; }
+scale > trough > slider { background-color: #FFFFFF; border: none; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); }
+
+headerbar { background-color: transparent; background-image: none; box-shadow: none; border-bottom: 1px solid @rule; min-height: 46px; color: @fg; }
+
+/* ── the shell's composite parts ── */
+.app-header .app-name { font-size: 17px; font-weight: 600; }
+.empty-state image { opacity: 0.55; }
+.empty-state .title { font-weight: 600; }

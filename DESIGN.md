@@ -10,7 +10,7 @@ The look is a piece of equipment: a graphite deck with one crimson signal. Five 
 
 1. **Graphite is the room, the accent is the signal.** Backdrops and panels are near-neutral dark greys. The accent (crimson unless the person picks another) marks only what is on, chosen, or the one action to take.
 2. **Quiet until needed.** Hover, focus and selection show; everything else rests. A border, label or colour that carries no information is removed.
-3. **One construction everywhere.** The shell and every app share `RedStarOS/Styles/Shell.axaml` and `apps/shared` (Look, Deck). Apps use the classes; they don't restyle controls.
+3. **One construction everywhere.** The shell and every app share `RedStarOS/Styles/Shell.axaml` and `apps/shared` (Look, Deck); GTK 4 programs (the login screen, and everything that moves off Avalonia) share `crimson-gtk/`, the same tokens and classes in GTK CSS. Apps use the classes; they don't restyle controls. A token changes in both in the same change.
 4. **Plain words.** Sentence case, the action on the button, numbers with units, no emoji.
 5. **Works for everyone, everywhere.** Dark and light, high contrast, reduced motion, keyboard only, and without the network.
 

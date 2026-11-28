@@ -68,14 +68,4 @@ public class SoftwareWindowTests
         w.Close();
         Dispatcher.UIThread.RunJobs();
     }
-
-    [AvaloniaFact]
-    public void The_login_screen_preview_opens()
-    {
-        var w = new RedStarOS.Views.GreeterWindow(new RedStarOS.Services.Greeter.DemoGreetd(), demo: true);
-        w.Show();
-        Dispatcher.UIThread.RunJobs();
-        w.Close();
-        Dispatcher.UIThread.RunJobs();
-    }
 }

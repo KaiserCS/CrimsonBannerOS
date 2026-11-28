@@ -11,8 +11,9 @@ name: Check
 #                    and published with nuget.org cut off
 #   • browser        Crimson Online (GTK 4 + WebKitGTK, in an Arch Linux container): unit tests and the real
 #                    browser's self-test, headless inside redstar-comp
-#   • login          crimson-login, the login screen in Vala and GTK 4 (in an Arch Linux container): its unit tests,
-#                    and its preview drawn headless inside redstar-comp (printed in the log)
+#   • login          crimson-login, the login screen in Vala and GTK 4, and crimson-gtk, the GTK theme it shares (in
+#                    an Arch Linux container): their tests, and the login screen and the theme's gallery drawn
+#                    headless inside redstar-comp (printed in the log)
 #   • arch-packages  ./install-arch.sh with nuget.org cut off: the Arch packages (packaging/arch) built from our own
 #                    feed, signed into our own pacman repository (tools/repo.sh) and installed from it with pacman
 # The same checks run locally with ./check.sh.
@@ -281,10 +282,13 @@ jobs:
       - name: Builds
         run: |
           (cd compositor && meson setup build && meson compile -C build)
+          crimson-gtk/build.sh
           greeter/build.sh
 
-      - name: Unit tests (greetd, signing in, people and desktops)
-        run: meson test -C greeter/build --print-errorlogs
+      - name: Unit tests (the GTK theme's style sheet; greetd, signing in, people and desktops)
+        run: |
+          meson test -C crimson-gtk/build --print-errorlogs
+          meson test -C greeter/build --print-errorlogs
 
       - name: The login screen drawn (headless, inside redstar-comp)
         run: |
@@ -292,6 +296,14 @@ jobs:
           echo "---- screen.png (Login-crimson-login) ----"
           base64 -w 0 login.png; echo
           echo "---- end screen.png ----"
+
+      - name: The GTK theme's gallery drawn, dark and light
+        run: |
+          crimson-gtk/test/headless.sh gallery-dark.png crimson-gtk/build/crimson-gtk-gallery
+          crimson-gtk/test/headless.sh gallery-light.png crimson-gtk/build/crimson-gtk-gallery --light
+          for f in gallery-dark gallery-light; do
+            echo "---- screen.png (GTK-$f) ----"; base64 -w 0 $f.png; echo; echo "---- end screen.png ----"
+          done
 
   arch-packages:
     name: Arch packages and our pacman repository
