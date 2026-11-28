@@ -344,9 +344,10 @@ jobs:
                    /usr/lib/tmpfiles.d/crimson-greeter.conf; do test -e "$f" || { echo "missing: $f"; exit 1; }; done
           pacman -Q greetd greetd-agreety xorg-xinit
           getent passwd greeter
-          # outside greetd, --greeter says how to look at it instead
-          set +e; /usr/lib/crimson-banner/RedStarOS --greeter 2>/tmp/greeter.err; code=$?; set -e
-          cat /tmp/greeter.err; [ "$code" = 2 ] && grep -q -- "--greeter-demo" /tmp/greeter.err
+          # the login screen is installed; outside greetd it says how to look at it instead
+          test -x /usr/bin/crimson-login
+          set +e; env -u GREETD_SOCK crimson-login 2>/tmp/greeter.err; code=$?; set -e
+          cat /tmp/greeter.err; [ "$code" = 2 ] && grep -q -- "crimson-login --demo" /tmp/greeter.err
           # switching to it and back, for real (systemctl enable/disable work without a running systemd)
           crimson-greeter-setup enable
           [ "$(crimson-greeter-setup status)" = "Crimson Banner OS's login screen (greetd)" ]
