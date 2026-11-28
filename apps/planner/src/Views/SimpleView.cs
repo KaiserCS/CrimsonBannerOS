@@ -179,7 +179,9 @@ public sealed partial class PlannerWindow
     {
         var u = p.Product.Unit;
         var box = new StackPanel { Spacing = 6, Margin = new Thickness(0, 10, 0, 0) };
-        box.Children.Add(new Border { Height = 1, Background = new SolidColorBrush(Color.FromArgb(40, 128, 128, 128)), Margin = new Thickness(0, 0, 0, 6) });
+        var rule = new Border { Height = 1, Margin = new Thickness(0, 0, 0, 6) };
+        rule.Bind(Border.BackgroundProperty, rule.GetResourceObservable("ShellRuleBrush"));
+        box.Children.Add(rule);
         var head = new WrapPanel();
         head.Children.Add(new TextBlock { Text = p.Product.Name, FontSize = 16, FontWeight = FontWeight.Bold, Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center });
         head.Children.Add(Badge(SimpleSignal(p.Signal), accent: p.Signal is Signal.Rapid or Signal.NoStock));
@@ -298,11 +300,14 @@ public sealed partial class PlannerWindow
     {
         var s = new StackPanel { Spacing = 8 };
         var head = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
-        head.Children.Add(new Border
+        // the step's number on the accent, as the accent pills are
+        var dot = new Border
         {
-            Classes = { "lcd" }, Width = 34, Height = 34, CornerRadius = new CornerRadius(17), VerticalAlignment = VerticalAlignment.Center,
-            Child = new TextBlock { Text = n, Classes = { "lcd-digits" }, FontSize = 18, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center },
-        });
+            Width = 32, Height = 32, CornerRadius = new CornerRadius(16), VerticalAlignment = VerticalAlignment.Center,
+            Child = new TextBlock { Text = n, Foreground = Brushes.White, FontSize = 16, FontWeight = FontWeight.Bold, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center },
+        };
+        dot.Bind(Border.BackgroundProperty, dot.GetResourceObservable("ShellAccentBrush"));
+        head.Children.Add(dot);
         head.Children.Add(new TextBlock { Text = title, FontSize = 19, FontWeight = FontWeight.Bold, VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap });
         s.Children.Add(head);
         s.Children.Add(Plain(now));
