@@ -19,6 +19,10 @@ unset DISPLAY WAYLAND_DISPLAY DBUS_SESSION_BUS_ADDRESS
 export XDG_RUNTIME_DIR="$WORK/runtime" HOME="$WORK/home"
 export WLR_BACKENDS=headless WLR_RENDERER=pixman WLR_LIBINPUT_NO_DEVICES=1 WLR_HEADLESS_OUTPUTS=1
 export GSK_RENDERER=cairo LIBGL_ALWAYS_SOFTWARE=1 GDK_BACKEND=wayland NO_AT_BRIDGE=1
+# a large photo as this person's picture: it must still come out the avatar's size
+mkdir -p "$WORK/avatars"
+cp "$HERE/../../RedStarOS/Assets/login-bg.jpg" "$WORK/avatars/$(id -un)"
+export CRIMSON_GREETER_AVATARS="$WORK/avatars"
 case "$OUT" in /*) ;; *) OUT="$PWD/$OUT" ;; esac
 rm -f "$OUT"
 timeout 60 "$COMP" -- sh -c "\"$LOGIN\" --screenshot \"$OUT\"" >"$WORK/out.log" 2>"$WORK/err.log" || true

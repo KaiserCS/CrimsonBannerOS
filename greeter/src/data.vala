@@ -17,9 +17,11 @@ public class LoginUser : Object {
 
     public string shown { get { return real_name.length > 0 ? real_name : name; } }
 
-    /// Their picture: AccountsService's copy (readable by the login screen), else none.
-    public string? avatar (string dir = "/var/lib/AccountsService/icons") {
-        var p = Path.build_filename (dir, name);
+    /// Their picture: AccountsService's copy (readable by the login screen), else none. $CRIMSON_GREETER_AVATARS
+    /// points elsewhere (the screenshot test).
+    public string? avatar (string? dir = null) {
+        var d = dir ?? Environment.get_variable ("CRIMSON_GREETER_AVATARS") ?? "/var/lib/AccountsService/icons";
+        var p = Path.build_filename (d, name);
         return FileUtils.test (p, FileTest.IS_REGULAR) ? p : null;
     }
 }

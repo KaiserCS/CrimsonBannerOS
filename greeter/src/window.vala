@@ -1,6 +1,52 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 namespace CrimsonLogin {
 
+/// A picture cut to a circle, exactly `size` across whatever the picture's own size, and covering the circle as a
+/// photo would (a Gtk.Picture grows to its picture's size, which made a large photo fill the card).
+public class RoundPicture : Gtk.Widget {
+    private Gdk.Paintable paintable;
+    private int size;
+
+    public RoundPicture (Gdk.Paintable paintable, int size) {
+        this.paintable = paintable;
+        this.size = size;
+        halign = Gtk.Align.CENTER;
+        valign = Gtk.Align.CENTER;
+    }
+
+    public override Gtk.SizeRequestMode get_request_mode () {
+        return Gtk.SizeRequestMode.CONSTANT_SIZE;
+    }
+
+    public override void measure (Gtk.Orientation orientation, int for_size, out int minimum, out int natural,
+                                  out int minimum_baseline, out int natural_baseline) {
+        minimum = size;
+        natural = size;
+        minimum_baseline = -1;
+        natural_baseline = -1;
+    }
+
+    public override void snapshot (Gtk.Snapshot s) {
+        float w = get_width (), h = get_height ();
+        double iw = paintable.get_intrinsic_width (), ih = paintable.get_intrinsic_height ();
+        if (iw <= 0 || ih <= 0) { iw = w; ih = h; }
+        double scale = double.max (w / iw, h / ih);
+        double dw = iw * scale, dh = ih * scale;
+        var bounds = Graphene.Rect ();
+        bounds.init (0, 0, w, h);
+        var clip = Gsk.RoundedRect ();
+        clip.init_from_rect (bounds, float.min (w, h) / 2);
+        s.push_rounded_clip (clip);
+        s.save ();
+        var at = Graphene.Point ();
+        at.init ((float) ((w - dw) / 2), (float) ((h - dh) / 2));
+        s.translate (at);
+        paintable.snapshot (s, dw, dh);
+        s.restore ();
+        s.pop ();
+    }
+}
+
 /// Crimson Banner OS's login screen (crimson-login, started by greetd through crimson-greeter; packaging/greeter).
 /// It looks like the lock screen: the clock, then a card with the person, their password and the desktop to start.
 /// Several people: their pictures above the card, to pick from. Shut down, restart and sleep sit at the bottom.
@@ -229,12 +275,9 @@ public class LoginWindow : Gtk.ApplicationWindow {
     private Gtk.Widget picture_for (LoginUser u, int size) {
         var path = u.avatar ();
         if (path != null) {
-            var p = new Gtk.Picture.for_filename (path);
-            p.content_fit = Gtk.ContentFit.COVER;
-            p.set_size_request (size, size);
-            p.add_css_class ("round");
-            p.overflow = Gtk.Overflow.HIDDEN;
-            return p;
+            try {
+                return new RoundPicture (Gdk.Texture.from_filename (path), size);
+            } catch (Error e) { /* the letter instead */ }
         }
         return letter (u.shown.length > 0 ? u.shown.get_char (0).toupper ().to_string () : "?", size);
     }
@@ -388,7 +431,7 @@ window.login { background: #1A0A0C; color: white; }
 dropdown button:focus-visible, button:focus-visible { outline-color: alpha(#C8102E, 0.75); }
 .card .error { color: #FF8A8A; font-size: 13px; }
 .card .notes { opacity: 0.8; font-size: 12px; }
-.avatar, .round { border-radius: 9999px; }
+.avatar { border-radius: 9999px; }
 .avatar { border: 2px solid rgba(255, 255, 255, 0.25); }
 .letter { background: #C8102E; color: white; border-radius: 9999px; font-weight: 600; }
 .letter.big { font-size: 40px; }
