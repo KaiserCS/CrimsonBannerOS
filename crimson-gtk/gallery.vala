@@ -43,7 +43,8 @@ int main (string[] args) {
             });
             return Source.REMOVE;
         });
-        if (shot != null) Timeout.add (2000, () => { Crimson.save_screenshot (win, shot); app.quit (); return Source.REMOVE; });
+        // with a menu to draw, after it: it opens at 1.2 s and is drawn at 2.4 s
+        if (shot != null) Timeout.add (menu_shot != null ? 4000 : 2000, () => { Crimson.save_screenshot (win, shot); app.quit (); return Source.REMOVE; });
     });
     return app.run (new string[] { args[0] });
 }
