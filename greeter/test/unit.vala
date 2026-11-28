@@ -71,11 +71,11 @@ class FakeGreetd : Object, Greetd {
 }
 
 async void frames () throws Error {
-    var out = new MemoryOutputStream.resizable ();
-    yield GreetdClient.write_frame (out, "{\"type\":\"cancel_session\"}");
-    yield GreetdClient.write_frame (out, "{\"é\":1}");
-    out.close ();
-    var bytes = out.steal_as_bytes ();
+    var sink = new MemoryOutputStream.resizable ();
+    yield GreetdClient.write_frame (sink, "{\"type\":\"cancel_session\"}");
+    yield GreetdClient.write_frame (sink, "{\"é\":1}");
+    sink.close ();
+    var bytes = sink.steal_as_bytes ();
     assert (bytes.get_size () == 4 + 25 + 4 + 8);
     uint32 n = 0;
     Memory.copy (&n, bytes.get_data (), 4);

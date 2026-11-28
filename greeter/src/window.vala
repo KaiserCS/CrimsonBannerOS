@@ -163,7 +163,7 @@ public class LoginWindow : Gtk.ApplicationWindow {
             ready ();
             return true;
         });
-        add_controller (keys);
+        ((Gtk.Widget) this).add_controller (keys);
     }
 
     private void update_clock () {
