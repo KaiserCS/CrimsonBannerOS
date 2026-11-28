@@ -90,8 +90,8 @@ Gtk.Window gallery (Gtk.Application app, out Gtk.MenuButton menu_button) {
     model.append_section (null, s2);
     var none = new SimpleAction ("none", null);
     app.add_action (none);
-    var check = new SimpleAction.stateful ("check", null, new Variant.boolean (true));
-    app.add_action (check);
+    var ticked = new SimpleAction.stateful ("check", null, new Variant.boolean (true));
+    app.add_action (ticked);
     menu_button = new Gtk.MenuButton ();
     menu_button.icon_name = "open-menu-symbolic";
     menu_button.menu_model = model;
