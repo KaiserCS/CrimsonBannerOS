@@ -243,12 +243,13 @@ namespace Data {
     /// What greetd starts for a desktop: Wayland ones as they are; X11 ones through startx, which brings up the X
     /// server on this console first. Plus the variables desktops look at to know what they are.
     public void command (LoginSession s, out string[] cmd, out string[] env) {
-        env = {
+        string[] e = {
             "XDG_SESSION_TYPE=" + (s.wayland ? "wayland" : "x11"),
             "XDG_SESSION_DESKTOP=" + s.id,
             "DESKTOP_SESSION=" + s.id,
         };
-        if (s.desktop_names.length > 0) env += "XDG_CURRENT_DESKTOP=" + string.joinv (":", s.desktop_names);
+        if (s.desktop_names.length > 0) e += "XDG_CURRENT_DESKTOP=" + string.joinv (":", s.desktop_names);
+        env = e;
         string[] c = {};
         if (!s.wayland) { c += "startx"; c += "/usr/bin/env"; }
         foreach (var a in s.exec) c += a;

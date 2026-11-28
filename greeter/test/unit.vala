@@ -40,18 +40,18 @@ void done (Error? e) {
 class FakeGreetd : Object, Greetd {
     public string? user;
     public int questions;
-    public string[] log = {};
+    public GenericArray<string> log = new GenericArray<string> ();
 
     public async GreetdReply create_session (string user) throws Error {
         this.user = user;
         questions = 0;
-        log += "create " + user;
+        log.add ("create " + user);
         if (user == "expiring") return new GreetdReply ("auth_message", "info", "Your password expires in 3 days");
         return new GreetdReply ("auth_message", "secret", "Password: ");
     }
 
     public async GreetdReply respond (string? response) throws Error {
-        log += "respond " + (response ?? "(null)");
+        log.add ("respond " + (response ?? "(null)"));
         if (response == null) return new GreetdReply ("auth_message", "secret", "Password: ");
         if (response != "right" && questions == 0) return new GreetdReply ("error", null, null, "auth_error", "Authentication failure");
         questions++;
@@ -60,12 +60,12 @@ class FakeGreetd : Object, Greetd {
     }
 
     public async GreetdReply start_session (string[] cmd, string[] env) throws Error {
-        log += "start " + string.joinv (" ", cmd);
+        log.add ("start " + string.joinv (" ", cmd));
         return new GreetdReply ("success");
     }
 
     public async GreetdReply cancel_session () throws Error {
-        log += "cancel";
+        log.add ("cancel");
         return new GreetdReply ("success");
     }
 }

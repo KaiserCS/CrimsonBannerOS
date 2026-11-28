@@ -147,7 +147,7 @@ public class GreetdClient : Object, Greetd {
 /// an empty one is accepted, and nothing is started.
 public class DemoGreetd : Object, Greetd {
     private bool asked;
-    public string[] started = {};
+    public GenericArray<string> started = new GenericArray<string> ();
 
     public async GreetdReply create_session (string user) throws Error {
         asked = true;
@@ -165,7 +165,7 @@ public class DemoGreetd : Object, Greetd {
     }
 
     public async GreetdReply start_session (string[] cmd, string[] env) throws Error {
-        started += string.joinv (" ", cmd);
+        started.add (string.joinv (" ", cmd));
         return new GreetdReply ("success");
     }
 
