@@ -384,6 +384,8 @@ window.login { background: #1A0A0C; color: white; }
 .card { background: rgba(20, 20, 24, 0.78); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 20px; padding: 26px 28px; }
 .card .name { font-size: 20px; font-weight: 600; }
 .card entry { min-height: 40px; border-radius: 10px; }
+.card entry:focus-within { outline: 2px solid alpha(#C8102E, 0.75); outline-offset: -2px; }
+dropdown button:focus-visible, button:focus-visible { outline-color: alpha(#C8102E, 0.75); }
 .card .error { color: #FF8A8A; font-size: 13px; }
 .card .notes { opacity: 0.8; font-size: 12px; }
 .avatar, .round { border-radius: 9999px; }
