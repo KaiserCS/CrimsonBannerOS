@@ -14,7 +14,8 @@ gtk = dependency('gtk4', version: '>= 4.12')
 
 gnome = import('gnome')
 # Crimson Banner's GTK theme (crimson-gtk/), compiled in with the login screen's own sources
-theme = files('../crimson-gtk/theme.vala')
+# (copied into the build first: Meson's Vala can't compile a source from outside the project's folder)
+theme = configure_file(input: '../crimson-gtk/theme.vala', output: 'crimson-theme.vala', copy: true)
 theme_resources = gnome.compile_resources('crimson-gtk-resources', '../crimson-gtk/data/crimson-gtk.gresource.xml',
   source_dir: '../crimson-gtk/data', c_name: 'crimson_gtk')
 # the login screen's picture, the shell's own (RedStarOS/Assets/login-bg.jpg), inside the program

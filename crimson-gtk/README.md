@@ -14,6 +14,7 @@ Crimson Banner's look for GTK 4 programs: the shell's colour tokens and componen
   `apply_mode ()` fixes them (the login screen is always dark). `Crimson.kicker`, `pill`, `panel`, `badge`, `lcd`,
   `nav`, `app_header`, `empty_state` build the parts; `save_screenshot` draws a window to a PNG.
 
-A program uses it by compiling `../crimson-gtk/theme.vala` and `../crimson-gtk/data/crimson-gtk.gresource.xml` with
-its own sources (see `greeter/meson.build`). `crimson-gtk-gallery` shows every part (`--light`, `--accent`,
+A program uses it by compiling `../crimson-gtk/theme.vala` (copied into its build with `configure_file`, as Meson's
+Vala won't compile a source from outside the project) and `../crimson-gtk/data/crimson-gtk.gresource.xml` with its
+own sources (see `greeter/meson.build`). `crimson-gtk-gallery` shows every part (`--light`, `--accent`,
 `--screenshot FILE`); CI prints it in both themes.
