@@ -52,6 +52,9 @@ public class Theme : Object {
         // small text in the accent: lightened on dark, where the accent itself is under 3:1 (DESIGN.md)
         sb.append (mode == Mode.DARK ? "@define-color accent_text mix(@accent, #FFFFFF, 0.45);\n" : "@define-color accent_text @accent;\n");
         sb.append ("@define-color brand %s;\n@define-color danger %s;\n".printf (BRAND, DANGER));
+        // GTK 4.16 and later colour their own pieces from these variables (GTK's blue, otherwise)
+        sb.append (":root { --accent-bg-color: %s; --accent-fg-color: #FFFFFF; --accent-color: %s; }\n".printf (
+            a, mode == Mode.DARK ? "mix(%s, #FFFFFF, 0.45)".printf (a) : a));
         sb.append (resource ("base.css"));
         return sb.str;
     }

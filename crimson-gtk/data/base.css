@@ -129,10 +129,10 @@ tooltip, tooltip.background { background-color: @menu; color: @fg; border: 1px s
 switch { background-color: @button_border; border: none; border-radius: 999px; }
 switch:checked { background-color: @accent; }
 switch > slider { background-color: #FFFFFF; border: none; border-radius: 999px; box-shadow: none; min-width: 20px; min-height: 20px; }
-checkbutton check, checkbutton radio { background-color: @entry_bg; border: 1px solid @entry_border; }
-checkbutton check:checked, checkbutton radio:checked { background-color: @accent; border-color: @accent; color: #FFFFFF; }
-scale > trough, progressbar > trough { background-color: @field; border-radius: 999px; min-height: 6px; }
-scale > trough > highlight, progressbar > trough > progress { background-color: @accent; border-radius: 999px; }
+checkbutton > check, checkbutton > radio { background-color: @entry_bg; background-image: none; border: 1px solid @entry_border; box-shadow: none; }
+checkbutton > check:checked, checkbutton > radio:checked { background-color: @accent; background-image: none; border-color: @accent; color: #FFFFFF; }
+scale > trough, progressbar > trough { background-color: @field; border: none; border-radius: 999px; min-height: 6px; }
+scale > trough > highlight, progressbar > trough > progress { background-color: @accent; background-image: none; border: none; box-shadow: none; border-radius: 999px; }
 scale > trough > slider { background-color: #FFFFFF; border: none; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); }
 
 headerbar { background-color: transparent; background-image: none; box-shadow: none; border-bottom: 1px solid @rule; min-height: 46px; color: @fg; }
