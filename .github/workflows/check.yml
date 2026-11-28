@@ -11,6 +11,8 @@ name: Check
 #                    and published with nuget.org cut off
 #   • browser        Crimson Online (GTK 4 + WebKitGTK, in an Arch Linux container): unit tests and the real
 #                    browser's self-test, headless inside redstar-comp
+#   • login          crimson-login, the login screen in Vala and GTK 4 (in an Arch Linux container): its unit tests,
+#                    and its preview drawn headless inside redstar-comp (printed in the log)
 #   • arch-packages  ./install-arch.sh with nuget.org cut off: the Arch packages (packaging/arch) built from our own
 #                    feed, signed into our own pacman repository (tools/repo.sh) and installed from it with pacman
 # The same checks run locally with ./check.sh.
@@ -261,6 +263,35 @@ jobs:
         env:
           REDSTAR_SELFTEST_GDB: 1
         run: browser/test/run-selftest.sh
+
+  login:
+    name: Login screen (Vala + GTK 4)
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    timeout-minutes: 20
+    steps:
+      - name: Vala, GTK 4 and build tools (and wlroots for the compositor it runs in)
+        run: |
+          pacman -Syu --noconfirm --needed git gcc meson ninja pkgconf vala gtk4 json-glib \
+            wlroots0.20 wayland wayland-protocols libxkbcommon libxcb xcb-util-wm cairo libdrm pixman xorg-xwayland \
+            mesa ttf-dejavu
+
+      - uses: actions/checkout@v5
+
+      - name: Builds
+        run: |
+          (cd compositor && meson setup build && meson compile -C build)
+          greeter/build.sh
+
+      - name: Unit tests (greetd, signing in, people and desktops)
+        run: meson test -C greeter/build --print-errorlogs
+
+      - name: The login screen drawn (headless, inside redstar-comp)
+        run: |
+          greeter/test/run-screenshot.sh login.png
+          echo "---- screen.png (Login-crimson-login) ----"
+          base64 -w 0 login.png; echo
+          echo "---- end screen.png ----"
 
   arch-packages:
     name: Arch packages and our pacman repository

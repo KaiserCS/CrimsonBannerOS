@@ -51,8 +51,8 @@ eq "disabled again: no config of ours left" "$([ -e "$ROOT/etc/greetd/config.tom
 # ── crimson-greeter's fallback ──
 export CRIMSON_GREETER_RUN="$T/run" CRIMSON_GREETER_CACHE="$T/cache"
 mkdir -p "$T/run" "$T/cache"
-printf '#!/bin/sh\necho wayland >> "%s/tried"\nexit "${STUB_CODE:-0}"\n' "$T" > "$T/bin/redstar-comp"
-printf '#!/bin/sh\necho x11 >> "%s/tried"\nexit "${STUB_X11:-${STUB_CODE:-0}}"\n' "$T" > "$T/bin/xinit"
+printf '#!/bin/sh\necho wayland >> "%s/tried"\necho "$*" > "%s/args"\nexit "${STUB_CODE:-0}"\n' "$T" "$T" > "$T/bin/redstar-comp"
+printf '#!/bin/sh\necho x11 >> "%s/tried"\necho "$*" > "%s/args"\nexit "${STUB_X11:-${STUB_CODE:-0}}"\n' "$T" "$T" > "$T/bin/xinit"
 printf '#!/bin/sh\n' > "$T/bin/Xorg"
 printf '#!/bin/sh\necho agreety "$@"\n' > "$T/bin/agreety"
 chmod +x "$T/bin/redstar-comp" "$T/bin/xinit" "$T/bin/Xorg" "$T/bin/agreety"
@@ -76,9 +76,18 @@ STUB_CODE=1 greeter >/dev/null || true
 STUB_CODE=0 greeter >/dev/null
 eq "someone signing in resets the count" "$(cat "$T/run/failures")" "0"
 eq "and it's the graphical one again" "$(STUB_CODE=0 greeter; echo done)" "done"
+# which login screen: crimson-login when it's installed, else the shell's
+export CRIMSON_GREETER_LOGIN="$T/bin/crimson-login"
+echo 0 > "$T/run/failures"
+greeter >/dev/null
+eq "without crimson-login: the shell's login screen" "$(cat "$T/args")" "-- /usr/lib/crimson-banner/RedStarOS --greeter"
+printf '#!/bin/sh\n' > "$T/bin/crimson-login"; chmod +x "$T/bin/crimson-login"
+greeter >/dev/null
+eq "with crimson-login: it" "$(cat "$T/args")" "-- $T/bin/crimson-login"
 # no KMS display device at all (an old frame buffer only): X11 straight away
 rm -f "$T/tried" "$T/dri/card0"; echo 0 > "$T/run/failures"
 STUB_CODE=0 greeter >/dev/null
 eq "no display device: X11 first" "$(tr '\n' ' ' < "$T/tried")" "x11 "
+eq "and crimson-login on X11 too" "$(cat "$T/args")" "$T/bin/crimson-login -- $T/bin/Xorg :7 vt1 -nolisten tcp -keeptty"
 
 exit "$fail"

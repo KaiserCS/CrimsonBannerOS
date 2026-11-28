@@ -58,7 +58,8 @@ same change that adds it, or it doesn't go in.
 | .NET runtime and SDK | the shell | .NET Foundation, steered by Microsoft | MIT | **dependent.** Kept by decision (18 Nov 2026): a rewrite would cost more than it frees. Rules: no Windows-only APIs, telemetry off, nothing that ties us to Microsoft services. Way out: the shell's logic stays portable; the X11 and Wayland parts are already plain C. |
 | Avalonia (incl. Avalonia.Wayland) | the shell's UI | AvaloniaUI OÜ (company) | MIT | **dependent.** Pinned versions; the native Wayland path reduces reliance on X11. Way out: none cheap. Watch the licence and governance at every upgrade. |
 | WebKitGTK | Crimson Online's web engine (since 20 Nov 2026; it replaced Chromium via Electron, removed the same day with npm) | WebKit project (upstream led largely by Apple); the GTK port and its releases by Igalia (a worker-owned cooperative) and the GNOME community | LGPL-2.1, BSD | **commons.** Free software under licences on GNU's free-licence list; LGPL keeps it open. If upstream ever turns against the port, the port's maintainers and its users are the way out. |
-| GTK 4, json-glib, libsoup | Crimson Online's window, data file, filter-list downloads | GNOME Foundation (non-profit) | LGPL-2.1 | accepted (commons) |
+| GTK 4, json-glib, libsoup | Crimson Online's window, data file, filter-list downloads; the login screen (crimson-login, `greeter/`, without libsoup) | GNOME Foundation (non-profit) | LGPL-2.1 | accepted (commons) |
+| Vala | the language of crimson-login, the login screen (`greeter/`), and of the shell as it leaves .NET and Avalonia | the GNOME project (the GNOME Foundation, non-profit) | LGPL-2.1-or-later (the compiler) | **commons, chosen 27 Nov 2026** by the head of the committee over plain C (the most code), C# on Gir.Core (keeps .NET) and Qt (led by one company, the Qt Company). Only needed to build: Vala compiles to C that uses GLib, so nothing of Vala itself is installed or run. The GNU licence list counts the LGPL-2.1 as free and GPL-compatible (the Free Software Directory's page couldn't be reached on 27 Nov 2026 to check its entry). Way out: the C it writes, or plain C and GTK 4 as Crimson Online is |
 | GStreamer, FFmpeg (gst-libav) | sound and video in Crimson Online's pages | community (freedesktop.org; FFmpeg project) | LGPL-2.1 | accepted (commons); system packages, not bundled |
 | libVLC | Video, CD Player (files and audio CDs) | VideoLAN (non-profit) | LGPL-2.1 | accepted |
 | CDPlayer's design (Kizarov3, github.com/Kizarov3/CDPlayer) | the look of CD Player and Video: palette, pills, transport keys, deck display, disc and shelf (`Styles/Deck.axaml`, `Views/HiFi/`, `CdPlayerWindow`) | an independent developer | MIT (Expat) | **ours, after theirs** (22 Nov 2026): rebuilt in C# for the shell, so nothing of the Electron app is shipped or run. Its streaming services (Spotify, YouTube Music, SoundCloud) are left out, so there are no accounts and no hosted services. GNU lists the Expat licence as free and GPL-compatible, and our version is GPL-3.0-or-later with CDPlayer's notice kept (`Views/HiFi/NOTICE`). The FSF would prefer copyleft, but the rule is about what we depend on, and nothing here runs their code. Way out: none needed. |
@@ -94,7 +95,7 @@ is reported beside the count. The floor is on the count, as the owner set it; th
 | Compositor (Wayland) | redstar-comp, on wlroots | ours | 2 |
 | Window manager (X11) | redstar-wm | ours | 1 |
 | Shell: desktop, taskbar, apps | Crimson Banner OS | ours | 3 |
-| UI toolkit | Avalonia | dependent | 3 |
+| UI toolkit | Avalonia; the login screen on GTK 4 since 27 Nov 2026, the first part moved (ROADMAP, 5) | dependent | 3 |
 | Runtime | .NET | dependent | 3 |
 | Web engine | Crimson Online on WebKitGTK | commons | 1 |
 | Media | libVLC | commons | 1 |
@@ -105,7 +106,7 @@ is reported beside the count. The floor is on the count, as the owner set it; th
 | Distribution base | Arch Linux (pacman) | commons | 3 |
 | Packages and their repository | `packaging/arch`, `tools/repo.sh`, `tools/publish-os.sh`: our PKGBUILDs, signed with our own key, in our own pacman repository, which installed systems update from | ours | 2 |
 | Installing more software | Software: our own catalogue, Flatpak and AppImage in one app of our own, free software only | ours | 1 |
-| Login screen | Crimson Banner's own login screen (`RedStarOS --greeter` in redstar-comp), on greetd | ours | 1 |
+| Login screen | Crimson Banner's own login screen (crimson-login, Vala and GTK 4, in redstar-comp; the shell's `RedStarOS --greeter` as its fallback), on greetd | ours | 1 |
 | Installer images | `iso/` and `tools/iso.sh` on archiso; Calamares as the installer; the libre and Mac kernels built by us | commons | 1 |
 
 **Weighted: 24 of 32 (75%).** The three *dependent* layers (UI toolkit, runtime, hosting and CI) carry 8 of the 32

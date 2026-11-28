@@ -10,7 +10,7 @@ on:
   push:
     tags: ['v*']
     branches: [main]
-    paths: ['iso/**', 'tools/iso.sh', '.github/workflows/iso.yml', '.github/scripts/iso-*.sh', 'packaging/**', 'RedStarOS/**', 'compositor/**']
+    paths: ['iso/**', 'greeter/**', 'tools/iso.sh', '.github/workflows/iso.yml', '.github/scripts/iso-*.sh', 'packaging/**', 'RedStarOS/**', 'compositor/**']
   workflow_dispatch:
     inputs:
       publish:

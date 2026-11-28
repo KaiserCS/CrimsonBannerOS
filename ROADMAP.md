@@ -90,9 +90,13 @@ Now that people can install it, a bad release reaches every installed system at 
       - *C# on GTK 4 through Gir.Core* (MIT, a community project, not yet 1.0): only the toolkit changes, so the
         services stay; .NET stays dependent, weighted 27 of 32 (84%). Mono (now WineHQ's) is no way out of .NET:
         it follows the old .NET Framework, not .NET 8.
-      Whichever is chosen: first the login screen (`RedStarOS --greeter`, about 780 lines, its own process under
-      greetd) as the pilot, then the separate apps (Planner, People's Archive, Atlas), then the shell a window at a
-      time, since separate processes can each use their own toolkit.
+      **Chosen 27 Nov 2026: Vala and GTK 4, and no Qt.** First the login screen as the pilot, then the separate
+      apps (Planner, People's Archive, Atlas), then the shell a window at a time, since separate processes can each
+      use their own toolkit.
+  - [x] ~~The login screen: crimson-login (`greeter/`), in Vala and GTK 4~~ (27 Nov 2026). The shell's own
+        (`RedStarOS --greeter`) stays as its fallback until crimson-login has been tried on real hardware.
+  - [ ] Remove the shell's login screen once it has.
+  - [ ] Planner, People's Archive and Atlas.
 - [ ] **Who pays for each dependency:** fill it in for every row of the table (PRINCIPLES.md, 11).
 
 ## 6. Security housekeeping

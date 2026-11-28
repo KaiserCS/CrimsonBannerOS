@@ -126,6 +126,28 @@ if pkg-config --exists webkitgtk-6.0 gtk4 json-glib-1.0 libsoup-3.0 2>/dev/null 
 else
   echo "(Crimson Online skipped: it needs WebKitGTK 6.0, GTK 4, json-glib, libsoup 3 and meson — Arch/CachyOS: pacman -S webkitgtk-6.0 gtk4 json-glib libsoup3 meson)"
 fi
+if pkg-config --exists gtk4 json-glib-1.0 2>/dev/null && command -v valac >/dev/null 2>&1 && command -v meson >/dev/null 2>&1; then
+  echo "==> Login screen (crimson-login: Vala + GTK 4)"
+  if ! build_out="$(greeter/build.sh 2>&1)"; then
+    printf '%s\n' "$build_out" | grep -E "error|Error|FAILED" | head -n 30
+    echo "crimson-login didn't build"
+    exit 1
+  fi
+  if ! out="$(meson test -C greeter/build --print-errorlogs 2>&1)"; then
+    printf '%s\n' "$out" | tail -n 40
+    exit 1
+  fi
+  printf '%s\n' "$out" | grep -E "^Ok:|^Fail:"
+  # its preview drawn headless inside redstar-comp (when that's built)
+  if [ -x compositor/build/redstar-comp ]; then
+    shot="$(mktemp --suffix=.png)"
+    greeter/test/run-screenshot.sh "$shot" >/dev/null || { greeter/test/run-screenshot.sh "$shot"; rm -f "$shot"; exit 1; }
+    rm -f "$shot"
+  fi
+  ok "crimson-login"
+else
+  echo "(crimson-login skipped: it needs Vala, GTK 4, json-glib and meson — Arch/CachyOS: pacman -S vala gtk4 json-glib meson)"
+fi
 echo "==> Arch packaging"
 bash -n packaging/arch/PKGBUILD && bash -n tools/repo.sh && bash -n install-arch.sh && bash -n tools/iso.sh \
   && for f in iso/pkgs/*/PKGBUILD; do bash -n "$f" || exit 1; done \
