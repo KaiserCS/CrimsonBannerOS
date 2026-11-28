@@ -4,6 +4,7 @@
     <file>base.css</file>
     <file>base-gtk3.css</file>
     <file>dark-surfaces.css</file>
+    <file>popovers.css</file>
     <file>dark.css</file>
     <file>light.css</file>
   </gresource>

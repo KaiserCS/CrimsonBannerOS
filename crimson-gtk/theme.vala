@@ -145,19 +145,46 @@ public class Theme : Object {
         }
     }
 
-    private const string ROOTS = ":root, window, popover, tooltip, dialog";
+    private const string ROOTS = ":root";
+
+    /// A sheet's @names (@menu, @accent…) as the plain colours of one look: for popovers, where GTK doesn't
+    /// resolve the theme's variables.
+    public static string with_colours (string css, Mode mode, string accent) {
+        var values = tokens (mode);
+        string soft, text;
+        accent_colours (mode, accent, out soft, out text);
+        values.insert ("accent", is_colour (accent) ? accent : DEFAULT_ACCENT);
+        values.insert ("accent_soft", soft);
+        values.insert ("accent_text", text);
+        values.insert ("brand", BRAND);
+        values.insert ("danger", DANGER);
+        try {
+            var re = new Regex ("@([a-z_]+)\\b");
+            return re.replace_eval (css, -1, 0, 0, (m, res) => {
+                var v = values.get (m.fetch (1));
+                res.append (v ?? m.fetch (0));
+                return false;
+            });
+        } catch (RegexError e) {
+            critical ("crimson-gtk: %s", e.message);
+            return css;
+        }
+    }
 
     /// The GTK 4 theme's gtk.css: light by default, dark by GTK's colour scheme (GTK 4.20 and later choose this way).
     public static string gtk4_sheet (string accent) {
         var sb = new StringBuilder ();
         sb.append ("@import url(\"%s\");\n".printf (GTK4_LIGHT));
-        // on every surface, not only :root: a popover or a tooltip is a surface of its own, and its parts didn't
-        // see :root's variables (a menu came out with GTK's light background under our white text)
         sb.append (ROOTS + " {\n" + variables (Mode.LIGHT, accent) + "}\n");
         sb.append ("@media (prefers-color-scheme: dark) {\n" + ROOTS + " {\n" + variables (Mode.DARK, accent) + "}\n");
         sb.append (resource ("dark-surfaces.css"));
         sb.append ("}\n");
         sb.append (with_variables (resource ("base.css")));
+        // popovers last, in plain colours: light, then dark under the media query (they don't see the variables)
+        sb.append (with_colours (resource ("popovers.css"), Mode.LIGHT, accent));
+        sb.append ("@media (prefers-color-scheme: dark) {\n");
+        sb.append (with_colours (resource ("popovers.css"), Mode.DARK, accent));
+        sb.append ("}\n");
         return sb.str;
     }
 
