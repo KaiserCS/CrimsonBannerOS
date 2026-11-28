@@ -115,7 +115,7 @@ namespace Data {
         foreach (var line in passwd.split ("\n")) {
             var f = line.split (":");
             if (f.length < 7) continue;
-            int uid;
+            int uid = 0;
             if (!int.try_parse (f[2], out uid)) continue;
             if (uid < uid_min || uid > uid_max) continue;
             var shell = f[6].strip ();
@@ -134,7 +134,7 @@ namespace Data {
         foreach (var raw in (login_defs ?? "").split ("\n")) {
             var p = Regex.split_simple ("\\s+", raw.strip ());
             if (p.length < 2 || p[0].has_prefix ("#")) continue;
-            int v;
+            int v = 0;
             if (p[0] == "UID_MIN" && int.try_parse (p[1], out v)) min = v;
             if (p[0] == "UID_MAX" && int.try_parse (p[1], out v)) max = v;
         }
