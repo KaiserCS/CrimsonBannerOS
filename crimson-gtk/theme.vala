@@ -87,12 +87,13 @@ public class Theme : Object {
     public static void accent_colours (Mode mode, string accent, out string soft, out string text) {
         var c = Gdk.RGBA ();
         if (!c.parse (is_colour (accent) ? accent : DEFAULT_ACCENT)) c.parse (DEFAULT_ACCENT);
-        int r = (int) Math.round (c.red * 255), g = (int) Math.round (c.green * 255), b = (int) Math.round (c.blue * 255);
+        // (rounded by hand: Math.round would need libm in every program that uses the theme)
+        int r = (int) (c.red * 255 + 0.5), g = (int) (c.green * 255 + 0.5), b = (int) (c.blue * 255 + 0.5);
         soft = "rgba(%d, %d, %d, 0.23)".printf (r, g, b);
         if (mode == Mode.LIGHT) { text = "#%02X%02X%02X".printf (r, g, b); return; }
         // mixed 45% with white, as the shell's ShellAccentTextBrush
-        text = "#%02X%02X%02X".printf ((int) Math.round (r * 0.55 + 255 * 0.45), (int) Math.round (g * 0.55 + 255 * 0.45),
-                                       (int) Math.round (b * 0.55 + 255 * 0.45));
+        text = "#%02X%02X%02X".printf ((int) (r * 0.55 + 255 * 0.45 + 0.5), (int) (g * 0.55 + 255 * 0.45 + 0.5),
+                                       (int) (b * 0.55 + 255 * 0.45 + 0.5));
     }
 
     /// A theme's tokens and accent as CSS variables (--cb-fg, --cb-panel…), and GTK's own accent variables.
