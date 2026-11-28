@@ -57,12 +57,32 @@ headerbar, .titlebar {
 }
 headerbar:backdrop, .titlebar:backdrop { background-color: @backdrop_bottom; }
 
-popover, menu, .menu, .context-menu {
+popover {
   background-color: @menu;
   border: 1px solid @border;
   border-radius: 12px;
   color: @fg;
 }
+/* GTK 3's menus are windows of their own, square on X11: no rounding, or the corners show black */
+menu, .menu, .context-menu { background-color: @menu; border: 1px solid @border; border-radius: 0; color: @fg; }
+
+/* the menu bar and toolbars: the window's own graphite, not GTK's lighter grey */
+menubar, .menubar, toolbar, .toolbar, .primary-toolbar, .inline-toolbar {
+  background-image: none;
+  background-color: @backdrop_top;
+  border-color: @rule;
+  color: @fg;
+}
+/* the open menu-bar item: an accent bar under it, as a chosen tab (GTK 3's Adwaita draws it blue) */
+menubar > menuitem:hover, .menubar > menuitem:hover, menubar > menuitem:active {
+  box-shadow: inset 0 -3px @accent;
+  color: @fg;
+}
+menubar > menuitem:hover label, menubar > menuitem:active label { color: @fg; }
+menu menuitem:hover, .menu menuitem:hover, .context-menu menuitem:hover { background-color: @hover; color: @fg; }
+menu menuitem:hover label, menu menuitem:hover accelerator { color: @fg; }
+/* a field's icon (a search field's magnifier) stays quiet, focused or not */
+entry image, entry:focus image, entry image.left, entry image.right, entry:focus image.left { color: @muted; }
 menu menuitem:hover, .menu menuitem:hover, popover modelbutton:hover { background-color: @hover; color: @fg; }
 tooltip, tooltip.background { background-color: @menu; color: @fg; border-radius: 8px; }
 

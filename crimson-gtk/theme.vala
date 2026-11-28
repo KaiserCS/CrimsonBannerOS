@@ -66,6 +66,7 @@ public class Theme : Object {
         sb.append (resource (mode == Mode.DARK ? "dark.css" : "light.css"));
         sb.append ("\n@define-color accent %s;\n".printf (a));
         sb.append ("@define-color accent_soft alpha(@accent, 0.23);\n");
+        sb.append (mode == Mode.DARK ? "@define-color accent_text mix(@accent, #FFFFFF, 0.45);\n" : "@define-color accent_text @accent;\n");
         sb.append ("@define-color brand %s;\n@define-color danger %s;\n".printf (BRAND, DANGER));
         sb.append (resource ("base-gtk3.css"));
         return sb.str;
