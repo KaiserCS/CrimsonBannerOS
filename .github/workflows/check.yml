@@ -307,6 +307,7 @@ jobs:
           # and as any other program gets it: GTK's installed "Crimson Banner" theme, none of our own styling
           cp -r crimson-gtk/build/theme-for-tests /usr/share/themes/CrimsonBanner
           crimson-gtk/test/headless.sh gallery-other.png crimson-gtk/build/crimson-gtk-gallery --as-other-program
+          crimson-gtk/test/probe-dark.sh || true
           for f in gallery-dark gallery-light gallery-other; do
             echo "---- screen.png (GTK-$f) ----"; base64 -w 0 $f.png; echo; echo "---- end screen.png ----"
           done
