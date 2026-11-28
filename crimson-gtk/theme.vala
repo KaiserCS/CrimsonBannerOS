@@ -123,7 +123,8 @@ public class Theme : Object {
     /// (they're the variables now), so one sheet can be light or dark by media query.
     public static string with_variables (string css) {
         var known = new GenericSet<string> (str_hash, str_equal);
-        foreach (var k in tokens (Mode.DARK).get_keys ()) known.add (k);
+        var dark = tokens (Mode.DARK);      // kept: get_keys () points into the table
+        foreach (var k in dark.get_keys ()) known.add (k);
         foreach (var k in new string[] { "accent", "accent_soft", "accent_text", "brand", "danger" }) known.add (k);
         var sb = new StringBuilder ();
         foreach (var line in css.split ("\n")) {
