@@ -2,19 +2,28 @@
    Menus, popovers and tooltips for other GTK 4 programs, written out with plain colours for light and again for
    dark (theme.vala resolves the @names): GTK resolves the theme's CSS variables in windows, but not inside a
    popover, which is a surface of its own, so there they'd fall back to GTK's light look under our text. */
-popover > contents, popover.menu > contents, popover.background > contents {
+/* (":not(.cb-plain)" matches every popover; it only makes these rules more specific than GTK's own, which are
+   longer, as popover.background.menu > contents) */
+popover:not(.cb-plain) > contents, popover.background.menu:not(.cb-plain) > contents {
   background-color: @menu;
+  background-image: none;
   border: 1px solid @border;
   border-radius: 12px;
   padding: 4px;
   color: @fg;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
-popover > arrow, popover.background > arrow { background-color: @menu; border: 1px solid @border; }
-popover label, popover modelbutton, popover modelbutton > label, popover image, popover arrow { color: @fg; }
-popover modelbutton, popover listview > row, popover list > row { border-radius: 6px; padding: 6px 10px; }
-popover modelbutton:hover, popover modelbutton:selected, popover listview > row:hover, popover list > row:hover { background-color: @hover; }
-popover separator { background-color: @border; }
-popover modelbutton check:checked, popover modelbutton radio:checked { background-color: transparent; color: @fg; }
-tooltip, tooltip.background { background-color: @menu; color: @fg; border: 1px solid @border; border-radius: 8px; }
-tooltip label { color: @fg; }
+popover:not(.cb-plain) > arrow, popover.background.menu:not(.cb-plain) > arrow { background-color: @menu; background-image: none; border: 1px solid @border; }
+popover:not(.cb-plain) label, popover:not(.cb-plain) modelbutton, popover:not(.cb-plain) image { color: @fg; }
+popover:not(.cb-plain) modelbutton, popover:not(.cb-plain) listview > row, popover:not(.cb-plain) list > row { border-radius: 6px; padding: 6px 10px; }
+popover.background.menu:not(.cb-plain) modelbutton:hover, popover.background.menu:not(.cb-plain) modelbutton:selected,
+popover:not(.cb-plain) modelbutton:hover, popover:not(.cb-plain) modelbutton:selected,
+popover:not(.cb-plain) listview > row:hover, popover:not(.cb-plain) list > row:hover {
+  background-color: @hover;
+  background-image: none;
+  color: @fg;
+}
+popover:not(.cb-plain) separator { background-color: @border; }
+popover:not(.cb-plain) modelbutton check:checked, popover:not(.cb-plain) modelbutton radio:checked { background-color: transparent; background-image: none; color: @fg; }
+tooltip:not(.cb-plain), tooltip.background:not(.cb-plain) { background-color: @menu; background-image: none; color: @fg; border: 1px solid @border; border-radius: 8px; }
+tooltip:not(.cb-plain) label { color: @fg; }
