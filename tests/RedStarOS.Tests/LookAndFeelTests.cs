@@ -60,4 +60,19 @@ public class LookAndFeelTests
         Assert.Equal("Bibata", keys["gtk-cursor-theme-name"]);
         Assert.False(keys.ContainsKey("gtk-font-name"));      // no font chosen: GTK keeps its own
     }
+
+    [Fact]
+    public void A_persons_own_copy_of_the_gtk_theme_follows_their_accent()
+    {
+        const string ours = "[X-GNOME-Metatheme]\nGtkTheme=CrimsonBanner\n# accent: #0078D4\n";
+        // crimson: the system's copy is crimson, so no copy of their own; one of ours there is removed
+        Assert.Equal((false, true, false), LookAndFeel.UserGtkThemePlan("#C8102E", ours));
+        // the same accent as the copy: nothing to do
+        Assert.Equal((true, true, true), LookAndFeel.UserGtkThemePlan("#0078d4", ours));
+        // another accent: made again
+        Assert.Equal((true, true, false), LookAndFeel.UserGtkThemePlan("#107C10", ours));
+        // a folder of the person's own by that name: never touched
+        Assert.Equal((true, false, false), LookAndFeel.UserGtkThemePlan("#107C10", "[Desktop Entry]\nName=Mine\n"));
+        Assert.Equal((true, false, false), LookAndFeel.UserGtkThemePlan("#107C10", null));
+    }
 }

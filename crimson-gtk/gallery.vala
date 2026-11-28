@@ -1,18 +1,28 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // crimson-gtk-gallery: every part of Crimson Banner's GTK 4 look in one window, to check it against the shell's.
 //   crimson-gtk-gallery [--light] [--accent #RRGGBB] [--screenshot FILE]
+//   crimson-gtk-gallery --as-other-program [--light]    without our own styling: GTK's installed "Crimson Banner"
+//                                                       theme instead, as any other GTK 4 program gets it
 int main (string[] args) {
     var mode = Crimson.Mode.DARK;
     string accent = Crimson.Theme.DEFAULT_ACCENT;
     string? shot = null;
+    bool other = false;
     for (int i = 1; i < args.length; i++) {
         if (args[i] == "--light") mode = Crimson.Mode.LIGHT;
+        else if (args[i] == "--as-other-program") other = true;
         else if (args[i] == "--accent" && i + 1 < args.length) accent = args[++i];
         else if (args[i] == "--screenshot" && i + 1 < args.length) shot = args[++i];
     }
     var app = new Gtk.Application ("org.redstaros.CrimsonGtkGallery", ApplicationFlags.NON_UNIQUE);
     app.activate.connect (() => {
-        Crimson.Theme.apply_mode (mode, accent);
+        if (other) {
+            var settings = Gtk.Settings.get_default ();
+            settings.gtk_theme_name = "CrimsonBanner";
+            settings.gtk_application_prefer_dark_theme = mode == Crimson.Mode.DARK;
+        } else {
+            Crimson.Theme.apply_mode (mode, accent);
+        }
         var win = gallery (app);
         win.present ();
         if (shot != null) Timeout.add (2000, () => { Crimson.save_screenshot (win, shot); app.quit (); return Source.REMOVE; });

@@ -58,6 +58,9 @@ build() {
   meson compile -C "$srcdir/comp"
   arch-meson browser "$srcdir/online"
   meson compile -C "$srcdir/online" redstar-online
+  # Crimson Banner's GTK theme: crimson-gtk-theme, and the theme other programs use (crimson-gtk/)
+  arch-meson crimson-gtk "$srcdir/gtk"
+  meson compile -C "$srcdir/gtk"
   # the login screen, in Vala and GTK 4 (greeter/)
   arch-meson greeter "$srcdir/login"
   meson compile -C "$srcdir/login"
@@ -70,6 +73,7 @@ check() {
   cd "$pkgbase-$pkgver"
   meson test -C "$srcdir/online" --print-errorlogs
   meson test -C "$srcdir/login" --print-errorlogs
+  meson test -C "$srcdir/gtk" --print-errorlogs
 }
 
 package_crimson-banner() {
@@ -97,7 +101,7 @@ package_crimson-banner() {
 
 package_crimson-banner-shell() {
   pkgdesc='Crimson Banner OS: the desktop shell, its apps and the login-screen sessions'
-  depends=(dotnet-runtime-8.0 fontconfig freetype2 libx11 libxi libxrandr libxcursor libice libsm libxss libxkbcommon wayland
+  depends=(dotnet-runtime-8.0 gtk4 json-glib fontconfig freetype2 libx11 libxi libxrandr libxcursor libice libsm libxss libxkbcommon wayland
            dbus polkit pam libxcrypt systemd zlib gcc-libs glibc pacman-contrib)
   backup=(etc/pam.d/crimson-banner)
   cd "$pkgbase-$pkgver"
@@ -120,6 +124,9 @@ package_crimson-banner-shell() {
   # the Crimson Banner icon theme (branding/icon-theme.py): other programs' icons drawn like ours; aliases are links
   install -d "$pkgdir/usr/share/icons"
   cp -a icons/CrimsonBanner "$pkgdir/usr/share/icons/"
+  # the Crimson Banner GTK theme (share/themes/CrimsonBanner) and crimson-gtk-theme, which makes a person's own copy
+  # in their accent
+  meson install -C "$srcdir/gtk" --destdir "$pkgdir" --no-rebuild
   install -Dm644 packaging/crimson-banner.pam "$pkgdir/etc/pam.d/crimson-banner"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
   install -Dm644 RedStarOS/Views/HiFi/NOTICE "$pkgdir/usr/share/licenses/$pkgname/NOTICE.CDPlayer"

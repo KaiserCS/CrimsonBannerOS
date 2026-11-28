@@ -267,7 +267,7 @@ public partial class SettingsWindow : Window
         p.Children.Add(Caption("Writes GTK's settings (~/.config/gtk-3.0 and gtk-4.0, and GNOME's interface settings) and tells Qt programs "
             + "how to look. On by default in a Crimson Banner session; off when Crimson Banner runs on top of another desktop, since those are "
             + "that desktop's settings too. Light or dark follows the Theme above."));
-        otherBox.Children.Add(Labelled("GTK theme", Choice(LookAndFeel.GtkThemes().Where(t => t != "Adwaita").ToList(), s.GtkTheme,
+        otherBox.Children.Add(Labelled("GTK theme", Choice(LookAndFeel.GtkThemes().Where(t => t != "Adwaita").ToList(), LookAndFeel.EffectiveGtkTheme(s),
             v => { SettingsStore.Current.GtkTheme = v; LookAndFeel.ApplyOtherPrograms(); })));
         otherBox.Children.Add(Labelled("Icon theme", Choice(LookAndFeel.IconThemes(), LookAndFeel.EffectiveIconTheme(s),
             v => { SettingsStore.Current.IconTheme = v; LookAndFeel.ApplyOtherPrograms(); DesktopEntries.Reload(); AdaptiveIcons.RefreshSoon(); })));

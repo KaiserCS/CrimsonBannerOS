@@ -59,6 +59,44 @@ public class Theme : Object {
         return sb.str;
     }
 
+    /// The same for GTK 3 programs: the tokens, the accent, and the GTK 3 components (no CSS variables there).
+    public static string css_for_gtk3 (Mode mode, string accent) {
+        var a = is_colour (accent) ? accent : DEFAULT_ACCENT;
+        var sb = new StringBuilder ();
+        sb.append (resource (mode == Mode.DARK ? "dark.css" : "light.css"));
+        sb.append ("\n@define-color accent %s;\n".printf (a));
+        sb.append ("@define-color accent_soft alpha(@accent, 0.23);\n");
+        sb.append ("@define-color brand %s;\n@define-color danger %s;\n".printf (BRAND, DANGER));
+        sb.append (resource ("base-gtk3.css"));
+        return sb.str;
+    }
+
+    /// GTK's own built-in theme each of ours starts from, so anything ours doesn't restyle still looks right.
+    public const string GTK4_LIGHT = "resource:///org/gtk/libgtk/theme/Default/Default-light.css";
+    public const string GTK4_DARK = "resource:///org/gtk/libgtk/theme/Default/Default-dark.css";
+    public const string GTK3_LIGHT = "resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained.css";
+    public const string GTK3_DARK = "resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained-dark.css";
+
+    /// The "Crimson Banner" GTK theme for every other program: a theme folder (/usr/share/themes/CrimsonBanner, or a
+    /// person's own copy in their accent) with GTK 4's and GTK 3's style sheets, light (gtk.css) and dark
+    /// (gtk-dark.css, which GTK picks when dark is preferred).
+    public static void write_theme_folder (string dir, string accent = DEFAULT_ACCENT) throws Error {
+        DirUtils.create_with_parents (Path.build_filename (dir, "gtk-4.0"), 0755);
+        DirUtils.create_with_parents (Path.build_filename (dir, "gtk-3.0"), 0755);
+        var head = "/* Crimson Banner OS's GTK theme, made by crimson-gtk-theme (crimson-gtk/). Accent %s. */\n".printf (accent);
+        FileUtils.set_contents (Path.build_filename (dir, "index.theme"),
+            "[Desktop Entry]\nType=X-GNOME-Metatheme\nName=Crimson Banner\nComment=Crimson Banner OS: graphite, with one accent\nEncoding=UTF-8\n\n"
+            + "[X-GNOME-Metatheme]\nGtkTheme=CrimsonBanner\nIconTheme=CrimsonBanner\n# accent: %s\n".printf (accent));
+        FileUtils.set_contents (Path.build_filename (dir, "gtk-4.0", "gtk.css"),
+            head + "@import url(\"%s\");\n".printf (GTK4_LIGHT) + css_for (Mode.LIGHT, accent));
+        FileUtils.set_contents (Path.build_filename (dir, "gtk-4.0", "gtk-dark.css"),
+            head + "@import url(\"%s\");\n".printf (GTK4_DARK) + css_for (Mode.DARK, accent));
+        FileUtils.set_contents (Path.build_filename (dir, "gtk-3.0", "gtk.css"),
+            head + "@import url(\"%s\");\n".printf (GTK3_LIGHT) + css_for_gtk3 (Mode.LIGHT, accent));
+        FileUtils.set_contents (Path.build_filename (dir, "gtk-3.0", "gtk-dark.css"),
+            head + "@import url(\"%s\");\n".printf (GTK3_DARK) + css_for_gtk3 (Mode.DARK, accent));
+    }
+
     private static string resource (string name) {
         try {
             var bytes = resources_lookup_data ("/org/redstaros/crimson-gtk/" + name, ResourceLookupFlags.NONE);

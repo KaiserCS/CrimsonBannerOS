@@ -137,6 +137,11 @@ if pkg-config --exists gtk4 json-glib-1.0 2>/dev/null && command -v valac >/dev/
     printf '%s\n' "$out" | tail -n 40
     exit 1
   fi
+  # the theme folder read by GTK 4 and GTK 3 themselves, which needs a display: inside redstar-comp, when it's built
+  if [ -x compositor/build/redstar-comp ]; then
+    crimson-gtk/test/in-compositor.sh meson test -C crimson-gtk/build --print-errorlogs >/dev/null \
+      || { crimson-gtk/test/in-compositor.sh meson test -C crimson-gtk/build --print-errorlogs; exit 1; }
+  fi
   if ! build_out="$(greeter/build.sh 2>&1)"; then
     printf '%s\n' "$build_out" | grep -E "error|Error|FAILED" | head -n 30
     echo "crimson-login didn't build"

@@ -77,6 +77,57 @@ public static class LookAndFeel
         !string.IsNullOrEmpty(s.IconTheme) ? s.IconTheme : (_ourThemeInstalled ??= SystemThemeDir(OurIconTheme) != null) ? OurIconTheme : null;
     private static bool? _ourThemeInstalled;
 
+    /// <summary>Crimson Banner's own GTK theme for other programs (crimson-gtk/, written by crimson-gtk-theme).</summary>
+    public const string OurGtkTheme = "CrimsonBanner";
+
+    /// <summary>The system's copy of a GTK theme (share/themes/NAME, not a person's own), or null.</summary>
+    public static string? SystemGtkThemeDir(string name) =>
+        DataDirs().Skip(1).Select(d => Path.Combine(d, "themes", name)).FirstOrDefault(d => Directory.Exists(Path.Combine(d, "gtk-4.0")) || Directory.Exists(Path.Combine(d, "gtk-3.0")));
+
+    /// <summary>
+    /// The GTK theme in use: the one chosen in Settings, else Crimson Banner's own when it's installed (it is with the
+    /// system), else none (GTK's own Adwaita).
+    /// </summary>
+    public static string? EffectiveGtkTheme(Settings s) =>
+        !string.IsNullOrEmpty(s.GtkTheme) ? s.GtkTheme : (_ourGtkInstalled ??= SystemGtkThemeDir(OurGtkTheme) != null) ? OurGtkTheme : null;
+    private static bool? _ourGtkInstalled;
+
+    /// <summary>A person's own copy of Crimson Banner's GTK theme, in their accent (it comes before the system's).</summary>
+    public static string UserGtkThemeDir => Path.Combine(DataDirs().First(), "themes", OurGtkTheme);
+
+    /// <summary>
+    /// What the person's own copy should be for an accent: none for crimson (the system's copy is crimson), else one
+    /// in that accent; and whether the folder there is ours to replace or remove (crimson-gtk-theme marks its
+    /// index.theme with the accent). Public for the tests.
+    /// </summary>
+    public static (bool Want, bool Ours, bool Current) UserGtkThemePlan(string accent, string? indexText)
+    {
+        bool ours = indexText != null && indexText.Contains("GtkTheme=CrimsonBanner") && indexText.Contains("# accent: ");
+        bool current = ours && indexText!.Contains("# accent: " + accent, StringComparison.OrdinalIgnoreCase);
+        bool want = !accent.Equals("#C8102E", StringComparison.OrdinalIgnoreCase);
+        return (want, ours, current);
+    }
+
+    /// <summary>The person's own copy of the theme, in their accent, made or removed to match (in the background).</summary>
+    private static void UpdateUserGtkTheme(Settings s)
+    {
+        if (EffectiveGtkTheme(s) != OurGtkTheme || SystemGtkThemeDir(OurGtkTheme) == null) return;
+        var dir = UserGtkThemeDir;
+        var index = Path.Combine(dir, "index.theme");
+        string? text = null;
+        try { if (File.Exists(index)) text = File.ReadAllText(index); } catch (IOException) { }
+        var accent = ThemeService.AccentHex;
+        var (want, ours, current) = UserGtkThemePlan(accent, text);
+        if (!want)
+        {
+            if (ours) try { Directory.Delete(dir, true); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+            return;
+        }
+        if (current || (text != null && !ours)) return;     // up to date, or a folder of the person's own: left alone
+        if (ProcessUtil.Which("crimson-gtk-theme") is { } tool)
+            _ = ProcessUtil.RunAsync(tool, new[] { dir, accent }, 10000);
+    }
+
     /// <summary>Icon themes: an index.theme that lists icon directories (pointer-only themes have none), not hidden.</summary>
     public static List<string> IconThemes()
     {
@@ -204,6 +255,7 @@ public static class LookAndFeel
         if (!StylesOtherPrograms) return;
         var s = SettingsStore.Current;
         var dark = ThemeService.IsDark;
+        UpdateUserGtkTheme(s);
         var keys = GtkKeys(s, dark);
         var cfg = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME") is { Length: > 0 } c ? c
             : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config");
@@ -218,7 +270,7 @@ public static class LookAndFeel
         {
             void Set(string key, string value) => _ = ProcessUtil.RunAsync(gs, new[] { "set", "org.gnome.desktop.interface", key, value }, 5000);
             Set("color-scheme", dark ? "prefer-dark" : "default");
-            if (!string.IsNullOrEmpty(s.GtkTheme)) Set("gtk-theme", s.GtkTheme);
+            if (EffectiveGtkTheme(s) is { } gtk) Set("gtk-theme", gtk);
             if (EffectiveIconTheme(s) is { } icons) Set("icon-theme", icons);
             if (!string.IsNullOrEmpty(s.CursorTheme)) Set("cursor-theme", s.CursorTheme);
             Set("cursor-size", CursorSize().ToString(CultureInfo.InvariantCulture));
@@ -244,7 +296,7 @@ public static class LookAndFeel
     public static List<KeyValuePair<string, string>> GtkKeys(Settings s, bool dark)
     {
         var k = new List<KeyValuePair<string, string>> { new("gtk-application-prefer-dark-theme", dark ? "1" : "0") };
-        if (!string.IsNullOrEmpty(s.GtkTheme)) k.Add(new("gtk-theme-name", s.GtkTheme));
+        if (EffectiveGtkTheme(s) is { } gtk) k.Add(new("gtk-theme-name", gtk));
         if (EffectiveIconTheme(s) is { } icons) k.Add(new("gtk-icon-theme-name", icons));
         if (!string.IsNullOrEmpty(s.CursorTheme)) k.Add(new("gtk-cursor-theme-name", s.CursorTheme));
         k.Add(new("gtk-cursor-theme-size", CursorSize().ToString(CultureInfo.InvariantCulture)));

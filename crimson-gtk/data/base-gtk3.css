@@ -1,0 +1,72 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later
+   Crimson Banner's look for GTK 3 programs (Firefox, GIMP, older GNOME and Xfce programs): the same tokens and the
+   same shapes as base.css, in what GTK 3's style sheets can say (no CSS variables, no letter spacing). It comes
+   after GTK 3's own Adwaita, so anything not restyled here still looks right. */
+
+@define-color theme_selected_bg_color @accent;
+@define-color theme_selected_fg_color #FFFFFF;
+@define-color selected_bg_color @accent;
+@define-color theme_bg_color @backdrop_bottom;
+@define-color theme_fg_color @fg;
+
+window.background, dialog.background, .background { background-color: @backdrop_bottom; color: @fg; }
+*:selected, selection, *:selected:focus { background-color: alpha(@accent, 0.40); color: @fg; }
+
+button {
+  background-image: none;
+  background-color: @button;
+  border: 1px solid @button_border;
+  border-radius: 8px;
+  padding: 5px 12px;
+  color: @fg;
+  box-shadow: none;
+  text-shadow: none;
+  -gtk-icon-shadow: none;
+}
+button:hover { background-color: @button_hover; }
+button:active, button:checked { background-color: @card; }
+button.suggested-action { background-color: @accent; border-color: transparent; color: #FFFFFF; }
+button.suggested-action:hover { background-color: shade(@accent, 1.08); }
+button.destructive-action { background-color: @danger; border-color: transparent; color: #FFFFFF; }
+button.flat { background-color: transparent; border-color: transparent; }
+button.flat:hover { background-color: @hover; }
+
+entry, spinbutton:not(.vertical) {
+  background-image: none;
+  background-color: @entry_bg;
+  border: 1px solid @entry_border;
+  border-radius: 8px;
+  color: @fg;
+  box-shadow: none;
+}
+entry:focus { border-color: @accent; box-shadow: inset 0 0 0 1px alpha(@accent, 0.5); }
+
+headerbar, .titlebar {
+  background-image: none;
+  background-color: @backdrop_top;
+  border-bottom: 1px solid @rule;
+  box-shadow: none;
+  color: @fg;
+}
+headerbar:backdrop, .titlebar:backdrop { background-color: @backdrop_bottom; }
+
+popover, menu, .menu, .context-menu {
+  background-color: @menu;
+  border: 1px solid @border;
+  border-radius: 12px;
+  color: @fg;
+}
+menu menuitem:hover, .menu menuitem:hover, popover modelbutton:hover { background-color: @hover; color: @fg; }
+tooltip, tooltip.background { background-color: @menu; color: @fg; border-radius: 8px; }
+
+switch { background-image: none; background-color: @button_border; border: none; border-radius: 999px; }
+switch:checked { background-color: @accent; }
+switch slider { background-image: none; background-color: #FFFFFF; border: none; border-radius: 999px; box-shadow: none; }
+check:checked, radio:checked { background-image: none; background-color: @accent; border-color: @accent; color: #FFFFFF; }
+scale trough, progressbar trough { background-image: none; background-color: @field; border: none; border-radius: 999px; }
+scale highlight, progressbar progress { background-image: none; background-color: @accent; border: none; border-radius: 999px; }
+scale slider { background-image: none; background-color: #FFFFFF; border: none; }
+
+notebook > header tab:checked { box-shadow: inset 0 -3px @accent; }
+treeview.view:selected, list row:selected, row:selected { background-color: @accent_soft; color: @fg; }
+separator { background-color: @border; }

@@ -273,7 +273,7 @@ jobs:
     steps:
       - name: Vala, GTK 4 and build tools (and wlroots for the compositor it runs in)
         run: |
-          pacman -Syu --noconfirm --needed git gcc meson ninja pkgconf vala gtk4 json-glib \
+          pacman -Syu --noconfirm --needed git gcc meson ninja pkgconf vala gtk4 gtk3 json-glib \
             wlroots0.20 wayland wayland-protocols libxkbcommon libxcb xcb-util-wm cairo libdrm pixman xorg-xwayland \
             mesa ttf-dejavu
 
@@ -290,6 +290,9 @@ jobs:
           meson test -C crimson-gtk/build --print-errorlogs
           meson test -C greeter/build --print-errorlogs
 
+      - name: The GTK theme folder, read by GTK 4 and GTK 3 themselves (inside redstar-comp, for a display)
+        run: crimson-gtk/test/in-compositor.sh meson test -C crimson-gtk/build --print-errorlogs
+
       - name: The login screen drawn (headless, inside redstar-comp)
         run: |
           greeter/test/run-screenshot.sh login.png
@@ -301,7 +304,10 @@ jobs:
         run: |
           crimson-gtk/test/headless.sh gallery-dark.png crimson-gtk/build/crimson-gtk-gallery
           crimson-gtk/test/headless.sh gallery-light.png crimson-gtk/build/crimson-gtk-gallery --light
-          for f in gallery-dark gallery-light; do
+          # and as any other program gets it: GTK's installed "Crimson Banner" theme, none of our own styling
+          cp -r crimson-gtk/build/theme-for-tests /usr/share/themes/CrimsonBanner
+          crimson-gtk/test/headless.sh gallery-other.png crimson-gtk/build/crimson-gtk-gallery --as-other-program
+          for f in gallery-dark gallery-light gallery-other; do
             echo "---- screen.png (GTK-$f) ----"; base64 -w 0 $f.png; echo; echo "---- end screen.png ----"
           done
 
@@ -426,6 +432,11 @@ jobs:
           done
           # the icon theme, its links followed: a drawn program and a picture of every size
           test -f /usr/share/icons/CrimsonBanner/index.theme && test -f /usr/share/icons/CrimsonBanner/names.txt
+          # the GTK theme other programs use, and the tool that makes a person's own copy in their accent
+          for f in index.theme gtk-4.0/gtk.css gtk-4.0/gtk-dark.css gtk-3.0/gtk.css gtk-3.0/gtk-dark.css; do
+            test -s "/usr/share/themes/CrimsonBanner/$f" || { echo "GTK theme: missing $f"; exit 1; }
+          done
+          crimson-gtk-theme /tmp/own-theme '#0078D4' && grep -q "accent #0078D4" /tmp/own-theme/gtk-4.0/gtk-dark.css
           for f in scalable/apps/org.gnome.Nautilus.svg 32x32/apps/org.kde.konsole.png 128x128/apps/gedit.png; do
             test -L "/usr/share/icons/CrimsonBanner/$f" && test -s "/usr/share/icons/CrimsonBanner/$f" || { echo "icon theme: missing $f"; exit 1; }
           done
